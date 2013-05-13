@@ -1,0 +1,71 @@
+body {
+	margin: auto;
+	font-family: Arial,Verdana,Helvetica,sans-serif;
+	font-size: 90%;
+}
+p {
+/* 	text-indent: 1em; */
+	padding-left: 1em;
+	padding-right: 1em;
+	color: rgb(0,60,118);
+}
+h1, h3 {
+	text-align: center;
+	color: rgb(0,60,118);
+}
+h1 {
+	padding-bottom: 0.5em;
+}
+.header_left {
+	text-align: left; 
+	text-indent: 1em;
+}
+.blauer_text {
+	color: rgb(0,60,118);
+}
+
+/* funktioniert nur in Mozilla*/
+input:-moz-placeholder {
+	color: rgba(0,60,118,0.50);
+	font-style: italic;
+}
+.kopfzeile {
+	width: 70em; 
+	margin: auto; 
+	padding-top: 2em;
+}
+.logo {
+/* 	background: url('../media/JGU_Uni_medizin_Logo_4c_Internet.jpg') no-repeat scroll right top transparent;  */
+	height: 6em; 
+	width: 70em; 
+	margin: auto;
+}
+.inhalt {
+	width: 70em; 
+	margin: auto; 
+	background-color: rgb(229,235,241);
+}
+.patienten_daten {
+	width: 50em; margin: auto;
+}
+.submit_anlegen {
+	color: rgb(0,60,118);
+}
+.kontakt_daten {
+	font-size:0.9em; 
+	text-align:center; 
+	background-color: rgb(255,255,255); 
+	padding-top: 0.8em;
+}
+.hinweisen_liste {
+	list-style-type:square; 
+	color: rgb(175, 30, 45); 
+	width: 60em;
+}
+.daten_tabelle {
+	margin: auto; 
+	color: rgb(0,60,118);
+}
+.geburtstag, .geburtsmonat, .geburtsjahr {
+	color: rgb(0,60,118);
+}

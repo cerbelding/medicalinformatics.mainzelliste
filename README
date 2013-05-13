@@ -1,0 +1,53 @@
+Mainzelliste is a pseudonymization service originally created by the department for medical informatics
+at the University Medical Center Mainz. It provides the following features:
+	- A centralized repository for identifying data (IDAT) of patients, i.e. data such
+	  as name, date of birth etc.
+	- Record Linkage procedures to determine if a patient is already present in the database.
+	- Generation of non-speaking pseudonmys for use in medical research networks.
+	- Session and token handling for distributed and web-based applications.
+	- A restful HTTP interface.
+	
+For detailed information, we refer to the included documentation.
+
+Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+
+This program is free software; you can redistribute it and/or modify it under the 
+terms of the GNU Affero General Public License as published by the Free Software 
+Foundation; either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+A copy of the GNU Affero General Public License is included in this package in 
+licenses/agpl-3.0.txt.
+
+Additional permission under GNU GPL version 3 section 7
+
+If you modify this Program, or any covered work, by linking or combining it with 
+Jersey (https://jersey.java.net) (or a modified version of that library), 
+containing parts covered by the terms of the General Public License, version 2.0, 
+the licensors of this Program grant you additional permission to convey the resulting work.
+
+
+This program uses the following third-party libraries under the listed licenses, which are
+included in folder "licences" under the listed file names:
+
+	- barcode4j (http://barcode4j.sourceforge.net/), 
+	  Apache Commons Codec (http://commons.apache.org/proper/commons-codec/),
+	  Apache Derby (http://db.apache.org/derby/), 
+	  Apache HttpComponents (http://hc.apache.org/),
+	  Apache log4j 1.2 (http://logging.apache.org/log4j/1.2/),
+	  Apache OpenJPA 2.2 (http://openjpa.apache.org/): Apache Licence 2.0, apache-2.0.txt
+
+Furthermore, the following files incorporate code by other authors:
+	- PIDGenerator.java: Java port of the PID generation code by Klaus Pommerening,
+	  published at http://www.staff.uni-mainz.de/pommeren/PID/ [7.5.2013].
+	  Used with permission of the author.
+	- Phonet.java, PhonetRules.java: Java port of the phonetic algorithm by Jörg Michael,
+	  published at http://www.heise.de/ct/ftp/99/25/252/ [7.5.2013] under the Lesser General
+	  Public License (lgpl-2.0.txt)
+	  
+In order to run this program, a JAX-RS implementation (e.g. Jersey, https://jersey.java.net/) 
+and a JDBC driver for the selected database are needed. These are not included for license reasons.
+
