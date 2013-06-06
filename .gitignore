@@ -2,5 +2,6 @@
 .project
 *.iml
 .settings
-/target
-/WebContent/WEB-INF/*.conf
+/.idea
+target
+WebContent/WEB-INF/*.conf
