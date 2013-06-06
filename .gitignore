@@ -1,0 +1,6 @@
+.classpath
+.project
+*.iml
+.settings
+/target
+/WebContent/WEB-INF/*.conf
