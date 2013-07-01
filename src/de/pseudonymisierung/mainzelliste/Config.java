@@ -25,9 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -74,16 +72,16 @@ public enum Config {
 			ServletContext context = Initializer.getServletContext();
 			String configPath = context.getInitParameter("de.pseudonymisierung.mainzelliste.ConfigurationFile");
 
-			if (configPath == null) configPath = "/mainzelliste.conf";
+			if (configPath == null) configPath = "/WEB-INF/mainzelliste.conf";
 			logger.info("Reading config from path " + configPath + "...");
 			
 			// First, try to read from resource (e.g. within the war file)
-			InputStream configInputStream = getClass().getResourceAsStream(configPath);
+			InputStream configInputStream = context.getResourceAsStream(configPath);
 			// Else: read from file System			
 			if (configInputStream == null)
 				configInputStream = new FileInputStream(configPath);
-			
-			props.load(configInputStream);
+			Reader reader = new InputStreamReader(configInputStream, "UTF-8");
+			props.load(reader);
 			/* 
 			 * Read properties into Preferences for easier hierarchical access
 			 * (e.g. it is possible to get the subtree of all idgenerators.* properties)
@@ -134,7 +132,7 @@ public enum Config {
 					try {
 						fieldClass = (Class<? extends Field<?>>) Class.forName(fieldClassStr);
 					} catch (ClassNotFoundException e) {
-						// Try with "de.unimainz..."
+						// Try with "de.pseudonymisierung.mainzelliste..."
 						fieldClass = (Class<? extends Field<?>>) Class.forName("de.pseudonymisierung.mainzelliste." + fieldClassStr);
 					}
 					this.FieldTypes.put(fieldName, fieldClass);
