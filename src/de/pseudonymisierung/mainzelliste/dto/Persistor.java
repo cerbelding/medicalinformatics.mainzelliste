@@ -25,10 +25,16 @@
  */
 package de.pseudonymisierung.mainzelliste.dto;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Properties;
 import java.util.Set;
-//import java.util.LinkedList;
+import java.util.TreeMap;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -36,6 +42,7 @@ import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
 
 import org.apache.log4j.Logger;
+
 
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.ID;
@@ -57,6 +64,10 @@ public enum Persistor {
 	private Logger logger = Logger.getLogger(this.getClass());
 	
 	private Persistor() {
+		
+		// update database schema (pre-JPA)
+		String dbVersion = this.getSchemaVersion();
+		
 		HashMap<String, String> persistenceOptions = new HashMap<String, String>();
 		
 		// Settings from config
@@ -74,6 +85,10 @@ public enum Persistor {
 		em = emf.createEntityManager();
 		
 		new org.apache.openjpa.jdbc.schema.DBCPDriverDataSource();
+		
+		// update database schema (post-JPA)
+		this.updateDatabaseSchemaJPA(dbVersion);
+		
 		// Check database connection
 		getPatients();
 		
@@ -170,16 +185,20 @@ public enum Persistor {
 	 * Load the persisted properties for an ID generator.
 	 * @param idString Identifier of the ID generator.
 	 */
-	public IDGeneratorMemory getIDGeneratorMemory(String idString) {
+	public IDGeneratorMemory getIDGeneratorMemory(String idType) {
 		EntityManager em = emf.createEntityManager();
-		TypedQuery<IDGeneratorMemory> q = em.createQuery("SELECT m FROM IDGeneratorMemory m WHERE m.idString = :idString", IDGeneratorMemory.class);
-		q.setParameter("idString", idString);
+		TypedQuery<IDGeneratorMemory> q = em.createQuery("SELECT m FROM IDGeneratorMemory m WHERE m.idType = :idType", IDGeneratorMemory.class);
+		q.setParameter("idType", idType);
 		List<IDGeneratorMemory> result = q.getResultList();
 		em.close();
 		if (result.size() == 0)
 			return null;
 		else
-			return result.get(0);
+			/*
+			 * Due to a previous bug, there might be multiple objects in the database.
+			 * Use the last one in order to (hopefully) get the most current values.
+			 */			
+			return result.get(result.size() - 1);
 	}
 	
 	/**
@@ -191,5 +210,100 @@ public enum Persistor {
 		em.merge(p);
 		em.getTransaction().commit();
 		em.close();
+	}
+	
+	
+	/**
+	 * Performes database updates after JPA initialization
+	 */
+	private void updateDatabaseSchemaJPA(String fromVersion)
+	{
+		EntityManager em = emf.createEntityManager();
+		em.getTransaction().begin();
+		
+		if ("1.0".equals(fromVersion)) {
+				em.createNativeQuery("UPDATE IDGeneratorMemory SET idType=idstring").executeUpdate();
+				em.createNativeQuery("ALTER TABLE IDGeneratorMemory DROP COLUMN idString").executeUpdate();
+				
+			/*
+			 * Delete invalid instances of IDGeneratorMemory (caused by Bug #3007
+			 * Both id generators of version 1.0 use a field "counter". The memory object
+			 * with the highest value has to be retained.
+			 */
+			List<String> idTypes = em.createQuery("SELECT DISTINCT m.idType FROM IDGeneratorMemory m", String.class).getResultList();
+			for (String idType: idTypes) {
+				if (idType != null) {
+					TreeMap<Integer, IDGeneratorMemory> genMap = new TreeMap<Integer, IDGeneratorMemory>();
+					List<IDGeneratorMemory> generators = em.createQuery("SELECT im FROM IDGeneratorMemory im WHERE im.idType = :idType", IDGeneratorMemory.class)
+							.setParameter("idType", idType).getResultList();
+					for (IDGeneratorMemory thisGen : generators) {
+						genMap.put(Integer.parseInt(thisGen.get("counter")), thisGen);
+					}
+					// Remove the object with the highest counter. This should be kept. 
+					genMap.pollLastEntry();
+					// Remove the others.
+					for (IDGeneratorMemory thisGen : genMap.values()) {
+						em.remove(thisGen);
+					}
+				}
+			}
+			this.updateSchemaVersion("1.1", em);
+			em.getTransaction().commit();
+		} // End of update 1.0 -> 1.1
+	}
+	
+	/**
+	 * Reads the release version from the database (1.0 is assumed if
+	 * this information cannot be found).
+	 */
+	private String getSchemaVersion() {
+		Connection conn;
+		Properties connectionProps = new Properties();
+		connectionProps.put("user",  Config.instance.getProperty("db.username"));
+		connectionProps.put("password",  Config.instance.getProperty("db.password"));
+		String url = Config.instance.getProperty("db.url");
+		try {
+			Class.forName(Config.instance.getProperty("db.driver"));
+			conn = DriverManager.getConnection(url, connectionProps);
+			// Check if there is a properties table 
+			DatabaseMetaData metaData = conn.getMetaData();
+			ResultSet rs = metaData.getTables(null, null, "mainzelliste_properties", null);
+			// Assume version 1.0 if none is provided
+			String version = "1.0";
+			if (!rs.next()) {
+				// Create table				
+				conn.createStatement().execute("CREATE table mainzelliste_properties" +
+						"(property varchar(256), value varchar(256))");
+			} 
+			rs = conn.createStatement().executeQuery("SELECT value FROM mainzelliste_properties " +
+					"WHERE property='version'");
+			if (!rs.next()) {
+				// Properties table exists, but no version information (should not occur)
+				conn.createStatement().execute("INSERT INTO mainzelliste_properties" +
+						"(property, value) VALUES ('version', '1.0')");
+			} else {
+				version = rs.getString("value");
+			}
+			return version;
+		} catch (SQLException e) {
+			logger.fatal("Could not update database schema!", e);
+			throw new Error(e);			
+		} catch (ClassNotFoundException e) {
+			logger.fatal("Could not find database driver!", e);
+			throw new Error(e);
+		}			
+	}
+	
+	/**
+	 * Udate version information in the database. Should be run in one transaction 
+	 * on the provided EntityManager together with the changes made for this version
+	 * so that no inconsistencies arise if any of the update statements fail.
+	 * @param toVersion The version string to set.
+	 * @param em A valid EntityManager object.
+	 */
+	private void updateSchemaVersion(String toVersion, EntityManager em) {
+
+		em.createNativeQuery("UPDATE mainzelliste_properties SET value='" + toVersion + 
+				"' WHERE property='version'").executeUpdate(); 
 	}
 }
