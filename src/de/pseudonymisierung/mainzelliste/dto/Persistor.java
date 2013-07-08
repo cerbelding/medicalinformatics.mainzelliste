@@ -65,9 +65,6 @@ public enum Persistor {
 	
 	private Persistor() {
 		
-		// update database schema (pre-JPA)
-		String dbVersion = this.getSchemaVersion();
-		
 		HashMap<String, String> persistenceOptions = new HashMap<String, String>();
 		
 		// Settings from config
@@ -87,6 +84,7 @@ public enum Persistor {
 		new org.apache.openjpa.jdbc.schema.DBCPDriverDataSource();
 		
 		// update database schema (post-JPA)
+		String dbVersion = this.getSchemaVersion();
 		this.updateDatabaseSchemaJPA(dbVersion);
 		
 		// Check database connection
@@ -255,6 +253,10 @@ public enum Persistor {
 	/**
 	 * Reads the release version from the database (1.0 is assumed if
 	 * this information cannot be found).
+	 * 
+	 * This function does not make use of JPA in order to be compatible
+	 * with updates that have to be made before JPA initialization 
+	 * (e.g. if the Object-DB mapping would be broken without the update).
 	 */
 	private String getSchemaVersion() {
 		Connection conn;
