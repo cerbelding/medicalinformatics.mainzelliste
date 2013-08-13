@@ -101,8 +101,8 @@ public enum Config {
 			logger.debug(props);
 			
 		} catch (IOException e)	{
-			logger.fatal("Error reading configuration file: ", e);
-			throw new InternalErrorException();
+			logger.fatal("Error reading configuration file. Please configure according to installation manual.", e);
+			throw new Error(e);
 		}
 		
 		this.recordTransformer = new RecordTransformer(props);

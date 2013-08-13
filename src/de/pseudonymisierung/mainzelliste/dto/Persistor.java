@@ -38,6 +38,7 @@ import java.util.TreeMap;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.NoResultException;
 import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
 
@@ -57,6 +58,9 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 public enum Persistor {
 	instance;
 	
+	/** Version of the database schema used by this application instance */
+	private static final String schemaVersion = "1.1";
+	
 	private EntityManagerFactory emf;
 	
 	private EntityManager em;
@@ -64,6 +68,8 @@ public enum Persistor {
 	private Logger logger = Logger.getLogger(this.getClass());
 	
 	private Persistor() {
+		
+		this.initPropertiesTable();
 		
 		HashMap<String, String> persistenceOptions = new HashMap<String, String>();
 		
@@ -187,16 +193,13 @@ public enum Persistor {
 		EntityManager em = emf.createEntityManager();
 		TypedQuery<IDGeneratorMemory> q = em.createQuery("SELECT m FROM IDGeneratorMemory m WHERE m.idType = :idType", IDGeneratorMemory.class);
 		q.setParameter("idType", idType);
-		List<IDGeneratorMemory> result = q.getResultList();
-		em.close();
-		if (result.size() == 0)
+		try {
+			IDGeneratorMemory result = q.getSingleResult();
+			em.close();
+			return result;
+		} catch (NoResultException e) { // No result -> No IDGeneratorMemory object persisted yet.
 			return null;
-		else
-			/*
-			 * Due to a previous bug, there might be multiple objects in the database.
-			 * Use the last one in order to (hopefully) get the most current values.
-			 */			
-			return result.get(result.size() - 1);
+		}
 	}
 	
 	/**
@@ -212,14 +215,14 @@ public enum Persistor {
 	
 	
 	/**
-	 * Performes database updates after JPA initialization
+	 * Performs database updates after JPA initialization
 	 */
 	private void updateDatabaseSchemaJPA(String fromVersion)
 	{
 		EntityManager em = emf.createEntityManager();
 		em.getTransaction().begin();
 		
-		if ("1.0".equals(fromVersion)) {
+		if ("1.0".equals(fromVersion)) { // 1.0 -> 1.1
 				em.createNativeQuery("UPDATE IDGeneratorMemory SET idType=idstring").executeUpdate();
 				em.createNativeQuery("ALTER TABLE IDGeneratorMemory DROP COLUMN idString").executeUpdate();
 				
@@ -245,8 +248,8 @@ public enum Persistor {
 					}
 				}
 			}
-			this.updateSchemaVersion("1.1", em);
-			em.getTransaction().commit();
+			this.setSchemaVersion("1.1", em);
+			em.getTransaction().commit(); //FIXME: Müsste der hier nicht (genau wie begin) HINTER die Klammer?
 		} // End of update 1.0 -> 1.1
 	}
 	
@@ -257,6 +260,8 @@ public enum Persistor {
 	 * This function does not make use of JPA in order to be compatible
 	 * with updates that have to be made before JPA initialization 
 	 * (e.g. if the Object-DB mapping would be broken without the update).
+	 * 
+	 * Run initPropertiesTable() first to ensure that version information exists.
 	 */
 	private String getSchemaVersion() {
 		Connection conn;
@@ -267,26 +272,13 @@ public enum Persistor {
 		try {
 			Class.forName(Config.instance.getProperty("db.driver"));
 			conn = DriverManager.getConnection(url, connectionProps);
-			// Check if there is a properties table 
-			DatabaseMetaData metaData = conn.getMetaData();
-			ResultSet rs = metaData.getTables(null, null, "mainzelliste_properties", null);
-			// Assume version 1.0 if none is provided
-			String version = "1.0";
-			if (!rs.next()) {
-				// Create table				
-				conn.createStatement().execute("CREATE table mainzelliste_properties" +
-						"(property varchar(256), value varchar(256))");
-			} 
-			rs = conn.createStatement().executeQuery("SELECT value FROM mainzelliste_properties " +
+			ResultSet rs = conn.createStatement().executeQuery("SELECT value FROM mainzelliste_properties " +
 					"WHERE property='version'");
 			if (!rs.next()) {
-				// Properties table exists, but no version information (should not occur)
-				conn.createStatement().execute("INSERT INTO mainzelliste_properties" +
-						"(property, value) VALUES ('version', '1.0')");
-			} else {
-				version = rs.getString("value");
-			}
-			return version;
+				logger.fatal("Properties table not initialized correctly!");
+				throw new Error("Properties table not initialized correctly!");	
+			}				
+			return rs.getString("value");
 		} catch (SQLException e) {
 			logger.fatal("Could not update database schema!", e);
 			throw new Error(e);			
@@ -297,15 +289,70 @@ public enum Persistor {
 	}
 	
 	/**
-	 * Udate version information in the database. Should be run in one transaction 
+	 * Update version information in the database. Should be run in one transaction 
 	 * on the provided EntityManager together with the changes made for this version
 	 * so that no inconsistencies arise if any of the update statements fail.
 	 * @param toVersion The version string to set.
 	 * @param em A valid EntityManager object.
 	 */
-	private void updateSchemaVersion(String toVersion, EntityManager em) {
-
+	private void setSchemaVersion(String toVersion, EntityManager em) {
 		em.createNativeQuery("UPDATE mainzelliste_properties SET value='" + toVersion + 
 				"' WHERE property='version'").executeUpdate(); 
+	}
+	
+	/**
+	 * Create mainzelliste_properties if not exists. Check if JPA schema
+	 * was initialized. If no, set version to current, otherwise, it is assumed
+	 * that the database schema was created by version 1.0 (where the properties
+	 * table did not exist) and this version is set.
+	 * 
+	 * Must be called before JPA initialization, i.e. before an EntityManager is
+	 * created.
+	 */
+	private void initPropertiesTable() {
+		Connection conn;
+		Properties connectionProps = new Properties();
+		connectionProps.put("user",  Config.instance.getProperty("db.username"));
+		connectionProps.put("password",  Config.instance.getProperty("db.password"));
+		String url = Config.instance.getProperty("db.url");
+		try {
+			Class.forName(Config.instance.getProperty("db.driver"));
+			conn = DriverManager.getConnection(url, connectionProps);
+			// Check if there is a properties table 
+			DatabaseMetaData metaData = conn.getMetaData();
+			// Look for patients table to determine if schema is yet to be created
+			String tableName;
+			if (metaData.storesLowerCaseIdentifiers())
+				tableName = "patient";
+			else
+				tableName = "Patient";
+			ResultSet rs = metaData.getTables(null, null, tableName, null);
+			boolean firstRun = !rs.next(); // First invocation with this database 
+			
+			// Check if there is a properties table 
+			metaData = conn.getMetaData();
+			rs = metaData.getTables(null, null, "mainzelliste_properties", null);
+			// Assume version 1.0 if none is provided
+			if (!rs.next()) {
+				// Create table				
+				conn.createStatement().execute("CREATE TABLE mainzelliste_properties" +
+						"(property varchar(256), value varchar(256))");
+			} 
+			rs = conn.createStatement().executeQuery("SELECT value FROM mainzelliste_properties " +
+					"WHERE property='version'");
+			if (!rs.next()) {
+				// Properties table exists, but no version information
+				String setVersion = firstRun ? Persistor.schemaVersion : "1.0";
+				conn.createStatement().execute("INSERT INTO mainzelliste_properties" +
+						"(property, value) VALUES ('version', '" + setVersion + "')");
+			}
+		} catch (SQLException e) {
+			logger.fatal("Could not update database schema!", e);
+			throw new Error(e);			
+		} catch (ClassNotFoundException e) {
+			logger.fatal("Could not find database driver!", e);
+			throw new Error(e);
+		}			
+		
 	}
 }
