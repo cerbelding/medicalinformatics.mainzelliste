@@ -1,4 +1,4 @@
-﻿# Template properties for mainzelliste
+# Template properties for mainzelliste
 #
 # The configuration listed here provides default values which should be suitable for
 # a variety of szenarios. At least, the sections "Database setup" and "xDAT servers"
@@ -21,8 +21,15 @@ debug = false
 dist = Mainzelliste
 
 # Database setup
-db.driver = org.postgresql.Driver
-db.url = jdbc:postgresql://localhost:5432/mainzelliste
+
+# Uncomment this for PostgreSQL
+# db.driver = org.postgresql.Driver
+# db.url = jdbc:postgresql://localhost:5432/mainzelliste
+
+# Uncomment this for MySQL
+# db.driver = com.mysql.jdbc.Driver
+# db.url = jdbc:mysql://localhost:3306/mainzelliste
+
 db.username = mainzelliste
 db.password = mainzelliste
 
@@ -68,9 +75,9 @@ validator.field.geburtsjahr.required = true
 # validator.field.{fieldname}.format: Regular expresssion which a field must adhere to.
 
 # Default: letters, dots, underscores, apostrophes, spaces; at least one letter.
-validator.field.vorname.format = [A-Za-zäÄöÖüÜß\\.\\-' ]*[A-Za-zäÄöÖüÜ]+[A-Za-zäÄöÖüÜ\\.\\-' ]*
-validator.field.nachname.format = [A-Za-zäÄöÖüÜ\\.\\-' ]*[A-Za-zäÄöÖüÜ]+[A-Za-zäÄöÖüÜ\\.\\-' ]*
-validator.field.geburtsname.format = [A-Za-zäÄöÖüÜ\\.\\-' ]*[A-Za-zäÄöÖüÜ]+[A-Za-zäÄöÖüÜ\\.\\-' ]*
+validator.field.vorname.format = [A-Za-zäÄöÖüÜß\\.\\-' ]*[A-Za-zäÄöÖüÜß]+[A-Za-zäÄöÖüÜß\\.\\-' ]*
+validator.field.nachname.format = [A-Za-zäÄöÖüÜß\\.\\-' ]*[A-Za-zäÄöÖüÜß]+[A-Za-zäÄöÖüÜß\\.\\-' ]*
+validator.field.geburtsname.format = [A-Za-zäÄöÖüÜß\\.\\-' ]*[A-Za-zäÄöÖüÜß]+[A-Za-zäÄöÖüÜß\\.\\-' ]*
 
 # Date validation:
 # validator.date.{i}.fields defines a list of fields, separated by commas.
@@ -229,6 +236,3 @@ servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1
 
 # Allowed Format of callback
 callback.allowedFormat = https://.* 
-
-# Path for PhonetRules, by warnecke
-path_phonet = /test.csv

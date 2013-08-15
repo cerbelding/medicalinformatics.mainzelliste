@@ -131,7 +131,7 @@ public class HTMLResource {
 		
 		logger.info("Handling edit operation for patient with id " + pidString);
 		
-		// TODO: Generalisieren f�r mehrere IDs
+		// TODO: Generalisieren für mehrere IDs
 		Patient pToEdit = Persistor.instance.getPatient(new PID(pidString, "pid"));
 		if (pToEdit == null)
 		{
@@ -183,7 +183,7 @@ public class HTMLResource {
 		Persistor.instance.updatePatient(pToEdit);
 		
 		return Response.ok("Patient edited successfully!").build();
-		// TODO: Redirect auf Edit-Formular f�r diesen Patienten
+		// TODO: Redirect auf Edit-Formular für diesen Patienten
 		/* 
 		return Response
 				.status(Status.SEE_OTHER)

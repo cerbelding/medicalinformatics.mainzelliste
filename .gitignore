@@ -5,3 +5,4 @@
 /.idea
 target
 WebContent/WEB-INF/*.conf
+.svn
