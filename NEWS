@@ -1,10 +1,8 @@
 Version 1.1
-	-Conversion to Maven Project
+	-Conversion to Maven Project (contributed by Jens Schwanke)
 	-Added information to context.xml template for running the application from Netbeans
 	-Removed control character and fixed missing umlauts in format for name fields in
-	 configuration template
-	ID requests with Accept: application/json returns IDs of all types that are
-	 specified by data field "idTypes" of the corresponding token.
+	 configuration template (reported by Maximilian Ataian)
 	-Fixed default path for configuration file
 	-Fixed a bug in IDGeneratorMemory that caused database errors (duplicate primary key)
 	 when using multiple ID types
