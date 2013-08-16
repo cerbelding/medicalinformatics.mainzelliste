@@ -5,7 +5,7 @@ Die Mainzelliste ist ein webbasierter Pseudonymisierungsdienst erster Stufe. Sie
 Weitere Informationen und Dokumentation zur Mainzelliste finden Sie auf der [Projektseite der Universitätsmedizin Mainz](http://www.mainzelliste.de).
 
 ## Releaseinformationen
-Detailliertes Changelog siehe Datei [NEWS](raw/master/NEWS).
+Detailliertes Changelog siehe Datei NEWS.
 
 ### 1.1
 - Umstellung von Abhängigkeitsmanagement und Build auf Maven sowie diverse kleinere Korrekturen.
