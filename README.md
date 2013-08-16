@@ -19,6 +19,7 @@ Entwickler benötigen Maven-Unterstützung, um das Projekt zu öffnen. Hinweise 
 
 ## Beiträge
 Als Communityprojekt lebt die Mainzelliste von den Beiträgen der Forschergemeinschaft. Wir bedanken uns für die Codebeiträge der folgenden Kollegen:
+
 - Maximilian Ataian, Universitätsmedizin Mainz
 - Benjamin Gathmann, Universitätsklinikum Freiburg
 - Jens Schwanke, Universitätsmedizin Göttingen
