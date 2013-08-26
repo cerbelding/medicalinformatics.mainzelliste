@@ -51,21 +51,21 @@ public class IDGeneratorMemory {
 	@MapKeyClass(String.class)
 	protected Map<String, String> mem = new HashMap<String, String>();
 	
-	protected String idString;
+	protected String idType;
 	
-	public IDGeneratorMemory(String idString)
+	public IDGeneratorMemory(String idType)
 	{
-		this.idString = idString;
+		this.idType = idType;
 	}
-	synchronized void set(String key, String value){
+	public synchronized void set(String key, String value){
 		mem.put(key, value);
 	}
 	
-	synchronized String get(String key){
+	public synchronized String get(String key){
 		return mem.get(key);
 	}
 	
-	synchronized void commit(){
+	public synchronized void commit(){
 		Persistor.instance.updateIDGeneratorMemory(this);
 	}
 }

@@ -101,8 +101,8 @@ public enum Config {
 			logger.debug(props);
 			
 		} catch (IOException e)	{
-			logger.fatal("Error reading configuration file: ", e);
-			throw new InternalErrorException();
+			logger.fatal("Error reading configuration file. Please configure according to installation manual.", e);
+			throw new Error(e);
 		}
 		
 		this.recordTransformer = new RecordTransformer(props);
@@ -132,7 +132,7 @@ public enum Config {
 					try {
 						fieldClass = (Class<? extends Field<?>>) Class.forName(fieldClassStr);
 					} catch (ClassNotFoundException e) {
-						// Try with "de.unimainz..."
+						// Try with "de.pseudonymisierung.mainzelliste..."
 						fieldClass = (Class<? extends Field<?>>) Class.forName("de.pseudonymisierung.mainzelliste." + fieldClassStr);
 					}
 					this.FieldTypes.put(fieldName, fieldClass);
