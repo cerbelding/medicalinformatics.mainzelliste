@@ -214,7 +214,7 @@ public class EpilinkMatcher implements Matcher {
 		this.thresholdNonMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_non_match"));
 	
 		// initialize exchange groups
-		//TODO Mechanismus generalisieren f�r andere Matcher
+		//TODO Mechanismus generalisieren für andere Matcher
 		this.nonExchangeFields = new HashSet<String>(this.weights.keySet());
 		this.exchangeGroups = new Vector<List<String>>();
 		for (int i = 0; props.containsKey("exchangeGroup." + i); i++)

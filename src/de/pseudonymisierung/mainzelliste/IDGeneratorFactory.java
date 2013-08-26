@@ -72,8 +72,15 @@ public enum IDGeneratorFactory {
 					thisIdGenerator = "de.pseudonymisierung.mainzelliste." + thisIdGenerator;
 				IDGenerator<?> thisGenerator = (IDGenerator<?>) Class.forName(thisIdGenerator).newInstance();
 				IDGeneratorMemory mem = Persistor.instance.getIDGeneratorMemory(thisIdType);
-				if (mem == null)
-					mem = new IDGeneratorMemory(thisIdType);				
+				if (mem == null) {
+					// Create new memory object and persist.
+					mem = new IDGeneratorMemory(thisIdType);
+					Persistor.instance.updateIDGeneratorMemory(mem);
+					/* Reread from persistence to ensure to get a persisted entity.
+					 * Otherwise future updates generate new objects in the database.
+					 */
+					mem = Persistor.instance.getIDGeneratorMemory(thisIdType);
+				}
 				// Get properties for this ID generator from Preferences 
 				Properties thisIdProps = new Properties();
 				Preferences thisIdPrefs = prefs.node(thisIdType);

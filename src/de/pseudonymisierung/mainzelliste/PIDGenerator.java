@@ -706,7 +706,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 		this.counter++;
 		mem.set("counter", Integer.toString(this.counter));
 		mem.commit();
-		return new PID(pid, "pid");
+		return new PID(pid, idType);
 	}
 
 	@Override
