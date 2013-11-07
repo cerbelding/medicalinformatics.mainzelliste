@@ -33,20 +33,17 @@ the licensors of this Program grant you additional permission to convey the resu
 This program uses the following third-party libraries under the listed licenses, which are
 included in folder "licences" under the listed file names:
 
-	- barcode4j (http://barcode4j.sourceforge.net/), 
-	  Apache Commons Codec (http://commons.apache.org/proper/commons-codec/),
-	  Apache Derby (http://db.apache.org/derby/), 
+	- Apache Commons Codec, Collections, DBCP, Lang, Logging, Pool
+	    (http://commons.apache.org/), 
 	  Apache HttpComponents (http://hc.apache.org/),
-	  Apache log4j 1.2 (http://logging.apache.org/log4j/1.2/),
+	  Apache Log4j (http://logging.apache.org/log4j/),
 	  Apache OpenJPA 2.2 (http://openjpa.apache.org/): Apache Licence 2.0, apache-2.0.txt
+	- Serp (http://serp.sourceforge.net/): BSD License, bsd-serp.txt
 
 Furthermore, the following files incorporate code by other authors:
 	- PIDGenerator.java: Java port of the PID generation code by Klaus Pommerening,
 	  published at http://www.staff.uni-mainz.de/pommeren/PID/ [7.5.2013].
 	  Used with permission of the author.
-	- Phonet.java, PhonetRules.java: Java port of the phonetic algorithm by Jörg Michael,
-	  published at http://www.heise.de/ct/ftp/99/25/252/ [7.5.2013] under the Lesser General
-	  Public License (lgpl-2.0.txt)
 	  
 In order to run this program, a JAX-RS implementation (e.g. Jersey, https://jersey.java.net/) 
 and a JDBC driver for the selected database are needed. These are not included for license reasons.

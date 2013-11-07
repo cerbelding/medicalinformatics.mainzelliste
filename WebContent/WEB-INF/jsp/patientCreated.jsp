@@ -58,12 +58,12 @@
 								<%
 										out.print(String.format("%02d",
 												Integer.parseInt(map.get("geburtstag").toString()))
-												+ ".");
+												+ ". ");
 										String months[] = { "Januar", "Februar", "März", "April", "Mai",
 												"Juni", "Juli", "August", "September", "Oktober",
 												"November", "Dezember" };
 										out.print(months[Integer.parseInt(map.get("geburtsmonat")
-												.toString())] + " ");
+												.toString()) - 1] + " ");
 										out.print(String.format("%02d",
 												Integer.parseInt(map.get("geburtsjahr").toString())));
 									%>
