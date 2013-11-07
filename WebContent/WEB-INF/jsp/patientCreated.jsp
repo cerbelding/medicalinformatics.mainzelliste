@@ -63,7 +63,7 @@
 												"Juni", "Juli", "August", "September", "Oktober",
 												"November", "Dezember" };
 										out.print(months[Integer.parseInt(map.get("geburtsmonat")
-												.toString())-1] + " ");
+												.toString()) - 1] + " ");
 										out.print(String.format("%02d",
 												Integer.parseInt(map.get("geburtsjahr").toString())));
 									%>
