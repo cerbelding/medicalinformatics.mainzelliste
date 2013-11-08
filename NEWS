@@ -1,13 +1,13 @@
 Version 1.2
 	-A field can now be defined but not used for matching (i.e. stored only). 
 	 This caused an exception in EpilinkMatcher in former versions.
-	-Fixed wrong display of month of birth on the result page (contributed by Daniel Volk)
+	-Fixed wrong display of month of birth on the result page (contributed by Daniel Volk).
 	-Sessions are now deleted if inactive for the amount of time specified by configuration property 
 	 "sessionTimeout". A session is inactive as long as no request is made to it or its tokens. See
 	 the documentation files for details.
 	-Fixed NullPointerException and "Internal Server Error" on deleting a session that does not exist.
 	-A bug in EpiLinkMatcher lead to overestimation of matching weights, which could lead to false 
-	 matches in some cases.	  
+	 matches in some cases (reported by Dirk Langner).
 
 Version 1.1
 	-Conversion to Maven Project (contributed by Jens Schwanke)
