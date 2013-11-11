@@ -25,7 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,8 +41,29 @@ public class Session extends ConcurrentHashMap<String, String>{
 	private String sessionId;
 	private Set<Token> tokens = new HashSet<Token>();
 	
+	/** 
+	 * The timestamp when this Session was last accessed.
+	 * Updateable via refresh();
+	 */
+	private Date lastAccess;
+	
+	/**
+	 * @return the lastAccess
+	 */
+	public Date getLastAccess() {
+		return lastAccess;
+	}
+
 	public Session(String s) {
 		sessionId = s;
+		this.refresh();
+	}
+	
+	/**
+	 * Set the timestamp of last access to the current time.
+	 */
+	public void refresh() {
+		lastAccess = Calendar.getInstance().getTime();
 	}
 	
 	public String getId(){
@@ -56,6 +79,7 @@ public class Session extends ConcurrentHashMap<String, String>{
 	
 	public Set<Token> getTokens() {
 		synchronized(tokens){
+			this.refresh();
 			return Collections.unmodifiableSet(tokens);
 		}
 	}
@@ -64,11 +88,13 @@ public class Session extends ConcurrentHashMap<String, String>{
 		synchronized(tokens){
 			tokens.add(t);
 		}
+		this.refresh();
 	}
 
 	public void deleteToken(String tokenId) {
 		synchronized(tokens){
 			tokens.remove(tokenId);
 		}
+		this.refresh();
 	}
 }

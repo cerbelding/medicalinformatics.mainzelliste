@@ -4,8 +4,19 @@ Die Mainzelliste ist ein webbasierter Pseudonymisierungsdienst erster Stufe. Sie
 
 Weitere Informationen und Dokumentation zur Mainzelliste finden Sie auf der [Projektseite der Universitätsmedizin Mainz](http://www.mainzelliste.de).
 
+Um immer auf dem aktuellen Stand zu bleiben, registrieren Sie sich auf unserer [Mailingliste](https://lists.uni-mainz.de/sympa/subscribe/mainzelliste).
+
 ## Releaseinformationen
 Detailliertes Changelog siehe Datei NEWS im Quellcode.
+
+### 1.2
+- Sessions verfallen nach einer konfigurierbaren Zeit.
+- Erlaubt Felder, die nur gespeichert werden, ohne zum Matching beizutragen.
+- Bugfixes (Beiträge von Daniel Volk, Dirk Langner).
+
+Beim Update ist zu beachten, dass in Version 1.2 Sessions standardmäßig nach 10 Minuten Inaktivität gelöscht werden. Falls dies nicht erwünscht ist, ist der Konfigurationsparameter "sessionTimeout" anzupassen.
+
+Das Update nimmt keine Datenbankänderungen vor.
 
 ### 1.1
 - Umstellung von Abhängigkeitsmanagement und Build auf Maven sowie diverse kleinere Korrekturen.
@@ -23,3 +34,5 @@ Als Communityprojekt lebt die Mainzelliste von den Beiträgen der Forschergemein
 - Maximilian Ataian, Universitätsmedizin Mainz
 - Benjamin Gathmann, Universitätsklinikum Freiburg
 - Jens Schwanke, Universitätsmedizin Göttingen
+- Daniel Volk, Universitätsmedizin Mainz
+- Dirk Langner, Universitätsmedizin Greifswald

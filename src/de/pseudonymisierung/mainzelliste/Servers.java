@@ -27,11 +27,14 @@ package de.pseudonymisierung.mainzelliste;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
@@ -58,6 +61,11 @@ public enum Servers {
 	private final Map<String, Server> servers = new HashMap<String, Server>();
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
 	private final Map<String, Token> tokensByTid = new HashMap<String, Token>();
+	
+	private final long sessionTimeout;
+	
+	/** The regular time interval after which to check for timed out sessions */
+	private final long sessionCleanupInterval = 60000;
 	
 	Logger logger = Logger.getLogger(Servers.class);
 	
@@ -87,6 +95,29 @@ public enum Servers {
 			Token t = new Token("4223", "addPatient");
 			tokensByTid.put(t.getId(), t);
 		}
+
+		// Read session timeout (maximum time a session can be inactive) from config
+		String sessionTimeout = Config.instance.getProperty("sessionTimeout");
+		if (sessionTimeout == null) {
+			this.sessionTimeout = 600000; // 10 min
+		} else {
+			try {
+				this.sessionTimeout = Long.parseLong(sessionTimeout) * 1000;
+				if (this.sessionTimeout <= 0)
+					throw new NumberFormatException();
+			} catch (NumberFormatException e) {
+				throw new Error("Invalid session timout: " + sessionTimeout + ". Please specify a positive whole number.");
+			}
+		}
+			
+		// schedule a regular task to delete timed out sessions
+		TimerTask sessionsCleanupThread = new TimerTask() {				
+			@Override
+			public void run() {
+				Servers.this.cleanUpSessions();
+			}									
+		};
+		new Timer().schedule(sessionsCleanupThread, new Date(), sessionCleanupInterval);
 	}
 	
 	public Session newSession(){
@@ -112,31 +143,50 @@ public enum Servers {
 	 * Returns all known session ids.
 	 */
 	public Set<String> getSessionIds(){
-		return Collections.unmodifiableSet(new HashSet<String>(sessions.keySet()));
+		synchronized (sessions) {
+			return Collections.unmodifiableSet(new HashSet<String>(sessions.keySet()));
+		}
 	}
 	
 	public void deleteSession(String sid){
 		Session s;
-		synchronized (sessions) {
+		synchronized (sessions) {			
 			s = sessions.get(sid);
-
+			// silently return if session does not exist
+			if (s == null)
+				return;
+			
 			for(Token t: s.getTokens()){
 				deleteToken(sid, t.getId());
 			}
 
 			sessions.remove(sid);
 		}
-		
 	}
+	
+	
+	public void cleanUpSessions() {
+		Date now = new Date();
+		synchronized (sessions) {
+			for (Session s : this.sessions.values()) {
+				if (now.getTime() - s.getLastAccess().getTime() > this.sessionTimeout)
+					this.deleteSession(s.getId());
+			}
+		}
+	}
+	
 	
 	public void checkPermission(HttpServletRequest req, String permission){
 		Set<String> perms = (Set<String>) req.getSession(true).getAttribute("permissions");
 
 		if(perms == null){ // Login
 			String apiKey = req.getHeader("mainzellisteApiKey");
+			if (apiKey == null) // Compatibility to pre 1.0 (needed by secuTrial interface)
+				apiKey = req.getHeader("mzidApiKey");
 			Server server = servers.get(apiKey);
 			
 			if(server == null){
+				logger.info("No server found with provided API key " + apiKey);
 				throw new WebApplicationException(Response
 						.status(Status.UNAUTHORIZED)
 						.entity("Please supply your API key in HTTP header field 'mainzellisteApiKey'.")
@@ -144,6 +194,7 @@ public enum Servers {
 			}
 		
 			if(!server.allowedRemoteAdresses.contains(req.getRemoteAddr())){
+				logger.info("IP address " + req.getRemoteAddr() +  " rejected");
 				throw new WebApplicationException(Response
 						.status(Status.UNAUTHORIZED)
 						.entity(String.format("Rejecting your IP address %s.", req.getRemoteAddr()))
@@ -218,9 +269,5 @@ public enum Servers {
 		synchronized (tokensByTid) {
 			return tokensByTid.get(tokenId);
 		}
-	}
-	public static void main(String args[])
-	{
-		Servers s = Servers.instance;
 	}
 }

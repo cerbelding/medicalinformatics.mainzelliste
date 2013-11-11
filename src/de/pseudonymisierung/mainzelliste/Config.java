@@ -56,7 +56,7 @@ public enum Config {
 		HASHED_NORMALIZED; // Bloomfilter with prior normalization
 	}
 	
-	private final String version = "1.0";
+	private final String version = "1.2";
 	
 	private final Map<String,Class<? extends Field<?>>> FieldTypes;
 	
@@ -72,7 +72,7 @@ public enum Config {
 			ServletContext context = Initializer.getServletContext();
 			String configPath = context.getInitParameter("de.pseudonymisierung.mainzelliste.ConfigurationFile");
 
-			if (configPath == null) configPath = "/WEB-INF/mainzelliste.conf";
+			if (configPath == null) configPath = "/WEB-INF/classes/mainzelliste.conf";
 			logger.info("Reading config from path " + configPath + "...");
 			
 			// First, try to read from resource (e.g. within the war file)

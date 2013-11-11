@@ -11,14 +11,14 @@
 	
 	@author Martin Lablans
  -->
-<!--
+ <!--
  In Netbeans, specify the path attribute as shown below if the following error
  occurs:
  "The context.xml file seems to be broken. Check whether it is well-formed and 
   valid."
  -->
- <!-- <Context path="/mainzelliste"> -->
- <Context>
+<!-- <Context path="/mainzelliste"> -->
+<Context>
         <Parameter name="de.pseudonymisierung.mainzelliste.ConfigurationFile"
                 value="/etc/mainzelliste.conf" override="false" />
 </Context>
