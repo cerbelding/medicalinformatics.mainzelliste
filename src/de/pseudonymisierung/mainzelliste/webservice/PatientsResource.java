@@ -373,7 +373,6 @@ public class PatientsResource {
 				HttpPost callbackReq = new HttpPost(callback);
 				callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
 				
-				// TODO: ID-Typ integrieren, z.B. idtype="pid", idstring="..."
 				JSONObject reqBody = new JSONObject()
 						.put("tokenId", t.getId())
 						.put("id", id.toJSON());
