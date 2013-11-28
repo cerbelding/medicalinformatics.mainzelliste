@@ -102,7 +102,7 @@ public enum Servers {
 			this.sessionTimeout = 600000; // 10 min
 		} else {
 			try {
-				this.sessionTimeout = Long.parseLong(sessionTimeout) * 1000;
+				this.sessionTimeout = Long.parseLong(sessionTimeout) * 60000;
 				if (this.sessionTimeout <= 0)
 					throw new NumberFormatException();
 			} catch (NumberFormatException e) {

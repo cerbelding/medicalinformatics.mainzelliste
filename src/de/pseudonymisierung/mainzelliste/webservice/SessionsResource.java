@@ -146,7 +146,7 @@ public class SessionsResource {
 			Servers.instance.checkPermission(req, "tt_" + t.getType());
 		}
 		
-		// Pr�fe Callback-URL
+		// Prüfe Callback-URL
 		String callback = t.getDataItemString("callback");
 		if (callback != null && !callback.equals("")) {
 			if (!Pattern.matches(Config.instance.getProperty("callback.allowedFormat"), callback)) {

@@ -34,6 +34,8 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
@@ -121,6 +123,14 @@ public abstract class ID {
 	@Override
 	public String toString() {
 		return String.format("%s=%s", getType(), getIdString());
+	}
+	
+	public JSONObject toJSON() throws JSONException {
+		JSONObject result = new JSONObject();
+		result.put("type", this.getType());
+		result.put("idString", this.getIdString());
+		result.put("tentative", this.isTentative());
+		return result;
 	}
 	
 	@Override

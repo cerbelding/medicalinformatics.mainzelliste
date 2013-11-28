@@ -376,7 +376,7 @@ public class PatientsResource {
 				// TODO: ID-Typ integrieren, z.B. idtype="pid", idstring="..."
 				JSONObject reqBody = new JSONObject()
 						.put("tokenId", t.getId())
-						.put("id", id);
+						.put("id", id.toJSON());
 				
 				String reqBodyJSON = reqBody.toString();
 				StringEntity reqEntity = new StringEntity(reqBodyJSON);
