@@ -41,6 +41,7 @@ public class RecordTransformer {
 	
 	private Map<String, FieldTransformerChain> fieldTransformers;
 	
+	@SuppressWarnings("unchecked")
 	public RecordTransformer(Properties props) throws InternalErrorException
 	{
 		fieldTransformers = new HashMap<String, FieldTransformerChain>();

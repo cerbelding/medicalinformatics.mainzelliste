@@ -111,15 +111,18 @@ public enum Persistor {
 		if (result.size() > 1) {
 			logger.fatal("Found more than one patient with ID: " + pid.toString());
 			throw new InternalErrorException("Found more than one patient with ID: " + pid.toString());
-		}
+		} 
+		
+		if (result.size() == 0)
+			return null;
+
 		Patient p = result.get(0);
 		// Fetch lazy loaded IDs
 		p.getIds();
+		p.getOriginal().getIds();
+		//em.refresh(p.getOriginal());
 		em.close();
-		if (result.size() == 0)
-			return null;
-		else
-			return result.get(0);
+		return p;
 	}
 	
 	/**

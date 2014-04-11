@@ -28,10 +28,12 @@ package de.pseudonymisierung.mainzelliste.matcher;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.HashedField;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.PlainTextField;
@@ -87,7 +89,7 @@ public class BloomFilterTransformer extends FieldTransformer<PlainTextField, Has
 		
 		byte inputBytes[] = input.getBytes();
 		byte md5[] = DigestUtils.md5(inputBytes);
-		byte sha[] = DigestUtils.sha(inputBytes);
+		byte sha[] = DigestUtils.sha1(inputBytes);
 		
 		// calculate significant Bytes of Hash
 		int nSignBytes = (int) Math.ceil(Math.log(hashLength) / Math.log(256));
@@ -151,12 +153,12 @@ public class BloomFilterTransformer extends FieldTransformer<PlainTextField, Has
 		System.out.println(f2.toString());
 		
 		Patient p1 = new Patient();
-		HashMap attr1 = new HashMap();
+		Map<String, Field<?>> attr1 = new HashMap<String, Field<?>>();
 		attr1.put("vorname", f1);
 		p1.setFields(attr1);
 		
 		Patient p2 = new Patient();
-		HashMap attr2 = new HashMap();
+		Map<String, Field<?>> attr2 = new HashMap<String, Field<?>>();
 		attr2.put("vorname", f2);
 		p2.setFields(attr2);
 

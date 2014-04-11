@@ -39,11 +39,11 @@ import de.pseudonymisierung.mainzelliste.exceptions.IncompatibleFieldTypesExcept
  */
 public class FieldTransformerChain {
 	
-	private List<FieldTransformer> transformers;
+	private List<FieldTransformer<Field<?>, Field<?>>> transformers;
 	
 	public FieldTransformerChain()
 	{
-		this.transformers = new Vector<FieldTransformer>();
+		this.transformers = new Vector<FieldTransformer<Field<?>, Field<?>>>();
 	}
 
 	public Class<?> getInputClass()
@@ -64,7 +64,7 @@ public class FieldTransformerChain {
 
 	public void add(FieldTransformer<Field<?>, Field<?>>... toAdd) throws IncompatibleFieldTypesException
 	{
-		for (FieldTransformer transformer : toAdd)
+		for (FieldTransformer<Field<?>, Field<?>> transformer : toAdd)
 		{
 			// output class of a transformer must be a subclass of input class of the
 			// next transformer
@@ -86,7 +86,8 @@ public class FieldTransformerChain {
 		{
 			if (result instanceof CompoundField)
 			{
-				CompoundField cf = transformer.transform((CompoundField) result);
+				@SuppressWarnings("unchecked")
+				CompoundField<Field<?>> cf = transformer.transform((CompoundField<Field<?>>) result);
 				result = cf;
 			} else {
 				result = transformer.transform(result);

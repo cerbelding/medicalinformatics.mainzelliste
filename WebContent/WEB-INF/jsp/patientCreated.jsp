@@ -72,7 +72,7 @@
 					</tr>
 					<tr>
 						<td>PLZ / Wohnort :</td>
-						<td>${it.plz} ${it.wohnort}</td>
+						<td>${it.plz} ${it.ort}</td>
 					</tr>
 				</tbody>
 			</table>

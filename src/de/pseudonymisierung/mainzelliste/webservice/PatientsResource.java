@@ -29,10 +29,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -50,12 +50,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -71,8 +65,8 @@ import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
 import de.pseudonymisierung.mainzelliste.IDRequest;
 import de.pseudonymisierung.mainzelliste.Patient;
+import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.pseudonymisierung.mainzelliste.Servers;
-import de.pseudonymisierung.mainzelliste.Validator;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
@@ -90,14 +84,23 @@ public class PatientsResource {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<Set<ID>> getAllPatients(@Context HttpServletRequest req) throws UnauthorizedException {
-		/* Benutzerrechte prüfen, basierend auf Rollenzuweisung in tomcat-users.xml.
-		 * Zusätzliche Prüfung via security-constraint in web.xml 
-		 */
+	public Response getAllPatients(@Context HttpServletRequest req,
+			@QueryParam("tokenId") String tokenId) throws UnauthorizedException {		
+		
 		logger.info("Received GET /patients");
+		
+		/*
+		 * If a token (type "readPatients") is provided, use this 
+		 */
+		if (tokenId != null)
+			return this.getPatientsToken(tokenId);
+		
+		/* 
+		 * Unrestricted access for user role 'admin' via tomcat-users.xml. 
+		 */
 		if (!req.isUserInRole("admin"))
 			throw new UnauthorizedException();
-		return Persistor.instance.getAllIds();
+		return Response.ok().entity(Persistor.instance.getAllIds()).build();
 	}
 	
 
@@ -106,14 +109,14 @@ public class PatientsResource {
 	@Produces(MediaType.TEXT_HTML)
 	public Response newPatientBrowser(
 			@QueryParam("tokenId") String tokenId,
-			MultivaluedMap<String, String> form){
+			MultivaluedMap<String, String> form,
+			@Context HttpServletRequest request){
 		Token t = Servers.instance.getTokenByTid(tokenId);
-		Map<String, Object> createRet = createNewPatient(tokenId, form); 
-		ID id = (ID) createRet.get("id");
-		IDRequest req = (IDRequest) createRet.get("request");
-		MatchResult result = (MatchResult) createRet.get("result");
+		IDRequest createRet = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request)); 
+		Set<ID> ids = createRet.getRequestedIds();
+		MatchResult result = createRet.getMatchResult();
 		Map <String, Object> map = new HashMap<String, Object>();
-		if (id == null) { // unsure case
+		if (ids == null) { // unsure case
 			// Copy form to JSP model so that input is redisplayed
 			for (String key : form.keySet())
 			{
@@ -121,16 +124,20 @@ public class PatientsResource {
 			}
 			map.put("readonly", "true");
 			map.put("tokenId", tokenId);
-			return Response.status(Status.ACCEPTED)
+			return Response.status(Status.CONFLICT)
 					.entity(new Viewable("/unsureMatch.jsp", map)).build();
 		} else {
 			if (t != null && t.getData() != null && t.getData().containsKey("redirect")) {
 				UriTemplate redirectURITempl = new UriTemplate(t.getDataItemString("redirect"));
 				HashMap<String, String> templateVarMap = new HashMap<String, String>();
 				for (String templateVar : redirectURITempl.getTemplateVariables()) {
-					ID thisID = req.getAssignedPatient().getId(templateVar);
-					String idString = thisID.getIdString();
-					templateVarMap.put(templateVar, idString);
+					if (templateVar.equals("tokenId")) {
+						templateVarMap.put(templateVar, tokenId);
+					} else {
+						ID thisID = createRet.getAssignedPatient().getId(templateVar);
+						String idString = thisID.getIdString();
+						templateVarMap.put(templateVar, idString);
+					}
 				}
 				try {
 					URI redirectURI = new URI(redirectURITempl.createURI(templateVarMap));
@@ -138,8 +145,6 @@ public class PatientsResource {
 					// into the "action" tag of a form and the parameters are passed as 
 					// hidden fields				
 					MultivaluedMap<String, String> queryParams = UriComponent.decodeQuery(redirectURI, true);
-					String redirectURIStripped =redirectURI.toString().substring(0,
-							redirectURI.toString().indexOf("?"));
 					map.put("redirect", redirectURI);
 					map.put("redirectParams", queryParams);
 					//return Response.status(Status.SEE_OTHER).location(redirectURI).build();
@@ -159,8 +164,10 @@ public class PatientsResource {
 				// and set flag for JSP to display them
 				map.put("printIdat", true);
 			}
-			map.put("id", id.getIdString());
-			map.put("tentative", id.isTentative());
+			// FIXME alle IDs übergeben und anzeigen
+			ID retId = ids.toArray(new ID[0])[0];
+			map.put("id", retId.getIdString());
+			map.put("tentative", retId.isTentative());
 			
 			if (Config.instance.debugIsOn() && result.getResultType() != MatchResultType.NON_MATCH)
 			{
@@ -186,221 +193,74 @@ public class PatientsResource {
 			@Context HttpServletRequest request,
 			@Context UriInfo context,
 			MultivaluedMap<String, String> form) throws JSONException {
-		Map<String, Object> responseMap = createNewPatient(tokenId, form);
-		logger.info("Accept: " + request.getHeader("Accept"));
-		logger.info("Content-Type: " + request.getHeader("Content-Type"));
-		ID newId = (ID) responseMap.get("id");
-		MatchResult result = (MatchResult) responseMap.get("result");
-		
-		URI newUri = context.getBaseUriBuilder()
-				.path(PatientsResource.class)
-				.path("/{idtype}/{idvalue}")
-				.build(newId.getType(), newId.getIdString());
-		
-		JSONObject ret = new JSONObject()
-				.put("newId", newId.getIdString())
-				.put("tentative", newId.isTentative())
-				.put("uri", newUri);
-				
-		if (Config.instance.debugIsOn())
-			ret.put("max_weight", result.getBestMatchedWeight());
-		
-		return Response
-			.status(Status.CREATED)
-			.entity(ret)
-			.location(newUri)
-			.build();
-	}
-
-	/**
-	 * PID request.
-	 * Looks for a patient with the specified data in the database. If a match is found, the 
-	 * ID of the matching patient is returned. If no match or possible match is found, a new
-	 * patient with the specified data is created. If a possible match is found and the form
-	 * has an entry "sureness" whose value can be parsed to true (by Boolean.parseBoolean()),
-	 * a new patient is created. Otherwise, return null.
-	 * @param tokenId
-	 * @param form
-	 * @return A map with the following members:
-	 * 	<ul>
-	 * 		<li> id: The generated id as an object of class ID. Null, if no id was generated due to an unsure match result.
-	 * 		<li> result: Result as an object of class MatchResult. 
-	 * @throws WebApplicationException if called with an invalid token.
-	 */
-	private Map<String, Object> createNewPatient(
-			String tokenId,
-			MultivaluedMap<String, String> form) throws WebApplicationException {
-
-		Validator.instance.validateForm(form);
-		HashMap<String, Object> ret = new HashMap<String, Object>();
-		Token t = Servers.instance.getTokenByTid(tokenId);
-		// create a token if started in debug mode
-		if (t == null && Config.instance.debugIsOn())
-		{
-			t = new Token("debug", "addPatient");
-			t.setType("addPatient");
+		IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request));
+		if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.getRequestedIds() == null) {
+			return Response
+					.status(Status.CONFLICT)
+					.entity("Unable to definitely determined whether the data refers to an existing or to a new patient. " +
+							"Please check data or resubmit with sureness=true to get a tentative result. Please check documentation for details.")
+					.build();
 		}
-
-		ID id;
-		MatchResult match;
-		// synchronize on token 
-		if (t == null) {
-			String infoLog = "Received ID request with invalid token. Token with ID: " + tokenId;
-			throw new WebApplicationException(Response
-					.status(Status.UNAUTHORIZED)
-					.entity("Please supply a valid 'addPatient' token.")
-					.build());
-		}
-		synchronized (t) {
-			/* Get token again and check if it still exist.
-			 * This prevents the following race condition:
-			 *  1. Thread A gets token t and enters synchronized block
-			 *  2. Thread B also gets token t, now waits for A to exit the synchronized block
-			 *  3. Thread A deletes t and exits synchronized block
-			 *  4. Thread B enters synchronized block with invalid token
+		logger.debug("Accept: " + request.getHeader("Accept"));
+		logger.debug("Content-Type: " + request.getHeader("Content-Type"));
+		List<ID> newIds = new LinkedList<ID>(response.getRequestedIds());
+		
+		int apiMajorVersion = Servers.instance.getRequestMajorApiVersion(request);
+		
+		if (apiMajorVersion >= 2) {
+			JSONArray ret = new JSONArray();
+			for (ID thisID : newIds) {
+				URI newUri = context.getBaseUriBuilder()
+						.path(PatientsResource.class)
+						.path("/{idtype}/{idvalue}")
+						.build(thisID.getType(), thisID.getIdString());
+	
+				ret.put(new JSONObject()
+					.put("idType", thisID.getType())
+					.put("idString", thisID.getIdString())
+					.put("tentative", thisID.isTentative())
+					.put("uri", newUri));
+			}
+					
+			return Response
+				.status(Status.CREATED)
+				.entity(ret)
+				.build();
+		} else {
+			/*
+			 *  Old api permits only one ID in response. If several
+			 *  have been requested, which one to choose?
 			 */
-			t = Servers.instance.getTokenByTid(tokenId);
-			// create a token if started in debug mode
-			if (t == null && Config.instance.debugIsOn())
-			{
-				t = new Token("debug", "addPatient");
-				t.setType("addPatient");
-			}
-			if(t == null || !t.getType().equals("addPatient")){
-				String infoLog = "Received ID request with invalid token. Token with ID: " + tokenId;
-				if(t == null)
-					infoLog += " is unknown.";
-				else
-					infoLog += " has unexpected type: " + t.getType();
-				logger.info(infoLog);
-				throw new WebApplicationException(Response
-					.status(Status.UNAUTHORIZED)
-					.entity("Please supply a valid 'addPatient' token.")
-					.build());
-			}
-			logger.info("Handling ID Request with token " + (t == null ? "(null)" : t.getId()));
-			Patient p = new Patient();
-			Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
-			
-			// get fields transmitted from MDAT server
-			if (t.getData().containsKey("fields")) {
-					Map<String, ?> serverFields = t.getDataItemMap("fields");
-					for (String key : serverFields.keySet()) {
-						String value = serverFields.get(key).toString();
-						// TODO check if a value is already present
-						form.add(key, value);
-					}
+			if (newIds.size() > 1) {
+				throw new WebApplicationException(
+						Response.status(Status.BAD_REQUEST)
+						.entity("Selected API version 1.0 permits only one ID in response, " +
+								"but several were requested. Set mainzellisteApiVersion to a " +
+								"value >= 2.0 or request only one ID type in token.")
+								.build());
 			}
 			
-			for(String s: Config.instance.getFieldKeys()){
-				if (!form.containsKey(s)) {
-					logger.error("Field " + s + " not found in input data!");
-					throw new WebApplicationException(Response.status(Status.BAD_REQUEST).entity("Field " + s + " not found in input data!").build());
-				}
-				chars.put(s, Field.build(s, form.getFirst(s)));
-			}
-	
-			p.setFields(chars);
+			ID newId = newIds.get(0);
 			
-			// Normalisierung, Transformation
-			Patient pNormalized = Config.instance.getRecordTransformer().transform(p);
-			pNormalized.setInputFields(chars);
+			URI newUri = context.getBaseUriBuilder()
+					.path(PatientsResource.class)
+					.path("/{idtype}/{idvalue}")
+					.build(newId.getType(), newId.getIdString());
 			
-			match = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
-			Patient assignedPatient; // The "real" patient that is assigned (match result or new patient) 
-			
-			// Get ID type from token or use first defined id type
-			String idType;
-			if (t.getData().containsKey("idtype"))
-				idType = t.getDataItemString("idtype");
-			else				
-				idType = IDGeneratorFactory.instance.getDefaultIDType();
-			
-			switch (match.getResultType())
-			{
-			case MATCH :
-				id = match.getBestMatchedPatient().getOriginal().getId(idType);
-				assignedPatient = match.getBestMatchedPatient();
-				// log token to separate concurrent request in the log file
-				logger.info("Found match with ID " + id.getIdString() + " for ID request " + t.getId()); 
-				break;
-				
-			case NON_MATCH :
-			case POSSIBLE_MATCH :
-				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH 
-				&& (form.getFirst("sureness") == null || !Boolean.parseBoolean(form.getFirst("sureness")))) {
-					ret.put("id", null);
-					ret.put("result", match);
-					return ret;
-				}
-				Set<ID> ids = IDGeneratorFactory.instance.generateIds();			
-				pNormalized.setIds(ids);
-				id = pNormalized.getId(idType);
-				logger.info("Created new ID " + id.getIdString() + " for ID request " + (t == null ? "(null)" : t.getId()));
-				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH)
-				{
-					pNormalized.setTentative(true);
-					id.setTentative(true);
-					logger.info("New ID " + id.getIdString() + " is tentative. Found possible match with ID " + 
-							match.getBestMatchedPatient().getId(idType).getIdString());
-				}
-				assignedPatient = pNormalized;
-				break;
-		
-			default :
-				logger.error("Illegal match result: " + match.getResultType());
-				throw new InternalErrorException();
-			}
-			
-			logger.info("Weight of best match: " + match.getBestMatchedWeight());
-			
-			IDRequest request = new IDRequest(p.getFields(), idType, match, assignedPatient);
-			
-			ret.put("request", request);
-			
-			Persistor.instance.addIdRequest(request);
-			
-			if(t != null && ! Config.instance.debugIsOn())
-				Servers.instance.deleteToken(t.getId());
-		}
-		// Callback aufrufen
-		String callback = t.getDataItemString("callback");
-		if (callback != null && callback.length() > 0)
-		{
-			try {
-				logger.debug("Sending request to callback " + callback);
-				HttpClient httpClient = new DefaultHttpClient();
-				HttpPost callbackReq = new HttpPost(callback);
-				callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
-				
-				JSONObject reqBody = new JSONObject()
-						.put("tokenId", t.getId())
-						.put("id", id.toJSON());
-				
-				String reqBodyJSON = reqBody.toString();
-				StringEntity reqEntity = new StringEntity(reqBodyJSON);
-				reqEntity.setContentType("application/json");
-				callbackReq.setEntity(reqEntity);				
-				HttpResponse response = httpClient.execute(callbackReq);
-				StatusLine sline = response.getStatusLine();
-				// Accept callback if OK, CREATED or ACCEPTED is returned
-				if ((sline.getStatusCode() < 200) || sline.getStatusCode() > 202) {
-					logger.error("Received invalid status form mdat callback: " + response.getStatusLine());
-					throw new InternalErrorException("Request to callback failed!");
-				}
-						
-				// TODO: Server-Antwort auslesen, Fehler abfangen.
-			} catch (Exception e) {
-				logger.error("Request to callback " + callback + "failed: ", e);
-				throw new InternalErrorException("Request to callback failed!");
-			}
-		}
-		ret.put("id", id);
-		ret.put("result", match);
-		return ret;
-	}
-	
+			JSONObject ret = new JSONObject()
+					.put("newId", newId.getIdString())
+					.put("tentative", newId.isTentative())
+					.put("uri", newUri);
 
+			return Response
+				.status(Status.CREATED)
+				.entity(ret)
+				.location(newUri)
+				.build();
+		}
+	}
+
+	
 	/**
 	 * Interface for Temp-ID-Resolver
 	 * 
@@ -420,7 +280,7 @@ public class PatientsResource {
 			JSONObject result = new JSONObject();
 			try {
 				subjects = data.getJSONObject("subjects");
-				Iterator subjectIt = subjects.keys();
+				Iterator<?> subjectIt = subjects.keys();
 				while (subjectIt.hasNext()) {
 					String subject = subjectIt.next().toString();
 					JSONArray tempIds = subjects.getJSONArray(subject);
@@ -465,15 +325,70 @@ public class PatientsResource {
 		String pidString = t.getDataItemString("id");
 		return Persistor.instance.getPatient(IDGeneratorFactory.instance.getFactory("pid").buildId(pidString));		
 	}
-	@Path("/tempid/{tid}")
+	
+	/**
+	 * Get patient via readPatient token
+	 * @param tid
+	 * @return
+	 */
+	@Path("/tokenId/{tid}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Patient getPatient(
+	public Response getPatientsToken(
 			@PathParam("tid") String tid){
-		//Hier keine Auth notwendig. Wenn tid existiert, ist der Nutzer dadurch autorisiert.
-		//Patient mit TempID tid zur�ckgeben
-		logger.info("Received GET /patients/tempid/" + tid);
-		return getPatientByTempId(tid);
+		logger.info("Reveived request to get patient with token " + tid);
+		// Check if token exists and has the right type. 
+		// Validity of token is checked upon creation
+		Token t = Servers.instance.getTokenByTid(tid);
+		t.checkTokenType("readPatients");
+		List<?> requests = t.getDataItemList("searchIds");
+		
+		JSONArray ret = new JSONArray();
+		for (Object item : requests) {
+			JSONObject thisPatient = new JSONObject();
+			String idType;
+			String idString;
+			@SuppressWarnings("unchecked")
+			Map<String, String> thisSearchId = (Map<String, String>) item; 
+			idType = thisSearchId.get("idType");
+			idString = thisSearchId.get("idString");
+			ID id = IDGeneratorFactory.instance.buildId(idType, idString);
+			Patient patient = Persistor.instance.getPatient(id);
+			if (t.hasDataItem("resultFields")) {
+				// get fields for output
+				Map<String, String> outputFields = new HashMap<String, String>();
+				@SuppressWarnings("unchecked")
+				List<String> fieldNames = (List<String>) t.getDataItemList("resultFields");
+				for (String thisFieldName : fieldNames) {
+					outputFields.put(thisFieldName, patient.getInputFields().get(thisFieldName).toString());
+				}
+				try {
+					thisPatient.put("fields", outputFields);
+				} catch (JSONException e) {
+					logger.error("Error while transforming patient fields into JSON", e);
+					throw new InternalErrorException("Error while transforming patient fields into JSON");
+				}
+			}
+			
+			if (t.hasDataItem("resultIds")) {
+				try {
+					@SuppressWarnings("unchecked")
+					List<String> idTypes = (List<String>) t.getDataItemList("resultIds");
+					List<JSONObject> returnIds = new LinkedList<JSONObject>();
+					for (String thisIdType : idTypes) {
+						returnIds.add(patient.getId(thisIdType).toJSON());
+					}
+					thisPatient.put("ids", returnIds);
+				} catch (JSONException e) {
+					logger.error("Error while transforming patient ids into JSON", e);
+					throw new InternalErrorException("Error while transforming patient ids into JSON");
+				}			
+			}
+			
+			ret.put(thisPatient);
+		}
+		
+		return Response.ok().entity(ret).build();
 	}
 	
 	@Path("/tempid/{tid}")

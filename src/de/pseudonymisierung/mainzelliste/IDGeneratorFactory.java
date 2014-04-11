@@ -36,6 +36,7 @@ import java.util.prefs.Preferences;
 import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
 /**
  * Factory for IDGenerators.
@@ -131,5 +132,11 @@ public enum IDGeneratorFactory {
 	 */
 	public String getDefaultIDType() {
 		return this.idTypes[0];
+	}
+	
+	public ID buildId(String idType, String idString) {
+		if (this.getFactory(idType) == null)
+			throw new InvalidIDException(String.format("No ID type %s defined!", idString));
+		return this.getFactory(idType).buildId(idString);
 	}
 }

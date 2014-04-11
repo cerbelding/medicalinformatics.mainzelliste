@@ -38,16 +38,24 @@ Die Schnittstellenänderungen werden nur aktiv, wenn ein zugreifendes System die
 
 
 ### 1.2
-- Sessions verfallen nach einer konfigurierbaren Zeit.
-- Erlaubt Felder, die nur gespeichert werden, ohne zum Matching beizutragen.
-- Bugfixes (Beiträge von Daniel Volk, Dirk Langner).
+- Sessions verfallen bei Inaktivität nach einer konfigurierbaren Zeit (Details siehe Konfigurationshandbuch, Parameter „sessionTimeout“)
+- In der Konfiguration können Felder definiert werden, die nicht im Record Linkage verwendet werden. Diese werden als Zusatzfelder in der Datenbank gespeichert.
+- Bugfixes:
+	- Monat des Geburtsdatums wurde auf Ergebnisseite falsch angezeigt (behoben von Daniel Volk)
+	- Löschen einer nicht-existenten Session verursachte NullPointerException
+	- Fehler in der Gewichtsberechnung des EpilinkMatcher führte in manchen Fällen zu zu hohen Matchgewichten (gemeldet von Dirk Langner) 
 
 Beim Update ist zu beachten, dass in Version 1.2 Sessions standardmäßig nach 10 Minuten Inaktivität gelöscht werden. Falls dies nicht erwünscht ist, ist der Konfigurationsparameter "sessionTimeout" anzupassen.
 
 Das Update nimmt keine Datenbankänderungen vor.
 
 ### 1.1
-- Umstellung von Abhängigkeitsmanagement und Build auf Maven sowie diverse kleinere Korrekturen.
+- Umstellung von Abhängigkeitsmanagement und Build auf Maven (Beitrag von Jens Schwanke)
+- Zusatzinformationen in context.xml-Vorlage für die Benutzung in Netbeans
+- Bugfixes:
+	- Fehlerhafte Zeichen in Konfigurationsvorlage (gemeldet von Maximilian Ataian)
+	- Fehlerhafter Standardpfad für Konfigurationsdatei
+	- Fehler in IDGeneratorMemory verursachte Datenbankfehler wegen doppeltem Primary Key
 
 Allen Benutzern wird das Update auf Version 1.1 empfohlen. Beim ersten Start werden Änderungen an der Datenbank zur Anpassung an die neue Version vorgenommen. Zur Sicherheit empfehlen wir, vor dem Update die Datenbank zu sichern.
 

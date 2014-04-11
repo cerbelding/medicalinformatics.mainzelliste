@@ -1,5 +1,27 @@
-<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+<%@page import="org.codehaus.jettison.json.JSONObject"%>
+<%@page import="de.pseudonymisierung.mainzelliste.ID"%>
+<%@page import="de.pseudonymisierung.mainzelliste.Patient"%>
+<%@page import="de.pseudonymisierung.mainzelliste.IDGeneratorFactory"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="ISO-8859-1"%>
+<%
+	String idTypes[] = IDGeneratorFactory.instance.getIDTypes();
+	String defaultIdType = IDGeneratorFactory.instance.getDefaultIDType();
+	JSONObject originalIds;
+	{
+		@SuppressWarnings("unchecked")
+		Map<String, Object> map = (Map<String, Object>) request
+			.getAttribute("it");
+	
+		Patient original = (Patient) map.get("original");
+	 	originalIds = new JSONObject();
+		if (original != null) {
+			for (ID thisId : original.getIds())
+				originalIds.put(thisId.getType(), thisId.getIdString());
+		}
+	}
+%>
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -11,88 +33,20 @@
 <title>Patienten bearbeiten</title>
 </head>
 
-<!-- JQuery -->
-<script type="text/javascript"
-	src="<%=request.getContextPath() %>/static/jslib/jquery/jquery-1.7.2.js"></script>
 
 <script type="text/javascript">
 
-function validateDate()
-{
-	if ($('#geburtsjahr').val().length != 4)
-	{
-		return false;
-	}
-	var geburtstag = parseInt($('#geburtstag').val(), 10);
-	var geburtsmonat = parseInt($('#geburtsmonat').val(), 10);
-	var geburtsjahr = parseInt($('#geburtsjahr').val(), 10);
+var originalIds = <%=originalIds.toString() %>;
 
-	switch (geburtsmonat) {
-		case 1:
-		case 3:
-		case 5:
-		case 7:
-		case 8:
-		case 10:
-		case 12:
-			if (geburtstag > 31) 
-			{
-				return false;
-			} else {
-				return true;
-			}
-		case 4:
-		case 6:
-		case 9:
-		case 11:
-			if (geburtstag > 30) {
-				return false; 
-			} else {
-				return true;
-			}
-		case 2:
-			if (((geburtsjahr % 400 == 0) || (geburtsjahr % 4 == 0 && geburtsjahr % 100 != 0))
-					&& geburtstag <= 29) 
-				return true;
-			else if (geburtstag <= 28) 
-				return true; 
-			else {
-				return false;
-			}
-		default :
-			return false;
-	}
+function fillOriginalId() {
+	var idType = document.getElementById("idTypeOriginal").value;
+	var idString = originalIds[idType];
+	if (idString === undefined)
+		idString = "";
 	
+	document.getElementById("idStringOriginal").value = idString;
 }
-function validateForm()
-{
-	// define required fields (without date, which is checked separately)
-	requiredFields = ['#vorname', '#nachname'];
-	for (i = 0; i < requiredFields.length; i++) {
-		if ($(requiredFields[i]).val().length == 0) {
-			$(requiredFields[i]).focus();
-			alert('Bitte füllen Sie alle Pflichtfelder aus!');
-			return false;
-		}
-	}
-	
-	// Geburtsjahr prüfen
-	if (!validateDate())
-	{
-		alert("Das eingegebene Datum ist ungültig!");
-		return false;
-	}
 
-	// Prüfen, ob Geburtsname verschieden von Nachnamen ist
-	
-	if ($('#nachname').val() == $('#geburtsname').val()) {
-		alert('Bitte geben Sie den Geburtsnamen nur an, ' +
-			'wenn er sich vom aktuellen Nachnamen unterscheidet!');
-		return false;		
-	}
-	
-	return true;	
-}
 </script>
 
 <body>
@@ -102,10 +56,9 @@ function validateForm()
 	<div class="inhalt">
 		<div>&nbsp;</div>
 		<div class="formular">
-			<form method="post" id="form_person"
-				onsubmit="return validateForm();">
+			<form method="post" id="form_person">
 				<h1>Patienten bearbeiten</h1>
-				<%@ include file="patientFormElements.jsp"%>
+				<%@ include file="patientFormElements.jsp" %>
 				<div id ="form_elements_admin">
 				<table class="daten_tabelle">
 					<tr>
@@ -116,11 +69,34 @@ function validateForm()
 							/></td>
 					</tr>
 					<tr>
-						<td><label for="original">Duplikat von:</label>
-						<td><input type="text" id="original" name="original" value="${it.original}"/></td>
+						<td rowspan="2"><label for="original">Duplikat von:</label></td>
+						<td><label for="idTypeOriginal">ID-Typ:</label></td>
+						<td>
+							<select name="idTypeOriginal" id="idTypeOriginal" onchange="fillOriginalId();s">
+								<%
+								for (String idType : idTypes)
+								{
+									String selected = idType.equals(defaultIdType) ?
+											"selected=\"selected\"" : "";
+								%>
+									<option value="<%=idType %>" <%=selected %>>
+										<%=idType %>
+									</option>
+								<%
+								}
+								%>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td><label for="idString">ID-Wert:</label>
+						</td>
+						<td><input type="text" name="idStringOriginal" id="idStringOriginal"
+							value="<%= originalIds.has(defaultIdType) ? originalIds.get(defaultIdType) : "" %>">
+						</td>
 					</tr>
 				</table>
-				
+				<input type="submit" value="Speichern" />
 				</div>
 			</form>
 		</div>

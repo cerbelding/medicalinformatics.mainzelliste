@@ -26,10 +26,7 @@
 package de.pseudonymisierung.mainzelliste.webservice;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Set;
-import java.util.regex.Pattern;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -50,12 +47,9 @@ import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.PID;
-import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.Session;
-import de.pseudonymisierung.mainzelliste.dto.Persistor;
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 
 /**
  * Resource-based access to server-side client sessions.
@@ -92,7 +86,30 @@ public class SessionsResource {
 			.location(newUri)
 			.build();
 	}
+
+	@Path("/{session}")
+	@GET
+	public Response readSession (
+			 @PathParam("session") String sid,
+			 @Context HttpServletRequest req) throws JSONException {
+		logger.info(String.format("Request to read session %s received by host %s", sid, req.getRemoteHost()));
+		// Berechtigung?
+		Session s = Servers.instance.getSession(sid);
+		if (s == null) {
+			return Response.status(
+					Status.NOT_FOUND)
+					.entity(String.format("No session with id %s", sid))
+					.build();
+		}
+		JSONObject ret = new JSONObject()
+			.put("sessionId", sid)
+			.put("uri", req.getRequestURL().toString());
 		
+		return Response.status(Status.OK)
+				.entity(ret)
+				.build();
+	}
+	
 	@Path("/{session}")
 	@DELETE
 	public Response deleteSession(
@@ -146,52 +163,20 @@ public class SessionsResource {
 			Servers.instance.checkPermission(req, "tt_" + t.getType());
 		}
 		
-		// Prüfe Callback-URL
-		String callback = t.getDataItemString("callback");
-		if (callback != null && !callback.equals("")) {
-			if (!Pattern.matches(Config.instance.getProperty("callback.allowedFormat"), callback)) {
-				throw new WebApplicationException(Response
-						.status(Status.BAD_REQUEST)
-						.entity("Callback address " + callback + " does not conform to allowed format.")
-						.build()); 
-			}
-			try {
-				URI callbackURI = new URI(callback);
-			} catch (URISyntaxException e) {
-				throw new WebApplicationException(Response
-						.status(Status.BAD_REQUEST)
-						.entity("Callback address " + callback + " is not a valid URI.")
-						.build());
-			}
-		}
-				
-		
-		// Prüfe Existenz der ID bei Typ "readPatient"
-		if (t.getType() == "readPatient") {
-			String idString = t.getDataItemString("id");
-			Patient p = Persistor.instance.getPatient(new PID(idString, "pid"));
-			if (p == null) {
-				throw new WebApplicationException(Response
-						.status(Status.BAD_REQUEST)
-						.entity("No patient with id '" + idString + "'.")
-						.build());
-			}
-		}
+		// Check validity of token (i.e. data items have correct format etc.)
+		t.checkValidity(Servers.instance.getRequestApiVersion(req));
 
-		//Token erstellen, speichern und URL zur�ckgeben
-		Token t2 = Servers.instance.newToken(s.getId(), t.getType());
-		t2.setData(t.getData());
+		//Token erstellen, speichern und URL zurückgeben
+  		Servers.instance.registerToken(s.getId(), t);
 		
 		URI newUri = UriBuilder
 				.fromUri(req.getRequestURL().toString())
 				.path("/{tid}")
-				.build(t2.getId());
+				.build(t.getId());
 		
-		JSONObject ret = new JSONObject()
-				.put("tokenId", t2.getId())
-				.put("uri", newUri);
+		JSONObject ret = getSingleToken(sid, t.getId(), req);
 		
-		logger.info("Created token of type " + t2.getType() + " with id " + t2.getId() + 
+		logger.info("Created token of type " + t.getType() + " with id " + t.getId() + 
 				" in session " + s.getId() + "\n" +
 				"Returned data: " + ret);
 
@@ -205,17 +190,16 @@ public class SessionsResource {
 	@Path("/{session}/tokens/{tokenid}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Token getSingleToken(
+	public JSONObject getSingleToken(
 			@PathParam("session") SessionIdParam sid,
 			@PathParam("tokenid") String tokenId,
 			@Context HttpServletRequest req){
 
+		logger.info("Received request to get token " + tokenId + " in session " + sid +
+				" by host " + req.getRemoteHost());
+
 		Session s = sid.getValue();
 		Token t = Servers.instance.getTokenByTid(tokenId); 
-
-		// Nicht jeder, der eine Token-Id hat, sollte das Token lesen können,
-		// insbesondere bei Temp-Ids ("readPatient"): Token enthält echte ID
-		Servers.instance.checkPermission(req, "tt_" + t.getType());
 
 		// Check that token exists and belongs to specified session
 		if (t == null || !s.getTokens().contains(t))
@@ -223,8 +207,13 @@ public class SessionsResource {
 					.status(Status.NOT_FOUND)
 					.entity("No token with id " + tokenId + " in session " + sid + ".")
 					.build());		
-		logger.info("Received request to get token " + tokenId + " in session " + sid +
-				" by host " + req.getRemoteHost());
-		return t;
+
+		try {
+			JSONObject ret = t.toJSON(Servers.instance.getRequestApiVersion(req));
+			ret.put("uri", req.getRequestURL());
+			return ret;
+		} catch (Exception e) {
+			throw new InternalErrorException(e);
+		}
 	}
 }
