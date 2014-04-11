@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
+import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
@@ -63,7 +64,7 @@ public class EpilinkMatcher implements Matcher {
 
 	private double thresholdNonMatch;
 	
-	private Map<String, FieldComparator> comparators;
+	private Map<String, FieldComparator<Field<?>>> comparators;
 	private Map<String, Double> frequencies;
 	private Map<String, Double> errorRates;
 
@@ -111,8 +112,38 @@ public class EpilinkMatcher implements Matcher {
 		// process exchange groups
 		for (List<String> exchangeGroup : this.exchangeGroups)
 		{
+			/* 
+			 * Remove empty fields from both sides until one side has
+			 * no more empty fields
+			 */
+			// Make copies of field maps for manipulation
+			Map<String, Field<?>> fieldsToCompareRight = new HashMap<String, Field<?>>();
+			Map<String, Field<?>> fieldsToCompareLeft = new HashMap<String, Field<?>>();
+			for (String fieldName : exchangeGroup) {
+				fieldsToCompareRight.put(fieldName, right.getFields().get(fieldName));
+				fieldsToCompareLeft.put(fieldName, left.getFields().get(fieldName));
+			}
+			Iterator<Map.Entry<String, Field<?>>> itRight = fieldsToCompareRight.entrySet().iterator(); 
+			Iterator<Map.Entry<String, Field<?>>> itLeft = fieldsToCompareLeft.entrySet().iterator();
 			
-			List<List<String>> permutations = permutations(exchangeGroup);
+            // process fields (left and right) until end is reached on one side
+            while (itRight.hasNext() && itLeft.hasNext()) {
+                // Search for next empty field on right side
+                if (itRight.next().getValue().isEmpty()) {
+                    // Now go to next empty field on the left 
+                    while (itLeft.hasNext()) {
+                        if (itLeft.next().getValue().isEmpty()) {
+                            // If empty fields have been found on each side, 
+                            // remove them and continue with search on right side         
+                            itRight.remove();
+                            itLeft.remove();
+                            break;
+                        }
+                    }
+                }
+            }        
+							
+			List<List<String>> permutations = permutations(new LinkedList<String>(fieldsToCompareRight.keySet()));
 			
 			double bestPermWeight = Double.NEGATIVE_INFINITY; 
 			double bestPermWeightSum = 0.0;
@@ -121,19 +152,19 @@ public class EpilinkMatcher implements Matcher {
 			{
 				double thisPermWeight = 0.0;
 				double thisPermWeightSum = 0;
-				Iterator<String> fieldIterator = exchangeGroup.iterator();
+				Iterator<String> fieldIterator = fieldsToCompareLeft.keySet().iterator();
 				for (String fieldNamePerm : permutation)
 				{
 					String fieldName = fieldIterator.next();
 					// Do not consider empty fields
-					if (left.getFields().get(fieldName).isEmpty() || 
-							right.getFields().get(fieldNamePerm).isEmpty())
+					if (fieldsToCompareLeft.get(fieldName).isEmpty() || 
+							fieldsToCompareRight.get(fieldNamePerm).isEmpty())
 						continue;
 					
 					// account mean value of field weights
 					double meanFieldWeight = 0.5 * (weights.get(fieldName) + weights.get(fieldNamePerm));
-					thisPermWeight += comparators.get(fieldName).compare(left.getFields().get(fieldName),
-							right.getFields().get(fieldNamePerm)) * meanFieldWeight;
+					thisPermWeight += comparators.get(fieldName).compare(fieldsToCompareLeft.get(fieldName),
+							fieldsToCompareRight.get(fieldNamePerm)) * meanFieldWeight;
 					thisPermWeightSum += meanFieldWeight;					
 				}
 				double thisPermWeightRatio = thisPermWeight / thisPermWeightSum;
@@ -168,7 +199,7 @@ public class EpilinkMatcher implements Matcher {
 		// Get error rate (is needed for weight computation below)					
 
 		// Initialize internal maps
-		this.comparators = new HashMap<String, FieldComparator>();
+		this.comparators = new HashMap<String, FieldComparator<Field<?>>>();
 		this.frequencies = new HashMap<String, Double>();
 		this.errorRates = new HashMap<String, Double>();
 		this.weights = new HashMap<String, Double>();
@@ -188,9 +219,10 @@ public class EpilinkMatcher implements Matcher {
 				{
 					fieldCompStr = fieldCompStr.trim();
 					try {
-						Class<FieldComparator> fieldCompClass = (Class<FieldComparator>) Class.forName("de.pseudonymisierung.mainzelliste.matcher." + fieldCompStr);
-						Constructor<FieldComparator> fieldCompConstr = fieldCompClass.getConstructor(String.class, String.class);
-						FieldComparator fieldComp = fieldCompConstr.newInstance(fieldName, fieldName);
+						@SuppressWarnings("unchecked")
+						Class<FieldComparator<Field<?>>> fieldCompClass = (Class<FieldComparator<Field<?>>>) Class.forName("de.pseudonymisierung.mainzelliste.matcher." + fieldCompStr);
+						Constructor<FieldComparator<Field<?>>> fieldCompConstr = fieldCompClass.getConstructor(String.class, String.class);
+						FieldComparator<Field<?>> fieldComp = fieldCompConstr.newInstance(fieldName, fieldName);
 						comparators.put(fieldName, fieldComp);
 					} catch (Exception e) {
 						System.err.println(e.getMessage());

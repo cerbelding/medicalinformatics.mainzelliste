@@ -25,10 +25,14 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
-import javax.persistence.Basic;
 import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -48,6 +52,7 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 @Entity
 @Table(name="IDRequest")
 public class IDRequest {
+	@SuppressWarnings("unused")
 	@Id
 	@GeneratedValue
 	@JsonIgnore
@@ -58,8 +63,8 @@ public class IDRequest {
 	private Map<String, Field<?>> inputFields;
 	
 	/** Type of the requested ID */
-	@Basic
-	private String requestedIdType;
+	@ElementCollection
+	private Set<String> requestedIdTypes;
 	
 	/** The match result, including the matched patient */
 	@Embedded
@@ -71,11 +76,11 @@ public class IDRequest {
 	@ManyToOne(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, fetch=FetchType.EAGER)
 	private Patient assignedPatient;
 
-	public IDRequest(Map<String, Field<?>> inputFields, String idType,
+	public IDRequest(Map<String, Field<?>> inputFields, Set<String> idTypes,
 			MatchResult matchResult, Patient assignedPatient) {
 		super();
 		this.inputFields = inputFields;
-		this.requestedIdType = idType;
+		this.requestedIdTypes = idTypes;
 		this.matchResult = matchResult;
 		this.assignedPatient = assignedPatient;
 	}
@@ -88,11 +93,24 @@ public class IDRequest {
 		return inputFields;
 	}
 
-	public String getRequestedIdType() {
-		return requestedIdType;
+	public Collection<String> getRequestedIdTypes() {
+		return requestedIdTypes;
 	}
 
 	public MatchResult getMatchResult() {
 		return matchResult;
+	}
+	
+	public Set<ID> getRequestedIds() {
+
+		if (this.assignedPatient == null)
+			return null;
+		
+		LinkedList<ID> idList = new LinkedList<ID>();
+		
+		for (String thisType : this.requestedIdTypes) {
+			idList.add(this.assignedPatient.getOriginal().getId(thisType));
+		}
+		return new CopyOnWriteArraySet<ID>(idList);
 	}
 }

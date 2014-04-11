@@ -30,12 +30,14 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
@@ -102,7 +104,7 @@ public enum Servers {
 			this.sessionTimeout = 600000; // 10 min
 		} else {
 			try {
-				this.sessionTimeout = Long.parseLong(sessionTimeout) * 1000;
+				this.sessionTimeout = Long.parseLong(sessionTimeout) * 60000;
 				if (this.sessionTimeout <= 0)
 					throw new NumberFormatException();
 			} catch (NumberFormatException e) {
@@ -159,24 +161,31 @@ public enum Servers {
 			for(Token t: s.getTokens()){
 				deleteToken(sid, t.getId());
 			}
-
 			sessions.remove(sid);
 		}
 	}
 	
 	
 	public void cleanUpSessions() {
+		logger.debug("Cleaning up sessions...");
+		LinkedList<String> sessionsToDelete = new LinkedList<String>();
 		Date now = new Date();
 		synchronized (sessions) {
 			for (Session s : this.sessions.values()) {
 				if (now.getTime() - s.getLastAccess().getTime() > this.sessionTimeout)
-					this.deleteSession(s.getId());
+					sessionsToDelete.add(s.getId());
+			}
+			// Delete sessions in a separate loop to avoid ConcurrentModificationException
+			for (String sessionId : sessionsToDelete) {
+				this.deleteSession(sessionId);
+				logger.info(String.format("Session %s timed out", sessionId));
 			}
 		}
 	}
 	
 	
 	public void checkPermission(HttpServletRequest req, String permission){
+		@SuppressWarnings("unchecked")
 		Set<String> perms = (Set<String>) req.getSession(true).getAttribute("permissions");
 
 		if(perms == null){ // Login
@@ -215,17 +224,15 @@ public enum Servers {
 		}
 	}
 	
-	public Token newToken(String sessionId, String tokenType){
+	public void registerToken(String sessionId, Token t){
 		String tid = UUID.randomUUID().toString();
-		Token t = new Token(tid, tokenType);
+		t.setId(tid);
 		
 		getSession(sessionId).addToken(t);
 
 		synchronized(tokensByTid){
 			tokensByTid.put(t.getId(), t);
 		}
-
-		return t;
 	}
 
 	/**
@@ -269,5 +276,54 @@ public enum Servers {
 		synchronized (tokensByTid) {
 			return tokensByTid.get(tokenId);
 		}
+	}
+	
+	public class ApiVersion {
+		public final int majorVersion;
+		public final int minorVersion;
+		
+		protected ApiVersion(String versionString) {
+			majorVersion = Integer.parseInt(versionString.split("\\.")[0]);
+			minorVersion = Integer.parseInt(versionString.split("\\.")[1]);
+		}
+	}
+	
+	public ApiVersion getRequestApiVersion(HttpServletRequest req) {
+		// First try to read saved version String (prevents multiple parsing of header etc.)
+		String version = null;
+		Object versionHeader =req.getAttribute("de.pseudonymisierung.mainzelliste.apiVersion");
+		if (versionHeader != null) {
+			version = versionHeader.toString();
+		} else {
+			// Try to read from header
+			version = req.getHeader("mainzellisteApiVersion");
+			// Try to read from URL parameter
+			if (version == null) {
+				version = req.getParameter("mainzellisteApiVersion");
+			}
+			// Otherwise assume 1.0
+			if (version == null) {
+				version = "1.0";
+			}
+			if (!Pattern.matches("\\d+\\.\\d+", version)) {
+				throw new WebApplicationException(
+						Response.status(Status.BAD_REQUEST)
+						.entity(String.format("'%s' is not a valid API version. Please " +
+								"supply API version in format MAJOR.MINOR as HTTP header or " +
+								"URL parameter 'mainzellisteApiVersion'.", version))
+						.build());
+			}
+			// Save in request scope
+			req.setAttribute("de.pseudonymisierung.mainzelliste.apiVersion", version);
+		}
+		return new ApiVersion(version);
+	}
+	
+	public int getRequestMajorApiVersion(HttpServletRequest req) {
+		return this.getRequestApiVersion(req).majorVersion;
+	}
+
+	public int getRequestMinorApiVersion(HttpServletRequest req) {
+		return this.getRequestApiVersion(req).minorVersion;
 	}
 }

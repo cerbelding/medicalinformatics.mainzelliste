@@ -30,6 +30,7 @@ package de.pseudonymisierung.mainzelliste;
 
 import java.util.Properties;
 
+
 /**
  * Simple ID generator that outputs consecutive IntegerIDs. For testing purposes
  * or to produce IDs for a database.

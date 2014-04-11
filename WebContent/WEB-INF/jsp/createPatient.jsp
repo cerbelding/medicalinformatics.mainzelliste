@@ -10,11 +10,6 @@
 <title>PID anfordern</title>
 </head>
 
-<!-- JQuery -->
-<script type="text/javascript" src="<%=request.getContextPath() %>/static/jslib/jquery/jquery-1.7.2.js"></script>
-
-<script type="text/javascript" src="<%=request.getContextPath() %>/static/jslib/validation.js"></script>
-
 <body>
 		<div class="kopfzeile">
 			<div class="logo">

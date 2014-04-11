@@ -85,6 +85,7 @@ public abstract class FieldComparator<F extends Field<?>> {
 	 * @return The comparison result as a real number in the interval [0,1],
 	 * where 1 denotes equality and 0 maximal disagreement.
 	 */
+	@SuppressWarnings("unchecked")
 	public double compare (Patient patientLeft, Patient patientRight)
 	{
 		Field<?> cLeft = patientLeft.getFields().get(this.fieldLeft);
@@ -140,6 +141,7 @@ public abstract class FieldComparator<F extends Field<?>> {
 	 * @param fieldRight
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public double compare(F fieldLeft, F fieldRight) {
 		/* If one of the fields is empty, consider them as unequal 
 		 * Justification: Sariyar M, Borg A. Missing values in deduplication of electronic patient data.
@@ -165,8 +167,6 @@ public abstract class FieldComparator<F extends Field<?>> {
 	public double compareBackend(CompoundField<F> fieldLeft, CompoundField<F> fieldRight)
 	{
 		
-		int nLeft = fieldLeft.getSize();
-		int nRight = fieldRight.getSize();
 		int nNonEmptyLeft = fieldLeft.getSize() - fieldLeft.nEmptyFields();
 		int nNonEmptyRight = fieldLeft.getSize() - fieldRight.nEmptyFields();
 

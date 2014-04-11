@@ -30,23 +30,24 @@ input:-moz-placeholder {
 	font-style: italic;
 }
 .kopfzeile {
-	width: 70em; 
+ 	max-width: 70em;  
 	margin: auto; 
 	padding-top: 2em;
 }
 .logo {
 /* 	background: url('../media/JGU_Uni_medizin_Logo_4c_Internet.jpg') no-repeat scroll right top transparent;  */
 	height: 6em; 
-	width: 70em; 
+ 	max-width: 70em; 
 	margin: auto;
 }
 .inhalt {
-	width: 70em; 
+ 	max-width: 70em;  
 	margin: auto; 
 	background-color: rgb(229,235,241);
 }
 .patienten_daten {
-	width: 50em; margin: auto;
+ 	max-width: 50em; 
+ 	margin: auto;
 }
 .submit_anlegen {
 	color: rgb(0,60,118);
@@ -60,7 +61,7 @@ input:-moz-placeholder {
 .hinweisen_liste {
 	list-style-type:square; 
 	color: rgb(175, 30, 45); 
-	width: 60em;
+ 	max-width: 60em; 
 }
 .daten_tabelle {
 	margin: auto; 

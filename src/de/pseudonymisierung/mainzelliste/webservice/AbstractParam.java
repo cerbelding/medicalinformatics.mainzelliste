@@ -33,6 +33,8 @@ import javax.ws.rs.core.Response.Status;
  * Taken from https://github.com/codahale/dropwizard, file link:
  * https://github.com/codahale/dropwizard/blob/master/dropwizard-jersey/src/main/java/com/codahale/dropwizard/jersey/params/AbstractParam.java
  * 
+ * See http://codahale.com/what-makes-jersey-interesting-parameter-classes/ for information
+ * 
  * Originally released under the Apache License 2.0 (see project root).
  * 
  */

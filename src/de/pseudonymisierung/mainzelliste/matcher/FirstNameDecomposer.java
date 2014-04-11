@@ -59,6 +59,7 @@ public class FirstNameDecomposer extends FieldTransformer<PlainTextField, Compou
 		return PlainTextField.class;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public Class<CompoundField<PlainTextField>> getOutputClass()
 	{
