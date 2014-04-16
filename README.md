@@ -30,7 +30,7 @@ Um immer auf dem aktuellen Stand zu bleiben, registrieren Sie sich auf unserer [
 	  sondern in Sekunden berechnet.
 	- Der Callbackaufruf funktionierte nicht wie dokumentiert (gemeldet von Michael Storck).
 	- In der Beispielkonfiguration war „ß“ nicht als gültiges Zeichen definiert (gemeldet von Benjamin Gathmann).
-	- Beim Löschen invalider Sessions trat eine ConcurrentModificationException auf (gemeldet von Benjamin Gathmann).
+	- Beim Löschen invalider Sessions trat eine ConcurrentModificationException auf (gemeldet von Stephan Rusch).
 
 Wir empfehlen allen Benutzern ein Update auf die aktuelle Version. Das Update nimmt keine Datenbankänderungen vor.
 
@@ -69,6 +69,7 @@ Als Communityprojekt lebt die Mainzelliste von den Beiträgen der Forschergemein
 
 - Maximilian Ataian, Universitätsmedizin Mainz
 - Benjamin Gathmann, Universitätsklinikum Freiburg
+- Stephan Rusch, Universitätsklinikum Freiburg
 - Jens Schwanke, Universitätsmedizin Göttingen
 - Daniel Volk, Universitätsmedizin Mainz
 - Dirk Langner, Universitätsmedizin Greifswald
