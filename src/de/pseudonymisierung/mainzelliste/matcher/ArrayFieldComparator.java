@@ -43,7 +43,7 @@ public class ArrayFieldComparator {
 
 	private String fieldListLeft[]; /** The names of fields to compare in the first patient's data */
 	private String fieldListRight[]; /** The names of fields to compare in the second patient's data */
-	private FieldComparator comparator;
+	private FieldComparator<?> comparator;
 	
 	/**
 	 * Instantiates an ArrayFieldComparator. 
@@ -52,7 +52,7 @@ public class ArrayFieldComparator {
 	 * @param comparator The comparator to use.
 	 */
 	public ArrayFieldComparator(String fieldListLeft[], String fieldListRight[],
-			FieldComparator comparator)
+			FieldComparator<?> comparator)
 	{
 		super();
 		this.fieldListLeft = fieldListLeft;

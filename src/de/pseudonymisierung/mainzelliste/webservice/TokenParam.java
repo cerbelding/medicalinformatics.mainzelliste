@@ -26,12 +26,15 @@
 package de.pseudonymisierung.mainzelliste.webservice;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.codehaus.jettison.json.JSONObject;
 
 public class TokenParam extends AbstractParam<Token> {
@@ -42,14 +45,33 @@ public class TokenParam extends AbstractParam<Token> {
 
 	@Override
 	protected Token parse(String param) throws WebApplicationException {
-		Token t = new Token();
+		
 		try {
 			JSONObject jsob = new JSONObject(param);
+			String tokenType = jsob.optString("type");
+			Token t;
+			if (tokenType.equals("addPatient"))
+				t = new AddPatientToken();
+			else
+				t = new Token();
 			if(!("".equals(jsob.optString("id"))))
 				t.setId(jsob.getString("id"));
 			t.setType(jsob.getString("type"));
-			HashMap<String, String> data = new ObjectMapper().readValue(jsob.getString("data"), HashMap.class);
+			HashMap<String, Object> data = new ObjectMapper().readValue (jsob.getString("data"), new TypeReference<HashMap<String, Object>>() {});
+
+			// compatibility fix: "idtypes" -> "idTypes"
+			HashMap<String, Object> changedItems = new HashMap<String, Object>();
+			for (Iterator<Entry<String, Object>> itDataItem = data.entrySet().iterator(); itDataItem.hasNext();) {
+				Entry<String, Object> dataEntry = itDataItem.next();
+				if (dataEntry.getKey().toLowerCase().equals("idtypes")) {
+					itDataItem.remove();
+					changedItems.put("idTypes", dataEntry.getValue());
+				}
+			}
+			data.putAll(changedItems);
 			t.setData(data);
+			
+			return t;
 		} catch (Exception e) {
 			throw new WebApplicationException(Response
 					.status(Status.BAD_REQUEST)
@@ -57,7 +79,5 @@ public class TokenParam extends AbstractParam<Token> {
 					.build()
 				);
 		}
-		
-		return t;
 	}
 }

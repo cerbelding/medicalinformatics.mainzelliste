@@ -116,6 +116,7 @@ public class GermanLastNameDecomposer extends FieldTransformer<PlainTextField, C
 		return PlainTextField.class;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public Class<CompoundField<PlainTextField>> getOutputClass()
 	{

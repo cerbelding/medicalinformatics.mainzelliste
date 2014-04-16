@@ -27,6 +27,7 @@ package de.pseudonymisierung.mainzelliste;
 
 import java.util.Properties;
 
+
 /**
  * Generator for a given type of ID (e.g. PID, SIC, LabID, ...)
  * 

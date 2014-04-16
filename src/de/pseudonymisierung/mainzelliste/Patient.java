@@ -40,8 +40,6 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.PostLoad;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.log4j.Logger;
@@ -58,74 +56,7 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
  * An entity identified by an ID and described by a number of Fields.
  */
 public class Patient {
-	@Id
-	@GeneratedValue
-	@JsonIgnore
-	private int patientJpaId;
-	
-	/**
-	 * Returns the internal ID of the persistency engine.
-	 * Needed to determine if two Patient object refer to the same database entry.
-	 * 
-	 * @return the patientJpaId
-	 */
-	public int getPatientJpaId() {
-		return patientJpaId;
-	}
-
-	/**
-	 * Set of IDs for this patient.
-	 */
-	@OneToMany(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, fetch=FetchType.LAZY)
-	private Set<ID> ids;
-	
-	/**
-	 * The map of fields of this patient. Field names are map keys, the corresponding
-	 * Field objects are the values.
-	 * The fields are not persisted by this map (therefore the {@literal @Transient} annotation),
-	 * as this leads to poor performance. Instead, fields are serialized by {@link #prePersist()} and
-	 * deserialized by {@link #postLoad()} upon saving to and loading from the database. 
-	 * @see #fieldsString 
-	 */
-	@Transient
-	private Map<String, Field<?>> fields;
-	
-	/**
-	 * Serialization of the fields as JSON string for efficient storage in the database.
-	 * @see #fields
-	 */
-	@Column(columnDefinition="text",length=-1)
-	@JsonIgnore
-	private String fieldsString;
-	
-	/**
-	 * Serialization of the input fields as JSON string for efficient storage in the database.
-	 * @see #inputFields
-	 */
-	@Column(length=4096)
-	@JsonIgnore
-	private String inputFieldsString;
-	
-	/**
-	 * Serializes the fields and input fields into JSON strings. Automatically called by
-	 * the JPA engine right before saving the object to the database. 
-	 */
-	@PrePersist
-	@PreUpdate
-	public void prePersist() {
-		this.fieldsString = fieldsToString(this.fields);
-		this.inputFieldsString = fieldsToString(this.inputFields);
-	}
-	
-	/**
-	 * Deserializes fields and input fields from their JSON representation. Automatically
-	 * called by the JPA engine right after loading the object from the database.
-	 */
-	@PostLoad
-	public void postLoad() {
-		this.fields = stringToFields(this.fieldsString);
-		this.inputFields = stringToFields(this.inputFieldsString);
-	}
+// FIXME Doku aktualisieren für Fassung ohne prePersist
 	
 	/**
 	 * JSON serialization of a map of fields. Backend function for {@link #prePersist()}.
@@ -173,6 +104,31 @@ public class Patient {
 			throw new InternalErrorException();
 		}
 	}
+
+	/**
+	 * The map of fields of this patient. Field names are map keys, the corresponding
+	 * Field objects are the values.
+	 * The fields are not persisted by this map (therefore the {@literal @Transient} annotation),
+	 * as this leads to poor performance. Instead, fields are serialized by {@link #prePersist()} and
+	 * deserialized by {@link #postLoad()} upon saving to and loading from the database. 
+	 * @see #fieldsString 
+	 */
+	@Transient
+	private Map<String, Field<?>> fields;
+	
+	/**
+	 * Serialization of the fields as JSON string for efficient storage in the database.
+	 * @see #fields
+	 */
+	@Column(columnDefinition="text",length=-1)
+	@JsonIgnore
+	private String fieldsString;
+	
+	/**
+	 * Set of IDs for this patient.
+	 */
+	@OneToMany(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, fetch=FetchType.LAZY)
+	private Set<ID> ids;
 	
 	/**
 	 * Input fields as read from form (before transformation).
@@ -182,10 +138,85 @@ public class Patient {
 	@Transient
 	private Map<String, Field<?>> inputFields;
 	
+	/**
+	 * Serialization of the input fields as JSON string for efficient storage in the database.
+	 * @see #inputFields
+	 */
+	@Column(length=4096)
+	@JsonIgnore
+	private String inputFieldsString;
+	
+	/**
+	 * True if this patient is suspected to be a duplicate.
+	 */
+	private boolean isTentative = false;
+	
 	@Transient
 	@JsonIgnore
 	private Logger logger = Logger.getLogger(this.getClass());
 	
+	/**
+	 * If p.original is not null, p is considered a duplicate of p.original. PID requests
+	 * that find p as the best matching patient should return the PID of p.getOriginal().
+	 * 
+	 */
+	@ManyToOne(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, fetch=FetchType.EAGER)
+	@JsonIgnore
+	private Patient original = null;
+	
+	@Id
+	@GeneratedValue
+	@JsonIgnore
+	private int patientJpaId;
+	
+	/**
+	 * Construct an empty patient object.
+	 */
+	public Patient() {}
+	
+	/**
+	 * Construct a patient object with the specified ids and fields.
+	 * @param ids A set of ID objects that identify the patient.
+	 * @param c The fields of the patient. A map with field names as keys and the corresponding
+	 * Field objects as values.
+	 */
+	public Patient(Set<ID> ids, Map<String, Field<?>> c) {
+		this.ids = ids;
+		this.setFields(c);
+	}
+
+	/**
+	 * Get the fields of this patient.
+	 * @return An unmodifiable map with field names as keys and corresponding field objects as values.
+	 * 	Although the map itself is unmodifiable, modifications of its members affect the patient object.
+	 */
+	public Map<String, Field<?>> getFields() {
+		return Collections.unmodifiableMap(fields);
+	}
+
+	/**
+	 * Get an ID of a specified type from this patient.
+	 * @param type The string that identifies the ID string. See {@link IDGeneratorFactory#getFactory(String)}
+	 */
+	public ID getId(String type)
+	{
+		for (ID thisId : ids)
+		{
+			if (thisId.getType().equals(type))
+				return thisId;
+		}
+		return null;
+	}
+
+	/**
+	 * Get the set of ids for this patient.
+	 * @return The ids of the patient as unmodifiable set. While the set itself is unmodifiable,
+	 * 	modification of the elements (ID objects) affect the patient object.  
+	 */
+	public Set<ID> getIds(){
+		return Collections.unmodifiableSet(ids);
+	}
+
 	/**
 	 * Returns the input fields, i.e. as they were transmitted in the last request that
 	 * modified this patient, before transformations.
@@ -194,22 +225,43 @@ public class Patient {
 	public Map<String, Field<?>> getInputFields() {
 		return inputFields;
 	}
-
+	
 	/**
-	 * Set the input fields. Whenever a request modifies this patient object (or upon creation)
-	 * the input fields as transmitted in the request, before transformation, should be set
-	 * with this method. This allows redisplaying them in the admin interface.
-	 * @param inputFields Map with field names as keys and corresponding Field objects as values.
+	 * Gets the original of this patient, i.e. the patient of which this patient is a
+	 * duplicate. More precisely: A patient p_1 is the original of a patient p_n if either
+	 * p_1 and p_n are the same or if there exists
+	 * a chain p_1, p_2, ... , p_n of patients where p_k is a duplicate of p_k+1 for 1<=k<n.
+	 * 
 	 */
-	public void setInputFields(Map<String, Field<?>> inputFields) {
-		this.inputFields = inputFields;
+	public Patient getOriginal() {
+		Patient p = this;
+		while (p.original != null && p.original != p)
+			p = p.original;
+		return p;
+//		if (this.original == null || this.original == this) return this;
+//		else return this.original.getOriginal();
 	}
 
 	/**
-	 * True if this patient is suspected to be a duplicate.
+	 * Returns the internal ID of the persistency engine.
+	 * Needed to determine if two Patient object refer to the same database entry.
+	 * 
+	 * @return the patientJpaId
 	 */
-	private boolean isTentative = false;
+	public int getPatientJpaId() {
+		return patientJpaId;
+	}
 
+	/**
+	 * Check whether this patient is the duplicate of another.
+	 * @see #getOriginal() 
+	 * @see #setOriginal(Patient)
+	 */
+	public boolean isDuplicate()
+	{
+		return (this.original != null);
+	}
+	
 	/**
 	 * Check if this patient is suspectedly a duplicate of another one.
 	 * @return
@@ -219,18 +271,26 @@ public class Patient {
 	}
 
 	/**
-	 * Sets the "tentative" status of this patient, i.e. if it is suspected that
-	 * the patient is a duplicate of another.
-	 * 
-	 * @param isTentative
+	 * Deserializes fields and input fields from their JSON representation. Automatically
+	 * called by the JPA engine right after loading the object from the database.
 	 */
-	public void setTentative(boolean isTentative) {
-		this.isTentative = isTentative;
-		for (ID id : this.ids)
-		{
-			id.setTentative(isTentative);
-		}
+	@PostLoad
+	public void postLoad() {
+		this.fields = stringToFields(this.fieldsString);
+		this.inputFields = stringToFields(this.inputFieldsString);
 	}
+	
+	
+//	/**
+//	 * Serializes the fields and input fields into JSON strings. Automatically called by
+//	 * the JPA engine right before saving the object to the database. 
+//	 */
+//	@PrePersist
+//	@PreUpdate
+//	public void prePersist() {
+//		this.fieldsString = fieldsToString(this.fields);
+//		this.inputFieldsString = fieldsToString(this.inputFields);
+//	}
 	
 	/**
 	 * Check whether p and this patient are the same in the database
@@ -241,19 +301,35 @@ public class Patient {
 	{
 		return (this.getPatientJpaId() == p.getPatientJpaId()); 
 	}
-
+	
 	/**
-	 * Gets the original of this patient, i.e. the patient of which this patient is a
-	 * duplicate. More precisely: A patient p_1 is the original of a patient p_n if either
-	 * p_1 and p_n are the same or if there exists
-	 * a chain p_1, p_2, ... , p_n of patients where p_k is a duplicate of p_k+1 for 1<=k<n.
-	 * 
+	 * Set the fields of this patient.
+	 * @param Fields A map with field names as keys and corresponding Field objects as values. The map is copied by reference.
 	 */
-	public Patient getOriginal() {
-		if (this.original == null || this.original == this) return this;
-		else return this.original.getOriginal();
+	public void setFields(Map<String, Field<?>> Fields) {
+		this.fields = Fields;
+		this.fieldsString = fieldsToString(this.fields);
 	}
-
+	
+	/**
+	 * Set the IDs for this patient.
+	 * @param ids Set of IDs. The set is copied by reference.
+	 */
+	public void setIds(Set<ID> ids) {
+		this.ids = ids;
+	}
+	
+	/**
+	 * Set the input fields. Whenever a request modifies this patient object (or upon creation)
+	 * the input fields as transmitted in the request, before transformation, should be set
+	 * with this method. This allows redisplaying them in the admin interface.
+	 * @param inputFields Map with field names as keys and corresponding Field objects as values.
+	 */
+	public void setInputFields(Map<String, Field<?>> inputFields) {
+		this.inputFields = inputFields;
+		this.inputFieldsString = fieldsToString(inputFields);
+	}
+	
 	/**
 	 * Set the original of a patient (see {@link #getOriginal() for a definition}. This 
 	 * effectively marks this patient as a duplicate of the argument.
@@ -279,87 +355,17 @@ public class Patient {
 	}
 	
 	/**
-	 * Check whether this patient is the duplicate of another.
-	 * @see #getOriginal() 
-	 * @see #setOriginal(Patient)
-	 */
-	public boolean isDuplicate()
-	{
-		return (this.original != null);
-	}
-
-	/**
-	 * If p.original is not null, p is considered a duplicate of p.original. PID requests
-	 * that find p as the best matching patient should return the PID of p.getOriginal().
+	 * Sets the "tentative" status of this patient, i.e. if it is suspected that
+	 * the patient is a duplicate of another.
 	 * 
+	 * @param isTentative
 	 */
-	@ManyToOne(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, fetch=FetchType.EAGER)
-	@JsonIgnore
-	private Patient original = null;
-	
-	
-	/**
-	 * Construct an empty patient object.
-	 */
-	public Patient() {}
-	
-	/**
-	 * Construct a patient object with the specified ids and fields.
-	 * @param ids A set of ID objects that identify the patient.
-	 * @param c The fields of the patient. A map with field names as keys and the corresponding
-	 * Field objects as values.
-	 */
-	public Patient(Set<ID> ids, Map<String, Field<?>> c) {
-		this.ids = ids;
-		this.setFields(c);
-	}
-	
-	/**
-	 * Get the set of ids for this patient.
-	 * @return The ids of the patient as unmodifiable set. While the set itself is unmodifiable,
-	 * 	modification of the elements (ID objects) affect the patient object.  
-	 */
-	public Set<ID> getIds(){
-		return Collections.unmodifiableSet(ids);
-	}
-	
-	/**
-	 * Get an ID of a specified type from this patient.
-	 * @param type The string that identifies the ID string. See {@link IDGeneratorFactory#getFactory(String)}
-	 */
-	public ID getId(String type)
-	{
-		for (ID thisId : ids)
+	public void setTentative(boolean isTentative) {
+		this.isTentative = isTentative;
+		for (ID id : this.ids)
 		{
-			if (thisId.getType().equals(type))
-				return thisId;
+			id.setTentative(isTentative);
 		}
-		return null;
-	}
-	
-	/**
-	 * Set the IDs for this patient.
-	 * @param ids Set of IDs. The set is copied by reference.
-	 */
-	public void setIds(Set<ID> ids) {
-		this.ids = ids;
-	}
-	
-	/**
-	 * Get the fields of this patient.
-	 * @return An unmodifiable map with field names as keys and corresponding field objects as values.
-	 * 	Although the map itself is unmodifiable, modifications of its members affect the patient object.
-	 */
-	public Map<String, Field<?>> getFields() {
-		return Collections.unmodifiableMap(fields);
-	}
-	
-	/**
-	 * Set the fields of this patient.
-	 * @param Fields A map with field names as keys and corresponding Field objects as values. The map is copied by reference.
-	 */
-	public void setFields(Map<String, Field<?>> Fields) {
-		this.fields = Fields;
 	}
 	
 	/**

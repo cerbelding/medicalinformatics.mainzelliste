@@ -30,14 +30,18 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 public class InvalidIDException extends WebApplicationException {
-	private static String message = "Invalid ID.";
+	private static String defaultMessage = "Invalid ID.";
 	
 	public InvalidIDException() {
+		this(defaultMessage);
+	}
+	
+	public InvalidIDException(String message) {
         super(Response.status(Status.BAD_REQUEST).entity(message).build());
 	}
 	
 	@Override
 	public String getMessage() {
-		return message;
+		return defaultMessage;
 	}
 }

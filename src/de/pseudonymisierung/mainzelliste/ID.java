@@ -34,6 +34,8 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
@@ -123,8 +125,26 @@ public abstract class ID {
 		return String.format("%s=%s", getType(), getIdString());
 	}
 	
+// alte Version, behalten für Kompatibilität?	
+//	public JSONObject toJSON() throws JSONException {
+//		JSONObject result = new JSONObject();
+//		result.put("type", this.getType());
+//		result.put("idString", this.getIdString());
+//		result.put("tentative", this.isTentative());
+//		return result;
+//	}
+	
 	@Override
 	public int hashCode() {
 		return toString().hashCode();
+	}
+	
+	public JSONObject toJSON() throws JSONException {
+		JSONObject ret = new JSONObject();
+		ret.put("idType", this.type);
+		ret.put("idString", this.idString);
+		ret.put("tentative", this.tentative);
+		
+		return ret;
 	}
 }

@@ -117,6 +117,7 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 			this.value = new LinkedList<T>();
 			for (int fieldInd = 0; fieldInd < arr.length(); fieldInd++) {
 				JSONObject obj = arr.getJSONObject(fieldInd);
+				@SuppressWarnings("unchecked")
 				T thisField = (T) Class.forName(obj.getString("class")).newInstance();
 				thisField.setValue(obj.getString("value"));
 				this.value.add(thisField);
@@ -163,6 +164,7 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 			return false;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	/**
 	 * Creates a copy of this CompoundField. The components are copied by calling
