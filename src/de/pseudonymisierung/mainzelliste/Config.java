@@ -60,7 +60,7 @@ public enum Config {
 		HASHED_NORMALIZED; // Bloomfilter with prior normalization
 	}
 	
-	private final String version = "1.3-RC1";
+	private final String version = "1.3";
 	
 	private final Map<String,Class<? extends Field<?>>> FieldTypes;
 	
