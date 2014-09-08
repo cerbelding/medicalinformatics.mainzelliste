@@ -8,7 +8,7 @@ Um immer auf dem aktuellen Stand zu bleiben, registrieren Sie sich auf unserer [
 
 ## Releaseinformationen
 
-### 1.3 (momentan Release Candidate 1, Review bis 29.04.2014)
+### 1.3
 - Mit Erscheinen dieser Version liegt erstmals eine umfassende Schnittstellenbeschreibung vor.
   Sie kann als PDF-Dokument von der Projektseite (s.o.) heruntergeladen werden. Softwareversion 1.3
   unterstützt sowohl die bisherige (1.0) als auch die aktuelle (2.0) Schnittstellenversion. 
