@@ -139,6 +139,23 @@ public enum Persistor {
 	}
 
 	/**
+	 * Check whether a patient with a given ID exists
+	 * @param idType
+	 * @param idString
+	 */
+	public boolean patientExists(String idType, String idString) {
+		EntityManager em = emf.createEntityManager();
+		TypedQuery<Long> q = em.createQuery("SELECT COUNT(p) FROM Patient p JOIN p.ids id WHERE id.idString = :idString AND id.type = :idType", Long.class);
+		q.setParameter("idString", idString);
+		q.setParameter("idType", idType);
+		Long count = q.getSingleResult();
+		if (count > 0)
+			return true;
+		else 
+			return false;
+	}
+
+	/**
 	 * Returns a detached list of the IDs of all patients.
 	 * @return A list where every item represents the IDs of one patient.
 	 */
@@ -223,12 +240,12 @@ public enum Persistor {
 	private void updateDatabaseSchemaJPA(String fromVersion)
 	{
 		EntityManager em = emf.createEntityManager();
-		em.getTransaction().begin();
-		
+
 		if ("1.0".equals(fromVersion)) { // 1.0 -> 1.1
-				em.createNativeQuery("UPDATE IDGeneratorMemory SET idType=idstring").executeUpdate();
-				em.createNativeQuery("ALTER TABLE IDGeneratorMemory DROP COLUMN idString").executeUpdate();
-				
+			em.getTransaction().begin();
+			em.createNativeQuery("UPDATE IDGeneratorMemory SET idType=idstring").executeUpdate();
+			em.createNativeQuery("ALTER TABLE IDGeneratorMemory DROP COLUMN idString").executeUpdate();
+
 			/*
 			 * Delete invalid instances of IDGeneratorMemory (caused by Bug #3007
 			 * Both id generators of version 1.0 use a field "counter". The memory object
@@ -252,8 +269,20 @@ public enum Persistor {
 				}
 			}
 			this.setSchemaVersion("1.1", em);
-			em.getTransaction().commit(); //FIXME: Müsste der hier nicht (genau wie begin) HINTER die Klammer?
+			fromVersion = "1.1";
+			em.getTransaction().commit();
 		} // End of update 1.0 -> 1.1
+		if ("1.1".equals(fromVersion)) { // 1.1 -> 1.3.1
+			em.getTransaction().begin();
+			// Add index on idString for more efficient access to patients by ID
+			em.createNativeQuery("CREATE INDEX i_id_idstring ON ID (idString)").executeUpdate();
+
+			// Update schema version. Corresponds to Mainzelliste version, therefore the gap
+			this.setSchemaVersion("1.3.1", em);
+			fromVersion = "1.3.1";
+			
+			em.getTransaction().commit();
+		} // End of update 1.1 -> 1.3.1
 	}
 	
 	/**
@@ -356,6 +385,5 @@ public enum Persistor {
 			logger.fatal("Could not find database driver!", e);
 			throw new Error(e);
 		}			
-		
 	}
 }

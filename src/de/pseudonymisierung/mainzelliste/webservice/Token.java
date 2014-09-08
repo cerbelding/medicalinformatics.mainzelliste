@@ -42,8 +42,6 @@ import com.sun.jersey.api.uri.UriTemplate;
 
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
-import de.pseudonymisierung.mainzelliste.PID;
-import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
@@ -258,8 +256,7 @@ public class Token {
 			}
 			checkIdType(idType);
 	
-			Patient p = Persistor.instance.getPatient(new PID(idString, idType));
-			if (p == null) {
+			if (!Persistor.instance.patientExists(idType, idString)) {
 				throw new InvalidTokenException("No patient found with provided "
 						+ idType + " '" + idString + "'!");
 			}

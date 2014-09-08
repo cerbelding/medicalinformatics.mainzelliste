@@ -33,6 +33,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.openjpa.persistence.jdbc.Index;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -53,6 +54,7 @@ public abstract class ID {
 	protected int idJpaId;
 	
 	@Basic
+	@Index(name="i_id_idstring")
 	protected String idString;
 	
 	@Basic

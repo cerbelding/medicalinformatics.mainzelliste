@@ -224,18 +224,18 @@ result.printIdat = true
 # 
 # - createToken: create tokens -- in addition, permission "tt_x" is req'd, where x is one of these TOKEN TYPES:
 #   - tt_addPatient: allows to generate one (1) ID. Token is invalidated afterwards even if an existing ID was returned.
-#	- tt_readPatient: allows to retreive IDAT for a patient, needed for Temp-ID-Handling (still in development)
+#	- tt_readPatients: allows to read IDAT or pseudonyms of patients
 
 # A passphrase used for authentication
 servers.0.apiKey = 
-servers.0.permissions = createSession;showSessionIds;deleteAllPatients;createToken;tt_addPatient;tt_readPatient
+servers.0.permissions = createSession;showSessionIds;deleteAllPatients;createToken;tt_addPatient;tt_readPatients
 
 # Accepted origin addresses
 servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1
 
 
 # Allowed Format of callback
-callback.allowedFormat = https://.* 
+callback.allowedFormat = https://.*
 
 # Session timeout
 # A session will be deleted if not accessed for this amount of time, specified in minutes
