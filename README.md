@@ -8,6 +8,19 @@ Um immer auf dem aktuellen Stand zu bleiben, registrieren Sie sich auf unserer [
 
 ## Releaseinformationen
 
+### 1.3.1
+- Bugfixes und Verbesserungen:
+	- GET request auf /patients mit ungültigem "readPatients"-Token verursachte eine NullPointerException.
+	- Die Erstellung von "readPatients"-Tokens konnte durch Optimierung einer Datenbankabfrage und Einführung
+	 eines Index beschleunigt werden.
+	- Korrekturen in der Konfigurationsvorlage: 
+		- Leerzeichen am Zeilenende bei "callback.allowedFormat" entfernt.
+	  	- Tokenbezeichnung "readPatient" zu "readPatients" korrigiert.    
+
+Wir empfehlen allen Nutzern das Einspielen dieses Bugfix-Releases. Eine Ausnahme sind Produktivinstanzen, die bereits konfiguriert sind und keine readPatients-Tokens verwenden; für diese kann v1.3.1 übersprungen werden.
+
+Das Schema der SQL-Datenbank wird beim ersten Start der neuen Version aktualisiert, ggfls. mehrfach (1.0 -> 1.1 -> 1.3.1). Das geschieht automatisch, aber wie immer empfehlen wir ein Vorab-Backup der SQL-Datenbank.
+
 ### 1.3
 - Mit Erscheinen dieser Version liegt erstmals eine umfassende Schnittstellenbeschreibung vor.
   Sie kann als PDF-Dokument von der Projektseite (s.o.) heruntergeladen werden. Softwareversion 1.3

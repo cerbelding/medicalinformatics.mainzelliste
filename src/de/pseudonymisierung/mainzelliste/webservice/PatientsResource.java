@@ -69,6 +69,7 @@ import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 import de.pseudonymisierung.mainzelliste.exceptions.UnauthorizedException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
@@ -340,6 +341,11 @@ public class PatientsResource {
 		// Check if token exists and has the right type. 
 		// Validity of token is checked upon creation
 		Token t = Servers.instance.getTokenByTid(tid);
+		if (t == null) {
+			logger.info("No token with id " + tid + " found");
+			throw new InvalidTokenException("Please supply a valid 'readPatients' token.");
+		}
+
 		t.checkTokenType("readPatients");
 		List<?> requests = t.getDataItemList("searchIds");
 		
