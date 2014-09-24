@@ -58,9 +58,7 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 public enum Persistor {
 	instance;
 	
-	/** Version of the database schema used by this application instance */
-	private static final String schemaVersion = "1.1";
-	
+
 	private EntityManagerFactory emf;
 	
 	private EntityManager em;
@@ -283,6 +281,11 @@ public enum Persistor {
 			
 			em.getTransaction().commit();
 		} // End of update 1.1 -> 1.3.1
+		
+		// Update schema version to release version, even if no changes are necessary
+		em.getTransaction().begin();
+		this.setSchemaVersion(Config.instance.getVersion(), em);
+		em.getTransaction().commit();
 	}
 	
 	/**
@@ -374,7 +377,7 @@ public enum Persistor {
 					"WHERE property='version'");
 			if (!rs.next()) {
 				// Properties table exists, but no version information
-				String setVersion = firstRun ? Persistor.schemaVersion : "1.0";
+				String setVersion = firstRun ? Config.instance.getVersion() : "1.0";
 				conn.createStatement().execute("INSERT INTO mainzelliste_properties" +
 						"(property, value) VALUES ('version', '" + setVersion + "')");
 			}

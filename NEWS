@@ -1,3 +1,6 @@
+Version 1.3.2
+	-Bugfix: Creation of database schema failed with a ReportingSQLException (reported by Matthias Lemmer)
+
 Version 1.3.1
 	-Bugfixes and improvements:
 		-GET request on /patients with an invalid "readPatients" token caused a NullPointerException.

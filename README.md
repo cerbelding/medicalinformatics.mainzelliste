@@ -8,6 +8,9 @@ Um immer auf dem aktuellen Stand zu bleiben, registrieren Sie sich auf unserer [
 
 ## Releaseinformationen
 
+### 1.3.2
+- Bugfix: Erstellung des Datenbankschemas scheiterte mit einer ReportingSQLException (gemeldet von Matthias Lemmer).
+	 
 ### 1.3.1
 - Bugfixes und Verbesserungen:
 	- GET request auf /patients mit ungültigem "readPatients"-Token verursachte eine NullPointerException.
@@ -86,3 +89,4 @@ Als Communityprojekt lebt die Mainzelliste von den Beiträgen der Forschergemein
 - Jens Schwanke, Universitätsmedizin Göttingen
 - Daniel Volk, Universitätsmedizin Mainz
 - Dirk Langner, Universitätsmedizin Greifswald
+- Matthias Lemmer, Universität Marburg
