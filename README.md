@@ -10,6 +10,8 @@ Um immer auf dem aktuellen Stand zu bleiben, registrieren Sie sich auf unserer [
 
 ### 1.3.2
 - Bugfix: Erstellung des Datenbankschemas scheiterte mit einer ReportingSQLException (gemeldet von Matthias Lemmer).
+
+Dieses Bugfix-Release ist nur für Nutzer relevant, die eine neue Instanz der Mainzelliste auf einer leeren Datenbank aufsetzen. Bei bestehenden Instanzen kann v1.3.2 übersprungen werden.
 	 
 ### 1.3.1
 - Bugfixes und Verbesserungen:
