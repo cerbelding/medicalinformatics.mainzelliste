@@ -245,7 +245,7 @@ public enum PatientBackend {
                                 
 			} catch (JSONException e) {
                                 logger.error("Internal serializitaion error: ", e);
-				throw new InternalErrorException("Internal serializitaion error:!");
+				throw new InternalErrorException("Internal serializitaion error!");
 			
                         } catch (IOException e) {
                             logger.error("Internal error building the request: ", e);
