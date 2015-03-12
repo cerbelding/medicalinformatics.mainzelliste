@@ -245,11 +245,11 @@ public enum PatientBackend {
                                 
 			} catch (JSONException e) {
                                 logger.error("Internal serializitaion error: ", e);
-				throw new InternalErrorException("Request to callback failed!");
+				throw new InternalErrorException("Internal serializitaion error:!");
 			
                         } catch (IOException e) {
                             logger.error("Internal error building the request: ", e);
-                            throw new InternalErrorException("Request to callback failed!");
+                            throw new InternalErrorException("Internal error building the request!");
                     }
 		}
 		return request;
