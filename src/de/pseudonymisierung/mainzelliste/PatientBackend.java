@@ -31,6 +31,8 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import java.io.IOException;
+import org.codehaus.jettison.json.JSONException;
 
 public enum PatientBackend {
 	instance;
@@ -239,11 +241,16 @@ public enum PatientBackend {
 					throw new InternalErrorException("Request to callback failed!");
 				}
 						
-				// TODO: Server-Antwort auslesen, Fehler abfangen.
-			} catch (Exception e) {
-				logger.error("Request to callback " + callback + "failed: ", e);
-				throw new InternalErrorException("Request to callback failed!");
-			}
+				// TODO: Server-Antwort auslesen
+                                
+			} catch (JSONException e) {
+                                logger.error("Internal serializitaion error: ", e);
+				throw new InternalErrorException("Internal serializitaion error!");
+			
+                        } catch (IOException e) {
+                            logger.error("Internal error building the request: ", e);
+                            throw new InternalErrorException("Internal error building the request!");
+                    }
 		}
 		return request;
 	}
