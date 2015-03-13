@@ -20,7 +20,7 @@
 		<div class="inhalt">
 			<div>&nbsp;</div>
 			<div class="formular">
-				<form action="<%=request.getContextPath() %>/patients?tokenId=${it.tokenId}&callback=${it.callback}" method="post" id="form_person"
+				<form action="<%=request.getContextPath() %>/patients?mainzellisteApiVersion=${it.mainzellisteApiVersion}&tokenId=${it.tokenId}&callback=${it.callback}" method="post" id="form_person"
 					onsubmit="return validateForm();">
 					<h1>PID anfordern</h1>
 					<h3 class="header_left">Hinweise zur Eingabe</h3>

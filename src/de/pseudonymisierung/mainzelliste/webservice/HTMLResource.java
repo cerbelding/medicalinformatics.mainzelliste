@@ -69,7 +69,8 @@ public class HTMLResource {
 	@Produces(MediaType.TEXT_HTML)
 	public Response createPatientForm(
 			@QueryParam("tokenId") String tokenId,
-			@QueryParam("callback") String callback){
+			@QueryParam("callback") String callback,
+                        @QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion){
 		Token t = Servers.instance.getTokenByTid(tokenId);
 		if (Config.instance.debugIsOn() ||
 				(t != null && t.getType().equals("addPatient")))
@@ -77,6 +78,7 @@ public class HTMLResource {
 			HashMap<String, Object> map = new HashMap<String, Object>();
 			map.put("tokenId", tokenId);
 			map.put("callback", callback);
+                        map.put("mainzellisteApiVersion", mainzellisteApiVersion);
 			map.put("adminPhone", Config.instance.getProperty("adminPhone"));
 			return Response.ok(new Viewable("/createPatient.jsp", map)).build();
 		} else throw new WebApplicationException(Response
