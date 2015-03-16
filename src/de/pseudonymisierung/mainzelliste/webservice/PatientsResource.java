@@ -110,6 +110,7 @@ public class PatientsResource {
 	@Produces(MediaType.TEXT_HTML)
 	public Response newPatientBrowser(
 			@QueryParam("tokenId") String tokenId,
+                        @QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion,
 			MultivaluedMap<String, String> form,
 			@Context HttpServletRequest request){
 		Token t = Servers.instance.getTokenByTid(tokenId);
@@ -125,6 +126,7 @@ public class PatientsResource {
 			}
 			map.put("readonly", "true");
 			map.put("tokenId", tokenId);
+                        map.put("mainzellisteApiVersion", mainzellisteApiVersion);
 			return Response.status(Status.CONFLICT)
 					.entity(new Viewable("/unsureMatch.jsp", map)).build();
 		} else {
@@ -166,14 +168,19 @@ public class PatientsResource {
 				map.put("printIdat", true);
 			}
 			// FIXME alle IDs übergeben und anzeigen
-                        ID retId = ids.toArray(new ID[0])[0];
+                        //ID retId = ids.toArray(new ID[0])[0];
                         
-                        //test
-			map.put("id", retId.getIdString());
                         map.put("ids", ids);
-                        String test = retId.getType();
-                        //
-                        map.put("tentative", retId.isTentative());
+                        
+                        map.put("tentative", false);
+                        //Only put true in map if one or more PID are tentative
+                        for (ID id : ids) {
+                            if (id.isTentative()) {
+                                map.put("tentative", true);
+                                break;
+                            }
+                        }
+                        
 			
 			if (Config.instance.debugIsOn() && result.getResultType() != MatchResultType.NON_MATCH)
 			{

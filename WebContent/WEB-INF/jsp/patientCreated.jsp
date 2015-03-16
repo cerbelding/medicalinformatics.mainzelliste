@@ -2,7 +2,6 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
 	pageEncoding="ISO-8859-1"%>
 <%@ page import="java.util.Map"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
 	Map<String, Object> map = (Map<String, Object>) request
 			.getAttribute("it");
@@ -26,21 +25,17 @@
 		<div class="formular">
 			<div>&nbsp;</div>
 			<h1>Ergebnis</h1>
+                        <div align="center">
+                            <p>
+                                    Ihr(e) angeforderter/angeforderten PID:
+                                    <tt>
+                                            <big>${it.ids}</big>
 
-			<p>
-				Ihr(e) angeforderte(n) PID:
-				<tt>
-					<big>${it.ids}</big>
-                                        <c:set var="ids" value="${it.ids}" ></c:set>
-                                        <c:forEach items="${ids}" var="id">
-                                            <p>
-                                            <big>${id.type} : ${id.idString}</big>
-                                            </p>
-                                        </c:forEach>
-				</tt>
-				. Bitte übernehmen Sie ihn in Ihre Unterlagen.
-			</p>
-
+                                    </tt>
+                                    . Bitte übernehmen Sie ihn in Ihre Unterlagen.
+                            </p>
+                        </div>
+                                        
 			<% if (map.containsKey("printIdat") && (Boolean) map.get("printIdat")) { %>
 			<h3>Eingegebene Daten</h3>
 			<p>
