@@ -2,6 +2,7 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
 	pageEncoding="ISO-8859-1"%>
 <%@ page import="java.util.Map"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
 	Map<String, Object> map = (Map<String, Object>) request
 			.getAttribute("it");
@@ -27,9 +28,15 @@
 			<h1>Ergebnis</h1>
 
 			<p>
-				Ihr angeforderter PID lautet
+				Ihr(e) angeforderte(n) PID:
 				<tt>
-					<big>${it.id}</big>
+					<big>${it.ids}</big>
+                                        <c:set var="ids" value="${it.ids}" ></c:set>
+                                        <c:forEach items="${ids}" var="id">
+                                            <p>
+                                            <big>${id.type} : ${id.idString}</big>
+                                            </p>
+                                        </c:forEach>
 				</tt>
 				. Bitte übernehmen Sie ihn in Ihre Unterlagen.
 			</p>

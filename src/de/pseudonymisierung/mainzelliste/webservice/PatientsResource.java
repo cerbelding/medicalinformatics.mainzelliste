@@ -166,9 +166,14 @@ public class PatientsResource {
 				map.put("printIdat", true);
 			}
 			// FIXME alle IDs übergeben und anzeigen
-			ID retId = ids.toArray(new ID[0])[0];
+                        ID retId = ids.toArray(new ID[0])[0];
+                        
+                        //test
 			map.put("id", retId.getIdString());
-			map.put("tentative", retId.isTentative());
+                        map.put("ids", ids);
+                        String test = retId.getType();
+                        //
+                        map.put("tentative", retId.isTentative());
 			
 			if (Config.instance.debugIsOn() && result.getResultType() != MatchResultType.NON_MATCH)
 			{
