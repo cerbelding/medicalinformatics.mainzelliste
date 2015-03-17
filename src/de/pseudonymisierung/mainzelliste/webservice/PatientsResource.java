@@ -167,9 +167,7 @@ public class PatientsResource {
 				// and set flag for JSP to display them
 				map.put("printIdat", true);
 			}
-			// FIXME alle IDs übergeben und anzeigen
-                        //ID retId = ids.toArray(new ID[0])[0];
-                        
+			                       
                         map.put("ids", ids);
                         
                         map.put("tentative", false);

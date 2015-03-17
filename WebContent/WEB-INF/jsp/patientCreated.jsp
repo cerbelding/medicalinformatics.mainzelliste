@@ -30,7 +30,6 @@
                                     Ihr(e) angeforderter/angeforderten PID:
                                     <tt>
                                             <big>${it.ids}</big>
-
                                     </tt>
                                     . Bitte übernehmen Sie ihn in Ihre Unterlagen.
                             </p>
