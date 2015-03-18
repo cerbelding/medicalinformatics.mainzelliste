@@ -1,5 +1,10 @@
+<%@page import="de.pseudonymisierung.mainzelliste.Config"%>
+<%@page import="java.util.ResourceBundle"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="ISO-8859-1"%>
+<%
+	ResourceBundle bundle = Config.instance.getResourceBunde(request);
+%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -7,47 +12,39 @@
 
 <link rel="stylesheet" type="text/css" href="<%=request.getContextPath() %>/static/css/patientenliste.css">
 
-<title>PID anfordern</title>
+<title><%=bundle.getString("createPatientTitle") %></title>
 </head>
 
 <body>
-		<div class="kopfzeile">
-			<div class="logo">
-			<img src="<%=request.getContextPath() %>/static/media/JGU_Uni_medizin_Logo_4c_Internet.jpg" align="right"
-				height="80%">
-			</div>
-		</div>
+		<jsp:include page="header.jsp"></jsp:include>
 		<div class="inhalt">
 			<div>&nbsp;</div>
 			<div class="formular">
-				<form action="<%=request.getContextPath() %>/patients?tokenId=${it.tokenId}&callback=${it.callback}" method="post" id="form_person"
-					onsubmit="return validateForm();">
-					<h1>PID anfordern</h1>
-					<h3 class="header_left">Hinweise zur Eingabe</h3>
+				<form action="<%=request.getContextPath() %>/patients?tokenId=${it.tokenId}" method="post" id="form_person">
+					<h1><%= bundle.getString("createPatientTitle")%></h1>
+					<h3 class="header_left"><%=bundle.getString("entryNotesTitle") %></h3>
 					<p>
-						Diese Anwendung gibt für die von Ihnen im Folgenden einzugebenden Stammdaten einen Personenidentifikator (PID) zurück. 
-						Dabei wird der bekannte Patientenbestand durchsucht; bei einem Treffer wird der bestehende PID zurückgegeben. 
-						Bitte beachten Sie bei Ihrer Eingabe die folgenden Punkte:
+						<%=bundle.getString("entryNotesText") %>
 					</p>
 					<ul class="hinweisen_liste">
 						<li>
 							<span class="blauer_text">
-								Geben Sie alle Ihnen bekannten Vornamen an, getrennt durch Leerzeichen. 
+								<%=bundle.getString("entryNotesFirstName") %> 
 							</span>
 						</li>
 						<li>
 							<span class="blauer_text">
-								Achten Sie bei Doppelnamen darauf, ob sie mit Bindestrich oder zusammen geschrieben werden (z.B. &quot;Annalena&quot; oder &quot;Anna-Lena&quot;).
+								<%=bundle.getString("entryNotesDoubleName") %> 
 							</span>
 						</li>
 						<li>
 							<span class="blauer_text">
-								Geben Sie den Geburtsnamen nur an, falls er vom aktuellen Nachnamen abweicht (z.B. bei Namenswechsel durch Heirat).
+								<%=bundle.getString("entryNotesBirthName") %> 
 							</span>
 						</li>
 						<li>
 							<span class="blauer_text">
-								Die mit <font color="red">*</font> markierten Felder sind Pflichtfelder.
+								<%=bundle.getString("entryNotesRequiredFields") %> 
 							</span>
 						</li>
 					</ul>
@@ -55,12 +52,15 @@
 					<p></p>
 
 
-			<%@ include file="patientFormElements.jsp" %>
+			<jsp:include page="patientFormElements.jsp">
+				<jsp:param name="showPlaceholders" value="true"/>
+			</jsp:include>
+			
 			<div align="center">
 				<td>&nbsp;</td>
 			</div>
 			<div align="center">
-				<input class="submit_anlegen" type="submit" name="anlegen" value=" PID anfordern "/>
+				<input class="submit_anlegen" type="submit" name="anlegen" value=" <%=bundle.getString("createPatientSubmit") %> "/>
 			</div>
 			<div align="center">
 				<td>&nbsp;</td>
@@ -68,6 +68,6 @@
 			</form>
 			</div>
 		</div>
-		<%@ include file="footer.jsp" %>
+		<jsp:include page="footer.jsp" />
 	</body>
 </html>

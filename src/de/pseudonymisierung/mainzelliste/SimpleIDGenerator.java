@@ -37,8 +37,11 @@ import java.util.Properties;
  */
 public class SimpleIDGenerator implements IDGenerator<IntegerID> {
 
+	/** Internal counter. Incremented on every ID creation. */
 	int counter;
+	/** The state information of this generator. */
 	IDGeneratorMemory mem;
+	/** The ID type this generator instance creates. */
 	String idType;
 	
 	@Override

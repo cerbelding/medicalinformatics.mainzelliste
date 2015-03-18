@@ -38,6 +38,7 @@ import javax.ws.rs.core.Response.Status;
  * Originally released under the Apache License 2.0 (see project root).
  * 
  */
+@SuppressWarnings("javadoc")
 public abstract class AbstractParam<V> {
 	private final V value;
 	private final String originalParam;

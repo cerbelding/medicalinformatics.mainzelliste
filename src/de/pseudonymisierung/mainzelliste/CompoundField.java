@@ -53,6 +53,7 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 	
 
+	/** The value of a compound field is a list of fields of a common type */
 	@OneToMany(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, 
 				fetch=FetchType.EAGER, targetEntity = Field.class)
 	private List<T> value;
@@ -62,6 +63,7 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 	 * of which can be empty at a given time. To get the number of non-empty fields,
 	 * call getSize() - nEmptyFields.
 	 * 
+	 * @return The number of components.
 	 */
 	public int getSize() {
 		return value.size();
@@ -69,16 +71,16 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 
 	/**
 	 * Construct a CompoundField from a list of fields.
-	 * @param value
+	 * @param value A list of Fields with matching type.
 	 */
 	public CompoundField(List<T> value)
 	{
 		super(value);
 	}
 
-	/** Construct a CompoundField with size components.
+	/** Construct a CompoundField with the given number of components.
 	 * 
-	 * @param size
+	 * @param size The number of components.
 	 */
 	public CompoundField(int size)
 	{		
@@ -97,7 +99,8 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 
 	/**
 	 * Get the i-th component.
-	 * @param i
+	 * @param i Index of the component to get.
+	 * @return The i-th component.
 	 */
 	public T getValueAt(int i)
 	{
@@ -110,6 +113,11 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 		this.value = value;
 	}
 	
+	/**
+	 * Set value from a String. Required format: A JSON array whose member are JSON representations of fields,
+	 * as returned by {@link Field#toJSON()}.
+	 * @param s A JSON array of the fields to set as components.
+	 */
 	@Override
 	public void setValue(String s) {
 		try {
@@ -130,8 +138,8 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 	
 	/**
 	 * Set the i-th component.
-	 * @param i
-	 * @param value
+	 * @param i The index of the component to set.
+	 * @param value The new value to set.
 	 */
 	public void setValueAt(int i, T value)
 	{
@@ -141,6 +149,7 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 	/**
 	 * Get the number of currently empty components. If a component is empty is
 	 * determined by calling its isEmpty() method.
+	 * @return The number of components c for which c.isEmpty() is true.
 	 */
 	public int nEmptyFields()
 	{
@@ -154,7 +163,8 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 	
 	@Override
 	/**
-	 * A CompoundField is empty if all of its components are empty. 
+	 * Check if this CompoundField is empty. 
+	 * @return true if all components of this CompoundField are empty. 
 	 */
 	public boolean isEmpty()
 	{
@@ -168,7 +178,8 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 	@Override
 	/**
 	 * Creates a copy of this CompoundField. The components are copied by calling
-	 * their clone() methods.
+	 * their clone() methods, respectively.
+	 * @return The cloned CompoundField.
 	 */
 	public CompoundField<T> clone()
 	{

@@ -32,24 +32,58 @@ import java.util.concurrent.Executors;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 
-//FIXME: Kommentar
+/**
+ * Multithreaded version of {@link EpilinkMatcher EpilinkMatcher}. Distributes
+ * matching to several threads, each processing a subset of the patients to
+ * match with.
+ */
 public class ThreadedEpilinkMatcher extends EpilinkMatcher {
+	
+	/**
+	 * Container for the best MatchResult. A single instance of this class is
+	 * accessed by all workers and updated whenever a better match is found.
+	 */
 	private class MatchResultContainer {
+		@SuppressWarnings("javadoc")
 		public MatchResult matchResult;
 	}
 	
+	/**
+	 * Thread that matches on a subset of patients.
+	 */
 	private class MatchCallable implements Runnable {
-		
+
+		/**
+		 * The patients to match against. Acts as a queue from which the workers
+		 * draw patients to process.
+		 */
 		private Iterator<Patient> iterator;
+		/** The (new) patient which to match to the patient list. */
 		private Patient left;
+		/** The best match this worker finds. */
 		private MatchResultContainer bestMatchResult;
 
+		
+		/**
+		 * Create an instance.
+		 * 
+		 * @param left
+		 *            The (new) patient which to compare against the others.
+		 * @param iterator
+		 *            Queue from which to draw patients to match against.
+		 * @param bestMatchResult
+		 *            Object to store the best match result in.
+		 */
 		public MatchCallable(Patient left, Iterator<Patient> iterator, MatchResultContainer bestMatchResult) {
 			this.iterator = iterator;
 			this.left = left;
 			this.bestMatchResult = bestMatchResult;
 		}
 	
+		/**
+		 * Draws patient from the queue provided in the constructor and compares
+		 * the new patient against them until no more patients are in the queue.
+		 */
 		@Override
 		public void run() {
 			Patient right;
@@ -76,8 +110,9 @@ public class ThreadedEpilinkMatcher extends EpilinkMatcher {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see de.pseudonymisierung.mainzelliste.matcher.Matcher#match(de.pseudonymisierung.mainzelliste.Patient, java.lang.Iterable)
+	/**
+	 * Puts all patients to match against in a queue and creates a set of workers to process the queue.
+	 * @see MatchCallable
 	 */
 	@Override
 	public MatchResult match(Patient a, Iterable<Patient> patientList) {

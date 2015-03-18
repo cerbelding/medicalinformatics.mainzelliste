@@ -27,49 +27,57 @@ package de.pseudonymisierung.mainzelliste;
 
 import javax.persistence.Entity;
 
-@Entity
 /**
  * A Field consisting of an Integer.
  */
+@Entity
 public class IntegerField extends Field<Integer> {
-	
+
+	/** The value of this field. */
 	private int value;
-	
-	public IntegerField(Integer value)
-	{
+
+	/**
+	 * Creates an instance with the given value.
+	 * 
+	 * @param value
+	 *            The value to set.
+	 */
+	public IntegerField(Integer value) {
 		this.value = value;
 	}
-	
-	public IntegerField(String value)
-	{
+
+	/**
+	 * Creates an instance from a String.
+	 * 
+	 * @param value
+	 *            A String that can be parsed to an Integer.
+	 */
+	public IntegerField(String value) {
 		this.value = Integer.parseInt(value.trim());
 	}
-	
+
 	@Override
-	public Integer getValue()
-	{
+	public Integer getValue() {
 		return this.value;
 	}
-	
+
 	@Override
-	public void setValue(Integer value)
-	{
+	public void setValue(Integer value) {
 		this.value = value;
 	}
-	
+
 	@Override
 	public void setValue(String s) {
 		this.value = Integer.parseInt(s);
 	}
-	
+
 	@Override
 	public Integer getValueJSON() {
 		return this.value;
 	}
-	
+
 	@Override
-	public IntegerField clone()
-	{
+	public IntegerField clone() {
 		return new IntegerField(this.value);
-	}	
+	}
 }

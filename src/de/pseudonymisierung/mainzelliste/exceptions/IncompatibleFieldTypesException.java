@@ -34,6 +34,19 @@ import de.pseudonymisierung.mainzelliste.matcher.FieldTransformer;
  */
 public class IncompatibleFieldTypesException extends Exception {
 
+	@SuppressWarnings("javadoc")
+	private static final long serialVersionUID = -3473667515748310234L;
+
+	/**
+	 * Create an instance for the case when two FieldTransformers are
+	 * incompatible to another. It is assumed that the output of first should be
+	 * input of second.
+	 * 
+	 * @param first
+	 *            First FieldTransformer, whose output type is incompatible.
+	 * @param second
+	 *            Second FieldTransformer, whose input type is incompatible.
+	 */
 	public IncompatibleFieldTypesException(FieldTransformer<Field<?>, Field<?>> first,
 			FieldTransformer<Field<?>, Field<?>> second)
 	{
@@ -41,6 +54,15 @@ public class IncompatibleFieldTypesException extends Exception {
 				" does not match input class of " + second.getClass());
 	}
 
+	/**
+	 * Create an instance for the case when Field type is incompatible as input
+	 * for a FieldTransformer.
+	 * 
+	 * @param input
+	 *            The input field, whose type is incompatible.
+	 * @param transformer
+	 *            The FieldTransformer, whose output type is incompatible.
+	 */
 	public IncompatibleFieldTypesException(Field<?> input,
 			FieldTransformer<Field<?>, Field<?>> transformer)
 	{
@@ -48,6 +70,15 @@ public class IncompatibleFieldTypesException extends Exception {
 				" does not match input class of " + transformer.getClass());
 	}
 
+	/**
+	 * Create an instance for the case when the output type of a
+	 * FieldTransformer is incompatible to a given Field type.
+	 * 
+	 * @param transformer
+	 *            The FieldTransformer, whose output type is incompatible.
+	 * @param output
+	 *            The Field, whose type is incompatible.
+	 */
 	public IncompatibleFieldTypesException(FieldTransformer<Field<?>, Field<?>> transformer,
 			Field<?> output)
 	{

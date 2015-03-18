@@ -29,9 +29,20 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+/**
+ * Signals that the requester is not authorized for the requested action. HTTP
+ * status code 401 (Unauthorized) will be returned to the requester if the
+ * exception is not caught.
+ */
 public class UnauthorizedException extends WebApplicationException {
+
+	@SuppressWarnings("javadoc")
+	private static final long serialVersionUID = -3700072300131484282L;
+	
+	/** Default error message. */
 	private static String message = "Unauthorized to access resource.";
 	
+	/** Create an instance with the default error message. */
 	public UnauthorizedException() {
 		super(Response.status(Status.UNAUTHORIZED).entity(message).build());
 	}

@@ -25,6 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,32 +55,40 @@ import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
+import de.pseudonymisierung.mainzelliste.Initializer;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
-@Path("/html")
 /**
- * HTML pages (rendered via JSP) to be accessed by a human
+ * HTML pages (rendered via JSP) to be accessed by a human user
  * are served via this resource.
  */
+@Path("/html")
 public class HTMLResource {
+
+	/** The logging instance. */
 	Logger logger = Logger.getLogger(HTMLResource.class);
 	
+	/**
+	 * Get the form for entering a new patient.
+	 * 
+	 * @param tokenId
+	 *            Id of a valid "addPatient" token.
+	 * @return The input form or an error message if the given token is not
+	 *         valid.
+	 */
 	@GET
 	@Path("createPatient")
 	@Produces(MediaType.TEXT_HTML)
 	public Response createPatientForm(
-			@QueryParam("tokenId") String tokenId,
-			@QueryParam("callback") String callback){
+			@QueryParam("tokenId") String tokenId) {
 		Token t = Servers.instance.getTokenByTid(tokenId);
 		if (Config.instance.debugIsOn() ||
 				(t != null && t.getType().equals("addPatient")))
 		{
 			HashMap<String, Object> map = new HashMap<String, Object>();
 			map.put("tokenId", tokenId);
-			map.put("callback", callback);
-			map.put("adminPhone", Config.instance.getProperty("adminPhone"));
 			return Response.ok(new Viewable("/createPatient.jsp", map)).build();
 		} else throw new WebApplicationException(Response
 				.status(Status.UNAUTHORIZED)
@@ -85,10 +96,44 @@ public class HTMLResource {
 				.build());
 	}
 	
+	/**
+	 * Get the form for changing an existing patient's IDAT.
+	 * 
+	 * @param tokenId
+	 *            Id of a valid "editPatient" token.
+	 * @return The edit form or an error message if the given token is not
+	 *         valid.
+	 */
+	@Path("editPatient")
+	@GET
+	@Produces(MediaType.TEXT_HTML)
+	public Response editPatient(@QueryParam("tokenId") String tokenId) {
+		Servers.instance.checkToken(tokenId, "editPatient");
+		EditPatientToken t = (EditPatientToken) Servers.instance.getTokenByTid(tokenId);
+		Patient p = Persistor.instance.getPatient(t.getPatientId());
+		Map <String, Object> map = new HashMap<String, Object>();
+		map.put("tokenId", tokenId);
+		map.putAll(p.getInputFields());
+		
+		return Response.ok(new Viewable("/editPatient.jsp", map)).build();
+	}
+	
+	/**
+	 * Get the administrator form for editing an existing patient's IDAT. The
+	 * arguments can be omitted, in which case an input form is shown where an
+	 * ID of the patient to edit can be input. Authentication is handled by the
+	 * servlet container as defined in web.xml.
+	 * 
+	 * @param idType
+	 *            Type of the ID of the patient to edit.
+	 * @param idString
+	 *            ID string of the patient to edit.
+	 * @return The edit form or a selection form if one of idType and idString is not provided.
+	 */
 	@Path("/admin/editPatient")
 	@GET
 	@Produces(MediaType.TEXT_HTML)
-	public Response editPatientForm(
+	public Response editPatientAdmin(
 			@QueryParam("idType") String idType,
 			@QueryParam("idString") String idString
 			) {
@@ -110,15 +155,29 @@ public class HTMLResource {
 		Map <String, Object> map = new HashMap<String, Object>();
 		map.putAll(p.getInputFields());
 		map.put("id", patId.getIdString());
+		map.put("tokenId", "abc");
 		map.put("tentative", p.getId("pid").isTentative());
 		if (p.getOriginal() != p)
-			map.put("original", p);
+			map.put("original", p.getOriginal());
 
-		return Response.ok(new Viewable("/editPatient.jsp", map)).build();
+		return Response.ok(new Viewable("/editPatientAdmin.jsp", map)).build();
 	}
 
-	/** Submit form for editing a patient. */
-	// Eigentlich wäre das PUT auf /pid/{pid}, aber PUT aus HTML-Formular geht nicht.
+	/**
+	 * Receives edit operations from the admin form.
+	 * 
+	 * @param idType
+	 *            Type of the ID of the patient to edit.
+	 * @param idString
+	 *            ID string of the patient to edit.
+	 * @param form
+	 *            IDAT as provided by the input form.
+	 * @param req
+	 *            The injected HttpServletRequest.
+	 * @return The edit form for the changed patient or the patient selection
+	 *         form if the patient was deleted via the form.
+	 * 
+	 */
 	@POST
 	@Path("/admin/editPatient")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -129,10 +188,18 @@ public class HTMLResource {
 			MultivaluedMap<String, String> form,
 			@Context HttpServletRequest req){
 		
+		if (form.containsKey("delete")) {
+			logger.info(String.format("Handling delete operation for patient with id of type %s and value %s.",
+					idType, idString));
+			Persistor.instance.deletePatient(IDGeneratorFactory.instance.buildId(idType, idString));
+			return Response.status(Status.SEE_OTHER)
+					.location(UriBuilder.fromResource(this.getClass()).path("admin/editPatient").build())
+					.build();
+		}
+		
 		logger.info(String.format("Handling edit operation for patient with id of type %s and value %s.",
 					idType, idString));
 		
-		// TODO: Generalisieren für mehrere IDs
 		ID idPatToEdit = IDGeneratorFactory.instance.buildId(idType, idString);
 		Patient pToEdit = Persistor.instance.getPatient(idPatToEdit);
 		if (pToEdit == null)
@@ -150,12 +217,13 @@ public class HTMLResource {
 		Patient pInput = new Patient();
 		Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
 
-		for(String s: Config.instance.getFieldKeys()){
-			if (!form.containsKey(s)) {
-				logger.error("Field " + s + " not found in input data!");
-				throw new WebApplicationException(Response.status(Status.BAD_REQUEST).entity("Field " + s + " not found in input data!").build());
+		for(String fieldName : Config.instance.getFieldKeys()){
+			// If a field is not in the map, keep the old value
+			if (!form.containsKey(fieldName))
+				chars.put(fieldName, pToEdit.getInputFields().get(fieldName));
+			else {
+				chars.put(fieldName, Field.build(fieldName, form.getFirst(fieldName)));
 			}
-			chars.put(s, Field.build(s, form.getFirst(s)));
 		}
 
 		pInput.setFields(chars);
@@ -172,7 +240,6 @@ public class HTMLResource {
 		// assign tentative status
 		pToEdit.setTentative(form.getFirst("tentative") != null);
 		// assign original
-		// TODO: andere IDs, Checkbox dazu
 		String idStringOriginal = form.getFirst("idStringOriginal");
 		String idTypeOriginal = form.getFirst("idTypeOriginal");		
 		if (!StringUtils.isEmpty(idStringOriginal) && ! StringUtils.isEmpty(idTypeOriginal))
@@ -188,8 +255,6 @@ public class HTMLResource {
 		
 		Persistor.instance.updatePatient(pToEdit);
 		
-//		return Response.ok("Patient edited successfully!").build();
-		// TODO: Redirect auf Edit-Formular für diesen Patienten
 		return Response
 				.status(Status.SEE_OTHER)
 				.header("Cache-control", "must-revalidate")
@@ -200,5 +265,30 @@ public class HTMLResource {
 						.queryParam("idString", idString)
 						.build())
 						.build();
+	}
+
+	/**
+	 * Returns the logo file from the configured path (configuration parameter operator.logo).
+	 * 
+	 * @return A "200 Ok" response containing the file, or an appropriate error code and message on failure.
+	 */
+	@GET
+	@Path("/logo")
+	@Produces("image/*")
+	public Response getLogo() {
+		try {
+			File logoFile = Config.instance.getLogo();
+			String contentType = Initializer.getServletContext().getMimeType(logoFile.getAbsolutePath());
+			if (contentType == null || !contentType.startsWith("image/")) {
+				logger.error("Logo file has incorrect mime type: " + contentType);
+				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR)
+						.entity("The logo file has incorrect mime type. See server log for details.").build());
+			}
+			return Response.ok().type(contentType).entity(new FileInputStream(logoFile)).build();
+		} catch (FileNotFoundException e) {
+			logger.error(e.getMessage(), e);
+			throw new WebApplicationException(Response.status(Status.NOT_FOUND)
+					.entity("Logo file could not be opened. Check server log for more information.").build());
+		}
 	}
 }

@@ -29,8 +29,22 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+/**
+ * Signals that input data (on creating or editing a patient) does not conform
+ * to the required format (e.g. illegal date). HTTP status code 400 (Bad
+ * Request) is returned to the requester if the exception is not caught.
+ */
 public class ValidatorException extends WebApplicationException {
 
+	@SuppressWarnings("javadoc")
+	private static final long serialVersionUID = -2843941728708025618L;
+
+	/**
+	 * Create an instance with the given error message.
+	 * 
+	 * @param message
+	 *            The error message.
+	 */
 	public ValidatorException(String message) {
         super(Response.status(Status.BAD_REQUEST).entity(message).build());		
 	}

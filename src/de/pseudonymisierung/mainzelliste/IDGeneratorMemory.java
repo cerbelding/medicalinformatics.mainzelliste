@@ -38,34 +38,65 @@ import javax.persistence.MapKeyClass;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
 /**
- * Contains a state of an IDGenerator in key-value-form.
+ * Contains state information for an IDGenerator in key-value-form. A typical
+ * use case is to hold a counter that is incremented on every ID generation. For
+ * every ID generator, an instance of this class is persisted in the database.
  */
 @Entity
 public class IDGeneratorMemory {
-	
+
+	/** Database id */
 	@Id
 	@GeneratedValue
 	protected int fieldJpaId;
-	
-	@ElementCollection(targetClass = String.class, fetch=FetchType.EAGER)
+
+	/** The persisted properties. */
+	@ElementCollection(targetClass = String.class, fetch = FetchType.EAGER)
 	@MapKeyClass(String.class)
 	protected Map<String, String> mem = new HashMap<String, String>();
-	
+
+	/** The id type for which this instance holds information. */
 	protected String idType;
-	
-	public IDGeneratorMemory(String idType)
-	{
+
+	/**
+	 * Create an instance for the given ID type.
+	 * 
+	 * @param idType
+	 *            The ID type.
+	 */
+	public IDGeneratorMemory(String idType) {
 		this.idType = idType;
 	}
-	public synchronized void set(String key, String value){
+
+	/**
+	 * Set a property.
+	 * 
+	 * @param key
+	 *            The property key.
+	 * @param value
+	 *            The property value.
+	 */
+	public synchronized void set(String key, String value) {
 		mem.put(key, value);
 	}
-	
-	public synchronized String get(String key){
+
+	/**
+	 * Get a property.
+	 * 
+	 * @param key
+	 *            The property key.
+	 * @return The property value.
+	 */
+	public synchronized String get(String key) {
 		return mem.get(key);
 	}
-	
-	public synchronized void commit(){
+
+	/**
+	 * Save properties to database.
+	 * 
+	 * @see Persistor#updateIDGeneratorMemory(IDGeneratorMemory)
+	 */
+	public synchronized void commit() {
 		Persistor.instance.updateIDGeneratorMemory(this);
 	}
 }

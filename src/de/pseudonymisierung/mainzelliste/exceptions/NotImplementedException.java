@@ -29,9 +29,19 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+/**
+ * Signals that a function is not yet implemented. HTTP status code 503 (Service
+ * Unavailable) will be returned to the client if the exception is not caught.
+ */
 public class NotImplementedException extends WebApplicationException {
+
+	@SuppressWarnings("javadoc")
+	private static final long serialVersionUID = 4679822464201106826L;
+	
+	/** The default error message. */
 	private static String message = "Functionality not implemented yet.";
 	
+	/** Create an instance with the default error message. */
 	public NotImplementedException() {
 		super(Response.status(Status.SERVICE_UNAVAILABLE).entity(message).build());
 	}

@@ -26,6 +26,7 @@
 package de.pseudonymisierung.mainzelliste;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -46,36 +47,59 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 
-/** 
- * Data structure for an ID request: Input fields, match result, type of ID.
+/**
+ * Represents a request to add a patient, consisting of information like input
+ * fields, match result, type of requested ID.
  */
 @Entity
-@Table(name="IDRequest")
+@Table(name = "IDRequest")
 public class IDRequest {
-	@SuppressWarnings("unused")
+
+	/** Database id. */
 	@Id
 	@GeneratedValue
 	@JsonIgnore
 	private int idRequestJpaId;
-	
+
 	/** Map of fields as provided by the input form. */
-	@OneToMany(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, fetch=FetchType.EAGER)
+	@OneToMany(cascade = { CascadeType.DETACH, CascadeType.MERGE,
+			CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.EAGER)
 	private Map<String, Field<?>> inputFields;
-	
+
 	/** Type of the requested ID */
 	@ElementCollection
 	private Set<String> requestedIdTypes;
-	
+
 	/** The match result, including the matched patient */
 	@Embedded
 	private MatchResult matchResult;
-	
-	/** The patient object that was actually assigned. In case of a match 
-	 * this is usually equal to matchResult.patient.
+
+	/**
+	 * The patient object that was actually assigned. In case of a match this is
+	 * usually equal to matchResult.bestMatchedPatient.
 	 */
-	@ManyToOne(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, fetch=FetchType.EAGER)
+	@ManyToOne(cascade = { CascadeType.DETACH, CascadeType.MERGE,
+			CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.EAGER)
 	private Patient assignedPatient;
 
+	/** Date and time of this reqest. */
+	private Date timestamp;
+
+	/**
+	 * Creates a new IDRequest instance.
+	 * 
+	 * @param inputFields
+	 *            The input fields as provided by the input form with field
+	 *            values as keys and respective inputs as values.
+	 * @param idTypes
+	 *            The requested ID types.
+	 * @param matchResult
+	 *            The match result as returned by the matcher.
+	 * @param assignedPatient
+	 *            The assigned patient object, i.e. the patient whose IDs are
+	 *            returned. This is the newly created patient if no matching
+	 *            patient was found.
+	 */
 	public IDRequest(Map<String, Field<?>> inputFields, Set<String> idTypes,
 			MatchResult matchResult, Patient assignedPatient) {
 		super();
@@ -83,34 +107,70 @@ public class IDRequest {
 		this.requestedIdTypes = idTypes;
 		this.matchResult = matchResult;
 		this.assignedPatient = assignedPatient;
+		this.timestamp = new Date();
 	}
 
+	/**
+	 * Get the assigned patient, i.e. he patient whose IDs are returned.
+	 * 
+	 * @return The assigned patient.
+	 */
 	public Patient getAssignedPatient() {
 		return assignedPatient;
 	}
 
+	/**
+	 * Get the input fields as provided by the input form.
+	 * 
+	 * @return Map with field values as keys and respective inputs as values.
+	 */
 	public Map<String, Field<?>> getInputFields() {
 		return inputFields;
 	}
 
+	/**
+	 * Get the requested ID types.
+	 * 
+	 * @return The requested ID types.
+	 */
 	public Collection<String> getRequestedIdTypes() {
 		return requestedIdTypes;
 	}
 
+	/**
+	 * Get the match result for this request as returned by the matcher.
+	 * 
+	 * @return The assigned match result.
+	 */
 	public MatchResult getMatchResult() {
 		return matchResult;
 	}
-	
+
+	/**
+	 * Get the requested IDs, i.e. the IDs of the assigned patient.
+	 * 
+	 * @return The requested IDs.
+	 * @see IDRequest#getAssignedPatient()
+	 */
 	public Set<ID> getRequestedIds() {
 
 		if (this.assignedPatient == null)
 			return null;
-		
+
 		LinkedList<ID> idList = new LinkedList<ID>();
-		
+
 		for (String thisType : this.requestedIdTypes) {
 			idList.add(this.assignedPatient.getOriginal().getId(thisType));
 		}
 		return new CopyOnWriteArraySet<ID>(idList);
+	}
+
+	/**
+	 * Gets the date and time of this request.
+	 * 
+	 * @return The date and time of this request.
+	 */
+	Date getTimestamp() {
+		return timestamp;
 	}
 }

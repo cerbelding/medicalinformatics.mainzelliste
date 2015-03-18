@@ -33,13 +33,35 @@ import java.util.Set;
 
 import de.pseudonymisierung.mainzelliste.PlainTextField;
 
-//FIXME: Kommentar
+/**
+ * Compares two strings, given as PlainTextField objects, based on n-grams. For
+ * a given integer n, let <i>T(a)</i> and <i>T(b)</i> be the sets of n-grams,
+ * i.e. substrings of the length n, of both strings. In order to recognize start
+ * and end characters, the strings are padded with a leading and a trailing
+ * blank. The similarity is computed as Dice's coefficient of these sets: <i>(2
+ * * |T(a) intersect T(b)|) / (|T(a)| + |T(b)|)</i>
+ * 
+ * @see <a href="http://en.wikipedia.org/wiki/N-gram">n-gram</a>
+ * @see <a
+ *      href="http://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient">Sørensen–Dice
+ *      coefficient</a>
+ *
+ */
 public class NGramComparator extends FieldComparator<PlainTextField> {
 
+	/** The length of n-grams ("n"). */
 	private int nGramLength = 2;
 
+	/** Cache of n-grams for recently used strings. */
 	private static Map<String, Set<String>> cacheNGrams = new HashMap<String, Set<String>>(50000);
 	
+	/**
+	 * Get the set of n-grams for a given string.
+	 * 
+	 * @param input
+	 *            The input string.
+	 * @return The generated n-grams.
+	 */
 	private Set<String> getNGrams(String input){
 		Set<String> cacheResult = cacheNGrams.get(input);
 		if (cacheResult != null) return Collections.unmodifiableSet(cacheResult);
@@ -65,6 +87,16 @@ public class NGramComparator extends FieldComparator<PlainTextField> {
 		return Collections.unmodifiableSet(output);
 	}
 
+	/**
+	 * Instantiate comparison between two specified fields. The field
+	 * definitions correspond to indices in the Fields map of the persons
+	 * (objects of class Patient) which are compared.
+	 * 
+	 * @param fieldLeft
+	 *            Name of comparison field on the left side.
+	 * @param fieldRight
+	 *            Name of comparison field on the right side.
+	 */
 	public NGramComparator (String fieldLeft, String fieldRight)
 	{
 		super(fieldLeft, fieldRight);

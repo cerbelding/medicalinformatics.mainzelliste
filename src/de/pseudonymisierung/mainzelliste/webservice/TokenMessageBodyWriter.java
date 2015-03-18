@@ -42,6 +42,10 @@ import org.codehaus.jettison.json.JSONObject;
 
 import com.sun.jersey.spi.resource.Singleton;
 
+/**
+ * Provides conversion of {@link Token} objects for returning them in HTTP
+ * responses.
+ */
 @Provider
 @Singleton
 @Produces(MediaType.APPLICATION_JSON)
@@ -69,7 +73,7 @@ public class TokenMessageBodyWriter implements
 		JSONObject ret = new JSONObject();
 		
 		try {
-			ret.put("tokenId", arg0.getId());
+			ret.put("id", arg0.getId());
 			ret.put("type", arg0.getType());
 			ret.put("data", new JSONObject(arg0.getData()));			
 		} catch (JSONException e) {

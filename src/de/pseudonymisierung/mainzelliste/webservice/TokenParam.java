@@ -37,9 +37,18 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.codehaus.jettison.json.JSONObject;
 
+/**
+ * Realization of {@link AbstractParam} for getting tokens by their JSON representation.
+ */
 public class TokenParam extends AbstractParam<Token> {
 
-	public TokenParam(String param) throws WebApplicationException {
+	/**
+	 * Create an instance from a JSON string.
+	 * 
+	 * @param param
+	 *            JSON representation of a token.
+	 */
+	public TokenParam(String param) {
 		super(param);
 	}
 
@@ -52,6 +61,8 @@ public class TokenParam extends AbstractParam<Token> {
 			Token t;
 			if (tokenType.equals("addPatient"))
 				t = new AddPatientToken();
+			else if (tokenType.equals("editPatient"))
+				t = new EditPatientToken();
 			else
 				t = new Token();
 			if(!("".equals(jsob.optString("id"))))
@@ -72,6 +83,8 @@ public class TokenParam extends AbstractParam<Token> {
 			t.setData(data);
 			
 			return t;
+		} catch (WebApplicationException e) {
+			throw (e);
 		} catch (Exception e) {
 			throw new WebApplicationException(Response
 					.status(Status.BAD_REQUEST)

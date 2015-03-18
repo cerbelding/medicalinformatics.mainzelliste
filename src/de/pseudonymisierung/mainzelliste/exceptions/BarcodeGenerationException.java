@@ -29,9 +29,20 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+/**
+ * Signals an error while creating barcodes. For future use.
+ */
 public class BarcodeGenerationException extends WebApplicationException {
+	
+	@SuppressWarnings("javadoc")
+	private static final long serialVersionUID = 6805218977850784188L;
+	
+	/** The default error message. */
 	final static String message = "An internal error occured generating your barcode.";
 
+	/**
+	 * Create an instance.
+	 */
 	public BarcodeGenerationException() {
         super(Response.status(Status.INTERNAL_SERVER_ERROR).entity(message).build());
 	}

@@ -31,58 +31,103 @@ import javax.persistence.ManyToOne;
 
 import de.pseudonymisierung.mainzelliste.Patient;
 
+/**
+ * Represents the result of matching a (usually new) patient against a list of
+ * existing ones. The result contains the matching patient, if there is one.
+ */
 @Embeddable
 public class MatchResult {
-	
-	public enum MatchResultType {
-		MATCH, NON_MATCH, POSSIBLE_MATCH, AMBIGOUS;
-	};
-	
-	@Basic
-	private MatchResultType type;
-	
-	private double bestMatchedWeight; 
 
 	/**
-	 * @return the bestMatchedWeight
+	 * Encodes record linkage results.
+	 */
+	public enum MatchResultType {
+		/**
+		 * A definitive match, i.e. the queried record matches another without a
+		 * doubt.
+		 */
+		MATCH,
+		/**
+		 * A definitve non-match, i.e. the queried record matches no other
+		 * without a doubt.
+		 */
+		NON_MATCH,
+		/**
+		 * A possible match, i.e. there is at least one record that might be a
+		 * match, but this cannot be determined for sure.
+		 */
+		POSSIBLE_MATCH,
+		/**
+		 * Ambigous case, used to signal conflicts (several records are matching
+		 * when only one is expected).
+		 */
+		AMBIGOUS;
+	};
+
+	/** The type of this match result. */
+	@Basic
+	private MatchResultType type;
+
+	/**
+	 * The best (i.e. highest) matching weight found.
+	 */
+	private double bestMatchedWeight;
+
+	/**
+	 * Get the best (i.e. highest) matching weight that occured in the record
+	 * linkage process. The corresponding patient can be retreived by
+	 * {@link #getBestMatchedPatient()}.
+	 * 
+	 * @return The best matching weight.
 	 */
 	public double getBestMatchedWeight() {
 		return bestMatchedWeight;
 	}
 
+	/**
+	 * The best matching patient (i.e. for which comparison produced the highest
+	 * weight).
+	 */
 	@ManyToOne
 	private Patient bestMatchedPatient;
-	
-	public Patient getBestMatchedPatient()
-	{
+
+	/**
+	 * Get the best matching patient. This the one for which comparison to the
+	 * input patient yielded the highes matching weight.
+	 * 
+	 * @return The best matching patient.
+	 */
+	public Patient getBestMatchedPatient() {
 		return this.bestMatchedPatient;
 	}
-	
+
 	/**
 	 * Get the match result type of this result.
 	 * 
-	 * @return <ul>
-	 * 	<li>MATCH: A sure match is found. getPatient() retreives the 
-	 * 	matching bestMatchedPatient.
-	 * 	<li>POSSIBLE_MATCH: An unsure match is found. getPatient() 
-	 * retreives the best matching bestMatchedPatient.
-	 * 	<li> NON_MATCH: No matching bestMatchedPatient was found. getPatient
-	 * returns null.
-	 * </ul>
-	 * 
+	 * @return The match result, see {@link MatchResultType} for details.
 	 */
-	public MatchResultType getResultType()
-	{
+	public MatchResultType getResultType() {
 		return this.type;
 	}
 
-	public MatchResult(MatchResultType type, Patient patient, double bestMatchedWeight)
-	{
+	/**
+	 * Create an instance with the given values.
+	 * 
+	 * @param type
+	 *            The match result type.
+	 * @param patient
+	 *            The best matching patient.
+	 * @param bestMatchedWeight
+	 *            The best matching weight.
+	 */
+	public MatchResult(MatchResultType type, Patient patient,
+			double bestMatchedWeight) {
 		this.type = type;
 		this.bestMatchedPatient = patient;
-		if (Double.isInfinite(bestMatchedWeight) || Double.isNaN(bestMatchedWeight))
+		if (Double.isInfinite(bestMatchedWeight)
+				|| Double.isNaN(bestMatchedWeight))
 			this.bestMatchedWeight = -Double.MAX_VALUE;
 		else
 			this.bestMatchedWeight = bestMatchedWeight;
-	}	
+	}
 }

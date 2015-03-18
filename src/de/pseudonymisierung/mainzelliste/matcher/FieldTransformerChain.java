@@ -34,19 +34,34 @@ import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.exceptions.IncompatibleFieldTypesException;
 
 
-/** 
- * Implements a chain of several FieldTransformers applied one after another
+/**
+ * Implements a chain of several FieldTransformers applied one after another.
+ * This is used to combine for each field the field tranformations defined in
+ * the configuration.
  */
 public class FieldTransformerChain {
 	
+	/** The chain of FieldTransformers in the order they are applied. */
 	private List<FieldTransformer<Field<?>, Field<?>>> transformers;
 	
+	/**
+	 * Creates an empty instance.
+	 */
 	public FieldTransformerChain()
 	{
 		this.transformers = new Vector<FieldTransformer<Field<?>, Field<?>>>();
 	}
 
-	public Class<?> getInputClass()
+	/**
+	 * Get the input type of this FieldTransformerChain. This is always a
+	 * subclass of Field and equal to the input type of the first
+	 * FieldTransformer in this chain.
+	 * 
+	 * @return A Class object that represents the input type of this
+	 *         FieldTransformerChain or null if no FieldTransformers are
+	 *         defined.
+	 */
+	public Class<Field<?>> getInputClass()
 	{
 		if (this.transformers.size() == 0)
 			return null;
@@ -54,6 +69,15 @@ public class FieldTransformerChain {
 		return this.transformers.get(0).getInputClass();
 	}
 	
+	/**
+	 * Get the output type of this FieldTransformerChain. This is always a
+	 * subclass of Field and equal to the output type of the last
+	 * FieldTransformer in this chain.
+	 * 
+	 * @return A Class object that represents the output type of this
+	 *         FieldTransformerChain or null if no FieldTransformers are
+	 *         defined.
+	 */
 	public Class<?> getOutputClass()
 	{
 		if (this.transformers.size() == 0)
@@ -62,6 +86,16 @@ public class FieldTransformerChain {
 		return this.transformers.get(this.transformers.size() - 1) .getInputClass();
 	}
 
+	/**
+	 * Add a FieldTransformer to this chain. It will be appended to the end of
+	 * the chain.
+	 * 
+	 * @param toAdd
+	 *            The FieldTransformer to add.
+	 * @throws IncompatibleFieldTypesException
+	 *             If the input field of toAdd does not match the output type of
+	 *             this chain.
+	 */
 	public void add(FieldTransformer<Field<?>, Field<?>>... toAdd) throws IncompatibleFieldTypesException
 	{
 		for (FieldTransformer<Field<?>, Field<?>> transformer : toAdd)
@@ -79,6 +113,15 @@ public class FieldTransformerChain {
 		}
 	}
 	
+	/**
+	 * Transform a Field with this chain. The input field is copied by calling
+	 * {@code input.clone()} before applying the transformations.
+	 * 
+	 * @param input
+	 *            The field to transform.
+	 * @return The transformed field or a copy of the input, if no
+	 *         FieldTransformers are defined in this chain.
+	 */
 	public Field<?> transform(Field<?> input)
 	{
 		Field<?> result = input.clone();

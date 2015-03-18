@@ -43,37 +43,78 @@ import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 
-//FIXME: Kommentar
+/**
+ * Performs record linkage by using the algorithm of Epilink et al. This is a
+ * simple weight based algorithm (similar to the method of Fellegi and Sunter)
+ * with support for string metrics.
+ * 
+ * The weight for a record pair (x1,x2) is computed by the formula
+ * 
+ * sum_i (w_1 * s(x1_i, x2_i)) / sum_i w_i where s(x1_i, x2_i) is the value of a
+ * string comparison of records x1 and x2 in the i-th field and w_i is a
+ * weighting factor computed by
+ * 
+ * w_i = log_2 (1-e_i) / f_i
+ * 
+ * where f_i denotes the average frequency of values and e_i the estimated error
+ * rate for field i.
+ * 
+ * @see "P. Contiero et al., The EpiLink record linkage software, in: Methods of Information in Medicine 2005, 44 (1), 66–71."
+ * 
+ *
+ */
 public class EpilinkMatcher implements Matcher {
 
+	/** Minimum weight for definitive matches. */
 	private double thresholdMatch;
+	
 	/**
-	 * @return the thresholdMatch
+	 * Get the minimum weight for definitive matches.
+	 * 
+	 * @return The minimum weight for matches, a number in the range [0,1].
 	 */
 	public double getThresholdMatch() {
 		return thresholdMatch;
 	}
 
 	/**
-	 * @return the thresholdNonMatch
+	 * Get the minimum weight for possible matches.
+	 * 
+	 * @return The minimum weight for possible matches, a number in the range
+	 *         [0,1].
 	 */
 	public double getThresholdNonMatch() {
 		return thresholdNonMatch;
 	}
 
-
+	/** The minimum weight for possible matches. */
 	private double thresholdNonMatch;
 	
+	/** The FieldComparators, by field name. */
 	private Map<String, FieldComparator<Field<?>>> comparators;
+	/** Mean frequencies of values by field name. */
 	private Map<String, Double> frequencies;
+	/** Assumed error rates by field name. */
 	private Map<String, Double> errorRates;
 
-	/** Field weights */
+	/**
+	 * Field weights by field name. Calculated from {@link #frequencies} and
+	 * {@link #errorRates}
+	 */
 	private Map<String, Double> weights;
 	
+	/** Sets of fields that are exchangeable for matching. */
 	private List<List<String>> exchangeGroups;
+	/** Buffer for fields not included in any exchange group. */
 	private Set<String> nonExchangeFields;
 	
+	/**
+	 * Get all permutations of a list of Strings.
+	 * 
+	 * @param elements
+	 *            A list of strings.
+	 * @return The permutations.
+	 */
 	private static List<List<String>> permutations(List<String> elements)
 	{
 		LinkedList<List<String>> result = new LinkedList<List<String>>();
@@ -82,6 +123,17 @@ public class EpilinkMatcher implements Matcher {
 		return result;
 	}
 	
+	/**
+	 * Backend function for calculating permutations. Called recursively.
+	 * 
+	 * @param result
+	 *            Result list to which permutations are added.
+	 * @param prefix
+	 *            Prefix to add to the resulting permutations (fixed part) for
+	 *            this run.
+	 * @param elements
+	 *            Elements that are permuted.
+	 */
 	private static void permutationWorker(List<List<String>> result, List<String> prefix, List<String> elements) {
 		LinkedList<String> workingCopy;
 		if (elements.size() == 1)
@@ -102,9 +154,14 @@ public class EpilinkMatcher implements Matcher {
 		}	
 	}
 	
+	/**
+	 * Calculate the matching weight for two records.
+	 * @param left The left hand side record.
+	 * @param right The right hand side record.
+	 * @return The matching weight, a number in the range [0,1].
+	 */
 	public double calculateWeight(Patient left, Patient right)
 	{
-
 	
 		double weightSum = 0; // holds sum of field weights 
 		double totalWeight = 0; // holds total weight

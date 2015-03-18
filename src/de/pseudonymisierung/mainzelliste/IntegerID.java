@@ -29,9 +29,18 @@ import javax.persistence.Entity;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
+/**
+ * A patient identifier that consists of an integer number.
+ */
 @Entity
 public class IntegerID extends ID {
 
+	/**
+	 * Creates an instance with the given ID string and type.
+	 * @param idString ID string. Must be parseable to an integer.
+	 * @param type The ID type.
+	 * @throws InvalidIDException If the ID type is unknown or idString cannot be parsed to an integer. 
+	 */
 	public IntegerID(String idString, String type) throws InvalidIDException {
 		super(idString, type);
 	}

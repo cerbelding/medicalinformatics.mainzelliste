@@ -212,6 +212,12 @@ idgenerator.intid = SimpleIDGenerator
 
 # Output of result
 
+# Whether to show a result page (defaults to true)
+# Set to false if you use a redirect address with "addPatient"-Tokens
+# and want the user to be immediately redirected to the calling application.
+# Only applicable if a redirect address is defined in a token
+result.show = true
+
 # Whether to include Idat in the result page.
 result.printIdat = true
 
@@ -225,13 +231,23 @@ result.printIdat = true
 # - createToken: create tokens -- in addition, permission "tt_x" is req'd, where x is one of these TOKEN TYPES:
 #   - tt_addPatient: allows to generate one (1) ID. Token is invalidated afterwards even if an existing ID was returned.
 #	- tt_readPatients: allows to read IDAT or pseudonyms of patients
+#   - tt_editPatient: allows to change identifying data of one (1) patient. Token is invalidated afterwards.
 
 # A passphrase used for authentication
 servers.0.apiKey = 
-servers.0.permissions = createSession;showSessionIds;deleteAllPatients;createToken;tt_addPatient;tt_readPatients
+servers.0.permissions = createSession;showSessionIds;deleteAllPatients;createToken;tt_addPatient;tt_readPatients;tt_editPatient
 
-# Accepted origin addresses
-servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1
+
+# Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only)
+ 
+# Allow only requests from localhost (e.g. for developing)
+# servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1
+
+# Allow requests from a typical private network
+# servers.0.allowedRemoteAdresses = 192.168.56.0/24
+
+# Allow combination of both
+# servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1;192.168.56.0/24
 
 
 # Allowed Format of callback
@@ -241,3 +257,10 @@ callback.allowedFormat = https://.*
 # A session will be deleted if not accessed for this amount of time, specified in minutes
 # Default value if not specified: 10
 # sessionTimeout = 10
+
+# Operator information of the Mainzelliste operator to display around user forms
+# (defaults to empty/invisible):
+# - Contact: Text to be displayed below all forms
+# - Logo: Path to image to be displayed in the upper right corner
+# operator.contact = 
+# operator.logo = /etc/mainzelliste/logo.png

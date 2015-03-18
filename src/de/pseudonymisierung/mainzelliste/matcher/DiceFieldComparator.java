@@ -35,6 +35,16 @@ import de.pseudonymisierung.mainzelliste.HashedField;
  */
 public class DiceFieldComparator extends FieldComparator<HashedField> {
 
+	/**
+	 * Instantiate comparison between two specified fields. The field
+	 * definitions correspond to indices in the Fields map of the persons
+	 * (objects of class Patient) which are compared.
+	 * 
+	 * @param fieldLeft
+	 *            Name of comparison field on the left side.
+	 * @param fieldRight
+	 *            Name of comparison field on the right side.
+	 */	
 	public DiceFieldComparator (String fieldLeft, String fieldRight)
 	{
 		super(fieldLeft, fieldRight);

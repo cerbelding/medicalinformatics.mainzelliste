@@ -32,13 +32,24 @@ import de.pseudonymisierung.mainzelliste.Patient;
 
 /**
  * BinaryFieldComparator implements a simple equal/unequal-comparison on fields.
- * Comparison is performed with the field's .equals method. For equal field,
- * 1.0 is returned as comparison value, 0 otherwise.
+ * Comparison is performed with the field's .equals method. For equal field, 1.0
+ * is returned as comparison value, 0 otherwise.
+ * 
  * @author borg
  *
  */
 public class BinaryFieldComparator extends FieldComparator<Field<?>> {
 
+	/**
+	 * Instantiate comparison between two specified fields. The field
+	 * definitions correspond to indices in the Fields map of the persons
+	 * (objects of class Patient) which are compared.
+	 * 
+	 * @param fieldLeft
+	 *            Name of comparison field on the left side.
+	 * @param fieldRight
+	 *            Name of comparison field on the right side.
+	 */
 	public BinaryFieldComparator (String fieldLeft, String fieldRight)
 	{
 		super(fieldLeft, fieldRight);
@@ -53,7 +64,8 @@ public class BinaryFieldComparator extends FieldComparator<Field<?>> {
 	}
 
 	/**
-	 * @return 1.0 if fieldLeft is not null and fieldLeft.equals(fieldRight), 0 otherwise.
+	 * @return 1.0 if fieldLeft is not null and fieldLeft.equals(fieldRight), 0
+	 *         otherwise.
 	 */
 	@Override
 	public double compareBackend(Field<?> fieldLeft, Field<?> fieldRight)

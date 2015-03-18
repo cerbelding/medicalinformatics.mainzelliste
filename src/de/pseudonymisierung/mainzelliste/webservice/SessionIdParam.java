@@ -32,7 +32,17 @@ import javax.ws.rs.core.Response.Status;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.Session;
 
+/**
+ * Realization of {@link AbstractParam} for getting sessions by their ids.
+ */
 public class SessionIdParam extends AbstractParam<Session> {
+	
+	/**
+	 * Create an instance with the given session id.
+	 * 
+	 * @param s
+	 *            Id of a valid session.
+	 */
 	public SessionIdParam(String s) {
 		super(s);
 	}
