@@ -70,7 +70,8 @@ public class HTMLResource {
 	public Response createPatientForm(
 			@QueryParam("tokenId") String tokenId,
 			@QueryParam("callback") String callback,
-                        @QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion){
+			@Context HttpServletRequest request) {
+		String mainzellisteApiVersion = Servers.instance.getRequestApiVersion(request).toString();
 		Token t = Servers.instance.getTokenByTid(tokenId);
 		if (Config.instance.debugIsOn() ||
 				(t != null && t.getType().equals("addPatient")))
