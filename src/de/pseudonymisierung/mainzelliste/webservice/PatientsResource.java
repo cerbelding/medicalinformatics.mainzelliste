@@ -119,6 +119,8 @@ public class PatientsResource {
 	 * 
 	 * @param tokenId
 	 *            Id of a valid "addPatient" token.
+	 * @param mainzellisteApiVersion
+	 *            The API version used to make the request.
 	 * @param form
 	 *            Input as provided by the HTML form.
 	 * @param request
@@ -130,6 +132,7 @@ public class PatientsResource {
 	@Produces({MediaType.TEXT_HTML, MediaType.WILDCARD})
 	public Response newPatientBrowser(
 			@QueryParam("tokenId") String tokenId,
+			@QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion,
 			MultivaluedMap<String, String> form,
 			@Context HttpServletRequest request){
 		try {
@@ -192,9 +195,17 @@ public class PatientsResource {
 					// and set flag for JSP to display them
 					map.put("printIdat", true);
 				}
-				ID retId = ids.toArray(new ID[0])[0];
-				map.put("id", retId.getIdString());
-				map.put("tentative", retId.isTentative());
+
+				map.put("ids", ids);
+                
+                map.put("tentative", false);
+                // Only put true in map if one or more PID are tentative
+                for (ID id : ids) {
+                    if (id != null && id.isTentative()) {
+                        map.put("tentative", true);
+                        break;
+                    }
+                }
 
 				if (Config.instance.debugIsOn() && result.getResultType() != MatchResultType.NON_MATCH)
 				{
@@ -217,7 +228,7 @@ public class PatientsResource {
 					.entity(new Viewable("/errorPage.jsp", map)).build();
 		}
 	}
-	
+
 	/**
 	 * Create a new patient. Interface for software applications.
 	 * 

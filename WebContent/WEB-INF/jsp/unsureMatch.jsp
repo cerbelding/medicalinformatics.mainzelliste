@@ -21,7 +21,7 @@
 		<div class="inhalt">
 			<div>&nbsp;</div>
 			<div class="formular">
-				<form action="<%=request.getContextPath() %>/patients?tokenId=${it.tokenId}&callback=${it.callback}" method="post" id="form_person">
+				<form action="<%=request.getContextPath() %>/patients?mainzellisteApiVersion=${it.mainzellisteApiVersion}&tokenId=${it.tokenId}" method="post" id="form_person">
 				<h1><%=bundle.getString("unsureCase") %></h1>
 				<%=bundle.getString("unsureCaseText") %>
 				<ul class="hinweisen_liste">

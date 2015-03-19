@@ -2,10 +2,13 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
 	pageEncoding="ISO-8859-1"%>
 <%@ page import="java.util.Map"%>
+<%@ page import="java.util.Set"%>
+<%@ page import="de.pseudonymisierung.mainzelliste.ID"%>
 <%
 	@SuppressWarnings("unchecked")
 	Map<String, Object> map = (Map<String, Object>) request
 			.getAttribute("it");
+	Set<ID> ids = (Set<ID>) map.get("ids");
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -24,15 +27,29 @@
 		<div class="formular">
 			<div>&nbsp;</div>
 			<h1>Ergebnis</h1>
-
-			<p>
-				Ihr angeforderter PID lautet
-				<tt>
-					<big>${it.id}</big>
-				</tt>
-				. Bitte übernehmen Sie ihn in Ihre Unterlagen.
-			</p>
-
+                        <div align="center">
+                            <p>
+								Ihr(e) angeforderter/angeforderten Pseudonym(e) lauten:
+                            </p>
+							<ul style="display: inline-block; text-align: left;">
+							<% for (ID id : ids) { 
+							if (id != null) {
+							%>
+								<li><tt><big><%=id.getType() %>: <%=id.getIdString() %></big></tt></li>                                  	
+							<% 
+								}
+							}
+							%>
+							</ul>
+                            <p>
+                            	Bitte übernehmen Sie diese(s) in Ihre Unterlagen. 
+                            </p>
+                            <p>
+                            	Der Text vor dem Doppelpunkt bezeichnet jeweils den
+                            	Pseudonymtyp, der Text danach ist das Pseudonym selbst.
+                            </p>
+                        </div>
+                                        
 			<% if (map.containsKey("printIdat") && (Boolean) map.get("printIdat")) { %>
 			<h3>Eingegebene Daten</h3>
 			<p>

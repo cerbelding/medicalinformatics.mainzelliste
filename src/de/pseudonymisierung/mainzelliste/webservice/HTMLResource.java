@@ -75,20 +75,24 @@ public class HTMLResource {
 	 * 
 	 * @param tokenId
 	 *            Id of a valid "addPatient" token.
-	 * @return The input form or an error message if the given token is not
-	 *         valid.
+	 * @param request
+	 *            The injected HttpServletRequest.
+	 * @return The input form or an error message if the given token is not valid.
 	 */
 	@GET
 	@Path("createPatient")
 	@Produces(MediaType.TEXT_HTML)
 	public Response createPatientForm(
-			@QueryParam("tokenId") String tokenId) {
+			@QueryParam("tokenId") String tokenId,
+			@Context HttpServletRequest request) {
+		String mainzellisteApiVersion = Servers.instance.getRequestApiVersion(request).toString();
 		Token t = Servers.instance.getTokenByTid(tokenId);
 		if (Config.instance.debugIsOn() ||
 				(t != null && t.getType().equals("addPatient")))
 		{
 			HashMap<String, Object> map = new HashMap<String, Object>();
 			map.put("tokenId", tokenId);
+			map.put("mainzellisteApiVersion", mainzellisteApiVersion);
 			return Response.ok(new Viewable("/createPatient.jsp", map)).build();
 		} else throw new WebApplicationException(Response
 				.status(Status.UNAUTHORIZED)
