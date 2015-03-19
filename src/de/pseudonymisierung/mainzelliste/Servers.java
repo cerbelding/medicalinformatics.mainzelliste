@@ -286,6 +286,10 @@ public enum Servers {
 			majorVersion = Integer.parseInt(versionString.split("\\.")[0]);
 			minorVersion = Integer.parseInt(versionString.split("\\.")[1]);
 		}
+		
+		public String toString() {
+			return majorVersion + "." + minorVersion;
+		}
 	}
 	
 	public ApiVersion getRequestApiVersion(HttpServletRequest req) {

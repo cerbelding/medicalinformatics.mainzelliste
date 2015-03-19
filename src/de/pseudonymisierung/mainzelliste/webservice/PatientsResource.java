@@ -171,9 +171,9 @@ public class PatientsResource {
                         map.put("ids", ids);
                         
                         map.put("tentative", false);
-                        //Only put true in map if one or more PID are tentative
+                        // Only put true in map if one or more PID are tentative
                         for (ID id : ids) {
-                            if (id.isTentative()) {
+                            if (id != null && id.isTentative()) {
                                 map.put("tentative", true);
                                 break;
                             }
