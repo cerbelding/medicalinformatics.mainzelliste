@@ -1,3 +1,8 @@
+<%@page import="javax.ws.rs.core.Response.Status"%>
+<%@page import="javax.ws.rs.core.Response"%>
+<%@page import="javax.ws.rs.WebApplicationException"%>
+<%@page import="org.codehaus.jettison.json.JSONException"%>
+<%@page import="java.util.Map"%>
 <%@page import="org.codehaus.jettison.json.JSONObject"%>
 <%@page import="de.pseudonymisierung.mainzelliste.ID"%>
 <%@page import="de.pseudonymisierung.mainzelliste.Patient"%>
@@ -8,18 +13,22 @@
 	String idTypes[] = IDGeneratorFactory.instance.getIDTypes();
 	String defaultIdType = IDGeneratorFactory.instance.getDefaultIDType();
 	JSONObject originalIds;
-	{
-		@SuppressWarnings("unchecked")
-		Map<String, Object> map = (Map<String, Object>) request
-			.getAttribute("it");
+	@SuppressWarnings("unchecked")
+	Map<String, Object> map = (Map<String, Object>) request
+		.getAttribute("it");
 	
-		Patient original = (Patient) map.get("original");
-	 	originalIds = new JSONObject();
-		if (original != null) {
-			for (ID thisId : original.getIds())
-				originalIds.put(thisId.getType(), thisId.getIdString());
-		}
-	}
+	Patient original = (Patient) map.get("original");
+ 	try {
+ 		originalIds = new JSONObject();
+ 		if (original != null) {
+ 			for (ID thisId : original.getIds())
+ 				originalIds.put(thisId.getType(), thisId.getIdString());
+ 		}
+ 	} catch (JSONException e) {
+ 		throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR)
+ 				.entity("An internal error has occured: JSONException while collecting IDs. " + e.getMessage())
+ 				.build());
+ 	}
 %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -50,20 +59,18 @@ function fillOriginalId() {
 </script>
 
 <body>
-	<div class="kopfzeile">
-		<div class="logo">&nbsp;</div>
-	</div>
+	<jsp:include page="header.jsp"></jsp:include>
 	<div class="inhalt">
 		<div>&nbsp;</div>
 		<div class="formular">
 			<form method="post" id="form_person">
 				<h1>Patienten bearbeiten</h1>
-				<%@ include file="patientFormElements.jsp" %>
+				<jsp:include page="patientFormElements.jsp"></jsp:include>
 				<div id ="form_elements_admin">
 				<table class="daten_tabelle">
 					<tr>
 						<td><label for="tentative">Vorläufig</label></td>
-						<td><input type="checkbox" id="tentative" name="tentative" 
+						<td><input type="checkbox" id="tentative" name="tentative"
 							<% if (map.get("tentative").equals(true)) {%>
 							checked="${it.tentative}" <% } %>
 							/></td>
@@ -96,12 +103,25 @@ function fillOriginalId() {
 						</td>
 					</tr>
 				</table>
-				<input type="submit" value="Speichern" />
+				</div>
+				<div align="center">
+					&nbsp;
+				</div>
+				<div align="center">
+					<input type="submit" value="Speichern">
+				</div>				
+			</form>
+			<div align="center">
+				&nbsp;
+			</div>
+			<form method="POST" onsubmit="return confirm('Patienten wirklich löschen?');">
+				<div align="center">
+					<input type="submit" value="Löschen" name="delete"/>
 				</div>
 			</form>
 		</div>
 		<div>&nbsp;</div>
 	</div>
-	<%@include file="footer.jsp" %>
+	<jsp:include page="footer.jsp" />
 </body>
 </html>

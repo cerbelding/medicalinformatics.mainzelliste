@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app metadata-complete="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" version="3.0">
 	<display-name>de.pseudonymisierung.mainzelliste</display-name>
+	<!-- Filter to add header for Cross-origin resource sharing -->
 	<filter>
-		<filter-name>Mainzer ID-Framework</filter-name>
+		<filter-name>Mainzelliste - CorsResponseFilter</filter-name>
+		<filter-class>de.pseudonymisierung.mainzelliste.CorsResponseFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>Mainzelliste - CorsResponseFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<filter>
+		<filter-name>Mainzelliste</filter-name>
 		<filter-class>com.sun.jersey.spi.container.servlet.ServletContainer</filter-class>
 	  	<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
@@ -20,12 +29,18 @@
 			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
 			<param-value>true</param-value>
 		</init-param>
+		<!-- Allows to convert POST requests to other methods via header "X-HTTP-Method-Override" 
+			or parameter "_method" -->
+ 		<init-param>
+	         <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
+	         <param-value>com.sun.jersey.api.container.filter.PostReplaceFilter</param-value>
+	     </init-param>		
 	</filter>
 	<listener>
 		<listener-class>de.pseudonymisierung.mainzelliste.Initializer</listener-class>
 	</listener>
 	<filter-mapping>
-		<filter-name>Mainzer ID-Framework</filter-name>
+		<filter-name>Mainzelliste</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 	<security-constraint>

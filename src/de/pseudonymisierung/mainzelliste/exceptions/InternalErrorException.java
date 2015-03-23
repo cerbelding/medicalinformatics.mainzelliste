@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -29,17 +29,39 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+/**
+ * Signals an internal application error. Will be reported to the requester as
+ * an HTTP 500 error, if not caught.
+ */
 public class InternalErrorException extends WebApplicationException {
+
+	@SuppressWarnings("javadoc")
+	private static final long serialVersionUID = -3828755806557209546L;
+	
+	/** The default error message. */
 	private static String message = "Internal server error.";
 	
+	/** Create an instance with default error message. */
 	public InternalErrorException() {
         super(Response.status(Status.INTERNAL_SERVER_ERROR).entity(message).build());
 	}
 	
+	/**
+	 * Create an instance with the given error message.
+	 * 
+	 * @param message
+	 *            The error message.
+	 */
 	public InternalErrorException(String message) {
         super(Response.status(Status.INTERNAL_SERVER_ERROR).entity(message).build());
 	}
 
+	/**
+	 * Create an instance with the given cause.
+	 * 
+	 * @param cause
+	 *            The underlying cause.
+	 */
 	public InternalErrorException(Throwable cause) {
 		super(cause, Status.INTERNAL_SERVER_ERROR);
 	}

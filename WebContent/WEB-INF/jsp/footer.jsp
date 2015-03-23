@@ -1,3 +1,15 @@
+<%@page import="de.pseudonymisierung.mainzelliste.Config"%>
+<%@page import="java.util.ResourceBundle"%>
+<% 
+	ResourceBundle bundle = Config.instance.getResourceBunde(request);
+	String operator = Config.instance.getProperty("operator.contact");
+%>
 		<div class="kontakt_daten">
-			<p>Kontakt: Medizinische Informatik, Universitätsmedizin der Johannes Gutenberg-Universität Mainz. Tel.: 06131-17-5062</p>
+			<p><% if (operator != null && !operator.equals("")) { %>
+				<%=bundle.getString("operator") %>: <%=operator %>
+				<% } %>
+			</p>
+			<p>
+				<small><%=bundle.getString("mainzellisteInfo") %>&nbsp;<a href="http://www.mainzelliste.de">http://www.mainzelliste.de</a>.</small>
+			</p>
 		</div>

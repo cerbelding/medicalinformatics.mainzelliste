@@ -23,28 +23,40 @@
  * License, version 2.0, the licensors of this Program grant you additional 
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.webservice;
+package de.pseudonymisierung.mainzelliste.exceptions;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 /**
- * Access to functions. In the future, pluggable modules can register here.
+ * Signals that an input field is invalid, e.g. unknown.
  */
-@Path("/functions")
-public class FunctionsResource {
+public class InvalidFieldException extends WebApplicationException {
 	
-	@GET
-	@Path("/{module}")
-	public Response delegate(
-			@PathParam("module") String subMod){
-		
-		return Response
-			.status(Status.NOT_FOUND)
-			.entity("Module " + subMod + " is unknown.")
-			.build();
+	@SuppressWarnings("javadoc")
+	private static final long serialVersionUID = 5981641835447911933L;
+	
+	/** The default error message. */
+	private static String defaultMessage = "Invalid Field.";
+	
+	/** Create an instance with the default error message. */
+	public InvalidFieldException() {
+		this(defaultMessage);
+	}
+	
+	/**
+	 * Create an instance with the given error message.
+	 * 
+	 * @param message
+	 *            The error message.
+	 */
+	public InvalidFieldException(String message) {
+        super(Response.status(Status.BAD_REQUEST).entity(message).build());
+	}
+	
+	@Override
+	public String getMessage() {
+		return super.getMessage();
 	}
 }

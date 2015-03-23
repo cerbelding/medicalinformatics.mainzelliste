@@ -8,6 +8,43 @@ Um immer auf dem aktuellen Stand zu bleiben, registrieren Sie sich auf unserer [
 
 ## Releaseinformationen
 
+### 1.4
+
+Diese Version implementiert die Schnittstellenversion 2.1 und damit die darin enthaltenen neuen Funktionen. Ausführliche Informationen dazu enthält das Schnittstellendokument, das von der [Projektseite](http://www.mainzelliste.de) heruntergeladen werden kann. Alle früheren Schnittstellenversionen werden weiterhin unterstützt. 
+
+Wegen der zusätzlich umgesetzen Bugfixes empfehlen wir auch Anwendern, die die neuen Funktionen nicht benötigen, ein Upgrade. Das Upgrade ist von jeder früheren Version möglich und außer dem Austausch der Applikation sind keine weiteren Schritte zu unternehmen. 
+
+Neue Funktionen:
+
+- Patientendaten können mittels des `editPatient`-Tokens und eines PUT-Requests geändert werden.
+- Sessions und Tokens können mittels DELETE-Requests explizit gelöscht werden.
+- POST-Requests können genutzt werden, um andere Methoden (insbesondere PUT und DELETE) zu kapseln („method override“). Das erlaubt die Verwendung anderer Methoden als POST und GET aus HTML-Formularen.
+- Cross origin resource sharing (CORS) für einfache GET-Zugriffe. Erlaubt z.B. den Abruf von IDAT aus einem Webbrowser über Domaingrenzen hinweg. Dazu müssen die erlaubten zugreifenden Hosts konfiguriert werden (siehe Konfigurationshandbuch, `servers.allowedOrigins`).
+- Für Anwendungsfälle, bei denen die Redirect-Funktionalität genutzt wird, kann die Ergebnisseite, die nach dem Anlegen eines Patienten erscheint, mittels Konfiguration deaktiviert werden (siehe Konfigurationshandbuch, `result.show`).
+- Für zugreifende Server können neben zugelassenen IP-Adressen nun auch Adressbereiche IPv4) in CIDR-Notation angegeben werden.
+- Bei Anlegen eines Patienten (POST /patients) wird der Zeitpunkt des Zugriffs gespeichert (Vorarbeit für zukünftige Anwendungen).
+- Bei Zugriff über die HTML-Schnittstelle werden Fehlermeldungen als Webseite formatiert ausgegeben. 
+- Die Benutzerformulare wurden internationalisiert und stehen nun in Deutsch und Englisch zur Verfügung. Die Sprachauswahl erfolgt gemäß dem vom Browser gesendeten Header (Accept-Language), im Fall einer nicht unterstützten Sprache wird Englisch verwendet. Die englische Übersetzung wurde freundlicherweise vom Projekt „European Management Platform for Childhood Interstitial Lung Diseases“ (chILD-EU) zur Verfügung gestellt.
+- Für die Benutzerformulare können Kontaktdaten und ein Logo konfiguriert werden, um den Betreiber der Instanz kenntlich zu machen (siehe Konfigurationshandbuch, `operator.*`).
+
+
+
+Bugfixes:
+
+- Die Fehlermeldung, die bei Eingabe einer ID unbekannten Typs ausgegeben wird, enthielt nicht den Typbezeichner, sondern die ID selbst.
+- Die JSON-Ausgabe bei Zugriff aus Session / Token entsprach nicht der Schnittstellenbeschreibung.
+- Tokenobjekte wurden nicht ordungsgemäß gelöscht, was in Anwendungsfällen mit langlebigen Sessions und großer Anzahl von Tokens zu Speicherproblemen führte.
+- Beim Abschicken des Formulars zum Anlegen von Patienten aus dem Internet Explorer IE wurde teilweise dazu ein JSON-Objekt ausgegeben, was eine Fehlermeldung provozierte.
+- Das reservierte Wort „value“ kam als Bezeichner in einer SQL-Abfrage vor, was bei Verwendung der Datenbank Firebird zu einem Datenbankfehler führte.
+- Verschiedene Methoden waren nicht threadsicher, was in Anwendungsfällen mit vielen parallelen Zugriffen zu Fehlern führte.
+
+Sonstige Änderungen:
+
+- Die Javadoc-Kommentare des Programmcodes wurden vervollständigt.
+- Der Programmcode wurde insgesamt bereinigt, das beinhaltet insbesondere die Entfernung von obsolet gewordenen Codeteilen, erledigten Kommentaren und Testmethoden.
+- Der Filtername der Applikation im Deployment Descriptor (web.xml) wurde von "Mainzer ID-Framework" nach "Mainzelliste" umbenannt.
+- Die Fehlermeldung bei Fehlschlagen des Callbacks nach Anlegen eines Patienten wurde differenziert, so dass insbesondere ein Mismatch zwischen angegebener und tatsächlich verwendeter API-Version schnell erkannt werden kann (Beitrag von Matthias Lemmer).
+
 ### 1.3.2
 - Bugfix: Erstellung des Datenbankschemas scheiterte mit einer ReportingSQLException (gemeldet von Matthias Lemmer).
 
@@ -92,3 +129,4 @@ Als Communityprojekt lebt die Mainzelliste von den Beiträgen der Forschergemein
 - Daniel Volk, Universitätsmedizin Mainz
 - Dirk Langner, Universitätsmedizin Greifswald
 - Matthias Lemmer, Universität Marburg
+- Projekt FP7-305653-chILD-EU

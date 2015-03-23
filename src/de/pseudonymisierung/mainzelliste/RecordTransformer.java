@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -34,16 +34,31 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.*;
 
 /**
- * Stores the field transformers for a set of fields, implemented as a HashMap.
- * Keys are the field names, values the corresponding FieldTransformer objects.
+ * A RecordTransformer applies all configured FieldTranformers to the fields of
+ * an input record.
  */
 public class RecordTransformer {
-	
+
+	/**
+	 * Map of field transformers. Keys are the field names, values the
+	 * corresponding FieldTransformer objects.
+	 */
 	private Map<String, FieldTransformerChain> fieldTransformers;
-	
+
+	/**
+	 * Create an instance from the configuration.
+	 * 
+	 * @param props
+	 *            The configuration of the Mainzelliste instance as provides by
+	 *            {@link Config}.
+	 * 
+	 * @throws InternalErrorException
+	 *             If an error occurs during initalization. A typical cause is
+	 *             when a configured FieldTransformer class cannot be found on
+	 *             the class path.
+	 */
 	@SuppressWarnings("unchecked")
-	public RecordTransformer(Properties props) throws InternalErrorException
-	{
+	public RecordTransformer(Properties props) throws InternalErrorException {
 		fieldTransformers = new HashMap<String, FieldTransformerChain>();
 
 		// Get names of fields from config vars.*
@@ -51,20 +66,18 @@ public class RecordTransformer {
 		java.util.regex.Matcher m;
 
 		// Build map of comparators and map of frequencies from Properties
-		for (Object key : props.keySet())
-		{
+		for (Object key : props.keySet()) {
 			m = p.matcher((String) key);
-			if (m.find()){
+			if (m.find()) {
 				String fieldName = m.group(1);
 				String transformerProp = props.getProperty("field." + fieldName + ".transformers");
 				if (transformerProp != null)
 				{
 					String transformers[] = transformerProp.split(",");
 					FieldTransformerChain thisChain = new FieldTransformerChain();
-					for (String thisTrans : transformers)
-					{
+					for (String thisTrans : transformers) {
 						thisTrans = thisTrans.trim();
-						try{
+						try {
 							FieldTransformer<Field<?>, Field<?>> tr = (FieldTransformer<Field<?>, Field<?>>) Class.forName("de.pseudonymisierung.mainzelliste.matcher." + thisTrans).newInstance();
 							thisChain.add(tr);						
 						} catch (Exception e)
@@ -76,21 +89,22 @@ public class RecordTransformer {
 					this.fieldTransformers.put(fieldName, thisChain);
 				}
 			}
-		}			
+		}
 	}
-	
-	
-	/** Transforms a patient by transforming all of its fields. Fields
-	 * for which no transformer is found (i.e. the field name is not in
-	 * .keySet()) are passed unchanged. */
-	public Patient transform(Patient input)
-	{
+
+	/**
+	 * Transforms a patient by transforming all of its fields. Fields for which
+	 * no transformer is found (i.e. the field name is not in .keySet()) are
+	 * passed unchanged. 
+	 * @param input The record to transform. 
+	 * @return The transformed record.
+	 */
+	public Patient transform(Patient input) {
 		Map<String, Field<?>> inFields = input.getFields();
 		Patient output = new Patient();
 		HashMap<String, Field<?>> outFields = new HashMap<String, Field<?>>();
 		/* iterate over input fields and transform each */
-		for (String fieldName : inFields.keySet())
-		{
+		for (String fieldName : inFields.keySet()) {
 			if (this.fieldTransformers.containsKey(fieldName))
 				outFields.put(fieldName, this.fieldTransformers.get(fieldName).transform(inFields.get(fieldName)));
 			else

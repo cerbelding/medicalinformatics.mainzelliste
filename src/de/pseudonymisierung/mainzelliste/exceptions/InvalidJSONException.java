@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -23,38 +23,53 @@
  * License, version 2.0, the licensors of this Program grant you additional 
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.webservice;
+package de.pseudonymisierung.mainzelliste.exceptions;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import de.pseudonymisierung.mainzelliste.Config;
+import org.codehaus.jettison.json.JSONException;
 
 /**
- * Realization of {@link AbstractParam} for field names.
+ * Provides a default way to report JSON errors  
+ * 
  */
-public class FieldKeyParam extends AbstractParam<String> {
+public class InvalidJSONException extends WebApplicationException {
+
+	@SuppressWarnings("javadoc")
+	private static final long serialVersionUID = -4979455015089015791L;
+	
+	/** The default error message. */
+	private static String defaultMessage = "A JSON error occured.";
+	
+	/** Create an instance with the default error message. */
+	public InvalidJSONException() {
+		this(defaultMessage);
+	}
 	
 	/**
-	 * Create an instance from the given field name.
+	 * Create an instance with the given exception as cause.
 	 * 
-	 * @param s
-	 *            Name of a valid (i.e. configured) field.
+	 * @param e
+	 *            The JSONException that is the cause of this exception.
+	 * */
+	public InvalidJSONException(JSONException e) {
+		this(defaultMessage + " " + e.getMessage());
+	}
+	
+	/**
+	 * Create an instance with the given error message.
+	 * 
+	 * @param message
+	 *            The error message.
 	 */
-	public FieldKeyParam(String s) {
-		super(s);
+	public InvalidJSONException(String message) {
+        super(Response.status(Status.BAD_REQUEST).entity(message).build());
 	}
 	
 	@Override
-	protected String parse(String s) throws WebApplicationException {
-		if(!Config.instance.getFieldKeys().contains(s)){
-			throw new WebApplicationException(Response
-				.status(Status.BAD_REQUEST)
-				.entity("There is no Field key called " + s + ".")
-				.build()
-			);
-		}
-		return s;
+	public String getMessage() {
+		return defaultMessage;
 	}
 }

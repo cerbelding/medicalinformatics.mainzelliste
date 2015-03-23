@@ -6,21 +6,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Authorizes to add a patient to the database by his IDAT and receive an ID
+ * (pseudonym) back.
+ */
 public class AddPatientToken extends Token {
 
-	/**
-	 * Fields transmitted on token creation
-	 */
+	/** Fields transmitted on token creation. */
 	private Map<String, String> fields = new HashMap<String, String>();
+	/** The ID types that should be returned when making the ID request. */
 	private Set<String> requestedIdTypes = new HashSet<String>();
 
-	public AddPatientToken(String tid, String type) {
-		super(tid, type);
+	/**
+	 * Create an instance with the given id.
+	 * 
+	 * @param tid
+	 *            The token id.
+	 */
+	public AddPatientToken(String tid) {
+		super(tid, "addPatient");
 
 		// read fields from JSON data
 		this.fields = new HashMap<String, String>();
 	}
 	
+	/**
+	 * Create an instance without setting the token id.
+	 */
 	AddPatientToken() {
 		super();
 		this.setType("addPatient");
@@ -54,13 +66,22 @@ public class AddPatientToken extends Token {
 				requestedIdTypes.add(this.getDataItemString("idtype"));
 		}
 	}
+
 	/**
 	 * Return the fields transmitted on token creation.
+	 * 
+	 * @return A map where keys are field names and values the respective field
+	 *         values.
 	 */
 	public Map<String, String> getFields() {
 		return this.fields;
 	}
 	
+	/**
+	 * Get the ID types that should be returned when making the ID request.
+	 * 
+	 * @return The set of requested ID types.
+	 */
 	public Set<String> getRequestedIdTypes() {
 		return this.requestedIdTypes;
 	}
