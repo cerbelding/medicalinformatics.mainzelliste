@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -37,8 +37,11 @@ import java.util.Properties;
  */
 public class SimpleIDGenerator implements IDGenerator<IntegerID> {
 
+	/** Internal counter. Incremented on every ID creation. */
 	int counter;
+	/** The state information of this generator. */
 	IDGeneratorMemory mem;
+	/** The ID type this generator instance creates. */
 	String idType;
 	
 	@Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -30,14 +30,26 @@ package de.pseudonymisierung.mainzelliste;
  * of 2D maps as Map<StringPair, ?>.
  */
 public class StringPair { 
+	
+	/** The first string. */
 	private String str1;
+	/** The second string. */
 	private String str2;
 	
+	/**
+	 * Create an instance with the given values.
+	 * @param str1 First string to assign.
+	 * @param str2 Second string to assign.
+	 */
 	public StringPair(String str1, String str2) {
 		this.str1 = str1;
 		this.str2 = str2;
 	}
 
+	/**
+	 * Computes the hash code by concatenating the members, separated by ",",
+	 * and computing the hash code on the result.
+	 */
 	@Override
 	public int hashCode()
 	{
@@ -45,6 +57,9 @@ public class StringPair {
 		return hashStr.hashCode();
 	}
 
+	/**
+	 * Two StringPairs are equal if the respective members are equal (checked by .equals).
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if(!(obj instanceof StringPair))

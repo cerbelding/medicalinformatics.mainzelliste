@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -41,31 +41,51 @@ import org.codehaus.jettison.json.JSONObject;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
 /**
- * A person's identificator. Once created, the ID is guaranteed to be valid. Immutable.
+ * A person's identifier. Once created, the ID is guaranteed to be valid.
+ * Immutable.
+ * 
+ * Every ID consists of the identifying string ("ID string") and a type
+ * ("ID type"). For one patient, multiple IDs with different types can be used
+ * to identify the patient within different domains or namespaces. The ID
+ * type is only a name and has no relation to the class of the respective
+ * ID objects.
+ * 
+ * All valid ID types for an instance must be configured (see section
+ * "IDGenerators" in the configuration file).
  * 
  * @see IDGenerator to generate IDs.
  */
 @Entity
 @Table(name="ID", uniqueConstraints=@UniqueConstraint(columnNames={"idString","type"}))
 public abstract class ID {
+	
+	/** Database id. */
 	@Id
 	@GeneratedValue
 	@JsonIgnore
 	protected int idJpaId;
 	
+	/** The ID string. */
 	@Basic
 	@Index(name="i_id_idstring")
 	protected String idString;
 	
+	/** The type (a.k.a. domain) of the ID. */
 	@Basic
 	protected String type;
 	
+	/**
+	 * Whether this ID is tentative, i.e. the patient to which it is assigned
+	 * might be a duplicate.
+	 */
 	@Basic
 	protected boolean tentative;
 	
 	/**
-	 * Check whether this ID is tentative, i.e. the patient to which it is assigned
-	 * might be a duplicate. 
+	 * Check whether this ID is tentative, i.e. the patient to which it is
+	 * assigned might be a duplicate.
+	 * 
+	 * @return true if this ID is tentative.
 	 */
 	public boolean isTentative() {
 		return tentative;
@@ -73,48 +93,77 @@ public abstract class ID {
 
 	/**
 	 * Set the tentative status of this ID.
+	 * 
 	 * @see #isTentative()
-	 * @param tentative Whether this ID should be considered tentative (true) or not (false).
+	 * @param tentative
+	 *            Whether this ID should be considered tentative (true) or not
+	 *            (false).
 	 */
 	public void setTentative(boolean tentative) {
 		this.tentative = tentative;
 	}
 
 	/**
-	 * Creates an ID from a given IDString.
+	 * Creates an ID with a given ID string and type.
 	 * 
-	 * @param idString String containing a valid ID.
-	 * @param type Type as according to config.
-	 * @throws InvalidIDException The given IdString is invalid and could not be corrected.
+	 * @param idString
+	 *            String containing a valid ID.
+	 * @param type
+	 *            Type as according to configuration.
+	 * @throws InvalidIDException
+	 *             If the given id type is not known or the given ID string is
+	 *             invalid and could not be corrected.
 	 */
 	public ID(String idString, String type) throws InvalidIDException {
 		setType(type);
 		setTentative(false);
-		if(!getFactory().verify(idString)){
-			throw new InvalidIDException();
+		IDGenerator<?> generator = getFactory();
+		if (generator == null)
+			throw new InvalidIDException("ID type " + type + " is unknown.");
+		if (!generator.verify(idString)){
+			throw new InvalidIDException("ID " + idString + " is invalid for type " + type + ".");
 		}
 		setIdString(idString);
 	}
 	
 	/**
-	 * String representation of this ID.
+	 * Gets the ID string.
+	 * 
+	 * @return The ID string.
 	 */
 	public abstract String getIdString();
+	
+	/**
+	 * Sets the ID string to the given value.
+	 * 
+	 * @param id
+	 *            A String valid as ID string for this ID type.
+	 * @throws InvalidIDException
+	 *             If id is not valid as an ID string for this ID type.
+	 * */
 	protected abstract void setIdString(String id) throws InvalidIDException;
 	
 	/**
-	 * Type of this ID according to config.
+	 * Gets the ID type.
+	 * @return The ID type.
 	 */
 	public String getType(){
 		return type;
 	}
 	
+	/**
+	 * Sets the ID type.
+	 * @param type The new ID type.
+	 */
 	protected void setType(String type){
 		this.type = type;
 	}
 	
 	/**
-	 * Returns a generator that can be used to create IDs of the same type as this ID.
+	 * Returns a generator that can be used to create IDs of the same type as
+	 * this ID.
+	 * 
+	 * @return The ID generator or null if none exists for the type of this ID.
 	 */
 	@JsonIgnore
 	@Transient
@@ -122,31 +171,41 @@ public abstract class ID {
 		return IDGeneratorFactory.instance.getFactory(getType());
 	}
 	
+	/**
+	 * Returns a string representation of this ID, mainly for display in log files etc.
+	 * @return A string of the format "{idType}={idString}".
+	 */
 	@Override
 	public String toString() {
 		return String.format("%s=%s", getType(), getIdString());
 	}
 	
-// alte Version, behalten für Kompatibilität?	
-//	public JSONObject toJSON() throws JSONException {
-//		JSONObject result = new JSONObject();
-//		result.put("type", this.getType());
-//		result.put("idString", this.getIdString());
-//		result.put("tentative", this.isTentative());
-//		return result;
-//	}
-	
+	/**
+	 * The hash code of an ID is computed as hash code of its String representation as returned by
+	 * {@link ID#toString()}.
+	 * @return The hash code of this ID.
+	 */
 	@Override
 	public int hashCode() {
 		return toString().hashCode();
 	}
 	
-	public JSONObject toJSON() throws JSONException {
-		JSONObject ret = new JSONObject();
-		ret.put("idType", this.type);
-		ret.put("idString", this.idString);
-		ret.put("tentative", this.tentative);
-		
-		return ret;
+	/**
+	 * Returns a JSON representation of this object.
+	 * 
+	 * @return A JSON object with fields "idString", "idType" (both String) and "tentative" (Boolean).
+	 */
+	public JSONObject toJSON() {
+		try {
+			JSONObject ret = new JSONObject();
+			ret.put("idType", this.type);
+			ret.put("idString", this.idString);
+			ret.put("tentative", this.tentative);
+			
+			return ret;
+		} catch (JSONException e) {
+			// If an exception occurs here, it indicates a bug
+			throw new Error(e);
+		}
 	}
 }

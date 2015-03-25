@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -33,16 +33,21 @@ import de.pseudonymisierung.mainzelliste.PlainTextField;
 
 
 /**
- * Decomposition of last name into components (3 by default),
- * with recognition of German components such as "von", "Freiherr" etc.
+ * Decomposition of last name into components (3 by default) with recognition of
+ * typical German family particles. Any substring that matches the regular
+ * expression "[ \\.:,;\\-']+" is regarded as delimiter. Name affixes, such as
+ * "von", "Freiherr" etc. are added, in the order of their appearance, to the
+ * beginning of the last component.
  */
 public class GermanLastNameDecomposer extends FieldTransformer<PlainTextField, CompoundField<PlainTextField>>{
 	
+	/** The number of components to split into. */
 	private int nCcomponents = 3;
 
 	/** Delimiters to recognize when decomposing Names as regular expression. */
 	private String delimiters = "[ \\.:,;\\-']+";
 
+	/** Typical German name affixes. */
 	private static String nameParticles[] = {"AL", "AM", "AN", "AUF", 
 		"D","DA", "DE", "DEL", "DELA", "DEM", "DEN", "DER", "DI", "DOS", "DR", "DU", 
 		"EL", "EN", "ET", 
@@ -58,9 +63,12 @@ public class GermanLastNameDecomposer extends FieldTransformer<PlainTextField, C
 		"Y", 
 		"ZU", "ZUM", "ZUR" };
 	
+	/** Filled with the members of {@link #nameParticleSet} for efficient access. */
 	private Set<String> nameParticleSet;
+	/** Number of components to split into. */
 	private int nComponents = 3;
 	
+	/** Create an instance. */
 	public GermanLastNameDecomposer()
 	{
 		this.nameParticleSet = new HashSet<String>();

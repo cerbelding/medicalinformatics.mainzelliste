@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -32,12 +32,18 @@ import java.util.Set;
 
 import de.pseudonymisierung.mainzelliste.PlainTextField;
 
-//FIXME: Kommentar
+/**
+ * Performs the following normalization on strings:
+ * <ul>
+ *   <li> Trailing delimiters such as blanks, colons, dashes etc. are removed.</li>
+ *   <li> German umlauts are replaced: ä -> ae, ö -> oe etc., ß -> ss </li>
+ *   <li> Conversion to uppercase. </li>
+ * </ul>
+ *     
+ */
 public class StringNormalizer extends FieldTransformer<PlainTextField, PlainTextField> {
 
-	/** Delimiters to remove from start and end.
-	 * 
-	 */
+	/** Delimiters to remove from start and end. */
 	private static char delimiterChars[] = {' ', '.', ':', ',', ';', '-', '\''};
 
 	/** Characters which to replace (umlauts) 
@@ -57,6 +63,9 @@ public class StringNormalizer extends FieldTransformer<PlainTextField, PlainText
 	private Map<Character, String> umlautReplacementMap;
 
 
+	/**
+	 * Create an instance.
+	 */
 	public StringNormalizer()
 	{
 		int i;
@@ -81,7 +90,6 @@ public class StringNormalizer extends FieldTransformer<PlainTextField, PlainText
 	 *  <li> conversion of Umlauts.
 	 * 	<li> conversion to upper case,
 	 * <ul>
-	 * @param input
 	 */
 	@Override
 	public PlainTextField transform(PlainTextField input)

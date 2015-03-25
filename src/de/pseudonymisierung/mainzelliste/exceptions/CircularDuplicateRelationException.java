@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -29,9 +29,34 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import de.pseudonymisierung.mainzelliste.Patient;
+
+/**
+ * Signals that while marking a patient as duplicate of another, a circular
+ * dependency is detected, i.e., a patient would become (transitively) a
+ * duplicate of itself.
+ */
 public class CircularDuplicateRelationException extends WebApplicationException {
+
+	@SuppressWarnings("javadoc")
+	private static final long serialVersionUID = 1554926735681002661L;
+	
+	/** The error message. */
 	String message;
 	
+	/**
+	 * Create an instance with an error message that reports the affected
+	 * patients.
+	 * 
+	 * @param duplicatePid
+	 *            ID string of the patient that is tried to be marked as
+	 *            duplicate.
+	 * @param originalPid
+	 *            ID string of the patient that is tried to be marked as
+	 *            original.
+	 *            
+	 * @see Patient#setOriginal(Patient)
+	 */
 	public CircularDuplicateRelationException(String duplicatePid, String originalPid) {
         super(Response.status(Status.BAD_REQUEST).entity(
         		"Cannot set " + duplicatePid + " to be a duplicate of " + originalPid +

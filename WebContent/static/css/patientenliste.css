@@ -24,18 +24,13 @@ h1 {
 	color: rgb(0,60,118);
 }
 
-/* funktioniert nur in Mozilla*/
-input:-moz-placeholder {
-	color: rgba(0,60,118,0.50);
-	font-style: italic;
-}
 .kopfzeile {
+	min-height: 3em;
  	max-width: 70em;  
 	margin: auto; 
 	padding-top: 2em;
 }
 .logo {
-/* 	background: url('../media/JGU_Uni_medizin_Logo_4c_Internet.jpg') no-repeat scroll right top transparent;  */
 	height: 6em; 
  	max-width: 70em; 
 	margin: auto;
