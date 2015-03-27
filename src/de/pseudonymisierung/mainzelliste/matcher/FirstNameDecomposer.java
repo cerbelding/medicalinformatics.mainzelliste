@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -30,13 +30,16 @@ import de.pseudonymisierung.mainzelliste.PlainTextField;
 
 
 /**
- * Decomposition of first name into components (3 by default)
+ * Decomposition of first name into components (3 by default). Any substring
+ * that matches the regular expression "[ \\.:,;\\-']+" is regarded as
+ * delimiter. The delimiters themselves are removed.
  */
 public class FirstNameDecomposer extends FieldTransformer<PlainTextField, CompoundField<PlainTextField>> {
 
 	/** Delimiters to recognize when decomposing Names as regular expression. */
 	private String delimiters = "[ \\.:,;\\-']+";
 
+	/** The number of components to split into. */
 	private int nComponents = 3;
 	
 	@Override
@@ -64,15 +67,5 @@ public class FirstNameDecomposer extends FieldTransformer<PlainTextField, Compou
 	public Class<CompoundField<PlainTextField>> getOutputClass()
 	{
 		return (Class<CompoundField<PlainTextField>>) new CompoundField<PlainTextField>(3).getClass();
-	}
-	
-	public static void main(String args[])
-	{
-		FirstNameDecomposer dec = new FirstNameDecomposer();
-		System.out.println(dec.getOutputClass());
-		
-		BloomFilterTransformer bf = new BloomFilterTransformer();
-		System.out.println(bf.getOutputClass());
-		
 	}
 }

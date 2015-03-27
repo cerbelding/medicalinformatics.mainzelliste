@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -38,6 +38,7 @@ import javax.ws.rs.core.Response.Status;
  * Originally released under the Apache License 2.0 (see project root).
  * 
  */
+@SuppressWarnings("javadoc")
 public abstract class AbstractParam<V> {
 	private final V value;
 	private final String originalParam;

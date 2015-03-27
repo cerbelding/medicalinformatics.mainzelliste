@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -29,11 +29,24 @@ import javax.persistence.Entity;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
-@Entity
 /**
- * An ID as proposed by Faldum and Pommerening. Also known as Faldum-Code.
+ * A PID as proposed by Faldum and Pommerening. Also known as Faldum-Code.
+ * 
+ * @see PIDGenerator
  */
+@Entity
 public class PID extends ID {
+	
+	/**
+	 * Create an instance with the given ID string and type.
+	 * 
+	 * @param PIDString
+	 *            A valid PID string.
+	 * @param type
+	 *            ID type as set in the configuration.
+	 * @throws InvalidIDException
+	 *             If PIDString is not a valid PID or the given type is unknown.
+	 */
 	public PID(String PIDString, String type) throws InvalidIDException {
 		super(PIDString, type);
 	}

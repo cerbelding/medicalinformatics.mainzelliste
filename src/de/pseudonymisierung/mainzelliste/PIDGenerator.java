@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -48,21 +48,31 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 
 /**
  * Here go all the mathematics involved in generating, checking and correcting
- * PIDs. Methods here are private to the package. A user should call the static
- * functions of class PID.
+ * PIDs. Methods here have package visibility only. A user should call the static
+ * methods of class PID.
  * 
  * For the theorem, confer publication of Faldum and Pommerening.
  * 
  * This class is a C-to-Java-port with generous approval by its author,
  * Klaus Pommerening.
+ * 
+ * @see "Faldum, Andreas and Pommerening, Klaus: An optimal code for patient identifiers. Computer Methods and Programs in Biomedicine 79 (2005), 81–88."
  */
 public class PIDGenerator implements IDGenerator<PID>{
+	
+	/** The ID type this generator instance produces. */
 	private String idType;
+	/** The IDGeneratorMemory instance for this generator. */
 	private IDGeneratorMemory mem;
 	
+	/** Private key for PID generation. */
+	@SuppressWarnings("javadoc") // One comment is sufficient, but Eclipse marks a warning otherwise.
 	private int key1, key2, key3;
+	/** Counter, increased with every created PID. */
 	private int counter = 1;
+	/** Randomizer instance. */ 
 	private Random rand;
+	/**  Internal variable of the algorithm. */
 	private static int NN = 1073741824;
 	/** 2^30 = module for calc */
 	private static int NN_1 = 1073741823;
@@ -90,6 +100,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 */
 	static char sigma[] = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
 
+	/** The logging instance. */
 	private Logger logger = Logger.getLogger(this.getClass());
 	
 	/**
@@ -99,6 +110,12 @@ public class PIDGenerator implements IDGenerator<PID>{
 	PIDGenerator() {		
 	}
 	
+	/** 
+	 * Create a PID for the given counter. PIDs are created in a deterministic order.
+	 * This method returns the i-th PID of this generator. 
+	 * @param counter Order of the PID to get.
+	 * @return The generated PID string.
+	 */
 	private String createPIDString(int counter) {
 		return PIDgen(counter);
 	}
@@ -126,6 +143,10 @@ public class PIDGenerator implements IDGenerator<PID>{
 			return false;
 	}
 
+	/**
+	 * Internal function used in PID algorithm.
+	 */
+	@SuppressWarnings("javadoc")
 	private static StringBuffer swapPositions(StringBuffer str, int pos1,
 			int pos2) {
 		StringBuffer ret = new StringBuffer(str);
@@ -138,13 +159,13 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * Tries to correct a PID.
 	 * 
 	 * Up to two errors are recognized, errors with one changed character or a
-	 * transposition of adjacent characters can be corrected.
+	 * transposition of two adjacent characters can be corrected.
 	 * 
 	 * @param PIDString
 	 *            The PID to correct.
 	 * @return PIDString, if it is a correct PID, the corrected PID if PIDString
 	 *         is invalid but can be corrected, null if PIDString is invalid and
-	 *         can not be corrected.
+	 *         cannot be corrected.
 	 */
 	static String correctPID(String PIDString) {
 
@@ -277,8 +298,9 @@ public class PIDGenerator implements IDGenerator<PID>{
 	}
 
 	/**
-	 * Multiply x and y mod 2^30 used in encr
+	 * Multiply x and y mod 2^30 used in encr.
 	 */
+	@SuppressWarnings("javadoc")
 	private static int mult30(int x, int y) {
 		int z;
 		z = x * y; /* multiply, dropping long int overflow */
@@ -292,6 +314,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * Error handling: If x is not in the required range, overflowing bits are
 	 * dropped. Used in encr
 	 */
+	@SuppressWarnings("javadoc")
 	static int rot30_6(int x) {
 		int y, z;
 		y = x & 63; /* preserve last 6 bits */
@@ -311,6 +334,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * handlicng: If x is not in the required range, overflowing bits are
 	 * dropped. Used in encr
 	 */
+	@SuppressWarnings("javadoc")
 	private static int NLmix(int x) {
 		int y;
 		int a, b, c, d, e;
@@ -423,6 +447,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * Error handling: If x is not in the required range, overflowing bits are
 	 * dropped. Used in PIDgen
 	 */
+	@SuppressWarnings("javadoc")
 	private static int[] u2pcw(int x) {
 		int y;
 		int p[] = new int[6];
@@ -454,6 +479,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * 
 	 * Used in multf32
 	 */
+	@SuppressWarnings("javadoc")
 	static int mult0f32(int x, int e) {
 		int u, v, w, s;
 		x = x & 31; /* drop overflowing bits */
@@ -498,6 +524,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * Generate PID.
 	 * 
 	 */
+	@SuppressWarnings("javadoc")
 	private String PIDgen(int x) {
 		int y, z;
 		int j; /* loop counter */
@@ -529,6 +556,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * Lowercase letters are converted to uppercase. Otherwise c is the codeword
 	 * corresponding to s and the function returns 1. ---> used in PIDcheck
 	 */
+	@SuppressWarnings("javadoc")
 	static int[] PID2c(String s) {
 		if (s.length() != 8)
 			return null;
@@ -628,6 +656,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * Output the weighted sum t p[0] + t^2 p[1] + t^3 p[2] + t^4 p[3] + t^5
 	 * p[4] + t^6 p[5] in F_32. Used in encode and PIDcheck.
 	 */
+	@SuppressWarnings("javadoc")
 	static int wsum1(int p[]) {
 		int s;
 		int i;
@@ -643,6 +672,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * Output the weighted sum t^2 p[0] + t^4 p[1] + t^6 p[2] + t^8 p[3] + t^10
 	 * p[4] + t^12 p[5] in F_32. Used in encode and PIDcheck.
 	 */
+	@SuppressWarnings("javadoc")
 	static int wsum2(int p[]) {
 		int s;
 		int i;
@@ -661,6 +691,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * 
 	 * Used in wsum1, wsum2, and PIDcheck.
 	 */
+	@SuppressWarnings("javadoc")
 	static int multf32(int x, int e) {
 		x = x & 31; /* drop overflowing bits */
 		while (e >= 4) {
