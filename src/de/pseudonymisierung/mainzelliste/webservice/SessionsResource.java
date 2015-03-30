@@ -242,7 +242,7 @@ public class SessionsResource {
 		return Response
 			.status(Status.CREATED)
 			.location(newUri)
-			.entity(t)
+			.entity(t.toJSON(Servers.instance.getRequestApiVersion(req)))
 			.build();
 	}
 	
@@ -262,7 +262,7 @@ public class SessionsResource {
 	@Path("/{session}/tokens/{tokenid}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Token getSingleToken(
+	public JSONObject getSingleToken(
 			@PathParam("session") SessionIdParam sid,
 			@PathParam("tokenid") String tokenId,
 			@Context HttpServletRequest req,
@@ -280,7 +280,7 @@ public class SessionsResource {
 					.status(Status.NOT_FOUND)
 					.entity("No token with id " + tokenId + " in session " + sid + ".")
 					.build());		
-		return t;
+		return t.toJSON(Servers.instance.getRequestApiVersion(req));
 	}
 	
 	/**
