@@ -328,7 +328,7 @@ public enum Servers {
 		Session s = getSession(sessionId);
 		String tid = UUID.randomUUID().toString();
 		t.setId(tid);
-		t.setURI(s.getURI().resolve("tokens/" + tid));
+		t.setURI(s.getURI().resolve("tokens" + tid));
 
 		getSession(sessionId).addToken(t);
 
