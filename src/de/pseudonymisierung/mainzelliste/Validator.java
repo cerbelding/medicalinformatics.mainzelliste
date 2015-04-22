@@ -302,21 +302,21 @@ public enum Validator {
 
 		while (formatIt.hasNext() && dateIt.hasNext()) {
 			String curDateFormat = formatIt.next();
-                        SimpleDateFormat sdf = new SimpleDateFormat(curDateFormat);
-                        sdf.setLenient(false);
-                        String dateString = dateIt.next();
-                        try {
-                            ParsePosition position = new ParsePosition(0);
-                            Date date = sdf.parse(dateString, position);
-                            if (position.getIndex() != curDateFormat.length()) {
-                                throw new ParseException(String.format("Unparseable date: %s", dateString), position.getIndex());
-                            }
-                            if (date == null) {
-                                throw new ValidatorException(dateString + " is not a valid date!");
-                            }
-                        } catch (ParseException e) {
-                            throw new ValidatorException(dateString + " is not a valid date!");
-                        }		
+			SimpleDateFormat sdf = new SimpleDateFormat(curDateFormat);
+			sdf.setLenient(false);
+			String dateString = dateIt.next();
+			try {
+				ParsePosition position = new ParsePosition(0);
+				Date date = sdf.parse(dateString, position);
+				if (position.getIndex() != curDateFormat.length()) {
+					throw new ParseException(String.format("Unparseable date: %s", dateString), position.getIndex());
+				}
+				if (date == null) {
+					throw new ValidatorException(dateString + " is not a valid date!");
+				}
+			} catch (ParseException e) {
+				throw new ValidatorException(dateString + " is not a valid date!");
+			}
 		}
 	}
 }
