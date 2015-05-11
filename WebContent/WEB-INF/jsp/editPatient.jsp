@@ -1,16 +1,14 @@
 <%@page import="de.pseudonymisierung.mainzelliste.Config"%>
 <%@page import="java.util.ResourceBundle"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="ISO-8859-1"%>
-
+	pageEncoding="UTF-8"%>
 <%
 	ResourceBundle bundle = Config.instance.getResourceBunde(request);
 %>
-
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <link rel="stylesheet" type="text/css"
 	href="<%=request.getContextPath() %>/static/css/patientenliste.css">
@@ -21,20 +19,15 @@
 <body>
 	<jsp:include page="header.jsp"></jsp:include>
 	<div class="inhalt">
-		<div>&nbsp;</div>
 		<div class="formular">
 			<form method="post" action="<%=request.getContextPath() %>/patients/tokenId/${it.tokenId}?_method=PUT" id="form_person">
 				<h1><%=bundle.getString("editPatientTitle") %></h1>
 				<jsp:include page="patientFormElements.jsp" />
-				<div align="center">
-					<td>&nbsp;</td>
-				</div>
-				<div align="center">
+				<p class="buttons">
 					<input type="submit" value="<%=bundle.getString("save") %>" />
-				</div>
+				</p>
 			</form>
 		</div>
-		<div>&nbsp;</div>
 	</div>
 	<jsp:include page="footer.jsp" />
 </body>

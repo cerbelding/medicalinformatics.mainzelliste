@@ -58,6 +58,8 @@ public class HashedField extends Field<BitSet>{
 	 */
 	private static BitSet String2BitSet(String b)
 	{
+		if (b == null)
+			return null;
 		BitSet bs = new BitSet(b.length());
 		for (int i = 0; i < b.length(); i++)
 		{

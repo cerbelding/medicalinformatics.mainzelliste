@@ -118,12 +118,15 @@ public enum Persistor {
 		q.setParameter("idType", pid.getType());
 		List<Patient> result = q.getResultList();
 		if (result.size() > 1) {
+			em.close();
 			logger.fatal("Found more than one patient with ID: " + pid.toString());
 			throw new InternalErrorException("Found more than one patient with ID: " + pid.toString());
 		} 
 		
-		if (result.size() == 0)
+		if (result.size() == 0) {
+			em.close();
 			return null;
+		}
 
 		Patient p = result.get(0);
 		// Fetch lazy loaded IDs
@@ -261,6 +264,7 @@ public enum Persistor {
 			em.close();
 			return result;
 		} catch (NoResultException e) { // No result -> No IDGeneratorMemory object persisted yet.
+			em.close();
 			return null;
 		}
 	}
@@ -273,8 +277,10 @@ public enum Persistor {
 	 */
 	public synchronized void updatePatient(Patient p) {
 		em.getTransaction().begin();
-		em.merge(p);
+		Patient edited = em.merge(p);
 		em.getTransaction().commit();
+		// Refreshes cached entity 
+		em.refresh(edited); 
 	}
 	
 	/**
@@ -348,6 +354,7 @@ public enum Persistor {
 		em.getTransaction().begin();
 		this.setSchemaVersion(Config.instance.getVersion(), em);
 		em.getTransaction().commit();
+		em.close();
 	}
 	
 	/**

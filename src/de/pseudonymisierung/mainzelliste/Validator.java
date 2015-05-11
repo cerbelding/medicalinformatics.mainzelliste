@@ -316,7 +316,7 @@ public enum Validator {
 				}
 			} catch (ParseException e) {
 				throw new ValidatorException(dateString + " is not a valid date!");
-			}			
+			}
 		}
 	}
 }

@@ -2,7 +2,6 @@
 	The use of placeholders for input fields can be activated by setting
 	request parameter "showPlaceholders" to "true".
 -->
-
 <%@page import="java.text.DateFormatSymbols"%>
 <%@page import="de.pseudonymisierung.mainzelliste.Config"%>
 <%@page import="java.util.ResourceBundle"%>
@@ -17,8 +16,6 @@
 %>
 <h3><%=bundle.getString("patientData")%></h3>
 <fieldset class="patienten_daten">
-	<div>&nbsp;</div>
-	<div>&nbsp;</div>
 	<table class="daten_tabelle">
 		<tbody>
 			<tr>
@@ -28,7 +25,7 @@
 					value="${it.vorname}" <% if (map.containsKey("readonly")) { %>
 					readonly="readonly" <% } else if (showPlaceholders) { %>
 					placeholder="<%=bundle.getString("placeholderFName") %>" <% } %> />
-					<font color="red">*</font></td>
+					<span class="red">*</span></td>
 			</tr>
 			<tr>
 				<td><label for="nachname"><%=bundle.getString("lastName")%>
@@ -37,7 +34,7 @@
 					value="${it.nachname}" <% if (map.containsKey("readonly")) { %>
 					readonly="readonly" <% } else if (showPlaceholders) { %>
 					placeholder="<%=bundle.getString("placeholderLName") %>" <% } %>/> 
-					<font color="red">*</font></td>
+					<span class="red">*</span></td>
 			</tr>
 			<tr>
 				<td><label for="geburtsname"><%=bundle.getString("birthName")%>
@@ -47,14 +44,14 @@
 					<% if (map.containsKey("readonly")) { %> readonly="readonly"
 					<% } else if (showPlaceholders) { %>
 					placeholder="<%=bundle.getString("placeholderBName") %>" <% } %> />
-					<font color="red">*</font> <small> (<%=bundle.getString("ifDifferent")%>)
+					<span class="red">*</span> <small> (<%=bundle.getString("ifDifferent")%>)
 				</small></td>
 			</tr>
 			<tr>
-				<td><small>&nbsp;</small></td>
+				<td colspan="2"><small>&nbsp;</small></td>
 			</tr>
 			<tr>
-				<td><label for="geburtsdatum"><%=bundle.getString("dateOfBirth")%>
+				<td><label<% if (!map.containsKey("readonly")) { %> for="geburtstag"<% } %>><%=bundle.getString("dateOfBirth")%>
 						:</label></td>
 				<td class="geburtsdatum" id="geburtsdatum">
 					<div>
@@ -86,7 +83,7 @@
 							<%
 								}
 							%>
-						</select><font color="red">*</font>
+						</select><span class="red">*</span>
 						<%
 							}
 						%>
@@ -123,7 +120,7 @@
 							<%
 								}
 							%>
-						</select><font color="red">*</font>
+						</select><span class="red">*</span>
 						<%
 							}
 						%>
@@ -159,7 +156,7 @@
 							<%
 								}
 							%>
-						</select><font color="red">*</font>
+						</select><span class="red">*</span>
 						<%
 							}
 						%>
