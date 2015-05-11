@@ -6,31 +6,57 @@ Further information and documentation on Mainzelliste can be found on the [proje
 
 In order to receive up-to-date information on the project, you can register to be on our [mailing list](https://lists.uni-mainz.de/sympa/subscribe/mainzelliste).
 
+The following article describes the underlying concepts of Mainzelliste and the motivation for its development. Please cite it when referring to Mainzelliste in publications:
+
+> Lablans M, Borg A, Ückert F. A RESTful interface to pseudonymization services in modern web applications. BMC Medical Informatics and Decision Making 2015, 15:2. <http://www.biomedcentral.com/1472-6947/15/2>.
+
+
 ## Release notes
 
 ### 1.4.0
 
 This release implements API version 2.1, including the new features presented therein. For detailed information, we refer to the comprehensive API document (currently only available in German), which can be downloaded from the [project web site](http://www.mainzelliste.de). All preceding API versions are still supported.
 
+<<<<<<< HEAD
 As this release contains various bug fixes, we recommend an upgrade to all users, regardless of whether they plan to use the new features or not. Upgrading is possible from every earlier release, and there are no steps necessary apart from replacing the binary.
 
 #### New features:
 
+=======
+As this release contains various bug fixes, we recommend an upgrade to all users, regardless of whether they plan to use the new features or not. Upgrading is possible from every earlier release, and there are no steps necessary apart from replacing the binary. As noted above, the update is fully backwards compatible to all Mainzelliste versions including 1.0.
+
+#### New features:
+
+- The user forms have been internationalized and are now available in English and German. Contributions for other languages are welcome: just send us the `MessageBundle_xx.properties` file for your language. The language is selected according to the `Accept-Language` header sent by the browser, with English being the default language if the requested language is not supported. The English translation was kindly provided by the project “European Management Platform for Childhood Interstitial Lung Diseases” (chILD-EU).
+- Contact information and logo do not show “Universitätsmedizin Mainz” anymore but can be configured to identify the operator of the Mainzelliste instance in the user forms (see configuration parameters `operator.contact` and `operator.logo`).
+>>>>>>> FETCH_HEAD
 - Patient data can be edited by means of an `editPatient` token and a PUT request.
 - Sessions and tokens can be explicitly deleted by means of a DELETE request.
 - POST requests can be used to perform other HTTP methods (notably PUT and DELETE). This technique, frequently called “method override”, allows for the use of additional methods other than GET and POST from HTML forms.
 - Cross origin resource sharing (CORS) for simple GET requests. This makes it possible, for instance, to retrieve patient data via an AJAX request from a server in a different domain than the server that serves the web page. This requires configuration of the permissible hosts (see configuration parameter `servers.allowedOrigins`).
+<<<<<<< HEAD
 - For use cases where the redirect functionality is used, the result page that appears after creating a patient can be disabled (see configuration parameter `result.show`).
 - In addition to specific IP addresses, IPv4 address ranges can be included in the list of addresses from which another server can get access (see configuration parameter `servers.{n}.allowedRemoteAdresses`)
 - For all successful requests to add a patient (POST /patients), the timestamp is logged in the database (for future use cases).
 - When making requests via the HTML interface, error messages are formatted as web pages.
 - The user forms have been internationalized and are now available in German and English. The language is selected according to the `Accept-Language` header sent by the browser, with English being the default language if the requested language is not supported. The English translation was kindly provided by the project “European Management Platform for Childhood Interstitial Lung Diseases” (chILD-EU).
 - Contact information and a logo can be configured to appear in the user forms in order to identify the operator of the Mainzelliste instance (see configuration parameters `operator.contact` and `operator.logo`).
+=======
+- For use cases including the redirect functionality, the result page that appears after creating a patient can be disabled (see configuration parameter `result.show`).
+- In addition to specific IP addresses, IPv4 address ranges can be included in the list of addresses from which another server can get access (see configuration parameter `servers.{n}.allowedRemoteAdresses`)
+- For all successful requests to add a patient (POST /patients), the timestamp is logged in the database (for future use cases).
+- When making requests via the HTML interface, error messages are formatted as web pages.
+tact` and `operator.logo`).
+>>>>>>> FETCH_HEAD
 - The result page that is shown after a patient has been added now lists all requested pseudonyms according to parameter `idTypes` in the token (contributed by Matthias Lemmer).
 
 #### Bug fixes:
 
+<<<<<<< HEAD
 - The error message that is issued when an ID of an unknown type has been entered stated the ID value instead of the ID type.
+=======
+- The error message issued upon entering an ID of an unknown type stated the ID value instead of the ID type.
+>>>>>>> FETCH_HEAD
 - The JSON output of requests to sessions and tokens did not match the API documentation.
 - Token objects were not garbage collected, leading to memory problems in use cases where sessions exist for a long time and contain high numbers of tokens.
 - Submitting the form to add a patient from Internet Explorer returned JSON data in some cases, causing an error message due to unrecognized content.

@@ -149,6 +149,7 @@ public class PatientsResource {
 				}
 				map.put("readonly", "true");
 				map.put("tokenId", tokenId);
+				map.put("mainzellisteApiVersion", mainzellisteApiVersion);
 				return Response.status(Status.CONFLICT)
 						.entity(new Viewable("/unsureMatch.jsp", map)).build();
 			} else {

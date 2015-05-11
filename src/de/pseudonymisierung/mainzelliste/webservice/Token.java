@@ -490,17 +490,16 @@ public class Token {
 	 */
 	public JSONObject toJSON(ApiVersion apiVersion) {
 		JSONObject ret = new JSONObject();
-		// URI not known in this context -> assign in SessionsResource
 		try {
 			if (apiVersion.majorVersion >= 2) {
 				ret.put("id", this.id).put("type", this.type);
-
 				ObjectMapper mapper = new ObjectMapper();
 				String dataString = mapper.writeValueAsString(data);
 				ret.put("data", new JSONObject(dataString));
 			} else {
 				ret.put("tokenId", this.id);
 			}
+			ret.put("uri", this.getURI().toString());
 			return ret;
 		} catch (Exception e) {
 			// As no external data is processed, this method should not fail.

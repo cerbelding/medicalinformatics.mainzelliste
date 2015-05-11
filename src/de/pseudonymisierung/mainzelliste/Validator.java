@@ -44,6 +44,7 @@ import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.ValidatorException;
+import java.text.ParsePosition;
 
 /**
  * Form validation. Validation checks are stored in a Properties object passed
@@ -300,13 +301,19 @@ public enum Validator {
 		Iterator<String> dateIt = dateStrings.iterator();
 
 		while (formatIt.hasNext() && dateIt.hasNext()) {
-			SimpleDateFormat sdf = new SimpleDateFormat(formatIt.next());
+			String curDateFormat = formatIt.next();
+			SimpleDateFormat sdf = new SimpleDateFormat(curDateFormat);
 			sdf.setLenient(false);
 			String dateString = dateIt.next();
 			try {
-				Date date = sdf.parse(dateString);
-				if (date == null)
+				ParsePosition position = new ParsePosition(0);
+				Date date = sdf.parse(dateString, position);
+				if (position.getIndex() != curDateFormat.length()) {
+					throw new ParseException(String.format("Unparseable date: %s", dateString), position.getIndex());
+				}
+				if (date == null) {
 					throw new ValidatorException(dateString + " is not a valid date!");
+				}
 			} catch (ParseException e) {
 				throw new ValidatorException(dateString + " is not a valid date!");
 			}			
