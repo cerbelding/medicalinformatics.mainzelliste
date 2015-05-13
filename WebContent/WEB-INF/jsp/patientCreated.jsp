@@ -2,8 +2,8 @@
 <%@page import="de.pseudonymisierung.mainzelliste.Config"%>
 <%@page import="java.util.ResourceBundle"%>
 <%@page import="javax.ws.rs.core.MultivaluedMap"%>
-<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
-	pageEncoding="ISO-8859-1"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.Set"%>
 <%@ page import="de.pseudonymisierung.mainzelliste.ID"%>
@@ -16,10 +16,10 @@
 	DateFormatSymbols dfs = DateFormatSymbols.getInstance(bundle
 			.getLocale());
 %>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <link rel="stylesheet" type="text/css"
 	href="<%=request.getContextPath()%>/static/css/patientenliste.css">
@@ -31,9 +31,8 @@
 	<jsp:include page="header.jsp"></jsp:include>
 	<div class="inhalt">
 		<div class="formular">
-			<div>&nbsp;</div>
 			<h1>Ergebnis</h1>
-                        <div align="center">
+                        <div style="text-align: center;">
                             <p>
 								<%=bundle.getString("yourRequestedPIDs") %>
                             </p>
@@ -41,7 +40,7 @@
 							<% for (ID id : ids) { 
 							if (id != null) {
 							%>
-								<li><tt><big><%=id.getType() %>: <%=id.getIdString() %></big></tt></li>                                  	
+								<li><span class="id"><%=id.getType() %>: <%=id.getIdString() %></span></li>                                  	
 							<% 
 								}
 							}
@@ -57,7 +56,6 @@
                                         
 			<% if (map.containsKey("printIdat") && (Boolean) map.get("printIdat")) { %>
 			<h3><%=bundle.getString("enteredData") %></h3>
-			<p>
 			<table class="daten_tabelle">
 				<tbody>
 					<tr>
@@ -95,13 +93,11 @@
 					</tr>
 				</tbody>
 			</table>
-			</p>
 			<% } %>
 			<%
 				//Map<String, Object> map = (Map<String,Object>)request.getAttribute("it");
 				if (map.containsKey("redirect")) {
 			%>
-			<p>
 			<form action="<%=map.get("redirect")%>" target="_top" method="get">
 				<%  
 				@SuppressWarnings("unchecked")
@@ -122,7 +118,6 @@
 					<% } %>
 				</div>
 			</form>
-			</p>
 			<%
 	}
 %>

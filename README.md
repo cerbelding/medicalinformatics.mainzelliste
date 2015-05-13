@@ -13,6 +13,29 @@ The following article describes the underlying concepts of Mainzelliste and the 
 
 ## Release notes
 
+###1.4.1
+
+This is a bug fix release and we recommend an upgrade to all users. Upgrading is possible from every earlier release, and there are no steps necessary apart from replacing the binary. 
+
+####Bug fixes:
+
+- When a patient had been edited, the updated data was not considered for record linkage until after restarting the application (reported by Benjamin Gathmann). 
+- POST /sessions/{sid}/tokens returned an invalid token object (reported by Matthias Lemmer).
+- Confirming an unsure case failed due to missing api version in request URL (fixed by Benjamin Gathmann, see pull request #22).
+- Date validation accepted some illegal dates when data was not entered through the select lists in the HTML form (fixed by Benjamin Gathmann, see pull request #24).
+- Some Instances of EntityManager were not closed on errors, leading to a memory leak. 
+
+
+####Other changes:
+
+- Removed references to deleted Javascript files (contributed by Benjamin Gathmann, see pull request #20).
+- The version number is now read from pom.xml, i.e. this is the only place in the source code where the version number is set.
+- All HTML forms have been converted to HTML 5 and validated using the W3C markup validation service (https://validator.w3.org/).
+- Logging of Jersey class WebComponent has been limited to SEVERE to avoid excessive warning messages in use cases where POST /patients is used with an empty request body (see http://stackoverflow.com/questions/2011895/how-to-fix-jersey-post-request-parameters-warning).
+- Field#build can now be called with null as initialization object, returning an empty field. 
+- Created tokens are logged entirely only in log level DEBUG. 
+ 
+
 ### 1.4.0
 
 This release implements API version 2.1, including the new features presented therein. For detailed information, we refer to the comprehensive API document (currently only available in German), which can be downloaded from the [project web site](http://www.mainzelliste.de). All preceding API versions are still supported.
