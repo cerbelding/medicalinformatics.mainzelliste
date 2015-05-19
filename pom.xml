@@ -116,6 +116,12 @@
             </resource>
             <resource>
                 <directory>${basedir}/resources</directory>
+            </resource>
+            <resource>
+                <directory>${basedir}/resources</directory>
+                <includes>
+                	<include>version.properties</include>
+                </includes>
                 <filtering>true</filtering>
             </resource>
         </resources>
