@@ -128,8 +128,7 @@ public class Patient {
 	 * by this map (therefore the {@literal @Transient} annotation), as this
 	 * leads to poor performance. Instead, fields are serialized as a JSON
 	 * object (handled by {@link #setFields(Map)} and de-serialized by
-	 * {@link #postLoad()} upon saving to and loading from the database,
-	 * respectively.
+	 * {@link #postLoad()} upon loading from the database.
 	 * 
 	 * @see #fieldsString
 	 */

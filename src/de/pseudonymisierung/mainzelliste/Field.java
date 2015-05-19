@@ -178,6 +178,9 @@ public abstract class Field<T> {
 	 */
 	public static Field<?> build(Class<? extends Field<?>> t, Object o){
 		try {
+			if (o == null) {
+				return t.newInstance();
+			}
 			Constructor<? extends Field<?>> c = t.getConstructor(o.getClass());
 			return c.newInstance(o);
 		} catch (Exception e) {

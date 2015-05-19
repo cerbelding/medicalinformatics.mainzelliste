@@ -65,7 +65,7 @@ public enum Config {
 	instance;
 	
 	/** The software version of this instance. */
-	private final String version = "1.4.0";
+	private final String version;
 	
 	/** Default paths from where configuration is read if no path is given in the context descriptor */ 
 	private final String defaultConfigPaths[] = {"/etc/mainzelliste/mainzelliste.conf", "/WEB-INF/classes/mainzelliste.conf"};
@@ -194,6 +194,9 @@ public enum Config {
 			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split(";")));
 		
 		Locale.setDefault(Locale.ENGLISH);
+		
+		// Read version number provided by pom.xml
+		version = readVersion();
 	}
 	
 	/**
@@ -386,4 +389,26 @@ public enum Config {
 		
 		return ret;
 	}
+	
+	/**
+	 * Read version string from properties file "version.properties",
+	 * which is copied from pom.xml by Maven.
+	 * @return The version string.
+	 */
+	private String readVersion() {
+		try {
+			Properties props = new Properties();
+			InputStream versionInputStream = Initializer.getServletContext().getResourceAsStream("/WEB-INF/classes/version.properties");
+			if (versionInputStream == null) {
+				throw new Error("File version.properties not found!");
+			}
+			props.load(versionInputStream);
+			String version = props.getProperty("version");
+			if (version == null)
+				throw new Error("property 'version' undefined in version.properties");
+			return version;
+		} catch (IOException e) {
+			throw new Error ("I/O error while reading version.properties", e);
+		}
+	}	
 }

@@ -236,8 +236,9 @@ public class SessionsResource {
 				.build(t.getId());
 		
 		logger.info("Created token of type " + t.getType() + " with id " + t.getId() + 
-				" in session " + s.getId() + "\n" +
-				"Returned data: " + t.toJSON(Servers.instance.getRequestApiVersion(req)));
+				" in session " + s.getId());
+		logger.debug("Returned data for token " + t.getId() + ": "
+				+ t.toJSON(Servers.instance.getRequestApiVersion(req)));
 
 		return Response
 			.status(Status.CREATED)

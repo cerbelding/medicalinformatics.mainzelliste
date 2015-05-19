@@ -27,6 +27,7 @@ package de.pseudonymisierung.mainzelliste;
 
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.logging.Level;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -35,6 +36,8 @@ import javax.servlet.ServletContextListener;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+
+import com.sun.jersey.spi.container.servlet.WebComponent;
 
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
@@ -89,7 +92,15 @@ public class Initializer implements ServletContextListener {
 		IDGeneratorFactory idgf = IDGeneratorFactory.instance;
 		Servers s = Servers.instance;
 		Validator v = Validator.instance;
-
+		
+		/* 
+		 * Limit Jersey logging to avoid spamming the log with "the request body has been consumed" messages
+		 * (see http://stackoverflow.com/questions/2011895/how-to-fix-jersey-post-request-parameters-warning).
+		 * This applies to use cases where all fields are transmitted via the "addPatient" token and the 
+		 * POST /patients request is intentionally empty. 
+		 */
+		java.util.logging.Logger webComponentLogger = java.util.logging.Logger.getLogger(WebComponent.class.getName());
+		webComponentLogger.setLevel(Level.SEVERE);
 		logger.info("#####Startup succeeded. Ready to take requests.");
 	}
 
