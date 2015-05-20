@@ -13,6 +13,10 @@ The following article describes the underlying concepts of Mainzelliste and the 
 
 ## Release notes
 
+###1.4.2
+
+Fixes an encoding error in German language properties file. This version can be skipped by users who do not use the HTML interface or use their own JSP files.
+
 ###1.4.1
 
 This is a bug fix release and we recommend an upgrade to all users. Upgrading is possible from every earlier release, and there are no steps necessary apart from replacing the binary. 
