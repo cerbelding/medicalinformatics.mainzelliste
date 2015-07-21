@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -27,37 +27,41 @@ package de.pseudonymisierung.mainzelliste.matcher;
 
 import java.util.BitSet;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Vector;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
 import de.pseudonymisierung.mainzelliste.HashedField;
-import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.PlainTextField;
 
 /**
- * BloomFilterTransformer and DiceFieldComparator implement the method presented by
- * Schnell et al (2009). BloomFilterTransformer splits a string enclosed in a PlainTextField
- * into n-grams 
- * @see <a href="http://www.biomedcentral.com/1472-6947/9/41">Rainer Schnell, Tobias Bachteler and Jörg Reiher:
- * Privacy-preserving record linkage using Bloom filters. BMC Medical Informatics and Decision Making 2009, 9:41</a>
+ * BloomFilterTransformer and DiceFieldComparator implement the method presented
+ * by Schnell et al (2009). BloomFilterTransformer splits a string enclosed in a
+ * PlainTextField into n-grams
+ * 
+ * @see <a href="http://www.biomedcentral.com/1472-6947/9/41">Rainer Schnell,
+ *      Tobias Bachteler and Jörg Reiher: Privacy-preserving record linkage
+ *      using Bloom filters. BMC Medical Informatics and Decision Making 2009,
+ *      9:41</a>
  */
 public class BloomFilterTransformer extends FieldTransformer<PlainTextField, HashedField> {
 
+	/** Bit length of the bloom filter. */
 	public final static int hashLength = 500;
+	/** Length of n-grams by which input fields are encoded. */
 	private int nGramLength = 2;
+	/** Number of hash functions. See cited article for details. */
 	private int nHashFunctions = 15;
 	
 	/**
-	 * Split the input string into n-grams of length nGramLength. The string
-	 * is padded with nGramLength-1 spaces (trailing and leading).
+	 * Split the input string into n-grams of length nGramLength. The string is
+	 * padded with nGramLength-1 spaces (trailing and leading).
 	 * 
-	 * For example, the input string "Java" yields the output n-grams 
-	 * " J", "Ja", "av", "va", "a ".
+	 * For example, the input string "Java" yields the output n-grams " J",
+	 * "Ja", "av", "va", "a ".
 	 * 
-	 * @param input
-	 * @return
+	 * @param input String to split into n-grams.
+	 * @return The set of n-grams.
 	 */
 	private Collection<String> getNGrams(String input){
 		// initialize Buffer to hold input and padding 
@@ -80,6 +84,12 @@ public class BloomFilterTransformer extends FieldTransformer<PlainTextField, Has
 		return output;
 	}
 	
+	/**
+	 * Backend method for computing hash functions. See cited article for details.
+	 * @param input The string to hash.
+	 * @param index Index of the hash function.
+	 * @return The bit in the bloom filter that is set by applying the hash function.
+	 */
 	private int hash(String input, int index)
 	{
 		int hash1 = 0;
@@ -87,7 +97,7 @@ public class BloomFilterTransformer extends FieldTransformer<PlainTextField, Has
 		
 		byte inputBytes[] = input.getBytes();
 		byte md5[] = DigestUtils.md5(inputBytes);
-		byte sha[] = DigestUtils.sha(inputBytes);
+		byte sha[] = DigestUtils.sha1(inputBytes);
 		
 		// calculate significant Bytes of Hash
 		int nSignBytes = (int) Math.ceil(Math.log(hashLength) / Math.log(256));
@@ -132,37 +142,5 @@ public class BloomFilterTransformer extends FieldTransformer<PlainTextField, Has
 	public Class<HashedField> getOutputClass()
 	{
 		return HashedField.class;
-	}
-
-	public static void main(String args[])
-	{
-		BloomFilterTransformer transformer = new BloomFilterTransformer();
-		PlainTextField testText1 = new PlainTextField("Andreas");
-		Collection<String> nGrams = transformer.getNGrams(testText1.getValue());
-		for (String str : nGrams)
-			System.out.println(str);
-		
-		PlainTextField testText2 = new PlainTextField("Andreas");
-				
-		HashedField f1 = transformer.transform(testText1);
-		HashedField f2 = transformer.transform(testText2);
-		
-		System.out.println(f1.toString());
-		System.out.println(f2.toString());
-		
-		Patient p1 = new Patient();
-		HashMap attr1 = new HashMap();
-		attr1.put("vorname", f1);
-		p1.setFields(attr1);
-		
-		Patient p2 = new Patient();
-		HashMap attr2 = new HashMap();
-		attr2.put("vorname", f2);
-		p2.setFields(attr2);
-
-		DiceFieldComparator comparator = new DiceFieldComparator("vorname", "vorname");
-		
-		System.out.println(comparator.compare(p1, p2));
-		
 	}
 }

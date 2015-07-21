@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -33,9 +33,12 @@ import javax.ws.rs.core.Response.Status;
  * Taken from https://github.com/codahale/dropwizard, file link:
  * https://github.com/codahale/dropwizard/blob/master/dropwizard-jersey/src/main/java/com/codahale/dropwizard/jersey/params/AbstractParam.java
  * 
+ * See http://codahale.com/what-makes-jersey-interesting-parameter-classes/ for information
+ * 
  * Originally released under the Apache License 2.0 (see project root).
  * 
  */
+@SuppressWarnings("javadoc")
 public abstract class AbstractParam<V> {
 	private final V value;
 	private final String originalParam;

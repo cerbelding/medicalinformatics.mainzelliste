@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -38,21 +38,31 @@ import de.pseudonymisierung.mainzelliste.StringPair;
  * to a set of fields in another patient's data. This allows 
  * taking transposition (such as swapping of name components) into
  * account.
+ * 
+ * NOTE: This class is not used currently and might be removed in a future release.
+ * 
  */
 public class ArrayFieldComparator {
 
-	private String fieldListLeft[]; /** The names of fields to compare in the first patient's data */
-	private String fieldListRight[]; /** The names of fields to compare in the second patient's data */
-	private FieldComparator comparator;
+	/** The names of fields to compare in the first patient's data */
+	private String fieldListLeft[]; 
+	/** The names of fields to compare in the second patient's data */
+	private String fieldListRight[]; 
+	/** The FieldComparator used to compare the subfields. */
+	private FieldComparator<?> comparator;
 	
 	/**
-	 * Instantiates an ArrayFieldComparator. 
-	 * @param fieldListLeft The names of fields to compare in the first patient's data. 
-	 * @param fieldListRight The names of fields to compare in the second patient's data.
-	 * @param comparator The comparator to use.
+	 * Instantiates an ArrayFieldComparator.
+	 * 
+	 * @param fieldListLeft
+	 *            The names of fields to compare in the first patient's data.
+	 * @param fieldListRight
+	 *            The names of fields to compare in the second patient's data.
+	 * @param comparator
+	 *            The comparator to use to compare individual subfields.
 	 */
 	public ArrayFieldComparator(String fieldListLeft[], String fieldListRight[],
-			FieldComparator comparator)
+			FieldComparator<?> comparator)
 	{
 		super();
 		this.fieldListLeft = fieldListLeft;
@@ -60,7 +70,12 @@ public class ArrayFieldComparator {
 		this.comparator = comparator;
 	}
 	
-	
+	/**
+	 * Compares two patient on the configured array of fields.
+	 * @param patientLeft The left hand side patient.
+	 * @param patientRight The right hand side patient.
+	 * @return A map with every field combination mapped to the comparison value.
+	 */
 	public Map<StringPair, Object> compare(Patient patientLeft, Patient patientRight) 
 	{
 		Hashtable<StringPair, Object> result = new Hashtable<StringPair, Object>();

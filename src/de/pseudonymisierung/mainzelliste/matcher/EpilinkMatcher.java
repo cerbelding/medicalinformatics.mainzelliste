@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -38,41 +38,83 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
+import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 
-//FIXME: Kommentar
+/**
+ * Performs record linkage by using the algorithm of Epilink et al. This is a
+ * simple weight based algorithm (similar to the method of Fellegi and Sunter)
+ * with support for string metrics.
+ * 
+ * The weight for a record pair (x1,x2) is computed by the formula
+ * 
+ * sum_i (w_1 * s(x1_i, x2_i)) / sum_i w_i where s(x1_i, x2_i) is the value of a
+ * string comparison of records x1 and x2 in the i-th field and w_i is a
+ * weighting factor computed by
+ * 
+ * w_i = log_2 (1-e_i) / f_i
+ * 
+ * where f_i denotes the average frequency of values and e_i the estimated error
+ * rate for field i.
+ * 
+ * @see "P. Contiero et al., The EpiLink record linkage software, in: Methods of Information in Medicine 2005, 44 (1), 66–71."
+ * 
+ *
+ */
 public class EpilinkMatcher implements Matcher {
 
+	/** Minimum weight for definitive matches. */
 	private double thresholdMatch;
+	
 	/**
-	 * @return the thresholdMatch
+	 * Get the minimum weight for definitive matches.
+	 * 
+	 * @return The minimum weight for matches, a number in the range [0,1].
 	 */
 	public double getThresholdMatch() {
 		return thresholdMatch;
 	}
 
 	/**
-	 * @return the thresholdNonMatch
+	 * Get the minimum weight for possible matches.
+	 * 
+	 * @return The minimum weight for possible matches, a number in the range
+	 *         [0,1].
 	 */
 	public double getThresholdNonMatch() {
 		return thresholdNonMatch;
 	}
 
-
+	/** The minimum weight for possible matches. */
 	private double thresholdNonMatch;
 	
-	private Map<String, FieldComparator> comparators;
+	/** The FieldComparators, by field name. */
+	private Map<String, FieldComparator<Field<?>>> comparators;
+	/** Mean frequencies of values by field name. */
 	private Map<String, Double> frequencies;
+	/** Assumed error rates by field name. */
 	private Map<String, Double> errorRates;
 
-	/** Field weights */
+	/**
+	 * Field weights by field name. Calculated from {@link #frequencies} and
+	 * {@link #errorRates}
+	 */
 	private Map<String, Double> weights;
 	
+	/** Sets of fields that are exchangeable for matching. */
 	private List<List<String>> exchangeGroups;
+	/** Buffer for fields not included in any exchange group. */
 	private Set<String> nonExchangeFields;
 	
+	/**
+	 * Get all permutations of a list of Strings.
+	 * 
+	 * @param elements
+	 *            A list of strings.
+	 * @return The permutations.
+	 */
 	private static List<List<String>> permutations(List<String> elements)
 	{
 		LinkedList<List<String>> result = new LinkedList<List<String>>();
@@ -81,6 +123,17 @@ public class EpilinkMatcher implements Matcher {
 		return result;
 	}
 	
+	/**
+	 * Backend function for calculating permutations. Called recursively.
+	 * 
+	 * @param result
+	 *            Result list to which permutations are added.
+	 * @param prefix
+	 *            Prefix to add to the resulting permutations (fixed part) for
+	 *            this run.
+	 * @param elements
+	 *            Elements that are permuted.
+	 */
 	private static void permutationWorker(List<List<String>> result, List<String> prefix, List<String> elements) {
 		LinkedList<String> workingCopy;
 		if (elements.size() == 1)
@@ -101,9 +154,14 @@ public class EpilinkMatcher implements Matcher {
 		}	
 	}
 	
+	/**
+	 * Calculate the matching weight for two records.
+	 * @param left The left hand side record.
+	 * @param right The right hand side record.
+	 * @return The matching weight, a number in the range [0,1].
+	 */
 	public double calculateWeight(Patient left, Patient right)
 	{
-
 	
 		double weightSum = 0; // holds sum of field weights 
 		double totalWeight = 0; // holds total weight
@@ -111,33 +169,66 @@ public class EpilinkMatcher implements Matcher {
 		// process exchange groups
 		for (List<String> exchangeGroup : this.exchangeGroups)
 		{
+			/* 
+			 * Remove empty fields from both sides until one side has
+			 * no more empty fields
+			 */
+			// Make copies of field maps for manipulation
+			Map<String, Field<?>> fieldsToCompareRight = new HashMap<String, Field<?>>();
+			Map<String, Field<?>> fieldsToCompareLeft = new HashMap<String, Field<?>>();
+			for (String fieldName : exchangeGroup) {
+				fieldsToCompareRight.put(fieldName, right.getFields().get(fieldName));
+				fieldsToCompareLeft.put(fieldName, left.getFields().get(fieldName));
+			}
+			Iterator<Map.Entry<String, Field<?>>> itRight = fieldsToCompareRight.entrySet().iterator(); 
+			Iterator<Map.Entry<String, Field<?>>> itLeft = fieldsToCompareLeft.entrySet().iterator();
 			
-			List<List<String>> permutations = permutations(exchangeGroup);
+            // process fields (left and right) until end is reached on one side
+            while (itRight.hasNext() && itLeft.hasNext()) {
+                // Search for next empty field on right side
+                if (itRight.next().getValue().isEmpty()) {
+                    // Now go to next empty field on the left 
+                    while (itLeft.hasNext()) {
+                        if (itLeft.next().getValue().isEmpty()) {
+                            // If empty fields have been found on each side, 
+                            // remove them and continue with search on right side         
+                            itRight.remove();
+                            itLeft.remove();
+                            break;
+                        }
+                    }
+                }
+            }        
+							
+			List<List<String>> permutations = permutations(new LinkedList<String>(fieldsToCompareRight.keySet()));
 			
 			double bestPermWeight = Double.NEGATIVE_INFINITY; 
 			double bestPermWeightSum = 0.0;
+			double bestPermWeightRatio = 0.0;
 			for (List<String> permutation : permutations)
 			{
 				double thisPermWeight = 0.0;
 				double thisPermWeightSum = 0;
-				Iterator<String> fieldIterator = exchangeGroup.iterator();
+				Iterator<String> fieldIterator = fieldsToCompareLeft.keySet().iterator();
 				for (String fieldNamePerm : permutation)
 				{
 					String fieldName = fieldIterator.next();
 					// Do not consider empty fields
-					if (left.getFields().get(fieldName).isEmpty() || 
-							right.getFields().get(fieldNamePerm).isEmpty())
+					if (fieldsToCompareLeft.get(fieldName).isEmpty() || 
+							fieldsToCompareRight.get(fieldNamePerm).isEmpty())
 						continue;
 					
 					// account mean value of field weights
 					double meanFieldWeight = 0.5 * (weights.get(fieldName) + weights.get(fieldNamePerm));
-					thisPermWeight += comparators.get(fieldName).compare(left.getFields().get(fieldName),
-							right.getFields().get(fieldNamePerm)) * meanFieldWeight;
-					thisPermWeightSum += meanFieldWeight;
+					thisPermWeight += comparators.get(fieldName).compare(fieldsToCompareLeft.get(fieldName),
+							fieldsToCompareRight.get(fieldNamePerm)) * meanFieldWeight;
+					thisPermWeightSum += meanFieldWeight;					
 				}
-				if (thisPermWeight >= bestPermWeight) {
+				double thisPermWeightRatio = thisPermWeight / thisPermWeightSum;
+				if (thisPermWeightRatio >= bestPermWeightRatio) {
 					bestPermWeight = thisPermWeight;
 					bestPermWeightSum = thisPermWeightSum;
+					bestPermWeightRatio = thisPermWeightRatio;
 				}
 			}
 			totalWeight += bestPermWeight;
@@ -165,7 +256,7 @@ public class EpilinkMatcher implements Matcher {
 		// Get error rate (is needed for weight computation below)					
 
 		// Initialize internal maps
-		this.comparators = new HashMap<String, FieldComparator>();
+		this.comparators = new HashMap<String, FieldComparator<Field<?>>>();
 		this.frequencies = new HashMap<String, Double>();
 		this.errorRates = new HashMap<String, Double>();
 		this.weights = new HashMap<String, Double>();
@@ -180,29 +271,33 @@ public class EpilinkMatcher implements Matcher {
 			m = p.matcher((String) key);
 			if (m.find()){
 				String fieldName = m.group(1);
-				String fieldCompStr = props.getProperty("field." + fieldName + ".comparator").trim();
-
-				try {
-					Class<FieldComparator> fieldCompClass = (Class<FieldComparator>) Class.forName("de.pseudonymisierung.mainzelliste.matcher." + fieldCompStr);
-					Constructor<FieldComparator> fieldCompConstr = fieldCompClass.getConstructor(String.class, String.class);
-					FieldComparator fieldComp = fieldCompConstr.newInstance(fieldName, fieldName);
-					comparators.put(fieldName, fieldComp);
-				} catch (Exception e) {
-					System.err.println(e.getMessage());
-					throw new InternalErrorException();
+				String fieldCompStr = props.getProperty("field." + fieldName + ".comparator");
+				if (fieldCompStr != null)
+				{
+					fieldCompStr = fieldCompStr.trim();
+					try {
+						@SuppressWarnings("unchecked")
+						Class<FieldComparator<Field<?>>> fieldCompClass = (Class<FieldComparator<Field<?>>>) Class.forName("de.pseudonymisierung.mainzelliste.matcher." + fieldCompStr);
+						Constructor<FieldComparator<Field<?>>> fieldCompConstr = fieldCompClass.getConstructor(String.class, String.class);
+						FieldComparator<Field<?>> fieldComp = fieldCompConstr.newInstance(fieldName, fieldName);
+						comparators.put(fieldName, fieldComp);
+					} catch (Exception e) {
+						System.err.println(e.getMessage());
+						throw new InternalErrorException();
+					}
+					// set error rate
+					double error_rate = Double.parseDouble(props.getProperty("matcher.epilink."+ fieldName + ".errorRate"));
+					errorRates.put(fieldName, error_rate);
+					// set frequency
+					double frequency = Double.parseDouble(props.getProperty("matcher.epilink." + fieldName + ".frequency"));
+					frequencies.put(fieldName, frequency);
+					// calculate field weights
+					// log_2 ((1 - e_i) / f_i)
+					// all e_i have same value in this implementation
+					double weight = (1 - error_rate) / frequency;
+					weight = Math.log(weight) / Math.log(2);
+					weights.put(fieldName, weight);
 				}
-				// set error rate
-				double error_rate = Double.parseDouble(props.getProperty("matcher.epilink."+ fieldName + ".errorRate"));
-				errorRates.put(fieldName, error_rate);
-				// set frequency
-				double frequency = Double.parseDouble(props.getProperty("matcher.epilink." + fieldName + ".frequency"));
-				frequencies.put(fieldName, frequency);
-				// calculate field weights
-				// log_2 ((1 - e_i) / f_i)
-				// all e_i have same value in this implementation
-				double weight = (1 - error_rate) / frequency;
-				weight = Math.log(weight) / Math.log(2);
-				weights.put(fieldName, weight);
 			}
 		}
 		// assert that Maps have the same keys

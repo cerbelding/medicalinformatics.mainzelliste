@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -31,14 +31,35 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 
 import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
+import de.pseudonymisierung.mainzelliste.matcher.DiceFieldComparator;
 
+/**
+ * Hashed fields for error-tolerant matching. The value of a hashed field
+ * represents a bloom filter, represented by a bit string, that encodes the set
+ * of n-grams of a given character string. This allows for error-tolerant,
+ * privacy preserving record linkage according to the method of Schnell,
+ * Bachteler and Reiher.
+ * 
+ * @see DiceFieldComparator
+ */
 @Entity
 public class HashedField extends Field<BitSet>{
+
+	/**	The value is encoded as a String to allow storage in a database. */
 	@Column(length = BloomFilterTransformer.hashLength)
 	private String value;
 	
+	/**
+	 * Conversion of the String representation of a bit string to a BitSet.
+	 * 
+	 * @param b
+	 *            String of the format [01]*
+	 * @return A BitSet with all bit i set for which b[i].equals("1").
+	 */
 	private static BitSet String2BitSet(String b)
 	{
+		if (b == null)
+			return null;
 		BitSet bs = new BitSet(b.length());
 		for (int i = 0; i < b.length(); i++)
 		{
@@ -55,6 +76,14 @@ public class HashedField extends Field<BitSet>{
 		return bs;
 	}
 	
+	/**
+	 * Conversion of a BitSet to a String representation.
+	 * 
+	 * @param hash
+	 *            A BitSet
+	 * @return A String of length hash.size() where the i-th position is set to
+	 *         "1" if the i-th bit of hash is set and "0" otherwise.
+	 */
 	private static String BitSet2String(BitSet hash)
 	{
 		StringBuffer result = new StringBuffer(hash.size());
@@ -68,11 +97,18 @@ public class HashedField extends Field<BitSet>{
 		return result.toString();
 	}
 	
+	/**
+	 * Create an instance from a BitSet.
+	 * @param b A BitSet.
+	 */
 	public HashedField(BitSet b) {
 		this.value = BitSet2String(b);
 	}
 	
-	/** Constructor that accepts a String of 0s and 1s. */
+	/** Create an instance from a String representation of a bit string.
+	 * 
+	 * @param b A String of the format [01]*. 
+	 */
 	public HashedField(String b)
 	{		
 		this.value = b;

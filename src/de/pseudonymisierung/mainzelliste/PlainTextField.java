@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -27,41 +27,53 @@ package de.pseudonymisierung.mainzelliste;
 
 import javax.persistence.Entity;
 
-@Entity
 /**
- * A field consisting of a String.
+ * A field consisting of plain text (i.e. a String).
  */
+@Entity
 public class PlainTextField extends Field<String> {
+
+	/** The field value. */
 	private String value;
 
+	/**
+	 * Create an instance with the given value, which is copied by reference.
+	 * 
+	 * @param value
+	 *            The value to set.
+	 */
 	public PlainTextField(String value) {
 		super(value);
 	}
-	
+
 	@Override
 	public String getValue() {
 		return this.value;
 	}
-	
+
 	@Override
 	public String getValueJSON() {
 		return this.value;
 	}
 
+	/**
+	 * Sets the value by reference.
+	 */
 	@Override
 	public void setValue(String value) {
 		this.value = value;
 	}
-	
+
+	/**
+	 * @return true if the value of this instance is null or an empty string.
+	 */
 	@Override
-	public boolean isEmpty()
-	{
+	public boolean isEmpty() {
 		return (this.value == null || this.value.length() == 0);
 	}
-	
+
 	@Override
-	public PlainTextField clone()
-	{
+	public PlainTextField clone() {
 		return new PlainTextField(new String(this.value));
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -36,52 +36,75 @@ import java.util.prefs.Preferences;
 import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
 /**
- * Factory for IDGenerators.
+ * Factory for IDGenerators. Implemented as a singleton object, which can be
+ * referenced by IDGeneratorFactory.instance.
  */
 public enum IDGeneratorFactory {
+
+	/** The singleton instance. */
 	instance;
-	
+
+	/** Map of generators, with respective ID types as keys. */
 	private final Map<String, IDGenerator<? extends ID>> generators;
-	
+
+	/**
+	 * The configured ID types. Must be saved separately as the order is
+	 * important for determining the default ID type (see getDefaultIDType())
+	 */
 	private String[] idTypes;
 
+	/** The logging instance */
 	private Logger logger = Logger.getLogger(this.getClass());
-	
+
+	/**
+	 * Initializes the IDGeneratorFactory. Reads the configuration and sets up
+	 * the necessary IDGenerator instances, which are initialized with the
+	 * settings stored in the database (see {@link IDGeneratorMemory}).
+	 */
 	private IDGeneratorFactory() {
 		HashMap<String, IDGenerator<? extends ID>> temp = new HashMap<String, IDGenerator<? extends ID>>();
-		Preferences prefs = Preferences.userRoot().node("de/pseudonymisierung/mainzelliste/idgenerator");
+		Preferences prefs = Preferences.userRoot().node(
+				"de/pseudonymisierung/mainzelliste/idgenerator");
 		Properties props = Config.instance.getProperties();
-		
-		if(!props.containsKey("idgenerators") || props.getProperty("idgenerators").length() == 0) {
+
+		if (!props.containsKey("idgenerators")
+				|| props.getProperty("idgenerators").length() == 0) {
 			logger.fatal("No ID generators defined!");
 			throw new Error("No ID generators defined!");
 		}
-		
-		// split list of ID generators: comma-separated, ignore whitespace around commas
+
+		// split list of ID generators: comma-separated, ignore whitespace
+		// around commas
 		this.idTypes = props.getProperty("idgenerators").split("\\s*,\\s*");
-		
+
 		// Iterate over ID types
 		for (String thisIdType : idTypes) {
 			String thisIdGenerator = prefs.get(thisIdType, "");
 			try {
-				// Add mainzelliste package to class name if none is given 
+				// Add mainzelliste package to class name if none is given
 				// (check by searching for a dot in the class name)
 				if (!thisIdGenerator.contains("."))
-					thisIdGenerator = "de.pseudonymisierung.mainzelliste." + thisIdGenerator;
-				IDGenerator<?> thisGenerator = (IDGenerator<?>) Class.forName(thisIdGenerator).newInstance();
-				IDGeneratorMemory mem = Persistor.instance.getIDGeneratorMemory(thisIdType);
+					thisIdGenerator = "de.pseudonymisierung.mainzelliste."
+							+ thisIdGenerator;
+				IDGenerator<?> thisGenerator = (IDGenerator<?>) Class.forName(
+						thisIdGenerator).newInstance();
+				IDGeneratorMemory mem = Persistor.instance
+						.getIDGeneratorMemory(thisIdType);
 				if (mem == null) {
 					// Create new memory object and persist.
 					mem = new IDGeneratorMemory(thisIdType);
 					Persistor.instance.updateIDGeneratorMemory(mem);
-					/* Reread from persistence to ensure to get a persisted entity.
-					 * Otherwise future updates generate new objects in the database.
+					/*
+					 * Reread from persistence to ensure to get a persisted
+					 * entity. Otherwise future updates generate new objects in
+					 * the database.
 					 */
 					mem = Persistor.instance.getIDGeneratorMemory(thisIdType);
 				}
-				// Get properties for this ID generator from Preferences 
+				// Get properties for this ID generator from Preferences
 				Properties thisIdProps = new Properties();
 				Preferences thisIdPrefs = prefs.node(thisIdType);
 				for (String key : thisIdPrefs.keys()) {
@@ -93,23 +116,34 @@ public enum IDGeneratorFactory {
 				logger.fatal("Unknown ID generator: " + thisIdType);
 				throw new Error(e);
 			} catch (Exception e) {
-				logger.fatal("Could not initialize ID generator " + thisIdType, e);
+				logger.fatal("Could not initialize ID generator " + thisIdType,
+						e);
 				throw new Error(e);
 			}
 		}
 		Logger logger = Logger.getLogger(IDGeneratorFactory.class);
 		generators = Collections.unmodifiableMap(temp);
-		
+
 		logger.info("ID generators have initialized successfully.");
 	}
-	
-	public IDGenerator<? extends ID> getFactory(String idType){
+
+	/**
+	 * Get the IDGenerator for the given ID type.
+	 * 
+	 * @param idType
+	 *            The ID type for which to get the IDGenerator.
+	 * @return The respective IDGenerator instance or null if the given ID type
+	 *         is unknown.
+	 */
+	public IDGenerator<? extends ID> getFactory(String idType) {
 		return generators.get(idType);
 	}
-	
+
 	/**
-	 * Generates a set of IDs for a new patient by calling every ID generator defined
-	 * in the configuration.
+	 * Generates a set of IDs for a new patient by calling every ID generator
+	 * defined in the configuration.
+	 * 
+	 * @return The set of generated IDs.
 	 */
 	public Set<ID> generateIds() {
 		HashSet<ID> ids = new HashSet<ID>();
@@ -118,18 +152,42 @@ public enum IDGeneratorFactory {
 		}
 		return ids;
 	}
-	
+
 	/**
-	 * Get names of defined id types as array. The result must not be modified.
+	 * Get names of defined id types as an array. The result must not be
+	 * modified.
+	 * 
+	 * @return The defined id types.
 	 */
 	public String[] getIDTypes() {
 		return this.idTypes;
 	}
-	
+
 	/**
-	 * Get the default id type (as of 02/2013, the first one defined in the config).
+	 * Get the default id type (currently, the first one defined in the
+	 * configuration).
+	 * 
+	 * @return The default id type.
 	 */
 	public String getDefaultIDType() {
 		return this.idTypes[0];
+	}
+
+	/**
+	 * Build an ID with the given ID string and type.
+	 * 
+	 * @param idType
+	 *            The ID type.
+	 * @param idString
+	 *            The ID string.
+	 * @return An ID instance with the given properties.
+	 * @throws InvalidIDException
+	 *             If the given id type is unknown.
+	 */
+	public ID buildId(String idType, String idString) {
+		if (this.getFactory(idType) == null)
+			throw new InvalidIDException(String.format(
+					"No ID type %s defined!", idType));
+		return this.getFactory(idType).buildId(idString);
 	}
 }

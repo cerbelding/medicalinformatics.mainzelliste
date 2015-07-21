@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -31,7 +31,17 @@ import javax.ws.rs.core.Response.Status;
 
 import de.pseudonymisierung.mainzelliste.Config;
 
+/**
+ * Realization of {@link AbstractParam} for field names.
+ */
 public class FieldKeyParam extends AbstractParam<String> {
+	
+	/**
+	 * Create an instance from the given field name.
+	 * 
+	 * @param s
+	 *            Name of a valid (i.e. configured) field.
+	 */
 	public FieldKeyParam(String s) {
 		super(s);
 	}
