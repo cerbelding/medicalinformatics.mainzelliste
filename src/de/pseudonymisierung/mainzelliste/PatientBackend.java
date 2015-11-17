@@ -21,7 +21,6 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -36,6 +35,15 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
 
 /**
  * Backend methods for handling patients. Implemented as a singleton object,
@@ -48,6 +56,33 @@ public enum PatientBackend {
 
 	/** The logging instance */
 	private Logger logger = Logger.getLogger(this.getClass());
+        
+        /** The TLS context depending on the config parameters */
+        private static SSLConnectionSocketFactory sslsf;
+        
+        static {
+            
+            if ("true".equals(Config.instance.getProperty("callback.allow_selfsigned"))) {
+                try {
+                    SSLContextBuilder builder = new SSLContextBuilder();
+                    builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+                    sslsf = new SSLConnectionSocketFactory(
+                                                builder.build(),
+                                                new String[] { "TLSv1", "TLSv1.1", "TLSv1.2" },
+                                                null,
+                                                SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+                } catch (NoSuchAlgorithmException ex) {
+                    java.util.logging.Logger.getLogger(PatientBackend.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (KeyStoreException ex) {
+                    java.util.logging.Logger.getLogger(PatientBackend.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (KeyManagementException ex) {
+                    java.util.logging.Logger.getLogger(PatientBackend.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else {
+                sslsf = new SSLConnectionSocketFactory(SSLContexts.createSystemDefault());
+            }
+    
+        }
 
 	/**
 	 * PID request. Looks for a patient with the specified data in the database.
@@ -245,8 +280,8 @@ public enum PatientBackend {
 					reqBody.put("tokenId", t.getId())
 						.put("id", returnIds.get(0).getIdString());
 				}
-
-				HttpClient httpClient = new DefaultHttpClient();
+                                
+				HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();                                
 				HttpPost callbackReq = new HttpPost(callback);
 				callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
 				StringEntity reqEntity = new StringEntity(reqBody.toString());
