@@ -84,11 +84,11 @@ public enum PatientBackend {
                         SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 
             } catch (NoSuchAlgorithmException ex) {
-                Logger.getLogger(PatientBackend.class).error("Error initializing Transport Layer Security", ex);
+                Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
             } catch (KeyStoreException ex) {
-                Logger.getLogger(PatientBackend.class).error("Error initializing Transport Layer Security", ex);
+                Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
             } catch (KeyManagementException ex) {
-                Logger.getLogger(PatientBackend.class).error("Error initializing Transport Layer Security", ex);
+                Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
             }
         }
 
