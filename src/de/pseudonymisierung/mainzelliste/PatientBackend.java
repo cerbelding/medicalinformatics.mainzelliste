@@ -3,12 +3,16 @@ package de.pseudonymisierung.mainzelliste;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.net.ssl.SSLContext;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -22,6 +26,11 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.log4j.Logger;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -35,15 +44,7 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.util.logging.Level;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
+
 
 /**
  * Backend methods for handling patients. Implemented as a singleton object,
@@ -62,26 +63,33 @@ public enum PatientBackend {
         
         static {
             
-            if ("true".equals(Config.instance.getProperty("callback.allow_selfsigned"))) {
-                try {
-                    SSLContextBuilder builder = new SSLContextBuilder();
+       
+            try {
+
+                SSLContextBuilder builder = new SSLContextBuilder();
+                SSLContext sslCtx;
+
+                if ("true".equals(Config.instance.getProperty("callback.allow_selfsigned"))) {
                     builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-                    sslsf = new SSLConnectionSocketFactory(
-                                                builder.build(),
-                                                new String[] { "TLSv1", "TLSv1.1", "TLSv1.2" },
-                                                null,
-                                                SSLConnectionSocketFactory.getDefaultHostnameVerifier());
-                } catch (NoSuchAlgorithmException ex) {
-                    java.util.logging.Logger.getLogger(PatientBackend.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (KeyStoreException ex) {
-                    java.util.logging.Logger.getLogger(PatientBackend.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (KeyManagementException ex) {
-                    java.util.logging.Logger.getLogger(PatientBackend.class.getName()).log(Level.SEVERE, null, ex);
+                    sslCtx = builder.build();
+
+                } else {
+                    sslCtx = SSLContexts.createSystemDefault();
                 }
-            } else {
-                sslsf = new SSLConnectionSocketFactory(SSLContexts.createSystemDefault());
+
+                sslsf = new SSLConnectionSocketFactory(
+                        sslCtx,
+                        new String[] { "TLSv1", "TLSv1.1", "TLSv1.2" },
+                        null,
+                        SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+
+            } catch (NoSuchAlgorithmException ex) {
+                Logger.getLogger(PatientBackend.class).error("Error initializing Transport Layer Security", ex);
+            } catch (KeyStoreException ex) {
+                Logger.getLogger(PatientBackend.class).error("Error initializing Transport Layer Security", ex);
+            } catch (KeyManagementException ex) {
+                Logger.getLogger(PatientBackend.class).error("Error initializing Transport Layer Security", ex);
             }
-    
         }
 
 	/**

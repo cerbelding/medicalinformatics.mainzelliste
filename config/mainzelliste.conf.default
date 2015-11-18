@@ -252,6 +252,7 @@ servers.0.permissions = createSession;showSessionIds;deleteAllPatients;createTok
 
 # Allowed Format of callback
 callback.allowedFormat = https://.*
+callback.allow_selfsigned = false
 
 # Session timeout
 # A session will be deleted if not accessed for this amount of time, specified in minutes
