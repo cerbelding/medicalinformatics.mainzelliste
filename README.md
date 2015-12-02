@@ -23,8 +23,9 @@ This is a backward compatible maintenance release and we recommend an upgrade to
 
 These changes prevent that a definitive match occurs for two records that differ in one component (day, month, year) of the date of birth, all other fields being equal (reported by Matthias Lemmer).    
 
-####Bug fix:
+####Bug fixes:
 - When creating an `addPatient` token, ID types were not checked when using data item `idTypes` (API version 2.x syntax) with declared API version missing or < 2.0.
+- The configuration parameter for cross origin resource sharing and its explanation were missing in the configuration template.
 
 ###1.4.2
 
