@@ -13,6 +13,19 @@ The following article describes the underlying concepts of Mainzelliste and the 
 
 ## Release notes
 
+###1.4.3
+
+This is a backward compatible maintenance release and we recommend an upgrade to all users. Also, we strongly recommend to incorporate the changes in the configuration template into actual configuration files (see comments below).
+
+####Changes in matching configuration:
+- Fixes a typo in the proposed matching configuration. In existing configuration files based on the template (`mainzelliste.conf.default`), the value for `matcher.epilink.geburtsmonat.frequency` should be changed from `0.833` to `0.0833`. This change has to be made manually because the actually used configuration file resides outside of the distributed package. 
+- Also, the proposed weight threshold for matches (`matcher.epilink.threshold_match`) has been raised from `0.9` to `0.95`. We also recommend to adopt this change in existing configuration files.
+
+These changes prevent that a definitive match occurs for two records that differ in one component (day, month, year) of the date of birth, all other fields being equal (reported by Matthias Lemmer).    
+
+####Bug fix:
+- When creating an `addPatient` token, ID types were not checked when using data item `idTypes` (API version 2.x syntax) with declared API version missing or < 2.0.
+
 ###1.4.2
 
 Fixes an encoding error in German language properties file. This version can be skipped by users who do not use the HTML interface or use their own JSP files.
