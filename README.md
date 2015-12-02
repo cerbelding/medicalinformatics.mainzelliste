@@ -72,7 +72,6 @@ As this release contains various bug fixes, we recommend an upgrade to all users
 - In addition to specific IP addresses, IPv4 address ranges can be included in the list of addresses from which another server can get access (see configuration parameter `servers.{n}.allowedRemoteAdresses`)
 - For all successful requests to add a patient (POST /patients), the timestamp is logged in the database (for future use cases).
 - When making requests via the HTML interface, error messages are formatted as web pages.
-tact` and `operator.logo`).
 - The result page that is shown after a patient has been added now lists all requested pseudonyms according to parameter `idTypes` in the token (contributed by Matthias Lemmer).
 
 #### Bug fixes:
