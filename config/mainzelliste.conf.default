@@ -251,7 +251,7 @@ servers.0.permissions = createSession;showSessionIds;deleteAllPatients;createTok
 
 # Allowed origins for cross origin resource sharing (CORS), multiple values separated by ";"
 
-servers.allowedOrigins = https://mdat-server.example.org 
+# servers.allowedOrigins = https://mdat-server.example.org 
 
 # Allowed Format of callback
 callback.allowedFormat = https://.*
