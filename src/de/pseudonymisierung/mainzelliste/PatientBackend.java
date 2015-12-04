@@ -3,12 +3,16 @@ package de.pseudonymisierung.mainzelliste;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.net.ssl.SSLContext;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -21,8 +25,12 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -37,6 +45,7 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
 
+
 /**
  * Backend methods for handling patients. Implemented as a singleton object,
  * which can be referenced by PatientBackend.instance.
@@ -48,6 +57,40 @@ public enum PatientBackend {
 
 	/** The logging instance */
 	private Logger logger = Logger.getLogger(this.getClass());
+        
+        /** The TLS context depending on the config parameters */
+        private static SSLConnectionSocketFactory sslsf;
+        
+        static {
+            
+       
+            try {
+
+                SSLContextBuilder builder = new SSLContextBuilder();
+                SSLContext sslCtx;
+
+                if ("true".equals(Config.instance.getProperty("callback.allow_selfsigned"))) {
+                    builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+                    sslCtx = builder.build();
+
+                } else {
+                    sslCtx = SSLContexts.createSystemDefault();
+                }
+
+                sslsf = new SSLConnectionSocketFactory(
+                        sslCtx,
+                        new String[] { "TLSv1", "TLSv1.1", "TLSv1.2" },
+                        null,
+                        SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+
+            } catch (NoSuchAlgorithmException ex) {
+                Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+            } catch (KeyStoreException ex) {
+                Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+            } catch (KeyManagementException ex) {
+                Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+            }
+        }
 
 	/**
 	 * PID request. Looks for a patient with the specified data in the database.
@@ -245,8 +288,8 @@ public enum PatientBackend {
 					reqBody.put("tokenId", t.getId())
 						.put("id", returnIds.get(0).getIdString());
 				}
-
-				HttpClient httpClient = new DefaultHttpClient();
+                                
+				HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();                                
 				HttpPost callbackReq = new HttpPost(callback);
 				callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
 				StringEntity reqEntity = new StringEntity(reqBody.toString());
