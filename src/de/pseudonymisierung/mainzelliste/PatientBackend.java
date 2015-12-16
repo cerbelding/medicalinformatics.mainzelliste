@@ -91,6 +91,11 @@ public enum PatientBackend {
 	}
 
 	/**
+	 * Session to be used when in debug mode.
+	 */
+	private Session debugSession = null;
+
+	/**
 	 * PID request. Looks for a patient with the specified data in the database.
 	 * If a match is found, the ID of the matching patient is returned. If no
 	 * match or possible match is found, a new patient with the specified data
@@ -122,7 +127,7 @@ public enum PatientBackend {
 			// If no token found and debug mode is on, create token, otherwise fail
 			if (Config.instance.debugIsOn())
 			{
-				Session s = Servers.instance.newSession();
+				Session s = getDebugSession();
 				try {
 					s.setURI(new URI("debug"));
 				} catch (URISyntaxException e) {
@@ -134,12 +139,12 @@ public enum PatientBackend {
 				tokenId = t.getId();
 			} else {
 				logger.error("No token with id " + tokenId + " found");
-				throw new InvalidTokenException("Please supply a valid 'addPatient' token.");
+				throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
 			}
 		} else { // correct token type?
 			if (!(tt instanceof AddPatientToken)) {
 				logger.error("Token " + tt.getId() + " is not of type 'addPatient' but '" + tt.getType() + "'");
-				throw new InvalidTokenException("Please supply a valid 'addPatient' token.");
+				throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
 			} else {
 				t = (AddPatientToken) tt;
 			}
@@ -290,6 +295,7 @@ public enum PatientBackend {
 				HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();                                
 				HttpPost callbackReq = new HttpPost(callback);
 				callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
+				callbackReq.setHeader("User-Agent", Config.instance.getUserAgentString());
 				StringEntity reqEntity = new StringEntity(reqBody.toString());
 				reqEntity.setContentType("application/json");
 				callbackReq.setEntity(reqEntity);
@@ -368,4 +374,15 @@ public enum PatientBackend {
 		Persistor.instance.updatePatient(pToEdit);
 	}
 
+	/**
+	 * Get a session for use in debug mode.
+	 * @return The debug session.
+	 */
+	private Session getDebugSession() {
+		if (debugSession == null
+				|| Servers.instance.getSession(debugSession.getId()) == null) {
+			debugSession = Servers.instance.newSession();
+		}
+		return debugSession;
+	}
 }
