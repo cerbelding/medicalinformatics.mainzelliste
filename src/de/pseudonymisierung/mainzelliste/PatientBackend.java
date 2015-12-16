@@ -69,7 +69,7 @@ public enum PatientBackend {
                 SSLContextBuilder builder = new SSLContextBuilder();
                 SSLContext sslCtx;
 
-                if ("true".equals(Config.instance.getProperty("callback.allow_selfsigned"))) {
+                if ("true".equals(Config.instance.getProperty("callback.allowSelfsigned"))) {
                     builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
                     sslCtx = builder.build();
 
