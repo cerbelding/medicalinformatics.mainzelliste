@@ -58,39 +58,37 @@ public enum PatientBackend {
 	/** The logging instance */
 	private Logger logger = Logger.getLogger(this.getClass());
         
-        /** The TLS context depending on the config parameters */
-        private static SSLConnectionSocketFactory sslsf;
+	/** The TLS context depending on the configuration parameters */
+	private SSLConnectionSocketFactory sslsf;
         
-        static {
-            
-       
-            try {
+	/**
+	 * Creates an instance. Invoked on first access to {@link PatientBackend#instance}.
+	 */
+	private PatientBackend() {
+		try {
 
-                SSLContextBuilder builder = new SSLContextBuilder();
-                SSLContext sslCtx;
+			SSLContextBuilder builder = new SSLContextBuilder();
+			SSLContext sslCtx;
 
-                if ("true".equals(Config.instance.getProperty("callback.allowSelfsigned"))) {
-                    builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-                    sslCtx = builder.build();
+			if ("true".equals(Config.instance.getProperty("callback.allowSelfsigned"))) {
+				builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+				sslCtx = builder.build();
 
-                } else {
-                    sslCtx = SSLContexts.createSystemDefault();
-                }
+			} else {
+				sslCtx = SSLContexts.createSystemDefault();
+			}
 
-                sslsf = new SSLConnectionSocketFactory(
-                        sslCtx,
-                        new String[] { "TLSv1", "TLSv1.1", "TLSv1.2" },
-                        null,
-                        SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+			sslsf = new SSLConnectionSocketFactory(sslCtx, new String[] { "TLSv1", "TLSv1.1", "TLSv1.2" }, null,
+					SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 
-            } catch (NoSuchAlgorithmException ex) {
-                Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
-            } catch (KeyStoreException ex) {
-                Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
-            } catch (KeyManagementException ex) {
-                Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
-            }
-        }
+		} catch (NoSuchAlgorithmException ex) {
+			Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+		} catch (KeyStoreException ex) {
+			Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+		} catch (KeyManagementException ex) {
+			Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+		}
+	}
 
 	/**
 	 * PID request. Looks for a patient with the specified data in the database.
