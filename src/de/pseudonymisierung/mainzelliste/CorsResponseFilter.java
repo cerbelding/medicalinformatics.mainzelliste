@@ -72,8 +72,9 @@ public class CorsResponseFilter implements Filter {
 			HttpServletResponse httpResponse = (HttpServletResponse) response;
 			
 			String origin = httpRequest.getHeader("Origin");
+			String thisHostAndScheme = httpRequest.getScheme() + "://" + httpRequest.getHeader("Host");
 			if (origin != null) {
-				if (Config.instance.originAllowed(origin)) {
+				if (origin.equals(thisHostAndScheme) || Config.instance.originAllowed(origin)) {
 					logger.debug("Allowing cross domain request from origin " + origin);
 					httpResponse.addHeader("Access-Control-Allow-Origin", origin);
 				} else {

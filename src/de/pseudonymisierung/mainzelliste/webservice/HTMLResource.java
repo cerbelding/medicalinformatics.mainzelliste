@@ -247,7 +247,7 @@ public class HTMLResource {
 		String idStringOriginal = form.getFirst("idStringOriginal");
 		String idTypeOriginal = form.getFirst("idTypeOriginal");		
 		if (!StringUtils.isEmpty(idStringOriginal) && ! StringUtils.isEmpty(idTypeOriginal))
-		{			
+		{
 			ID originalId = IDGeneratorFactory.instance.buildId(idTypeOriginal, idStringOriginal);
 			Patient pOriginal = Persistor.instance.getPatient(originalId);
 			pToEdit.setOriginal(pOriginal);
