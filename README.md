@@ -16,12 +16,12 @@ Java developers should have a look at [Mainzelliste.Client](https://bitbucket.or
 
 ###1.5.0
 
-This release introduces a couple of new features and bug fixes, which do not change the public API (current version: 2.1). We recommend an upgrade to all users, which is possible from any earlier release without any steps necessary other than replacing the binary. The update is fully backwards compatible to all Mainzelliste versions down to 1.0, except for use cases with the requirement that future dates can be entered (these are now rejected by date validation). 
+This release introduces a couple of new features and bug fixes, the addition of language selection via URL parameter being the only (backward compatible) change to the public API (now version 2.2). We recommend an upgrade to all users, which is possible from any earlier release without any steps necessary other than replacing the binary. The update is fully backwards compatible to all Mainzelliste versions down to 1.0, except for use cases with the requirement that future dates can be entered (these are now rejected by date validation).
 
 ####New features:
 
 - A new field transformation, `StringTrimmer`, can be used to delete leading and trailing whitespace from a `PlainTextField`.
-- The language of user forms can be set by providing the language code as URL parameter `language` (currently `de` and `en` are supported).
+- The language of user forms can be set by providing the language code as URL parameter `language` (currently `de` and `en` are supported). If provided, this parameter overrides the choice of preferred languages in the `Accept-Language` header.
 - Date validation rejects dates in the future.
 - Application name and version are provided in responses and callback requests as HTTP header `Server` and `User-Agent`, respectively, in the format `Mainzelliste/x.y.z`.
 - The implementation of the callback request ensures the use of state-of-the-art transport layer security (TLS) (contributed by Matthias Lemmer, see pull request #26).
@@ -30,7 +30,8 @@ This release introduces a couple of new features and bug fixes, which do not cha
 ####Bug fixes:
 
 - The host name provided by the `Origin` header was checked against the configured list of hosts (configuration parameter `servers.allowedOrigins`) even if equal to the host of the Mainzelliste instance itself, i.e. treating a same-origin request like a cross-origin request (reported by Benjamin Gathmann). 
-- Requests with an invalid token (i.e. non-existent or of wrong type) lead to status code 400 (Bad Request) instead of 401 (Unauthorized). 
+- Requests with an invalid token (i.e. non-existent or of wrong type) lead to status code 400 (Bad Request), now 401 (Unauthorized) is returned.
+- Fixed internationalization of title in result page shown after a patient has been created (patientCreated.jsp). 
 
 ####Other changes:
 
