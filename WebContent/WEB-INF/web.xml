@@ -6,6 +6,7 @@
 		<filter-name>Mainzelliste - ServerInfoFilter</filter-name>
 		<filter-class>de.pseudonymisierung.mainzelliste.webservice.ServerInfoFilter</filter-class>
 	</filter>
+	<!-- Filter to add "Server" header ("Mainzelliste/x.y.z") to responses -->
 	<filter-mapping>
 		<filter-name>Mainzelliste - ServerInfoFilter</filter-name>
 		<url-pattern>/*</url-pattern>
@@ -32,6 +33,9 @@
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.WebPageContentRegex</param-name>
+			<!-- Definition of "webjar" as a static resource is necessary for
+			  compatibility with OSSE extensions (see 
+				https://bitbucket.org/medinfo_mainz/mainzelliste-osse) -->
 			<param-value>/(static|webjar)/.*</param-value>
 		</init-param>
 		<init-param>
