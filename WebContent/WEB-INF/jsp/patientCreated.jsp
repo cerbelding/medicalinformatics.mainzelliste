@@ -24,36 +24,36 @@
 <link rel="stylesheet" type="text/css"
 	href="<%=request.getContextPath()%>/static/css/patientenliste.css">
 
-<title>Ergebnis</title>
+<title><%=bundle.getString("result") %></title>
 </head>
 
 <body>
 	<jsp:include page="header.jsp"></jsp:include>
 	<div class="inhalt">
 		<div class="formular">
-			<h1>Ergebnis</h1>
+			<h1><%=bundle.getString("result") %></h1>
                         <div style="text-align: center;">
                             <p>
 								<%=bundle.getString("yourRequestedPIDs") %>
                             </p>
 							<ul style="display: inline-block; text-align: left;">
-							<% for (ID id : ids) { 
+							<% for (ID id : ids) {
 							if (id != null) {
 							%>
-								<li><span class="id"><%=id.getType() %>: <%=id.getIdString() %></span></li>                                  	
-							<% 
+								<li><span class="id"><%=id.getType() %>: <%=id.getIdString() %></span></li>
+							<%
 								}
 							}
 							%>
 							</ul>
                             <p>
-                            	<%=bundle.getString("pleaseCopy") %> 
+                            	<%=bundle.getString("pleaseCopy") %>
                             </p>
                             <p>
                             	<%=bundle.getString("idTypeNote") %>
                             </p>
                         </div>
-                                        
+
 			<% if (map.containsKey("printIdat") && (Boolean) map.get("printIdat")) { %>
 			<h3><%=bundle.getString("enteredData") %></h3>
 			<table class="daten_tabelle">
@@ -99,14 +99,14 @@
 				if (map.containsKey("redirect")) {
 			%>
 			<form action="<%=map.get("redirect")%>" target="_top" method="get">
-				<%  
+				<%
 				@SuppressWarnings("unchecked")
-				MultivaluedMap<String, String> redirectParams = (MultivaluedMap<String, String>) map.get("redirectParams"); 
+				MultivaluedMap<String, String> redirectParams = (MultivaluedMap<String, String>) map.get("redirectParams");
 				for (String key : redirectParams.keySet()) {
 					String value = redirectParams.getFirst(key);
 					%>
 				<input type="hidden" name="<%=key %>" value="<%=value %>" />
-				<% 
+				<%
 				}
 				%>
 				<div style="text-align: center">
