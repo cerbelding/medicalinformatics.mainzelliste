@@ -30,7 +30,8 @@ This release introduces a couple of new features and bug fixes, the addition of 
 ####Bug fixes:
 
 - The host name provided by the `Origin` header was checked against the configured list of hosts (configuration parameter `servers.allowedOrigins`) even if equal to the host of the Mainzelliste instance itself, i.e. treating a same-origin request like a cross-origin request (reported by Benjamin Gathmann). 
-- Requests with an invalid token (i.e. non-existent or of wrong type) lead to status code 400 (Bad Request), now 401 (Unauthorized) is returned. 
+- Requests with an invalid token (i.e. non-existent or of wrong type) lead to status code 400 (Bad Request), now 401 (Unauthorized) is returned.
+- Fixed internationalization of title in result page shown after a patient has been created (patientCreated.jsp). 
 
 ####Other changes:
 
