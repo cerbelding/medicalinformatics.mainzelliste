@@ -92,7 +92,7 @@ public class Initializer implements ServletContextListener {
 		IDGeneratorFactory idgf = IDGeneratorFactory.instance;
 		Servers s = Servers.instance;
 		Validator v = Validator.instance;
-		
+
 		/* 
 		 * Limit Jersey logging to avoid spamming the log with "the request body has been consumed" messages
 		 * (see http://stackoverflow.com/questions/2011895/how-to-fix-jersey-post-request-parameters-warning).

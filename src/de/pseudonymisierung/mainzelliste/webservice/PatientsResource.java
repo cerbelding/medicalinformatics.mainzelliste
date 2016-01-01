@@ -338,7 +338,7 @@ public class PatientsResource {
 		Token t = Servers.instance.getTokenByTid(tid);
 		if (t == null) {
 			logger.info("No token with id " + tid + " found");
-			throw new InvalidTokenException("Please supply a valid 'readPatients' token.");
+			throw new InvalidTokenException("Please supply a valid 'readPatients' token.", Status.UNAUTHORIZED);
 		}
 
 		t.checkTokenType("readPatients");
@@ -492,7 +492,7 @@ public class PatientsResource {
 		EditPatientToken tt;
 		if (t == null || !"editPatient".equals(t.getType()) ) {
 				logger.info("Token with id " + tokenId + " " + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
-				throw new InvalidTokenException("Please supply a valid 'editPatient' token.");
+				throw new InvalidTokenException("Please supply a valid 'editPatient' token.", Status.UNAUTHORIZED);
 		}
 		// synchronize on token 
 		synchronized (t) {
