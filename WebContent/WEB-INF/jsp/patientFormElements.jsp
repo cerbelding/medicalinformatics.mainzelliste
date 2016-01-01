@@ -11,8 +11,8 @@
 	@SuppressWarnings("unchecked")
 	Map<String, Object> map = (Map<String, Object>) request
 			.getAttribute("it");
-	ResourceBundle bundle = Config.instance.getResourceBunde(request);
-	Boolean showPlaceholders = Boolean.parseBoolean(request.getParameter("showPlaceholders"));	
+	ResourceBundle bundle = Config.instance.getResourceBundle(request);
+	Boolean showPlaceholders = Boolean.parseBoolean(request.getParameter("showPlaceholders"));
 %>
 <h3><%=bundle.getString("patientData")%></h3>
 <fieldset class="patienten_daten">

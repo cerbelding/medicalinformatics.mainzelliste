@@ -3,7 +3,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%
-	ResourceBundle bundle = Config.instance.getResourceBunde(request);
+	ResourceBundle bundle = Config.instance.getResourceBundle(request);
+	// pass "language" parameter from URL if given (included in form URL below)
+	String languageInUrl ="";
+	if (request.getParameter("language") != null)
+		languageInUrl = "&amp;language=" + request.getParameter("language");
 %>
 <!DOCTYPE html>
 <html>
@@ -20,7 +24,7 @@
 		<jsp:include page="header.jsp"></jsp:include>
 		<div class="inhalt">
 			<div class="formular">
-				<form action="<%=request.getContextPath() %>/patients?mainzellisteApiVersion=${it.mainzellisteApiVersion}&amp;tokenId=${it.tokenId}" method="post" id="form_person">
+				<form action="<%=request.getContextPath() %>/patients?mainzellisteApiVersion=${it.mainzellisteApiVersion}&amp;tokenId=${it.tokenId}<%=languageInUrl %>" method="post" id="form_person">
 				<h1><%=bundle.getString("unsureCase") %></h1>
 				<%=bundle.getString("unsureCaseText") %>
 				<ul class="hinweisen_liste">

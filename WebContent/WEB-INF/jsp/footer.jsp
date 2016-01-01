@@ -1,7 +1,7 @@
 <%@page import="de.pseudonymisierung.mainzelliste.Config"%>
 <%@page import="java.util.ResourceBundle"%>
-<% 
-	ResourceBundle bundle = Config.instance.getResourceBunde(request);
+<%
+	ResourceBundle bundle = Config.instance.getResourceBundle(request);
 	String operator = Config.instance.getProperty("operator.contact");
 %>
 		<div class="kontakt_daten">

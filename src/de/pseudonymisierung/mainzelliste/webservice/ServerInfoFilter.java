@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Martin Lablans, Andreas Borg, Frank Ückert
+ * Copyright (C) 2013-2015 Martin Lablans, Andreas Borg, Frank Ückert
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -23,7 +23,7 @@
  * License, version 2.0, the licensors of this Program grant you additional 
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste;
+package de.pseudonymisierung.mainzelliste.webservice;
 
 import java.io.IOException;
 
@@ -33,54 +33,38 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import de.pseudonymisierung.mainzelliste.Config;
 
 /**
- * Adds header "Access-Control-Allow-Origin" for Cross-origin resource sharing
- * 
- * If an incoming request includes the header "Origin", the value of it is
- * checked against a list of configured hosts (see {@link Config#originAllowed(String)}).
- * If the host is listed as an allowed origin, the header "Access-Control-Allow-Origin" 
- * in the response is set to this value. 
- *
+ * Adds header "Server" with application information to HTTP responses.
+ * The provided string is of the format "Mainzelliste/x.y.z". Activated by 
+ * filter definition "Mainzelliste - ServerInfoFilter" in web.xml.
  */
-public class CorsResponseFilter implements Filter {
-
-	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
-	
-	/**
-	 * Not used in this implementation.
-	 */
-	@Override
-	public void init(FilterConfig arg0) throws ServletException {}
+public class ServerInfoFilter implements Filter {
 
 	/**
 	 * Not used in this implementation.
 	 */
 	@Override
-	public void destroy() {}
+	public void init(FilterConfig arg0) throws ServletException {
+	}
+
+	/**
+	 * Not used in this implementation.
+	 */
+	@Override
+	public void destroy() {
+	}
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response,
 			FilterChain chain) throws IOException, ServletException {
-		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
-			HttpServletRequest httpRequest = (HttpServletRequest) request;
+		if (response instanceof HttpServletResponse) {
 			HttpServletResponse httpResponse = (HttpServletResponse) response;
-			
-			String origin = httpRequest.getHeader("Origin");
-			String thisHostAndScheme = httpRequest.getScheme() + "://" + httpRequest.getHeader("Host");
-			if (origin != null) {
-				if (origin.equals(thisHostAndScheme) || Config.instance.originAllowed(origin)) {
-					logger.debug("Allowing cross domain request from origin " + origin);
-					httpResponse.addHeader("Access-Control-Allow-Origin", origin);
-				} else {
-					logger.info("Rejecting cross domain request from origin " + origin);
-				}
-			}
+			httpResponse.addHeader("Server",
+					Config.instance.getUserAgentString());
 		}
 		chain.doFilter(request, response);
 	}

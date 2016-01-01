@@ -6,7 +6,7 @@
 
     <groupId>de.pseudonymisierung.mainzelliste</groupId>
     <artifactId>mainzelliste</artifactId>
-    <version>1.4.3</version>
+    <version>1.5.0</version>
     <packaging>war</packaging>
 
     <properties>
@@ -24,7 +24,7 @@
         <version.commons-dbcp>1.4</version.commons-dbcp>
         <version.postgresql>9.2-1003-jdbc4</version.postgresql>
         <version.mysql>5.1.25</version.mysql>
-        <version.httpclient>4.2.5</version.httpclient>
+        <version.httpclient>4.5.1</version.httpclient>
         <version.commons.net>3.3</version.commons.net>
     </properties>
 

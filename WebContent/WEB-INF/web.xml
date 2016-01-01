@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app metadata-complete="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" version="3.0">
 	<display-name>de.pseudonymisierung.mainzelliste</display-name>
+	<!-- Filter to add Server header -->
+	<filter>
+		<filter-name>Mainzelliste - ServerInfoFilter</filter-name>
+		<filter-class>de.pseudonymisierung.mainzelliste.webservice.ServerInfoFilter</filter-class>
+	</filter>
+	<!-- Filter to add "Server" header ("Mainzelliste/x.y.z") to responses -->
+	<filter-mapping>
+		<filter-name>Mainzelliste - ServerInfoFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
 	<!-- Filter to add header for Cross-origin resource sharing -->
 	<filter>
 		<filter-name>Mainzelliste - CorsResponseFilter</filter-name>
@@ -23,7 +33,10 @@
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.WebPageContentRegex</param-name>
-			<param-value>/static/.*</param-value>
+			<!-- Definition of "webjar" as a static resource is necessary for
+			  compatibility with OSSE extensions (see 
+				https://bitbucket.org/medinfo_mainz/mainzelliste-osse) -->
+			<param-value>/(static|webjar)/.*</param-value>
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
@@ -34,7 +47,7 @@
  		<init-param>
 	         <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
 	         <param-value>com.sun.jersey.api.container.filter.PostReplaceFilter</param-value>
-	     </init-param>		
+	     </init-param>
 	</filter>
 	<listener>
 		<listener-class>de.pseudonymisierung.mainzelliste.Initializer</listener-class>

@@ -299,6 +299,7 @@ public enum Validator {
 	private void checkDates(Iterable<String> formatStrings, Iterable<String> dateStrings) {		
 		Iterator<String> formatIt = formatStrings.iterator();
 		Iterator<String> dateIt = dateStrings.iterator();
+		Date currentDate = new Date();
 
 		while (formatIt.hasNext() && dateIt.hasNext()) {
 			String curDateFormat = formatIt.next();
@@ -314,6 +315,8 @@ public enum Validator {
 				if (date == null) {
 					throw new ValidatorException(dateString + " is not a valid date!");
 				}
+				if (date.after(currentDate))
+					throw new ValidatorException(dateString + " is in the future!");
 			} catch (ParseException e) {
 				throw new ValidatorException(dateString + " is not a valid date!");
 			}
