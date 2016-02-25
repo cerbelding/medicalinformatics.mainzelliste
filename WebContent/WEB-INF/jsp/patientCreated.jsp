@@ -27,6 +27,14 @@
 <title><%=bundle.getString("result") %></title>
 </head>
 
+<script type="text/javascript">
+	function printLayout() {
+		var tab = document.getElementById('daten_tabelle'); 
+		tab.style.margin="0";		
+	}
+
+</script>
+
 <body>
 	<jsp:include page="header.jsp"></jsp:include>
 	<div class="inhalt">
@@ -56,7 +64,7 @@
 
 			<% if (map.containsKey("printIdat") && (Boolean) map.get("printIdat")) { %>
 			<h3><%=bundle.getString("enteredData") %></h3>
-			<table class="daten_tabelle">
+			<table class="daten_tabelle" id="daten_tabelle">
 				<tbody>
 					<tr>
 						<td><%=bundle.getString("firstName") %>:</td>
@@ -111,7 +119,7 @@
 				%>
 				<div style="text-align: center">
 					<% if (map.containsKey("printIdat") && (Boolean) map.get("printIdat")) { %>
-						<input type="submit" onclick="window.print();"
+						<input type="submit" onclick="printLayout(); window.print();"
 						value="Drucken und Patient anlegen" />
 					<% } else { %>
 						<input type="submit" value="Patient anlegen" />
