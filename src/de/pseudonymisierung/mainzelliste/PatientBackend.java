@@ -202,6 +202,7 @@ public enum PatientBackend {
 			pNormalized.setInputFields(chars);
 			
 			match = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
+			logger.debug("Best matching weight: " + match.getBestMatchedWeight());
 			Patient assignedPatient; // The "real" patient that is assigned (match result or new patient) 
 			
 			// If a list of ID types is given in token, return these types

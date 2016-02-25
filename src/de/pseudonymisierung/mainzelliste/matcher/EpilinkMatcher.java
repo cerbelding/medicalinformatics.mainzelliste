@@ -39,6 +39,7 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
@@ -66,7 +67,6 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
  */
 public class EpilinkMatcher implements Matcher {
 
-	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
 	/** Minimum weight for definitive matches. */
 	private double thresholdMatch;
 	
@@ -110,6 +110,8 @@ public class EpilinkMatcher implements Matcher {
 	/** Buffer for fields not included in any exchange group. */
 	private Set<String> nonExchangeFields;
 	
+	/** The logging instance. */
+	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
 	/**
 	 * Get all permutations of a list of Strings.
 	 * 
@@ -243,9 +245,10 @@ public class EpilinkMatcher implements Matcher {
 			if (left.getFields().get(fieldName).isEmpty() || right.getFields().get(fieldName).isEmpty())
 				continue;
 			
-			double fieldWeight = weights.get(fieldName); 
+			double fieldWeight = weights.get(fieldName);
 			weightSum += fieldWeight;
-			double thisCompWeight = comparators.get(fieldName).compare(left, right) * fieldWeight; 
+			double thisCompWeight = comparators.get(fieldName).compare(left, right) * fieldWeight;
+			logger.debug("Weighted comparison for field " + fieldName + ": " + thisCompWeight);
 			totalWeight += thisCompWeight;
 		}
 		totalWeight /= weightSum;
@@ -299,6 +302,7 @@ public class EpilinkMatcher implements Matcher {
 					// all e_i have same value in this implementation
 					double weight = (1 - error_rate) / frequency;
 					weight = Math.log(weight) / Math.log(2);
+					logger.debug("Field weight for field " + fieldName + ": " + weight);
 					weights.put(fieldName, weight);
 				}
 			}
