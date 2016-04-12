@@ -62,6 +62,12 @@
             <version>${version.mysql}</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>2.3.3</version>
+            <!--<scope>runtime</scope>-->
+        </dependency>
 
         <!-- Logging -->
         <dependency>
@@ -102,6 +108,11 @@
         	<groupId>commons-net</groupId>
         	<artifactId>commons-net</artifactId>
         	<version>${version.commons.net}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.4</version>
         </dependency>
     </dependencies>
 
