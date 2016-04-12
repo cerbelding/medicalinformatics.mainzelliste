@@ -26,6 +26,7 @@
 package de.pseudonymisierung.mainzelliste.matcher;
 
 import javax.persistence.Basic;
+import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.ManyToOne;
 
@@ -71,6 +72,9 @@ public class MatchResult {
 	/**
 	 * The best (i.e. highest) matching weight found.
 	 */
+        @Basic
+	// explicit specify the data type (needed for HSQLDB)
+        @Column(columnDefinition = "DOUBLE PRECISION")
 	private double bestMatchedWeight;
 
 	/**

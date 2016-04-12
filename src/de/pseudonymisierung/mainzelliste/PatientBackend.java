@@ -195,6 +195,7 @@ public enum PatientBackend {
 			// Normalization, Transformation
 			Patient pNormalized = Config.instance.getRecordTransformer().transform(p);
 			pNormalized.setInputFields(chars);
+                        pNormalized.generateHash(p.getFields());
 			
 			match = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
 			Patient assignedPatient; // The "real" patient that is assigned (match result or new patient) 
@@ -369,7 +370,8 @@ public enum PatientBackend {
 		// assign changed fields to patient in database, persist
 		pToEdit.setFields(pNormalized.getFields());
 		pToEdit.setInputFields(pNormalized.getInputFields());
-
+                pToEdit.generateHash(pNormalized.getFields());
+                
 		// Save to database
 		Persistor.instance.updatePatient(pToEdit);
 	}

@@ -94,7 +94,13 @@ public class EpilinkMatcher implements Matcher {
 	
 	/** The FieldComparators, by field name. */
 	private Map<String, FieldComparator<Field<?>>> comparators;
-	/** Mean frequencies of values by field name. */
+	
+        public Map<String, FieldComparator<Field<?>>> getComparators()
+        {
+            return comparators;
+        }        
+        
+        /** Mean frequencies of values by field name. */
 	private Map<String, Double> frequencies;
 	/** Assumed error rates by field name. */
 	private Map<String, Double> errorRates;
@@ -104,11 +110,27 @@ public class EpilinkMatcher implements Matcher {
 	 * {@link #errorRates}
 	 */
 	private Map<String, Double> weights;
+        
+        public Map<String, Double> getWeights()
+        {
+            return weights;
+        }
 	
 	/** Sets of fields that are exchangeable for matching. */
 	private List<List<String>> exchangeGroups;
+        
+        public List<List<String>> getExchangeGroups()
+        {
+            return exchangeGroups;
+        }
+        
 	/** Buffer for fields not included in any exchange group. */
 	private Set<String> nonExchangeFields;
+        
+        public Set<String> getNonExchangeFields()
+        {
+            return nonExchangeFields;
+        }
 	
 	/**
 	 * Get all permutations of a list of Strings.

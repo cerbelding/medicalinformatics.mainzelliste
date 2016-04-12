@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -51,6 +52,8 @@ import org.codehaus.jettison.json.JSONObject;
 
 import de.pseudonymisierung.mainzelliste.exceptions.CircularDuplicateRelationException;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.matcher.hasher.HashFormatter;
+import de.pseudonymisierung.mainzelliste.matcher.hasher.Hasher;
 
 /**
  * A patient entity identified by at least one ID and described by a number of Fields.
@@ -143,6 +146,7 @@ public class Patient {
 	 * 
 	 * @see #fields
 	 */
+        @Basic(fetch = FetchType.LAZY)
 	@Lob
 	@JsonIgnore
 	private String fieldsString;
@@ -170,9 +174,17 @@ public class Patient {
 	 * 
 	 * @see #inputFields
 	 */
+        @Basic(fetch = FetchType.LAZY)
 	@Lob
 	@JsonIgnore
 	private String inputFieldsString;
+        
+        /**
+            Hash of a patient. If no hashes used, the string is empty.
+        */
+        @Basic(fetch = FetchType.EAGER)
+        @Column(length = 128)
+        private String hash;
 
 	/**
 	 * True if this patient is suspected to be a duplicate.
@@ -364,6 +376,32 @@ public class Patient {
 		this.fields = fields;
 		this.fieldsString = fieldsToString(this.fields);
 	}
+        
+        /**
+	 * Creates a hash based on the given fields. Whether and which Hasher is used
+	 * must be specified in the configuration file. The given fields should be normalized.
+	 *
+	 * @param fields Fields with normalized patient datas
+         */
+        public void generateHash(Map<String, Field<?>> fields)
+        {
+            Hasher hasher = Config.instance.getHasher();
+
+            if (hasher != null) {
+                HashFormatter hf = HashFormatter.getInstance();
+                hash = hasher.generate(hf.getHasherInput(fields));
+            }
+        }
+        
+        /**
+         * Returns a copy of the hash.
+         *
+         * @return Hash of patient.
+         */
+        public String getHash()
+        {
+            return new String(hash);
+        }
 
 	/**
 	 * Set the IDs for this patient.

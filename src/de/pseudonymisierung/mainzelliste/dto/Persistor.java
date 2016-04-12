@@ -90,7 +90,11 @@ public enum Persistor {
 		// Other settings
 		persistenceOptions.put("openjpa.jdbc.SynchronizeMappings", "buildSchema");
 		persistenceOptions.put("openjpa.jdbc.DriverDataSource", "dbcp");
-		persistenceOptions.put("openjpa.ConnectionProperties", "testOnBorrow=true, validationQuery=SELECT 1");
+		
+                if (isHsqldb())
+                    persistenceOptions.put("openjpa.ConnectionProperties", "testOnBorrow=true, validationQuery=SELECT 1 FROM INFORMATION_SCHEMA.SYSTEM_USERS");
+                else
+                    persistenceOptions.put("openjpa.ConnectionProperties", "testOnBorrow=true, validationQuery=SELECT 1");
 		
 		emf = Persistence.createEntityManagerFactory("mainzelliste", persistenceOptions);
 		em = emf.createEntityManager();
@@ -406,6 +410,59 @@ public enum Persistor {
 		em.createNativeQuery("UPDATE mainzelliste_properties SET " + quoteIdentifier("value") + "='" + toVersion + 
 				"' WHERE property='version'").executeUpdate(); 
 	}
+        
+        
+        /**
+         * Start a connection based of the specified properties in the configuration
+         * file. Returns true, if the connection is to a HSQLDB. After check, the
+         * connection is disconnected.
+         *
+         * @param conn Connection to the database
+         * @return true, if the used database is a HSQLDB, otherwise false
+         */
+        private boolean isHsqldb() {
+            Connection conn = null;
+
+            Properties connectionProps = new Properties();
+            connectionProps.put("user", Config.instance.getProperty("db.username"));
+            connectionProps.put("password", Config.instance.getProperty("db.password"));
+            String url = Config.instance.getProperty("db.url");
+
+            boolean result = false;
+
+            try {
+                Class.forName(Config.instance.getProperty("db.driver"));
+                conn = DriverManager.getConnection(url, connectionProps);
+                result = isHsqldb(conn);
+                conn.close();
+            }
+            catch (Exception e) {
+            }
+
+            return result;
+        }
+
+        /**
+         * Check if the given connection to a HSQLDB.
+         *
+         * @param conn Connection to the database
+         * @return true, if the given connection is to HSQLDB, otherwise false
+         */
+        private boolean isHsqldb(Connection conn) {
+            DatabaseMetaData metaData = null;
+
+            try {
+                metaData = conn.getMetaData();
+
+                if (metaData.getDatabaseProductName().indexOf("HSQL") != -1) {
+                    return true;
+                }
+            }
+            catch (Exception e) {
+            }
+
+            return false;
+        }
 	
 	/**
 	 * Create mainzelliste_properties if not exists. Check if JPA schema was
@@ -434,8 +491,8 @@ public enum Persistor {
 			rs = metaData.getTables(null, null, "mainzelliste_properties", null);
 			// Assume version 1.0 if none is provided
 			if (!rs.next()) {
-				// Create table				
-				conn.createStatement().execute("CREATE TABLE mainzelliste_properties" +
+				// Create table ("IF NOT EXISTS": HSQLDB does not recognize existing tables based on getTables(...)")
+				conn.createStatement().execute("CREATE TABLE IF NOT EXISTS mainzelliste_properties" +
 						"(property varchar(256), " + quoteIdentifier("value") +" varchar(256))");
 			} 
 			rs = conn.createStatement().executeQuery("SELECT " + quoteIdentifier("value") + 

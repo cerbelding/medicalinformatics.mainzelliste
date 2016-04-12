@@ -55,6 +55,7 @@ import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.*;
+import de.pseudonymisierung.mainzelliste.matcher.hasher.Hasher;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
@@ -84,7 +85,9 @@ public enum Config {
 	private RecordTransformer recordTransformer;
 	/** The configured matcher */
 	private Matcher matcher;
-	
+        /** Instance of a class which implements the Hasher interface. The class should implement the method for generating and comparing hashes. */
+	private Hasher hasher;
+        
 	/** Logging instance */
 	private Logger logger = Logger.getLogger(Config.class);
 	
@@ -154,6 +157,19 @@ public enum Config {
 		
 		this.recordTransformer = new RecordTransformer(props);
 		
+                /* Loading a class that implements the interface of the Hasher */
+            if (props.getProperty("Hasher.use") != null && props.getProperty("Hasher.use").equals("true")) {
+                try {
+                    Class<?> hasherClass = Class.forName("de.pseudonymisierung.mainzelliste.matcher.hasher." + props.getProperty("Hash.hasher"));
+                    hasher = (Hasher) hasherClass.newInstance();
+                    logger.info("Hasher of class " + hasher.getClass() + " initialized.");
+                } catch (Exception e) {
+                    logger.fatal("Initialization of hasher failed: " + e.getMessage(), e);
+                    throw new InternalErrorException();
+                }
+            }
+                
+                
 		try {
 			Class<?> matcherClass = Class.forName("de.pseudonymisierung.mainzelliste.matcher." + props.getProperty("matcher"));
 			matcher = (Matcher) matcherClass.newInstance();
@@ -224,6 +240,15 @@ public enum Config {
 	public Matcher getMatcher() {
 		return matcher;
 	}
+        
+        /**
+         * Returns an instance of a Hasher, which is specified in the configuration
+         * file.
+         * @return Instance of a Hasher
+         */
+        public Hasher getHasher() {
+            return hasher;
+        }
 
 	/**
 	 * Get the specified property from the configuration.
