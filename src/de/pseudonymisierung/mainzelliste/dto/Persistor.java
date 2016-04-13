@@ -443,7 +443,7 @@ public enum Persistor {
         }
 
         /**
-         * Check if the given connection to a HSQLDB.
+         * Check if the given connection is to a HSQLDB.
          *
          * @param conn Connection to the database
          * @return true, if the given connection is to HSQLDB, otherwise false
