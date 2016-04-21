@@ -224,6 +224,10 @@ result.show = true
 # Whether to include Idat in the result page.
 result.printIdat = true
 
+# Set a fixed language for the user interface. Must be a language code for which a
+# MessageBundle exists in the application. Current valid values are "en" and "de"
+# language =
+
 # xDAT servers
 # 
 # Known Permissions / Token Types:
