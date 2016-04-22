@@ -1,8 +1,12 @@
-.classpath
-.project
-*.iml
-.settings
-/.idea
-target
-WebContent/WEB-INF/*.conf
-.svn
+# Ignore Maven output folder.
+/target/
+
+# Ignore Eclipse project files.
+/.classpath
+/.project
+/.settings/
+
+# Ignore Mainzelliste context descriptor and configuration files, as these
+# contain user-defined or even confidential content.
+/WebContent/META-INF/context.xml
+/config/*.conf
