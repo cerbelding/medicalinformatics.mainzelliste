@@ -21,6 +21,7 @@ Mainzelliste is used in various medical joint research projects, including:
 - German Cancer Consortium (DKTK) ([Data protection concept](http://www.unimedizin-mainz.de/typo3temp/secure_downloads/19402/0/3826542f323206d948a330d5705d0463564669b1/Datenschutzkonzept_CCP-IT__10.10.2014.pdf))
 - German National Cohort ([Data protection concept](http://nationale-kohorte.de/wp-content/uploads/2015/07/Treuhandstellenkonzept.pdf))
 - Cluster for Individualized Immune Intervention (Ci3) ([Meeting abstract on IT concept](http://www.egms.de/static/de/meetings/gmds2014/14gmds106.shtml))
+- Studies conducted by the [LASER group](http://www.la-ser.com/).
 
 Another important use case is pseudonymization in central biobanks, for example:
 
