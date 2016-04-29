@@ -10,7 +10,35 @@ The following article describes the underlying concepts of Mainzelliste and the 
 
 > Lablans M, Borg A, Ückert F. A RESTful interface to pseudonymization services in modern web applications. BMC Medical Informatics and Decision Making 2015, 15:2. <http://www.biomedcentral.com/1472-6947/15/2>.
 
-Java developers should have a look at [Mainzelliste.Client](https://bitbucket.org/medinfo_mainz/mainzelliste.client), a library that handles the HTTP calls necessary for using Mainzelliste in a client application.   
+Java developers should have a look at [Mainzelliste.Client](https://bitbucket.org/medinfo_mainz/mainzelliste.client), a library that handles the HTTP calls necessary for using Mainzelliste in a client application.
+
+## References
+
+Mainzelliste is used in various medical joint research projects, including:
+
+- German Mukoviszidose Register ([Data protection concept](http://muko.info/fileadmin/redaktion/datei_gruppen/muko_institut/2015_06_24_Datenschutzkonzept_Mukoviszidose-Register_2.0.pdf))
+- European chILD-EU register ([Ethics/Data Safety](http://www.klinikum.uni-muenchen.de/Child-EU/en/register/ethics_data_safety/index.html))
+- [German Cancer Consortium](https://ccp-it.dktk.dkfz.de/)
+- Cluster for Individualized Immune Intervention (Ci3) ([Meeting abstract on IT concept](http://www.egms.de/static/de/meetings/gmds2014/14gmds106.shtml))
+- Studies conducted by the [LASER group](http://www.la-ser.com/)
+
+Another important use case is pseudonymization in central biobanks, for example:
+
+- [Comprehensive Biomaterial Bank Marburg](http://www.cbbmr.de/informationen-allgemein/allgemeines.html)
+- [Hannover Unified Biobank](http://www.pg-ss.imi.uni-erlangen.de/SiteCollectionDocuments/Hannover_HUB_IT_Kersting.pdf)
+
+The Mainzelliste API has been implemented in the following projects and software products:
+
+- [OSSE – Open Source Registry System for Rare Diseases in the EU](http://osse-register.de)
+- [OpenClinica](https://openclinica.com/) (see [presentation on integrating Mainzelliste and other software](https://community.openclinica.com/sites/fileuploads/akaza/cms-community/Tomas%20Skripcak%20-%20Lessons%20learned.pdf))
+- [secuTrial](http://secutrial.com) (see [modules description](http://www.secutrial.com/module/))
+- [Semantic Clinical Registry System for Rare Diseases](http://aksw.org/Projects/SCRS.html)
+- [MOSAIC](https://mosaic-greifswald.de/) (Mainzelliste interface used by "Trusted-Third-Party-Dispatcher", see [Bialke et al. A workflow-driven approach to integrate generic software modules in a Trusted Third Party. Journal of Translational Medicine 2015, 13:176](http://www.translational-medicine.com/content/13/1/176)
+- [Electronic data capture system by Fraunhofer FOKUS](https://cdn3.scrivito.com/fokus/57a537e2ec27cb7b/0a3a0655dcc079f58890e39dbdca4781/E-HEALTH_Standards_PB_03-2015_v03.pdf)
+- [Centraxx](http://www.kairos.de/centraxx/)
+- German National Cohort (uses a subset of the API) ([Data protection concept](http://nationale-kohorte.de/wp-content/uploads/2015/07/Treuhandstellenkonzept.pdf))
+
+We have compiled this list from the results of public search engines. If you use the Mainzelliste or its API, we would be glad to include your project in this list. Please don't hestitate to [contact us](mailto:info@mainzelliste.de).
 
 ## Release notes
 
@@ -25,13 +53,13 @@ This release introduces a couple of new features and bug fixes, the addition of 
 - Date validation rejects dates in the future.
 - Application name and version are provided in responses and callback requests as HTTP header `Server` and `User-Agent`, respectively, in the format `Mainzelliste/x.y.z`.
 - The implementation of the callback request ensures the use of state-of-the-art transport layer security (TLS) (contributed by Matthias Lemmer, see pull request #26).
-- When configuration parameter `callback.allowSelfsigned` is set to `true`, self-signed certificates on the target host are accepted when making callback requests (contributed by Matthias Lemmer, see pull request #26).  
+- When configuration parameter `callback.allowSelfsigned` is set to `true`, self-signed certificates on the target host are accepted when making callback requests (contributed by Matthias Lemmer, see pull request #26).
 
 ####Bug fixes:
 
-- The host name provided by the `Origin` header was checked against the configured list of hosts (configuration parameter `servers.allowedOrigins`) even if equal to the host of the Mainzelliste instance itself, i.e. treating a same-origin request like a cross-origin request (reported by Benjamin Gathmann). 
+- The host name provided by the `Origin` header was checked against the configured list of hosts (configuration parameter `servers.allowedOrigins`) even if equal to the host of the Mainzelliste instance itself, i.e. treating a same-origin request like a cross-origin request (reported by Benjamin Gathmann).
 - Requests with an invalid token (i.e. non-existent or of wrong type) lead to status code 400 (Bad Request), now 401 (Unauthorized) is returned.
-- Fixed internationalization of title in result page shown after a patient has been created (patientCreated.jsp). 
+- Fixed internationalization of title in result page shown after a patient has been created (patientCreated.jsp).
 
 ####Other changes:
 
@@ -43,10 +71,10 @@ This release introduces a couple of new features and bug fixes, the addition of 
 This is a backward compatible maintenance release and we recommend an upgrade to all users. Also, we strongly recommend to incorporate the changes in the configuration template into actual configuration files (see comments below).
 
 ####Changes in matching configuration:
-- Fixes a typo in the proposed matching configuration. In existing configuration files based on the template (`mainzelliste.conf.default`), the value for `matcher.epilink.geburtsmonat.frequency` should be changed from `0.833` to `0.0833`. This change has to be made manually because the actually used configuration file resides outside of the distributed package. The location of the configuration file is defined in the context descriptor by parameter `de.pseudonymisierung.mainzelliste.ConfigurationFile` (see installation manual for details). 
+- Fixes a typo in the proposed matching configuration. In existing configuration files based on the template (`mainzelliste.conf.default`), the value for `matcher.epilink.geburtsmonat.frequency` should be changed from `0.833` to `0.0833`. This change has to be made manually because the actually used configuration file resides outside of the distributed package. The location of the configuration file is defined in the context descriptor by parameter `de.pseudonymisierung.mainzelliste.ConfigurationFile` (see installation manual for details).
 - Also, the proposed weight threshold for matches (`matcher.epilink.threshold_match`) has been raised from `0.9` to `0.95`. We also recommend to adopt this change in existing configuration files.
 
-These changes prevent that a definitive match occurs for two records that differ in one component (day, month, year) of the date of birth, all other fields being equal (reported by Matthias Lemmer).    
+These changes prevent that a definitive match occurs for two records that differ in one component (day, month, year) of the date of birth, all other fields being equal (reported by Matthias Lemmer).
 
 ####Bug fixes:
 - When creating an `addPatient` token, ID types were not checked when using data item `idTypes` (API version 2.x syntax) with declared API version missing or < 2.0.
@@ -58,15 +86,15 @@ Fixes an encoding error in German language properties file. This version can be 
 
 ###1.4.1
 
-This is a bug fix release and we recommend an upgrade to all users. Upgrading is possible from every earlier release, and there are no steps necessary apart from replacing the binary. 
+This is a bug fix release and we recommend an upgrade to all users. Upgrading is possible from every earlier release, and there are no steps necessary apart from replacing the binary.
 
 ####Bug fixes:
 
-- When a patient had been edited, the updated data was not considered for record linkage until after restarting the application (reported by Benjamin Gathmann). 
+- When a patient had been edited, the updated data was not considered for record linkage until after restarting the application (reported by Benjamin Gathmann).
 - POST /sessions/{sid}/tokens returned an invalid token object (reported by Matthias Lemmer).
 - Confirming an unsure case failed due to missing api version in request URL (fixed by Benjamin Gathmann, see pull request #22).
 - Date validation accepted some illegal dates when data was not entered through the select lists in the HTML form (fixed by Benjamin Gathmann, see pull request #24).
-- Some Instances of EntityManager were not closed on errors, leading to a memory leak. 
+- Some Instances of EntityManager were not closed on errors, leading to a memory leak.
 
 
 ####Other changes:
@@ -75,9 +103,9 @@ This is a bug fix release and we recommend an upgrade to all users. Upgrading is
 - The version number is now read from pom.xml, i.e. this is the only place in the source code where the version number is set.
 - All HTML forms have been converted to HTML 5 and validated using the W3C markup validation service (https://validator.w3.org/).
 - Logging of Jersey class WebComponent has been limited to SEVERE to avoid excessive warning messages in use cases where POST /patients is used with an empty request body (see http://stackoverflow.com/questions/2011895/how-to-fix-jersey-post-request-parameters-warning).
-- Field#build can now be called with null as initialization object, returning an empty field. 
-- Created tokens are logged entirely only in log level DEBUG. 
- 
+- Field#build can now be called with null as initialization object, returning an empty field.
+- Created tokens are logged entirely only in log level DEBUG.
+
 
 ### 1.4.0
 
@@ -117,7 +145,7 @@ As this release contains various bug fixes, we recommend an upgrade to all users
 
 ### 1.3.2
 
-#### Bugfix: 
+#### Bugfix:
 
 - Creation of database schema failed with ReportingSQLException (reported by Matthias Lemmer).
 
@@ -128,8 +156,8 @@ As this release contains various bug fixes, we recommend an upgrade to all users
 - GET request to /patients with invalid `readPatients` token caused a NullPointerException.
 - Creation of `readPatients` tokens has been accelerated by optimizing the database query and using an index.
 - Corrections in the template configuration file:
-	- A trailing space in `callback.allowedFormat` has been removed.
-	- Token type `readPatient` has been corrected to `readPatients`.
+    - A trailing space in `callback.allowedFormat` has been removed.
+    - Token type `readPatient` has been corrected to `readPatients`.
 
 ### 1.3.0
 
@@ -172,9 +200,9 @@ As of release 1.3.0, a comprehensive API document exists. It is available as a P
 - Wrong characters in template configuration file (reported by Maximilian Ataian).
 - Wrong default path for configuration file.
 - A bug in IDGeneratorMemory caused a database error due to a duplicate primary key.
-	
+
 ### 1.0
-- Initial release 
+- Initial release
 
 ### Contributions
 As an open source project, Mainzelliste profits from contributions from the research community. We would like to thank the following colleagues for their code contributions:
