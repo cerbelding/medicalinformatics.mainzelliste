@@ -10,7 +10,7 @@ The following article describes the underlying concepts of Mainzelliste and the 
 
 > Lablans M, Borg A, Ückert F. A RESTful interface to pseudonymization services in modern web applications. BMC Medical Informatics and Decision Making 2015, 15:2. <http://www.biomedcentral.com/1472-6947/15/2>.
 
-Java developers should have a look at [Mainzelliste.Client](https://bitbucket.org/medinfo_mainz/mainzelliste.client), a library that handles the HTTP calls necessary for using Mainzelliste in a client application.   
+Java developers should have a look at [Mainzelliste.Client](https://bitbucket.org/medinfo_mainz/mainzelliste.client), a library that handles the HTTP calls necessary for using Mainzelliste in a client application.
 
 ## References
 
@@ -20,7 +20,7 @@ Mainzelliste is used in various medical joint research projects, including:
 - European chILD-EU register ([Ethics/Data Safety](http://www.klinikum.uni-muenchen.de/Child-EU/en/register/ethics_data_safety/index.html))
 - [German Cancer Consortium](https://ccp-it.dktk.dkfz.de/)
 - Cluster for Individualized Immune Intervention (Ci3) ([Meeting abstract on IT concept](http://www.egms.de/static/de/meetings/gmds2014/14gmds106.shtml))
-- Studies conducted by the [LASER group](http://www.la-ser.com/).
+- Studies conducted by the [LASER group](http://www.la-ser.com/)
 
 Another important use case is pseudonymization in central biobanks, for example:
 
@@ -53,13 +53,13 @@ This release introduces a couple of new features and bug fixes, the addition of 
 - Date validation rejects dates in the future.
 - Application name and version are provided in responses and callback requests as HTTP header `Server` and `User-Agent`, respectively, in the format `Mainzelliste/x.y.z`.
 - The implementation of the callback request ensures the use of state-of-the-art transport layer security (TLS) (contributed by Matthias Lemmer, see pull request #26).
-- When configuration parameter `callback.allowSelfsigned` is set to `true`, self-signed certificates on the target host are accepted when making callback requests (contributed by Matthias Lemmer, see pull request #26).  
+- When configuration parameter `callback.allowSelfsigned` is set to `true`, self-signed certificates on the target host are accepted when making callback requests (contributed by Matthias Lemmer, see pull request #26).
 
 ####Bug fixes:
 
-- The host name provided by the `Origin` header was checked against the configured list of hosts (configuration parameter `servers.allowedOrigins`) even if equal to the host of the Mainzelliste instance itself, i.e. treating a same-origin request like a cross-origin request (reported by Benjamin Gathmann). 
+- The host name provided by the `Origin` header was checked against the configured list of hosts (configuration parameter `servers.allowedOrigins`) even if equal to the host of the Mainzelliste instance itself, i.e. treating a same-origin request like a cross-origin request (reported by Benjamin Gathmann).
 - Requests with an invalid token (i.e. non-existent or of wrong type) lead to status code 400 (Bad Request), now 401 (Unauthorized) is returned.
-- Fixed internationalization of title in result page shown after a patient has been created (patientCreated.jsp). 
+- Fixed internationalization of title in result page shown after a patient has been created (patientCreated.jsp).
 
 ####Other changes:
 
@@ -71,10 +71,10 @@ This release introduces a couple of new features and bug fixes, the addition of 
 This is a backward compatible maintenance release and we recommend an upgrade to all users. Also, we strongly recommend to incorporate the changes in the configuration template into actual configuration files (see comments below).
 
 ####Changes in matching configuration:
-- Fixes a typo in the proposed matching configuration. In existing configuration files based on the template (`mainzelliste.conf.default`), the value for `matcher.epilink.geburtsmonat.frequency` should be changed from `0.833` to `0.0833`. This change has to be made manually because the actually used configuration file resides outside of the distributed package. The location of the configuration file is defined in the context descriptor by parameter `de.pseudonymisierung.mainzelliste.ConfigurationFile` (see installation manual for details). 
+- Fixes a typo in the proposed matching configuration. In existing configuration files based on the template (`mainzelliste.conf.default`), the value for `matcher.epilink.geburtsmonat.frequency` should be changed from `0.833` to `0.0833`. This change has to be made manually because the actually used configuration file resides outside of the distributed package. The location of the configuration file is defined in the context descriptor by parameter `de.pseudonymisierung.mainzelliste.ConfigurationFile` (see installation manual for details).
 - Also, the proposed weight threshold for matches (`matcher.epilink.threshold_match`) has been raised from `0.9` to `0.95`. We also recommend to adopt this change in existing configuration files.
 
-These changes prevent that a definitive match occurs for two records that differ in one component (day, month, year) of the date of birth, all other fields being equal (reported by Matthias Lemmer).    
+These changes prevent that a definitive match occurs for two records that differ in one component (day, month, year) of the date of birth, all other fields being equal (reported by Matthias Lemmer).
 
 ####Bug fixes:
 - When creating an `addPatient` token, ID types were not checked when using data item `idTypes` (API version 2.x syntax) with declared API version missing or < 2.0.
