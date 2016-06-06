@@ -2,7 +2,7 @@
 
 Mainzelliste is a web-based first-level pseudonymization service. It allows for the creation of personal identifiers (PID) from identifying attributes (IDAT), and thanks to the record linkage functionality, this is even possible with poor quality identifying data. The functions are available through a RESTful web interface.
 
-Further information and documentation on Mainzelliste can be found on the [project web page of the University Medical Center Mainz](http://www.mainzelliste.de).
+Further information and documentation on Mainzelliste can be found on the [project web page of the University Medical Center Mainz](http://www.unimedizin-mainz.de/imbei/informatik/opensource/mainzelliste.html).
 
 In order to receive up-to-date information on the project, you can register to be on our [mailing list](https://lists.uni-mainz.de/sympa/subscribe/mainzelliste).
 
