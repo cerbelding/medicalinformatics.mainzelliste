@@ -8,9 +8,9 @@ import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 
 /**
- * Represent a multithreaded version of the HashedEpilinkMatcher. The calculation is based on the
- * HashedEpilinkMatcher. Whether two patients are compared by their attributes,
- * depends on the comparison of their hashes.
+ * Represents a multithreaded version of the HashedEpilinkMatcher. The
+ * calculation is based on the HashedEpilinkMatcher. Whether two patients are
+ * compared by their attributes, depends on the comparison of their hashes.
  *
  * For using this Matcher, a threshold must be specified in the configuration
  * file. If no Hasher is specified, the behaviour is like the EpilinkMatcher.
@@ -110,9 +110,10 @@ public class HashedThreadedEpilinkMatcher extends HashedEpilinkMatcher {
      */
     @Override
     public MatchResult match(Patient a, Iterable<Patient> patientList) {
-        
-        if (getHasher() == null)
+
+        if (getHasher() == null) {
             return super.match(a, patientList);
+        }
 
         MatchResult bestMatchResult = new MatchResult(MatchResultType.NON_MATCH, null, -Double.MAX_VALUE);
         MatchResultContainer resultContainer = new MatchResultContainer();

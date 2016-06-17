@@ -40,6 +40,8 @@ import org.apache.log4j.PatternLayout;
 import com.sun.jersey.spi.container.servlet.WebComponent;
 
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
+import de.pseudonymisierung.mainzelliste.matcher.hasher.HashFormatter;
+import java.util.List;
 
 /**
  * This class is responsible for setting up all singletons in the right order
@@ -92,6 +94,39 @@ public class Initializer implements ServletContextListener {
 		IDGeneratorFactory idgf = IDGeneratorFactory.instance;
 		Servers s = Servers.instance;
 		Validator v = Validator.instance;
+                HashFormatter h = HashFormatter.getInstance();
+                
+                if (Config.instance.getHasher() != null) {
+                    HashFormatter hf = p.getHashFormatter();
+
+                    if (hf == null) {
+                        hf = HashFormatter.getInstance();
+                        p.persistHashFormatter(hf);
+                    }
+                    hf.initialize();
+                    
+                    List<Patient> patients = p.getPatients();
+
+                    // If hash format was changed, generate for each patient a new hash
+                    if (hf.isHashFormatChanged()) {
+                        Logger.getLogger(Persistor.class).info("Hash format was changed. All Hashes will be updated.");
+                        for (Patient patient : patients) {
+                            patient.generateHash();
+                            p.updatePatient(patient);
+                        }
+                    } else {
+                        // Check whether all patients have a hash, if a patient do not, generate one
+                        Logger.getLogger(Persistor.class).info("Missing hashes will be generated.");
+                        for (Patient patient : patients) {
+                            if (patient.getHash().isEmpty()) {
+                                patient.generateHash();
+                                p.updatePatient(patient);
+                            }
+                        }
+                    }
+
+                    p.updateHashFormatter(hf);
+                }
 
 		/* 
 		 * Limit Jersey logging to avoid spamming the log with "the request body has been consumed" messages
