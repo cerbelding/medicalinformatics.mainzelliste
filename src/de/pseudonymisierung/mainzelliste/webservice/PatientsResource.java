@@ -460,8 +460,11 @@ public class PatientsResource {
 			Map<String, String> newFieldValues = new HashMap<String, String>();
 			Iterator<?> i = newFieldValuesJSON.keys();
 			while (i.hasNext()) {
-				String fieldName = i.next().toString();			
-				newFieldValues.put(fieldName, newFieldValuesJSON.get(fieldName).toString());
+				String fieldName = i.next().toString();		
+				if (newFieldValuesJSON.isNull(fieldName))
+				    newFieldValues.put(fieldName, "");
+				else
+				    newFieldValues.put(fieldName, newFieldValuesJSON.get(fieldName).toString());
 			}
 			this.editPatient(tokenId, newFieldValues, request);	
 			return Response.status(Status.NO_CONTENT).build();
