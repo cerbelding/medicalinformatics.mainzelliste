@@ -69,6 +69,9 @@ public enum Persistor {
 	/** The logging instance. */
 	private Logger logger = Logger.getLogger(this.getClass());
 	
+	/** String with which database identifers are quoted. */
+	private String identifierQuoteString = null;
+	
 	/** Creates the singleton instance with the configured database connection. */
 	private Persistor() {
 		
@@ -79,8 +82,10 @@ public enum Persistor {
 		// Settings from config
 		persistenceOptions.put("javax.persistence.jdbc.driver", Config.instance.getProperty("db.driver"));
 		persistenceOptions.put("javax.persistence.jdbc.url", Config.instance.getProperty("db.url"));
-		persistenceOptions.put("javax.persistence.jdbc.user", Config.instance.getProperty("db.username"));
-		persistenceOptions.put("javax.persistence.jdbc.password", Config.instance.getProperty("db.password"));
+		if (Config.instance.getProperty("db.username") != null)
+			persistenceOptions.put("javax.persistence.jdbc.user", Config.instance.getProperty("db.username"));
+		if (Config.instance.getProperty("db.password") != null)
+			persistenceOptions.put("javax.persistence.jdbc.password", Config.instance.getProperty("db.password"));
 		
 		// Other settings
 		persistenceOptions.put("openjpa.jdbc.SynchronizeMappings", "buildSchema");
@@ -370,15 +375,10 @@ public enum Persistor {
 	 * @return The persisted release version.
 	 */
 	private String getSchemaVersion() {
-		Connection conn;
-		Properties connectionProps = new Properties();
-		connectionProps.put("user",  Config.instance.getProperty("db.username"));
-		connectionProps.put("password",  Config.instance.getProperty("db.password"));
-		String url = Config.instance.getProperty("db.url");
+		Connection conn = getJdbcConnection();
 		try {
-			Class.forName(Config.instance.getProperty("db.driver"));
-			conn = DriverManager.getConnection(url, connectionProps);
-			ResultSet rs = conn.createStatement().executeQuery("SELECT value FROM mainzelliste_properties " +
+			// Check if there is a properties table 
+			ResultSet rs = conn.createStatement().executeQuery("SELECT " + quoteIdentifier("value") + " FROM mainzelliste_properties " +
 					"WHERE property='version'");
 			if (!rs.next()) {
 				logger.fatal("Properties table not initialized correctly!");
@@ -388,9 +388,6 @@ public enum Persistor {
 		} catch (SQLException e) {
 			logger.fatal("Could not update database schema!", e);
 			throw new Error(e);			
-		} catch (ClassNotFoundException e) {
-			logger.fatal("Could not find database driver!", e);
-			throw new Error(e);
 		}			
 	}
 	
@@ -406,7 +403,7 @@ public enum Persistor {
 	 *            A valid EntityManager object.
 	 */
 	private void setSchemaVersion(String toVersion, EntityManager em) {
-		em.createNativeQuery("UPDATE mainzelliste_properties SET value='" + toVersion + 
+		em.createNativeQuery("UPDATE mainzelliste_properties SET " + quoteIdentifier("value") + "='" + toVersion + 
 				"' WHERE property='version'").executeUpdate(); 
 	}
 	
@@ -420,14 +417,8 @@ public enum Persistor {
 	 * created.
 	 */
 	private void initPropertiesTable() {
-		Connection conn;
-		Properties connectionProps = new Properties();
-		connectionProps.put("user",  Config.instance.getProperty("db.username"));
-		connectionProps.put("password",  Config.instance.getProperty("db.password"));
-		String url = Config.instance.getProperty("db.url");
+		Connection conn = getJdbcConnection();
 		try {
-			Class.forName(Config.instance.getProperty("db.driver"));
-			conn = DriverManager.getConnection(url, connectionProps);
 			// Check if there is a properties table 
 			DatabaseMetaData metaData = conn.getMetaData();
 			// Look for patients table to determine if schema is yet to be created
@@ -440,32 +431,70 @@ public enum Persistor {
 			boolean firstRun = !rs.next(); // First invocation with this database 
 			
 			// Check if there is a properties table 
-			metaData = conn.getMetaData();
-			// "value" is a reserved word so it must be quoted in SQL queries
-			String identifierQuote = metaData.getIdentifierQuoteString();
-			String valueQuoted = identifierQuote + "value" + identifierQuote;
-			logger.debug("Quoted: " + valueQuoted);
 			rs = metaData.getTables(null, null, "mainzelliste_properties", null);
 			// Assume version 1.0 if none is provided
 			if (!rs.next()) {
 				// Create table				
 				conn.createStatement().execute("CREATE TABLE mainzelliste_properties" +
-						"(property varchar(256), " + valueQuoted +" varchar(256))");
+						"(property varchar(256), " + quoteIdentifier("value") +" varchar(256))");
 			} 
-			rs = conn.createStatement().executeQuery("SELECT " + valueQuoted + 
+			rs = conn.createStatement().executeQuery("SELECT " + quoteIdentifier("value") + 
 					" FROM mainzelliste_properties WHERE property='version'");
 			if (!rs.next()) {
 				// Properties table exists, but no version information
 				String setVersion = firstRun ? Config.instance.getVersion() : "1.0";
 				conn.createStatement().execute("INSERT INTO mainzelliste_properties" +
-						"(property, value) VALUES ('version', '" + setVersion + "')");
+						"(property, " + quoteIdentifier("value") + ") VALUES ('version', '" + setVersion + "')");
 			}
 		} catch (SQLException e) {
 			logger.fatal("Could not update database schema!", e);
 			throw new Error(e);			
+		}			
+	}
+	
+	/**
+	 * Get JDBC connection to database. Fails with an Error if the driver class cannot be found or an error occurs while
+	 * connecting.
+	 * 
+	 * @return The JDBC connection.
+	 */
+	private Connection getJdbcConnection() {
+		Properties connectionProps = new Properties();
+		if (Config.instance.getProperty("db.username") != null) connectionProps.put("user",  Config.instance.getProperty("db.username"));
+		if (Config.instance.getProperty("db.password") != null) connectionProps.put("password",  Config.instance.getProperty("db.password"));
+		String url = Config.instance.getProperty("db.url");
+		try {
+			Class.forName(Config.instance.getProperty("db.driver"));
+			return DriverManager.getConnection(url, connectionProps);
 		} catch (ClassNotFoundException e) {
 			logger.fatal("Could not find database driver!", e);
 			throw new Error(e);
-		}			
+		} catch (SQLException e) {
+			logger.fatal("SQL error while getting database connection!", e);
+			throw new Error(e);
+		}
+	}
+	
+	/**
+	 * Quote an identifier (e.g. table name) for use in an SQL query. Selects the appropriate quotation character.
+	 * 
+	 * @param identifier
+	 *            The identifier to quote.
+	 * @return The quoted identifier.
+	 */
+	private String quoteIdentifier(String identifier) {
+		// Retrieve from database only once to reduce connections
+		if (identifierQuoteString == null) {
+			try {
+				Connection conn = getJdbcConnection();
+				DatabaseMetaData metaData = conn.getMetaData();
+				identifierQuoteString = metaData.getIdentifierQuoteString();
+				conn.close();
+			} catch (SQLException e) {
+				logger.fatal("Could not get quote string for database identifiers!", e);
+				throw new Error(e);
+			}
+		}
+		return identifierQuoteString + identifier + identifierQuoteString;
 	}
 }

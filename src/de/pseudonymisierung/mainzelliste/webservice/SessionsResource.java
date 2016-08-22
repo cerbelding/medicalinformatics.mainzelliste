@@ -209,8 +209,8 @@ public class SessionsResource {
 		Session s = sid.getValue();
 		
 		logger.info("Received request to create token for session " + s.getId() + " by host " + 
-				req.getRemoteHost() + "\n" +
-				"Received data: " + tp);
+				req.getRemoteHost());
+		logger.debug("Received data: " + tp);
 		
 		Token t = new TokenParam(tp).getValue();
 		

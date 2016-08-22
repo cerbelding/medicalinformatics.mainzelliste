@@ -291,7 +291,7 @@ public class Token {
 	@SuppressWarnings("unchecked")
 	private void checkAddPatient(ApiVersion apiVersion) {
 		// check requested id types
-		if (apiVersion.majorVersion >= 2) {
+		if (this.hasDataItem("idTypes")) {
 			this.checkIdTypes((List<String>) this.getDataItemList("idTypes"));
 		} else if (this.hasDataItem("idtypes")) {
 			this.checkIdTypes((List<String>) this.getDataItemList("idtypes"));

@@ -47,7 +47,7 @@ public class HashedField extends Field<BitSet>{
 
 	/**	The value is encoded as a String to allow storage in a database. */
 	@Column(length = BloomFilterTransformer.hashLength)
-	private String value;
+	protected String value;
 	
 	/**
 	 * Conversion of the String representation of a bit string to a BitSet.
@@ -96,7 +96,14 @@ public class HashedField extends Field<BitSet>{
 		}
 		return result.toString();
 	}
-	
+
+	/**
+	 * Create an empty instance.
+	 */
+	public HashedField() {
+		this.value = "";
+	}
+
 	/**
 	 * Create an instance from a BitSet.
 	 * @param b A BitSet.

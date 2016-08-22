@@ -33,10 +33,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -45,6 +48,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -192,8 +196,6 @@ public enum Config {
 		String allowedOriginsString = props.getProperty("servers.allowedOrigins"); 
 		if (allowedOriginsString != null)			
 			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split(";")));
-		
-		Locale.setDefault(Locale.ENGLISH);
 		
 		// Read version number provided by pom.xml
 		version = readVersion();
@@ -357,15 +359,80 @@ public enum Config {
 	}
 	
 	/**
-	 * Get resource bundle matching the locale of the request (based on Accept-Language header).
-	 * If no matching resource bundle is found, English is assumed.
-	 * @param req The servlet request.
-	 * @return The matching resource bundle. 
+	 * Get resource bundle for the best matching locale of the request. The best
+	 * matching locale is determined by iterating through the following list of
+	 * language codes and choosing the first for which a resource bundle file is
+	 * found:
+	 * <ol>
+	 * <li>If present, value of the URL parameter 'language'.
+	 * <li>Any language codes provided in HTTP header "Accept-Language" in the
+	 * given order.
+	 * <li>"en" as fallback (i.e. English is the default language).
+	 * </ol>
+	 * 
+	 * @param req
+	 *            The servlet request.
+	 * @return The matching resource bundle.
 	 */
-	public ResourceBundle getResourceBunde(ServletRequest req) {
-		Locale requestLocale = req.getLocale();
-		ResourceBundle bundle = ResourceBundle.getBundle("MessageBundle", requestLocale);
-		return bundle;
+	public ResourceBundle getResourceBundle(HttpServletRequest req) {
+
+		// Look if there is a cached ResourceBundle instance for this request
+		final String storedResourceBundleKey = this.getClass().getName() + ".selectedResourceBundle";
+		Object storedResourceBundle = req.getAttribute(storedResourceBundleKey);
+		if (storedResourceBundle != null && storedResourceBundle instanceof ResourceBundle)
+				return (ResourceBundle) storedResourceBundle;
+		
+		// Base name of resource bundle files
+		String baseName = "MessageBundle";
+
+		// Build a list of preferred locales
+		LinkedList<Locale> preferredLocales = new LinkedList<Locale>();
+		// First preference: URL parameter "language", if set.
+		String languageParam = req.getParameter("language");
+		if (languageParam != null) {
+			Locale urlLocale = new Locale(languageParam);
+			preferredLocales.add(urlLocale);
+		}
+
+		// Next, add all preferred locales from the request (header "Language").
+		Enumeration<Locale> requestLocales = req.getLocales();
+		while (requestLocales.hasMoreElements()) {
+			preferredLocales.add(requestLocales.nextElement());
+		}
+
+		// Finally, add English as fallback
+		preferredLocales.add(Locale.ENGLISH);
+
+		// Instantiate control object for searching resources without using default locale,
+		// as default locale is searched for explicitly.
+		ResourceBundle.Control noFallback = ResourceBundle.Control.getNoFallbackControl(ResourceBundle.Control.FORMAT_DEFAULT);
+
+		// Iterate over list of locales and return the first matching resource bundle
+		for (Locale thisLocale : preferredLocales) {
+			  // Try to get ResourceBundle for current locale
+			   try {
+				   ResourceBundle selectedResourceBundle = ResourceBundle.getBundle("MessageBundle", thisLocale, noFallback);
+				   // Cache ResourceBundle object for further calls to this method within the same HTTP request
+				   req.setAttribute(storedResourceBundleKey, selectedResourceBundle);
+				   return selectedResourceBundle;
+			   } catch (MissingResourceException e) {
+				   // Silently try next preferred locale
+			   }
+		}
+
+		// If this line is reached, no resource bundle (including system default) could be found, which is an error
+		throw new Error ("Could not find resource bundle with base name '" + baseName + "' for any of the locales: " + preferredLocales);
+	}
+	
+	/**
+	 * Returns application name and version for use in HTTP headers Server and
+	 * User-Agent. Format: "Mainzelliste/x.y.z", with the version as returned by
+	 * {@link #getVersion()}.
+	 * 
+	 * @return The version string.
+	 */
+	public String getUserAgentString() {
+		return "Mainzelliste/" + getVersion();
 	}
 	
 	/**

@@ -2,7 +2,7 @@
 <%@page import="java.util.ResourceBundle"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-<% ResourceBundle bundle = Config.instance.getResourceBunde(request); %>
+<%	ResourceBundle bundle = Config.instance.getResourceBundle(request); %>
 <!DOCTYPE html>
 <html>
 <head>

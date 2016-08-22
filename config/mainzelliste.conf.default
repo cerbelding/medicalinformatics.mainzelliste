@@ -155,7 +155,7 @@ matcher.epilink.geburtsname.frequency = 0.0000271
 # 1 / 30 (approximate average number of days in a month)
 matcher.epilink.geburtstag.frequency = 0.0333 
 # 1 / 12
-matcher.epilink.geburtsmonat.frequency = 0.833  
+matcher.epilink.geburtsmonat.frequency = 0.0833  
 # example value: birth years for an age range of 35 years (40 - 75).
 matcher.epilink.geburtsjahr.frequency = 0.0286
 
@@ -186,7 +186,7 @@ matcher.epilink.ort.errorRate = 0.04
 #
 # Record pairs with a weight w with threshold_non_match <= w < threshold_match are
 # considered possible matches and lead to a tentative PID. 
-matcher.epilink.threshold_match = 0.9
+matcher.epilink.threshold_match = 0.95
 matcher.epilink.threshold_non_match = 0.6
 
 
@@ -249,9 +249,13 @@ servers.0.permissions = createSession;showSessionIds;deleteAllPatients;createTok
 # Allow combination of both
 # servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1;192.168.56.0/24
 
+# Allowed origins for cross origin resource sharing (CORS), multiple values separated by ";"
+
+# servers.allowedOrigins = https://mdat-server.example.org 
 
 # Allowed Format of callback
 callback.allowedFormat = https://.*
+callback.allowSelfsigned = false
 
 # Session timeout
 # A session will be deleted if not accessed for this amount of time, specified in minutes

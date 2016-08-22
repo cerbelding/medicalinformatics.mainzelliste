@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
@@ -65,6 +66,7 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
  */
 public class EpilinkMatcher implements Matcher {
 
+	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
 	/** Minimum weight for definitive matches. */
 	private double thresholdMatch;
 	
@@ -271,6 +273,7 @@ public class EpilinkMatcher implements Matcher {
 			m = p.matcher((String) key);
 			if (m.find()){
 				String fieldName = m.group(1);
+				logger.info("Initializing properties for field " + fieldName);
 				String fieldCompStr = props.getProperty("field." + fieldName + ".comparator");
 				if (fieldCompStr != null)
 				{

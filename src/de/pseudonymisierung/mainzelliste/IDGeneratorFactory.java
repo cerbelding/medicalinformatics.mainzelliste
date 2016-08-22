@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.prefs.Preferences;
 
 import org.apache.log4j.Logger;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
@@ -113,15 +115,13 @@ public enum IDGeneratorFactory {
 				thisGenerator.init(mem, thisIdType, thisIdProps);
 				temp.put(thisIdType, thisGenerator);
 			} catch (ClassNotFoundException e) {
-				logger.fatal("Unknown ID generator: " + thisIdType);
+				logger.fatal("Unknown ID generator " + thisIdGenerator + " for id type " + thisIdType);
 				throw new Error(e);
 			} catch (Exception e) {
-				logger.fatal("Could not initialize ID generator " + thisIdType,
-						e);
+				logger.fatal("Could not initialize ID generator " + thisIdGenerator + " for id type " + thisIdType, e);
 				throw new Error(e);
 			}
 		}
-		Logger logger = Logger.getLogger(IDGeneratorFactory.class);
 		generators = Collections.unmodifiableMap(temp);
 
 		logger.info("ID generators have initialized successfully.");
@@ -173,6 +173,26 @@ public enum IDGeneratorFactory {
 		return this.idTypes[0];
 	}
 
+	public ID idFromJSON(JSONObject json) throws JSONException, InvalidIDException {
+		if (!json.has("idType") && json.has("idString"))
+			throw new JSONException("Illegal format for ID. Need at least members 'idType' and 'idString'");
+		
+		IDGenerator<?> generator = IDGeneratorFactory.instance.getFactory(json.getString("idType"));
+		if (generator == null) {
+			String message = String.format("No ID generator %s found!", json.getString("idType")); 
+			logger.error(message);
+			throw new InvalidIDException();
+		}
+		ID id = generator.buildId(json.getString("idString"));
+		
+		if (json.has("tentative"))
+			id.setTentative(json.getBoolean("tentative"));
+		else
+			id.setTentative(false);
+		
+		return id;
+	}
+	
 	/**
 	 * Build an ID with the given ID string and type.
 	 * 
