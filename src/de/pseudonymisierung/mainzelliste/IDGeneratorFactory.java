@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.prefs.Preferences;
 
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
@@ -68,8 +67,6 @@ public enum IDGeneratorFactory {
 	 */
 	private IDGeneratorFactory() {
 		HashMap<String, IDGenerator<? extends ID>> temp = new HashMap<String, IDGenerator<? extends ID>>();
-		Preferences prefs = Preferences.userRoot().node(
-				"de/pseudonymisierung/mainzelliste/idgenerator");
 		Properties props = Config.instance.getProperties();
 
 		if (!props.containsKey("idgenerators")
@@ -84,7 +81,8 @@ public enum IDGeneratorFactory {
 
 		// Iterate over ID types
 		for (String thisIdType : idTypes) {
-			String thisIdGenerator = prefs.get(thisIdType, "");
+			PropertyIterator propIt = new PropertyIterator(props, "idgenerator." + thisIdType);
+			String thisIdGenerator = propIt.getProperty("", "");
 			try {
 				// Add mainzelliste package to class name if none is given
 				// (check by searching for a dot in the class name)
@@ -108,9 +106,10 @@ public enum IDGeneratorFactory {
 				}
 				// Get properties for this ID generator from Preferences
 				Properties thisIdProps = new Properties();
-				Preferences thisIdPrefs = prefs.node(thisIdType);
-				for (String key : thisIdPrefs.keys()) {
-					thisIdProps.put(key, thisIdPrefs.get(key, ""));
+				for (Object key : propIt.keys()) {
+					if (key instanceof String) {
+						thisIdProps.put(key, propIt.getProperty((String)key, ""));
+					}
 				}
 				thisGenerator.init(mem, thisIdType, thisIdProps);
 				temp.put(thisIdType, thisGenerator);
