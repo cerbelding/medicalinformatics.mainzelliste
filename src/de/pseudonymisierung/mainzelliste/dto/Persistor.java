@@ -51,6 +51,10 @@ import de.pseudonymisierung.mainzelliste.IDGeneratorMemory;
 import de.pseudonymisierung.mainzelliste.IDRequest;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.sql.Driver;
+import java.util.Enumeration;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -106,7 +110,43 @@ public enum Persistor {
 		
 		Logger.getLogger(Persistor.class).info("Persistence has initialized successfully.");
 	}
-	
+
+	public void shutdown() {
+		// Now deregister JDBC drivers in this context's ClassLoader
+		ClassLoader cl = Thread.currentThread().getContextClassLoader();
+		Enumeration<Driver> drivers = DriverManager.getDrivers();
+		while (drivers.hasMoreElements()) {
+			Driver driver = drivers.nextElement();
+			if (driver.getClass().getClassLoader() == cl) {
+				// This driver was registered by the webapp's ClassLoader, so deregister it:
+				if (driver.getClass().getName().equals("com.mysql.jdbc.Driver")) {
+					// special mysql handling
+					try {
+						Class<?> threadClass = Class.forName("com.mysql.jdbc.AbandonedConnectionCleanupThread");
+						logger.info("Calling MySQL AbandonedConnectionCleanupThread shutdown");
+						Method shutdownMethod = threadClass.getMethod("shutdown");
+						shutdownMethod.invoke(null);
+					} catch (ClassNotFoundException ex) {
+					} catch (NoSuchMethodException ex) {
+					} catch (SecurityException ex) {
+					} catch (IllegalAccessException ex) {
+					} catch (IllegalArgumentException ex) {
+					} catch (InvocationTargetException ex) {
+					}
+				}
+				try {
+					logger.info("Deregistering JDBC driver " + driver);
+					DriverManager.deregisterDriver(driver);
+				} catch (SQLException ex) {
+					logger.debug("Error deregistering JDBC driver {}" + ex);
+				}
+			} else {
+				// driver was not registered by the webapp's ClassLoader and may be in use elsewhere
+				logger.debug("Not deregistering JDBC driver " + driver + " as it does not belong to this webapp's ClassLoader");
+			}
+		}
+	}
+
 	/**
 	 * Get a patient by one of its IDs.
 	 * 
