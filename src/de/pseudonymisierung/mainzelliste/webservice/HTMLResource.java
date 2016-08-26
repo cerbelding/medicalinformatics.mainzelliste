@@ -25,8 +25,6 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +57,8 @@ import de.pseudonymisierung.mainzelliste.Initializer;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
+import java.io.IOException;
+import java.net.URL;
 
 /**
  * HTML pages (rendered via JSP) to be accessed by a human user
@@ -281,15 +281,20 @@ public class HTMLResource {
 	@Produces("image/*")
 	public Response getLogo() {
 		try {
-			File logoFile = Config.instance.getLogo();
-			String contentType = Initializer.getServletContext().getMimeType(logoFile.getAbsolutePath());
+			URL logoURL = Config.instance.getLogo();
+			// getPath() is sufficient since getMimeType() is actually checking the file's extension only
+			String contentType = Initializer.getServletContext().getMimeType(logoURL.getPath().toLowerCase());
 			if (contentType == null || !contentType.startsWith("image/")) {
 				logger.error("Logo file has incorrect mime type: " + contentType);
 				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR)
 						.entity("The logo file has incorrect mime type. See server log for details.").build());
 			}
-			return Response.ok().type(contentType).entity(new FileInputStream(logoFile)).build();
+			return Response.ok().type(contentType).entity(logoURL.openStream()).build();
 		} catch (FileNotFoundException e) {
+			logger.error(e.getMessage(), e);
+			throw new WebApplicationException(Response.status(Status.NOT_FOUND)
+					.entity("Logo file could not be opened. Check server log for more information.").build());
+		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
 			throw new WebApplicationException(Response.status(Status.NOT_FOUND)
 					.entity("Logo file could not be opened. Check server log for more information.").build());
