@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
+import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -40,6 +41,9 @@ public class ContextLifeCycleListener implements ServletContextListener {
 	public void contextDestroyed(ServletContextEvent sce) {
 		// sut down persistor
 		Persistor.instance.shutdown();
+
+		// shut down server manager
+		Servers.instance.shutdown();
 	}
 
 }
