@@ -46,7 +46,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Level;
@@ -54,6 +53,9 @@ import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.*;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
@@ -298,15 +300,30 @@ public enum Config {
 	 * @throws FileNotFoundException
 	 *             if the logo file cannot be found at the specified location.
 	 */
-	public File getLogo() throws FileNotFoundException {
+	public URL getLogo() throws FileNotFoundException {
 		String logoFileName = this.getProperty("operator.logo");
 		if (logoFileName == null || logoFileName.equals(""))
 			throw new FileNotFoundException("No logo file configured.");
-		File logoFile = new File(logoFileName);
-		if (logoFile.exists())
-			return logoFile;
-		else 
-			throw new FileNotFoundException("No logo file found at " + logoFileName + ".");
+		File logoFile;
+		URL logoURL;
+		try {
+			logoURL = Initializer.getServletContext().getResource(logoFileName);
+		} catch (MalformedURLException e) {
+			throw new FileNotFoundException(e.toString());
+		}
+		if (logoURL != null) {
+			return logoURL;
+		} else {
+			logoFile = new File(logoFileName);
+
+			try {
+				if (logoFile.exists())
+					return logoFile.toURI().toURL();
+				throw new FileNotFoundException("No logo file found at " + logoFileName + ".");
+			} catch (MalformedURLException e) {
+				throw new FileNotFoundException("No logo file found at " + logoFileName + ". (" + e.toString() + ")");
+			}
+		}
 	}
 	
 	/**
