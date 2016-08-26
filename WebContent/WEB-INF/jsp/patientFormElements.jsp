@@ -178,6 +178,17 @@
 			<tr>
 				<td>&nbsp;</td>
 			</tr>
+			<tr>
+				<td>
+					<label for="land"><%=bundle.getString("land")%></label>
+				</td>
+				<td>
+					<input type="text"
+						id="land" name="land" size="50" value="${it.ort}"
+						<% if (map.containsKey("readonly")) { %> readonly="readonly"
+						<% } else if (showPlaceholders) {%> placeholder="<%=bundle.getString("placeholderLand") %>" <% } %> />
+				</td>
+			</tr>
 		</tbody>
 	</table>
 </fieldset>
