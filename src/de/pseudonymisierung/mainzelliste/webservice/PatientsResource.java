@@ -75,21 +75,20 @@ import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.exceptions.UnauthorizedException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+import java.util.regex.Pattern;
 
 /**
  * Resource-based access to patients.
  */
 @Path("/patients")
 public class PatientsResource {
-	
+
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(PatientsResource.class);
-	
+	private final Logger logger = Logger.getLogger(PatientsResource.class);
+
 	/**
 	 * Get a list of patients.
-	 * 
-	 * @param req
-	 *            The injected HttpServletRequest.
+	 *
 	 * @param tokenId
 	 *            Id of a valid "readPatients" token.
 	 * @return A JSON result as specified in the API documentation.
@@ -98,21 +97,79 @@ public class PatientsResource {
 	 */
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllPatients(@Context HttpServletRequest req,
-			@QueryParam("tokenId") String tokenId) throws UnauthorizedException {		
-		
+	public Response getPatients(@QueryParam("tokenId") String tokenId) throws UnauthorizedException {
 		logger.info("Received GET /patients");
-		
+
 		/*
-		 * If a token (type "readPatients") is provided, use this 
+		 * If a token (type "readPatients") is provided, use this
 		 */
 		if (tokenId != null)
-			return this.getPatientsToken(tokenId);
-		
+			return Response.ok().entity(getPatientsList(tokenId)).build();
+
 		else
 			throw new UnauthorizedException();
 	}
-	
+
+	/**
+	 * Get patients via "readPatient" token.
+	 *
+	 * @param tokenId
+	 *            Id of a valid "readPatient" token.
+	 * @return A JSON result as specified in the API documentation.
+	 */
+	@Path("/tokenId/{tid}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getPatientsToken(@PathParam("tid") String tokenId){
+		logger.info("Received GET /patients/tokenId/{tid}");
+
+		/*
+		 * If a token (type "readPatients") is provided, use this
+		 */
+		if (tokenId != null)
+			return Response.ok().entity(getPatientsList(tokenId)).build();
+
+		else
+			throw new UnauthorizedException();
+
+	}
+
+	/**
+	 * Get a list of patients as jsonp.
+	 *
+	 * @param tokenId
+	 *            Id of a valid "readPatients" token.
+	 * @param jsonpCallback
+	 * @return A JSON result as specified in the API documentation.
+	 * @throws UnauthorizedException
+	 *             If no token is provided.
+	 */
+	@Path("/jsonp")
+	@GET
+	@Produces("text/javascript")
+	public Response getPatientsJsonp(@QueryParam("tokenId") String tokenId,
+			@QueryParam("callback") String jsonpCallback) throws UnauthorizedException {
+		logger.info("Received GET /patients/jsonp");
+
+		/*
+		 * If a token (type "readPatients") is provided, use this
+		 */
+		if (tokenId != null) {
+			if (jsonpCallback != null) {
+				Pattern pattern = Pattern.compile("^[a-z][a-z0-9_]*$", Pattern.CASE_INSENSITIVE);
+				if (pattern.matcher(jsonpCallback).matches()) {
+					StringBuilder out = new StringBuilder();
+					out.append(jsonpCallback);
+					out.append("(");
+					out.append(getPatientsList(tokenId).toString());
+					out.append(");");
+					return Response.ok().entity(out.toString()).build();
+				}
+			}
+		}
+
+		throw new UnauthorizedException();
+	}
 
 	/**
 	 * Create a new patient. Interface for web browser.
@@ -320,18 +377,7 @@ public class PatientsResource {
 		}
 	}
 
-	/**
-	 * Get patients via "readPatient" token.
-	 * 
-	 * @param tid
-	 *            Id of a valid "readPatient" token.
-	 * @return A JSON result as specified in the API documentation.
-	 */
-	@Path("/tokenId/{tid}")
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getPatientsToken(
-			@PathParam("tid") String tid){
+	private JSONArray getPatientsList(String tid){
 		logger.info("Reveived request to get patient with token " + tid);
 		// Check if token exists and has the right type. 
 		// Validity of token is checked upon creation
@@ -388,8 +434,8 @@ public class PatientsResource {
 			
 			ret.put(thisPatient);
 		}
-		
-		return Response.ok().entity(ret).build();
+
+		return ret;
 	}
 
 	/**
