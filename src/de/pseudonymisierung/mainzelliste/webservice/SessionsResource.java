@@ -269,7 +269,7 @@ public class SessionsResource {
 			@Context HttpServletRequest req,
 			@Context UriInfo uriInfo){
 
-		logger.info("Received request to get token " + tokenId + " in session " + sid +
+		logger.info("Received request to get token " + tokenId + " in session " + sid.getValue().getId()  +
 				" by host " + req.getRemoteHost());
 
 		Session s = sid.getValue();
@@ -279,7 +279,7 @@ public class SessionsResource {
 		if (t == null || !s.getTokens().contains(t))
 			throw new WebApplicationException(Response
 					.status(Status.NOT_FOUND)
-					.entity("No token with id " + tokenId + " in session " + sid + ".")
+					.entity("No token with id " + tokenId + " in session " + sid.getValue().getId()  + ".")
 					.build());		
 		return t.toJSON(Servers.instance.getRequestApiVersion(req));
 	}
