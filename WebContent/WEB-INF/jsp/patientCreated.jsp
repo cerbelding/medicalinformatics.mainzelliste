@@ -98,7 +98,7 @@
 				//Map<String, Object> map = (Map<String,Object>)request.getAttribute("it");
 				if (map.containsKey("redirect")) {
 			%>
-			<form action="<%=map.get("redirect")%>" target="_top" method="get">
+			<form action="<%=map.get("redirect")%>" method="get">
 				<%
 				@SuppressWarnings("unchecked")
 				MultivaluedMap<String, String> redirectParams = (MultivaluedMap<String, String>) map.get("redirectParams");
@@ -112,9 +112,9 @@
 				<div style="text-align: center">
 					<% if (map.containsKey("printIdat") && (Boolean) map.get("printIdat")) { %>
 						<input type="submit" onclick="window.print();"
-						value="Drucken und Patient anlegen" />
+						value="<%=bundle.getString("printAndGoForward")%>" />
 					<% } else { %>
-						<input type="submit" value="Patient anlegen" />
+						<input type="submit" value="<%=bundle.getString("goForward")%>" />
 					<% } %>
 				</div>
 			</form>
