@@ -112,6 +112,9 @@ public enum Persistor {
 	}
 
 	public void shutdown() {
+		// This method is mainly copied from stackoverflow.com:
+		// http://stackoverflow.com/questions/3320400
+		// See answer by daiscog (http://stackoverflow.com/users/889583/daiscog)
 		// Now deregister JDBC drivers in this context's ClassLoader
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		Enumeration<Driver> drivers = DriverManager.getDrivers();
