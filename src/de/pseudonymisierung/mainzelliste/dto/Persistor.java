@@ -55,6 +55,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Driver;
 import java.util.Enumeration;
+import javax.servlet.ServletContext;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -111,39 +112,50 @@ public enum Persistor {
 		Logger.getLogger(Persistor.class).info("Persistence has initialized successfully.");
 	}
 
-	public void shutdown() {
-		// Now deregister JDBC drivers in this context's ClassLoader
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
+	public void shutdown(ServletContext context) {
+		ClassLoader contextClassLoader = context.getClassLoader();
 		Enumeration<Driver> drivers = DriverManager.getDrivers();
 		while (drivers.hasMoreElements()) {
 			Driver driver = drivers.nextElement();
-			if (driver.getClass().getClassLoader() == cl) {
-				// This driver was registered by the webapp's ClassLoader, so deregister it:
-				if (driver.getClass().getName().equals("com.mysql.jdbc.Driver")) {
+			Class<?> driverClass = driver.getClass();
+
+			if (checkClassLoader(driver, contextClassLoader)) {
+				if (driverClass.getName().equals("com.mysql.jdbc.Driver")) {
 					// special mysql handling
-					try {
-						Class<?> threadClass = Class.forName("com.mysql.jdbc.AbandonedConnectionCleanupThread");
-						logger.info("Calling MySQL AbandonedConnectionCleanupThread shutdown");
-						Method shutdownMethod = threadClass.getMethod("shutdown");
-						shutdownMethod.invoke(null);
-					} catch (ClassNotFoundException ex) {
-					} catch (NoSuchMethodException ex) {
-					} catch (SecurityException ex) {
-					} catch (IllegalAccessException ex) {
-					} catch (IllegalArgumentException ex) {
-					} catch (InvocationTargetException ex) {
-					}
+					handleMySQLShutdown();
 				}
 				try {
 					logger.info("Deregistering JDBC driver " + driver);
 					DriverManager.deregisterDriver(driver);
 				} catch (SQLException ex) {
-					logger.debug("Error deregistering JDBC driver {}" + ex);
+					logger.debug("An error occured during deregistering JDBC driver " + driver, ex);
 				}
-			} else {
-				// driver was not registered by the webapp's ClassLoader and may be in use elsewhere
-				logger.debug("Not deregistering JDBC driver " + driver + " as it does not belong to this webapp's ClassLoader");
 			}
+		}
+	}
+
+	private boolean checkClassLoader(Driver driver, ClassLoader contextClassLoader) {
+		ClassLoader cl = driver.getClass().getClassLoader();
+		while (cl != null) {
+			if (cl == contextClassLoader)
+				return true; // the driver was loaded by the context class loader or by one of its successor
+			cl = cl.getParent();
+		}
+		return false;
+	}
+
+	private void handleMySQLShutdown() {
+		try {
+			Class<?> threadClass = Class.forName("com.mysql.jdbc.AbandonedConnectionCleanupThread");
+			logger.info("Calling MySQL AbandonedConnectionCleanupThread shutdown");
+			Method shutdownMethod = threadClass.getMethod("shutdown");
+			shutdownMethod.invoke(null);
+		} catch (ClassNotFoundException ex) {
+		} catch (NoSuchMethodException ex) {
+		} catch (SecurityException ex) {
+		} catch (IllegalAccessException ex) {
+		} catch (IllegalArgumentException ex) {
+		} catch (InvocationTargetException ex) {
 		}
 	}
 
