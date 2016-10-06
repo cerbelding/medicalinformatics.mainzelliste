@@ -31,22 +31,26 @@ dist = Mainzelliste
 # db.url = jdbc:mysql://localhost:3306/mainzelliste
 
 # Uncomment this for HSQLDB
-db.driver = org.hsqldb.jdbcDriver
-db.url = jdbc:hsqldb:file:C:/Program Files/hsqldb/mainzelliste;shutdown=true
+# db.driver = org.hsqldb.jdbcDriver
+# db.url = jdbc:hsqldb:file:C:/Program Files/hsqldb/mainzelliste;shutdown=true
 
 db.username = mainzelliste
 db.password = mainzelliste
 
 
 # Hashing
-Hasher.use = true
-Hash.hasher = NilsimsaHasher
-Hash.input.field.0 = geburtstag
-Hash.input.field.1 = _
-Hash.input.field.2 = geburtsmonat
-Hash.input.field.3 = _
-Hash.input.field.4 = geburtsjahr
-Hash.threshold = 80
+# Input data can be contain names of fields or any combinations of characters.
+# If a specified value is empty it is interpreted as a space.
+# The following example concatenates the components of the date of birth,
+# separated by underscores.
+# Hasher.use = true
+# Hash.hasher = NilsimsaHasher
+# Hash.input.field.0 = geburtstag
+# Hash.input.field.1 = _
+# Hash.input.field.2 = geburtsmonat
+# Hash.input.field.3 = _
+# Hash.input.field.4 = geburtsjahr
+# Hash.threshold = 80
 
 
 # Logging
