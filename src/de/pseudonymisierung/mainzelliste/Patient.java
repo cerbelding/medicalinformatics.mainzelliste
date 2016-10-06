@@ -56,433 +56,433 @@ import de.pseudonymisierung.mainzelliste.matcher.hasher.HashFormatter;
 import de.pseudonymisierung.mainzelliste.matcher.hasher.Hasher;
 
 /**
- * A patient entity identified by at least one ID and described by a number of
- * Fields.
+ * A patient entity identified by at least one ID and described by a number of Fields.
  */
 @XmlRootElement
 @Entity
 public class Patient {
 
-    /**
-     * JSON serialization of a map of fields. Used for persisting fields in the
-     * database.
-     *
-     * @param fields Map of fields to serialize.
-     * @return JSON serialization of the given fields.
-     * @see #stringToFields(String)
-     */
-    public static String fieldsToString(Map<String, Field<?>> fields) {
-        try {
-            JSONObject fieldsJson = new JSONObject();
-            for (String fieldName : fields.keySet()) {
-                JSONObject thisField = new JSONObject();
-                thisField.put("class", fields.get(fieldName).getClass()
-                        .getName());
-                thisField.put("value", fields.get(fieldName).getValueJSON());
-                fieldsJson.put(fieldName, thisField);
-            }
-            return fieldsJson.toString();
-        } catch (JSONException e) {
-            Logger.getLogger(Patient.class).error("Exception: ", e);
-            throw new InternalErrorException();
-        }
-    }
+	/**
+	 * JSON serialization of a map of fields. Used for persisting fields in the
+	 * database.
+	 * 
+	 * @param fields
+	 *            Map of fields to serialize.
+	 * @return JSON serialization of the given fields.
+	 * @see #stringToFields(String)
+	 */
+	public static String fieldsToString(Map<String, Field<?>> fields) {
+		try {
+			JSONObject fieldsJson = new JSONObject();
+			for (String fieldName : fields.keySet()) {
+				JSONObject thisField = new JSONObject();
+				thisField.put("class", fields.get(fieldName).getClass()
+						.getName());
+				thisField.put("value", fields.get(fieldName).getValueJSON());
+				fieldsJson.put(fieldName, thisField);
+			}
+			return fieldsJson.toString();
+		} catch (JSONException e) {
+			Logger.getLogger(Patient.class).error("Exception: ", e);
+			throw new InternalErrorException();
+		}
+	}
 
-    /**
-     * Creates a map of fields from its JSON representation. Used to read
-     * persisted fields from the database.
-     *
-     * @param fieldsJsonString JSON string as created by
-     * {@link #fieldsToString(Map)}.
-     * @return The map of fields.
-     */
-    public static Map<String, Field<?>> stringToFields(String fieldsJsonString) {
-        try {
-            Map<String, Field<?>> fields = new HashMap<String, Field<?>>();
-            JSONObject fieldsJson = new JSONObject(fieldsJsonString);
-            Iterator<?> it = fieldsJson.keys();
-            while (it.hasNext()) {
-                String fieldName = (String) it.next();
-                JSONObject thisFieldJson = fieldsJson.getJSONObject(fieldName);
-                String fieldClass = thisFieldJson.getString("class");
-                String fieldValue = thisFieldJson.getString("value");
-                Field<?> thisField = (Field<?>) Class.forName(fieldClass)
-                        .newInstance();
-                thisField.setValue(fieldValue);
-                fields.put(fieldName, thisField);
-            }
-            return fields;
-        } catch (JSONException e) {
-            Logger.getLogger(Patient.class).error(
-                    "JSON error while parsing patient fields: "
-                    + e.getMessage(), e);
-            throw new InternalErrorException();
-        } catch (Exception e) {
-            Logger logger = Logger.getLogger(Patient.class);
-            logger.error("Exception while parsing patient fields from string: "
-                    + fieldsJsonString);
-            Logger.getLogger(Patient.class)
-                    .error("Cause: " + e.getMessage(), e);
-            throw new InternalErrorException();
-        }
-    }
+	/**
+	 * Creates a map of fields from its JSON representation. Used to read
+	 * persisted fields from the database.
+	 * 
+	 * @param fieldsJsonString
+	 *            JSON string as created by {@link #fieldsToString(Map)}.
+	 * @return The map of fields.
+	 */
+	public static Map<String, Field<?>> stringToFields(String fieldsJsonString) {
+		try {
+			Map<String, Field<?>> fields = new HashMap<String, Field<?>>();
+			JSONObject fieldsJson = new JSONObject(fieldsJsonString);
+			Iterator<?> it = fieldsJson.keys();
+			while (it.hasNext()) {
+				String fieldName = (String) it.next();
+				JSONObject thisFieldJson = fieldsJson.getJSONObject(fieldName);
+				String fieldClass = thisFieldJson.getString("class");
+				String fieldValue = thisFieldJson.getString("value");
+				Field<?> thisField = (Field<?>) Class.forName(fieldClass)
+						.newInstance();
+				thisField.setValue(fieldValue);
+				fields.put(fieldName, thisField);
+			}
+			return fields;
+		} catch (JSONException e) {
+			Logger.getLogger(Patient.class).error(
+					"JSON error while parsing patient fields: "
+							+ e.getMessage(), e);
+			throw new InternalErrorException();
+		} catch (Exception e) {
+			Logger logger = Logger.getLogger(Patient.class);
+			logger.error("Exception while parsing patient fields from string: "
+					+ fieldsJsonString);
+			Logger.getLogger(Patient.class)
+					.error("Cause: " + e.getMessage(), e);
+			throw new InternalErrorException();
+		}
+	}
 
-    /**
-     * The map of fields of this patient. Field names are map keys, the
-     * corresponding Field objects are the values. The fields are not persisted
-     * by this map (therefore the {@literal @Transient} annotation), as this
-     * leads to poor performance. Instead, fields are serialized as a JSON
-     * object (handled by {@link #setFields(Map)} and de-serialized by
-     * {@link #postLoad()} upon loading from the database.
-     *
-     * @see #fieldsString
-     */
-    @Transient
-    private Map<String, Field<?>> fields;
+	/**
+	 * The map of fields of this patient. Field names are map keys, the
+	 * corresponding Field objects are the values. The fields are not persisted
+	 * by this map (therefore the {@literal @Transient} annotation), as this
+	 * leads to poor performance. Instead, fields are serialized as a JSON
+	 * object (handled by {@link #setFields(Map)} and de-serialized by
+	 * {@link #postLoad()} upon loading from the database.
+	 * 
+	 * @see #fieldsString
+	 */
+	@Transient
+	private Map<String, Field<?>> fields;
 
-    /**
-     * Serialization of the fields as JSON string for efficient storage in the
-     * database.
-     *
-     * @see #fields
-     */
-    @Basic(fetch = FetchType.LAZY)
-    @Lob
-    @JsonIgnore
-    private String fieldsString;
+	/**
+	 * Serialization of the fields as JSON string for efficient storage in the
+	 * database.
+	 * 
+	 * @see #fields
+	 */
+	@Basic(fetch = FetchType.LAZY)
+	@Lob
+	@JsonIgnore
+	private String fieldsString;
 
-    /**
-     * Set of IDs for this patient.
-     */
-    @OneToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE,
-        CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.LAZY)
-    private Set<ID> ids;
+	/**
+	 * Set of IDs for this patient.
+	 */
+	@OneToMany(cascade = { CascadeType.DETACH, CascadeType.MERGE,
+			CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
+	private Set<ID> ids;
 
-    /**
-     * Input fields as read from form (before transformation). Used to display
-     * field values as they were entered in first place.
-     *
-     * @see #fields
-     * @see #inputFieldsString
-     */
-    @Transient
-    private Map<String, Field<?>> inputFields;
+	/**
+	 * Input fields as read from form (before transformation). Used to display
+	 * field values as they were entered in first place.
+	 * 
+	 * @see #fields
+	 * @see #inputFieldsString
+	 */
+	@Transient
+	private Map<String, Field<?>> inputFields;
 
-    /**
-     * Serialization of the input fields as JSON string for efficient storage in
-     * the database.
-     *
-     * @see #inputFields
-     */
-    @Basic(fetch = FetchType.LAZY)
-    @Lob
-    @JsonIgnore
-    private String inputFieldsString;
+	/**
+	 * Serialization of the input fields as JSON string for efficient storage in
+	 * the database.
+	 * 
+	 * @see #inputFields
+	 */
+	@Basic(fetch = FetchType.LAZY)
+	@Lob
+	@JsonIgnore
+	private String inputFieldsString;
 
-    /**
-     * Hash of a patient. If no hashes used, the string is empty.
-     */
-    @Basic(fetch = FetchType.EAGER)
-    @Column(length = 128)
-    private String hash;
+	/**
+	 * Hash of a patient. If no hashes used, the string is empty.
+	 */
+	@Basic(fetch = FetchType.EAGER)
+	@Column(length = 128)
+	private String hash;
 
-    /**
-     * True if this patient is suspected to be a duplicate.
-     */
-    private boolean isTentative = false;
+	/**
+	 * True if this patient is suspected to be a duplicate.
+	 */
+	private boolean isTentative = false;
 
-    /**
-     * The logging instance.
-     */
-    @Transient
-    @JsonIgnore
-    private Logger logger = Logger.getLogger(this.getClass());
+	/** The logging instance. */
+	@Transient
+	@JsonIgnore
+	private Logger logger = Logger.getLogger(this.getClass());
 
-    /**
-     * The patient of which this patient is a duplicate of. If p.original is not
-     * null, p is considered a duplicate of p.original.
-     */
-    @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.MERGE,
-        CascadeType.PERSIST, CascadeType.REFRESH}, fetch = FetchType.EAGER)
-    @JsonIgnore
-    private Patient original = null;
+	/**
+	 * The patient of which this patient is a duplicate of. If p.original is not
+	 * null, p is considered a duplicate of p.original.
+	 */
+	@ManyToOne(cascade = { CascadeType.DETACH, CascadeType.MERGE,
+			CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.EAGER)
+	@JsonIgnore
+	private Patient original = null;
 
-    /**
-     * Database id.
-     */
-    @Id
-    @GeneratedValue
-    @JsonIgnore
-    private int patientJpaId;
+	/** Database id. */
+	@Id
+	@GeneratedValue
+	@JsonIgnore
+	private int patientJpaId;
 
-    /**
-     * Construct an empty patient object.
-     */
-    public Patient() {
-    }
+	/**
+	 * Construct an empty patient object.
+	 */
+	public Patient() {
+	}
 
-    /**
-     * Construct a patient object with the specified ids and fields.
-     *
-     * @param ids A set of ID objects that identify the patient.
-     * @param c The fields of the patient. A map with field names as keys and
-     * the corresponding Field objects as values.
-     */
-    public Patient(Set<ID> ids, Map<String, Field<?>> c) {
-        this.ids = ids;
-        this.setFields(c);
-    }
+	/**
+	 * Construct a patient object with the specified ids and fields.
+	 * 
+	 * @param ids
+	 *            A set of ID objects that identify the patient.
+	 * @param c
+	 *            The fields of the patient. A map with field names as keys and
+	 *            the corresponding Field objects as values.
+	 */
+	public Patient(Set<ID> ids, Map<String, Field<?>> c) {
+		this.ids = ids;
+		this.setFields(c);
+	}
 
-    /**
-     * Get the fields of this patient.
-     *
-     * @return An unmodifiable map with field names as keys and corresponding
-     * field objects as values. Although the map itself is unmodifiable,
-     * modifications of its members affect the patient object.
-     */
-    public Map<String, Field<?>> getFields() {
-        return Collections.unmodifiableMap(fields);
-    }
+	/**
+	 * Get the fields of this patient.
+	 * 
+	 * @return An unmodifiable map with field names as keys and corresponding
+	 *         field objects as values. Although the map itself is unmodifiable,
+	 *         modifications of its members affect the patient object.
+	 */
+	public Map<String, Field<?>> getFields() {
+		return Collections.unmodifiableMap(fields);
+	}
 
-    /**
-     * Get the ID of the specified type from this patient.
-     *
-     * @param type The ID type. See {@link ID} for the general structure of an
-     * ID.
-     * @return This patient's ID of the given type or null if no such ID is
-     * defined.
-     */
-    public ID getId(String type) {
-        for (ID thisId : ids) {
-            if (thisId.getType().equals(type)) {
-                return thisId;
-            }
-        }
-        return null;
-    }
+	/**
+	 * Get the ID of the specified type from this patient.
+	 * 
+	 * @param type
+	 *            The ID type. See {@link ID} for the general structure of an
+	 *            ID.
+	 * @return This patient's ID of the given type or null if no such ID is
+	 *         defined.
+	 */
+	public ID getId(String type) {
+		for (ID thisId : ids) {
+			if (thisId.getType().equals(type))
+				return thisId;
+		}
+		return null;
+	}
 
-    /**
-     * Get the set of IDs of this patient.
-     *
-     * @return The IDs of the patient as unmodifiable set. While the set itself
-     * is unmodifiable, modification of the elements (ID objects) affect the
-     * patient object.
-     */
-    public Set<ID> getIds() {
-        return Collections.unmodifiableSet(ids);
-    }
+	/**
+	 * Get the set of IDs of this patient.
+	 * 
+	 * @return The IDs of the patient as unmodifiable set. While the set itself
+	 *         is unmodifiable, modification of the elements (ID objects) affect
+	 *         the patient object.
+	 */
+	public Set<ID> getIds() {
+		return Collections.unmodifiableSet(ids);
+	}
 
-    /**
-     * Returns the input fields, i.e. as they were transmitted in the last
-     * request that modified this patient, before transformations. Used for
-     * displaying the field values as they had been entered in the first place.
-     *
-     * @return Map with field names as keys and the corresponding Field objects
-     * as values.
-     */
-    public Map<String, Field<?>> getInputFields() {
-        return inputFields;
-    }
+	/**
+	 * Returns the input fields, i.e. as they were transmitted in the last
+	 * request that modified this patient, before transformations. Used for
+	 * displaying the field values as they had been entered in the first place.
+	 * 
+	 * @return Map with field names as keys and the corresponding Field objects
+	 *         as values.
+	 */
+	public Map<String, Field<?>> getInputFields() {
+		return inputFields;
+	}
 
-    /**
-     * Gets the original of this patient, i.e. the patient of which this patient
-     * is a duplicate. More precisely: A patient p_1 is the original of a
-     * patient p_n if either p_1 and p_n are the same or if there exists a chain
-     * p_1, p_2, ... , p_n of patients where p_k is a duplicate of p_k+1 for
-     * 1<=k<n.
-     *
-     * PID requests that find p as the best matching patient should return the
-     * PID of p.getOriginal().
-     *
-     * @return The original of this patient, returns this if this patient is not
-     * a duplicate.
-     *
-     * @see #setOriginal(Patient)
-     */
-    public Patient getOriginal() {
-        Patient p = this;
-        while (p.original != null && p.original != p) {
-            p = p.original;
-        }
-        return p;
-    }
+	/**
+	 * Gets the original of this patient, i.e. the patient of which this patient
+	 * is a duplicate. More precisely: A patient p_1 is the original of a
+	 * patient p_n if either p_1 and p_n are the same or if there exists a chain
+	 * p_1, p_2, ... , p_n of patients where p_k is a duplicate of p_k+1 for
+	 * 1<=k<n.
+	 * 
+	 * PID requests that find p as the best matching patient should return the
+	 * PID of p.getOriginal().
+	 * 
+	 * @return The original of this patient, returns this if this patient is not
+	 *         a duplicate.
+	 * 
+	 * @see #setOriginal(Patient)
+	 */
+	public Patient getOriginal() {
+		Patient p = this;
+		while (p.original != null && p.original != p)
+			p = p.original;
+		return p;
+	}
 
-    /**
-     * Returns the internal ID of the persistency engine. Needed to determine if
-     * two Patient object refer to the same database entry.
-     *
-     * @return the patientJpaId
-     */
-    public int getPatientJpaId() {
-        return patientJpaId;
-    }
+	/**
+	 * Returns the internal ID of the persistency engine. Needed to determine if
+	 * two Patient object refer to the same database entry.
+	 * 
+	 * @return the patientJpaId
+	 */
+	public int getPatientJpaId() {
+		return patientJpaId;
+	}
 
-    /**
-     * Check whether this patient is the duplicate of another.
-     *
-     * @return True if this patient is the duplicate of another.
-     * @see #getOriginal()
-     * @see #setOriginal(Patient)
-     */
-    public boolean isDuplicate() {
-        return (this.original != null);
-    }
+	/**
+	 * Check whether this patient is the duplicate of another.
+	 * 
+	 * @return True if this patient is the duplicate of another.
+	 * @see #getOriginal()
+	 * @see #setOriginal(Patient)
+	 */
+	public boolean isDuplicate() {
+		return (this.original != null);
+	}
 
-    /**
-     * Check if this patient is suspected to be a duplicate of another one.
-     *
-     * @return True if this patient is suspected to be a duplicate of another.
-     */
-    public boolean isTentative() {
-        return isTentative;
-    }
+	/**
+	 * Check if this patient is suspected to be a duplicate of another one.
+	 * 
+	 * @return True if this patient is suspected to be a duplicate of another.
+	 */
+	public boolean isTentative() {
+		return isTentative;
+	}
 
-    /**
-     * De-serializes fields and input fields from their JSON representation.
-     * Automatically called by the JPA engine right after loading the object
-     * from the database. Fields that are missing in the database due to a later
-     * change of configuration are added with empty values.
-     */
-    @PostLoad
-    public void postLoad() {
-        this.fields = stringToFields(this.fieldsString);
-        this.inputFields = stringToFields(this.inputFieldsString);
-        for (String thisFieldKey : Config.instance.getFieldKeys()) {
-            if (!this.fields.containsKey(thisFieldKey)) {
-                this.fields.put(thisFieldKey, Field.build(thisFieldKey, ""));
-            }
-            if (!this.inputFields.containsKey(thisFieldKey)) {
-                this.inputFields.put(thisFieldKey,
-                        Field.build(thisFieldKey, ""));
-            }
-        }
-    }
+	/**
+	 * De-serializes fields and input fields from their JSON representation.
+	 * Automatically called by the JPA engine right after loading the object
+	 * from the database. Fields that are missing in the database due to a later
+	 * change of configuration are added with empty values.
+	 */
+	@PostLoad
+	public void postLoad() {
+		this.fields = stringToFields(this.fieldsString);
+		this.inputFields = stringToFields(this.inputFieldsString);
+		for (String thisFieldKey : Config.instance.getFieldKeys()) {
+			if (!this.fields.containsKey(thisFieldKey))
+				this.fields.put(thisFieldKey, Field.build(thisFieldKey, ""));
+			if (!this.inputFields.containsKey(thisFieldKey))
+				this.inputFields.put(thisFieldKey,
+						Field.build(thisFieldKey, ""));
+		}
+	}
 
-    /**
-     * Check whether p and this patient are the same in the database (i.e. their
-     * patientJpaId values are equal).
-     *
-     * @param p A patient object.
-     * @return true if this and p refer to the same database entry.
-     */
-    public boolean sameAs(Patient p) {
-        return (this.getPatientJpaId() == p.getPatientJpaId());
-    }
+	/**
+	 * Check whether p and this patient are the same in the database (i.e. their
+	 * patientJpaId values are equal).
+	 * 
+	 * @param p
+	 *            A patient object.
+	 * @return true if this and p refer to the same database entry.
+	 */
+	public boolean sameAs(Patient p) {
+		return (this.getPatientJpaId() == p.getPatientJpaId());
+	}
 
-    /**
-     * Set the fields of this patient. Additionally, the hash of the patient is generated.
-     *
-     * @param Fields A map with field names as keys and corresponding Field
-     * objects as values. The map is copied by reference.
-     */
-    public void setFields(Map<String, Field<?>> fields) {
-        this.fields = fields;
-        this.fieldsString = fieldsToString(this.fields);
-        
-        generateHash();
-    }
+	/**
+	 * Set the fields of this patient. Additionally, the hash of the patient is generated.
+	 *
+	 * @param Fields
+	 *            A map with field names as keys and corresponding Field objects
+	 *            as values. The map is copied by reference.
+	 */
+	public void setFields(Map<String, Field<?>> fields) {
+		this.fields = fields;
+		this.fieldsString = fieldsToString(this.fields);
+		
+		generateHash();
+	}
 
-    /**
-     * Creates a hash based on the given fields. Whether and which Hasher is
-     * used must be specified in the configuration file. The given fields should
-     * be normalized.
-     *
-     * @param fields Fields with normalized patient datas
-     */
-    private void generateHash(Map<String, Field<?>> fields) {
-        Hasher hasher = Config.instance.getHasher();
+	/**
+	 * Creates a hash based on the given fields. Whether and which Hasher is
+	 * used must be specified in the configuration file. The given fields should
+	 * be normalized.
+	 *
+	 * @param fields Fields with normalized patient datas
+	 */
+	private void generateHash(Map<String, Field<?>> fields) {
+		Hasher hasher = Config.instance.getHasher();
 
-        if (hasher != null) {
-            Logger.getLogger(Patient.class).info("Generate Hash.");
-            
-            HashFormatter hf = HashFormatter.getInstance();
-            hash = hasher.generate(hf.getHasherInput(fields));
-        }
-    }
-    
-    public void generateHash()
-    {
-        generateHash(fields);
-    }
+		if (hasher != null) {
+			Logger.getLogger(Patient.class).info("Generate Hash.");
+			
+			HashFormatter hf = HashFormatter.getInstance();
+			hash = hasher.generate(hf.getHasherInput(fields));
+		}
+	}
+	
+	public void generateHash()
+	{
+		generateHash(fields);
+	}
 
-    /**
-     * Returns a copy of the hash.
-     *
-     * @return Hash of patient.
-     */
-    public String getHash() {
-        return new String(hash);
-    }
+	/**
+	 * Returns a copy of the hash.
+	 *
+	 * @return Hash of patient.
+	 */
+	public String getHash() {
+		return new String(hash);
+	}
 
-    /**
-     * Set the IDs for this patient.
-     *
-     * @param ids Set of IDs. The set is copied by reference.
-     */
-    public void setIds(Set<ID> ids) {
-        this.ids = ids;
-    }
+	/**
+	 * Set the IDs for this patient.
+	 * 
+	 * @param ids
+	 *            Set of IDs. The set is copied by reference.
+	 */
+	public void setIds(Set<ID> ids) {
+		this.ids = ids;
+	}
 
-    /**
-     * Set the input fields. Whenever a request modifies this patient object (or
-     * upon creation) the input fields as transmitted in the request, before
-     * transformation, should be set with this method. This allows redisplaying
-     * them in the admin interface or to users by means of a "readPatients"
-     * token.
-     *
-     * @param inputFields Map with field names as keys and corresponding Field
-     * objects as values.
-     */
-    public void setInputFields(Map<String, Field<?>> inputFields) {
-        this.inputFields = inputFields;
-        this.inputFieldsString = fieldsToString(inputFields);
-    }
+	/**
+	 * Set the input fields. Whenever a request modifies this patient object (or
+	 * upon creation) the input fields as transmitted in the request, before
+	 * transformation, should be set with this method. This allows redisplaying
+	 * them in the admin interface or to users by means of a "readPatients"
+	 * token.
+	 * 
+	 * @param inputFields
+	 *            Map with field names as keys and corresponding Field objects
+	 *            as values.
+	 */
+	public void setInputFields(Map<String, Field<?>> inputFields) {
+		this.inputFields = inputFields;
+		this.inputFieldsString = fieldsToString(inputFields);
+	}
 
-    /**
-     * Set the original of a patient (see {@link #getOriginal() for a
-     * definition}. This effectively marks this patient as a duplicate of the
-     * argument.
-     *
-     * @param original The patient which is to be set as the original of this.
-     * Can be null, which means that this patient is not a duplicate at all.
-     */
-    public void setOriginal(Patient original) {
-        if (original == null || original.sameAs(this)) {
-            this.original = null;
-            return;
-        }
+	/**
+	 * Set the original of a patient (see {@link #getOriginal() for a
+	 * definition}. This effectively marks this patient as a duplicate of the
+	 * argument.
+	 * 
+	 * @param original
+	 *            The patient which is to be set as the original of this. Can be
+	 *            null, which means that this patient is not a duplicate at all.
+	 */
+	public void setOriginal(Patient original) {
+		if (original == null || original.sameAs(this)) {
+			this.original = null;
+			return;
+		}
 		// Check if operation would lead to a circular relation
-        // (setting a as duplicate of b when b is a duplicate of a)
-        if (original.getOriginal().sameAs(this)) {
-            CircularDuplicateRelationException e = new CircularDuplicateRelationException(
-                    this.getId("pid").getIdString(), original.getId("pid")
-                    .getIdString());
-            logger.error(e.getMessage());
-            throw e;
-        }
-        this.original = original;
-    }
+		// (setting a as duplicate of b when b is a duplicate of a)
+		if (original.getOriginal().sameAs(this)) {
+			CircularDuplicateRelationException e = new CircularDuplicateRelationException(
+					this.getId("pid").getIdString(), original.getId("pid")
+							.getIdString());
+			logger.error(e.getMessage());
+			throw e;
+		}
+		this.original = original;
+	}
 
-    /**
-     * Sets the "tentative" status of this patient, i.e. if it is suspected that
-     * the patient is a duplicate of another.
-     *
-     * @param isTentative The new tentative status.
-     */
-    public void setTentative(boolean isTentative) {
-        this.isTentative = isTentative;
-        for (ID id : this.ids) {
-            id.setTentative(isTentative);
-        }
-    }
+	/**
+	 * Sets the "tentative" status of this patient, i.e. if it is suspected that
+	 * the patient is a duplicate of another.
+	 * 
+	 * @param isTentative
+	 *            The new tentative status.
+	 */
+	public void setTentative(boolean isTentative) {
+		this.isTentative = isTentative;
+		for (ID id : this.ids) {
+			id.setTentative(isTentative);
+		}
+	}
 
-    /**
-     * Returns a string representation of this patient by calling toString on
-     * the map of fields, i.e. the result looks like "[vorname=Peter,
-     * nachname=Meier, ...]".
-     */
-    @Override
-    public String toString() {
-        return fields.toString();
-    }
+	/**
+	 * Returns a string representation of this patient by calling toString on
+	 * the map of fields, i.e. the result looks like "[vorname=Peter, nachname=Meier, ...]".
+	 */
+	@Override
+	public String toString() {
+		return fields.toString();
+	}
 }
