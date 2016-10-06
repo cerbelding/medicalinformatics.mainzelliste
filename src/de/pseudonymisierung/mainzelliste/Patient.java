@@ -180,7 +180,7 @@ public class Patient {
 	private String inputFieldsString;
 
 	/**
-	 * Hash of a patient. If no hashes used, the string is empty.
+	 * Hash of a patient. If no hashes are used, the string is empty.
 	 */
 	@Basic(fetch = FetchType.EAGER)
 	@Column(length = 128)
@@ -384,7 +384,7 @@ public class Patient {
 	 * used must be specified in the configuration file. The given fields should
 	 * be normalized.
 	 *
-	 * @param fields Fields with normalized patient datas
+	 * @param fields Fields with normalized patient data
 	 */
 	private void generateHash(Map<String, Field<?>> fields) {
 		Hasher hasher = Config.instance.getHasher();
@@ -397,6 +397,9 @@ public class Patient {
 		}
 	}
 	
+	/**
+	 * Generate hash based on the current field values.
+	 */
 	public void generateHash()
 	{
 		generateHash(fields);
@@ -405,7 +408,7 @@ public class Patient {
 	/**
 	 * Returns a copy of the hash.
 	 *
-	 * @return Hash of patient.
+	 * @return Hash of this patient.
 	 */
 	public String getHash() {
 		return new String(hash);

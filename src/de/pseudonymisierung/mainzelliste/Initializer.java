@@ -107,15 +107,15 @@ public class Initializer implements ServletContextListener {
 			
 			List<Patient> patients = p.getPatients();
 
-			// If hash format was changed, generate for each patient a new hash
+			// If hash format has changed, generate a new hash for every patient
 			if (hf.isHashFormatChanged()) {
-				Logger.getLogger(Persistor.class).info("Hash format was changed. All Hashes will be updated.");
+				Logger.getLogger(Persistor.class).info("Hash format has changed. All Hashes will be updated.");
 				for (Patient patient : patients) {
 					patient.generateHash();
 					p.updatePatient(patient);
 				}
 			} else {
-				// Check whether all patients have a hash, if a patient do not, generate one
+				// Check whether all patients have a hash, if a patient does not have one, generate it
 				Logger.getLogger(Persistor.class).info("Missing hashes will be generated.");
 				for (Patient patient : patients) {
 					if (patient.getHash().isEmpty()) {

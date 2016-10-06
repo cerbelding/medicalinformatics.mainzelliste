@@ -96,9 +96,9 @@ public class EpilinkMatcher implements Matcher {
 	private Map<String, FieldComparator<Field<?>>> comparators;
 
 	/**
-	 * Get the used comparators for attribute comparison.
+	 * Get the field comparators used for attribute comparison.
 	 * 
-	 * @return Used comparators
+	 * @return The used field comparators.
 	 */
 	public Map<String, FieldComparator<Field<?>>> getComparators()
 	{
@@ -119,7 +119,7 @@ public class EpilinkMatcher implements Matcher {
 	/**
 	 * Get the calculated weights of fields.
 	 * 
-	 * @return Weights of fields
+	 * @return Weights of fields.
 	 */
 	public Map<String, Double> getWeights()
 	{
@@ -130,9 +130,9 @@ public class EpilinkMatcher implements Matcher {
 	private List<List<String>> exchangeGroups;
 	
 	/**
-	 * Get the sepzified exchange groups.
+	 * Get the configured exchange groups.
 	 * 
-	 * @return Exchange groups
+	 * @return The configured exchange groups.
 	 */
 	public List<List<String>> getExchangeGroups()
 	{
@@ -143,9 +143,9 @@ public class EpilinkMatcher implements Matcher {
 	private Set<String> nonExchangeFields;
 		
 	/**
-	 * Get the non exchange groups.
+	 * Get the fields that are not part of any exchange group.
 	 * 
-	 * @return Non exchange groups
+	 * @return The non-exchange group fields.
 	 */
 	public Set<String> getNonExchangeFields()
 	{

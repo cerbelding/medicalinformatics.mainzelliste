@@ -160,7 +160,7 @@ public enum Config {
 		
 		this.recordTransformer = new RecordTransformer(props);
 
-		/* Loading a class that implements the interface of the Hasher */
+		/* Load a implementation of Hasher interface according to the configuration */
 		if (props.getProperty("hasher.use") != null && props.getProperty("hasher.use").equals("true")) {
 			try {
 				Class<?> hasherClass = Class.forName("de.pseudonymisierung.mainzelliste.matcher.hasher." + props.getProperty("hash.hasher"));

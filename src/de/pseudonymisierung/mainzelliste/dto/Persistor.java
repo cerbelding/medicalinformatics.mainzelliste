@@ -92,6 +92,8 @@ public enum Persistor {
 		persistenceOptions.put("openjpa.jdbc.SynchronizeMappings", "buildSchema");
 		persistenceOptions.put("openjpa.jdbc.DriverDataSource", "dbcp");
 
+		// Configure OpenJPA to check validity of database connections with a validation query, which can differ
+		// across database systems.
 		if (isHsqldb()) {
 			persistenceOptions.put("openjpa.ConnectionProperties", "testOnBorrow=true, validationQuery=SELECT 1 FROM INFORMATION_SCHEMA.SYSTEM_USERS");
 		} else {
@@ -309,7 +311,7 @@ public enum Persistor {
 	 */
 	public synchronized HashFormatter getHashFormatter() {
 		em.getTransaction().begin();
-		List<HashFormatter> tmpList = em.createQuery("select h from HashFormatter h").getResultList();
+		List<HashFormatter> tmpList = em.createQuery("select h from HashFormatter h", HashFormatter.class).getResultList();
 		em.getTransaction().commit();
 
 		HashFormatter result = null;
@@ -453,10 +455,9 @@ public enum Persistor {
 	}
 
 	/**
-	 * Check if the given connection is to a HSQLDB.
+	 * Check if HSQLDB is used as database backend.
 	 *
-	 * @param conn Connection to the database
-	 * @return true, if the given connection is to HSQLDB, otherwise false
+	 * @return true, if HSQLDB is used, otherwise false
 	 */
 	private boolean isHsqldb() {
 		Connection conn = getJdbcConnection();

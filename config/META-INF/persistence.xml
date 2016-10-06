@@ -13,7 +13,7 @@
 		<class>de.pseudonymisierung.mainzelliste.IDGeneratorMemory</class>
 		<class>de.pseudonymisierung.mainzelliste.IntegerID</class>
 		<class>de.pseudonymisierung.mainzelliste.matcher.MatchResult</class>
-                <class>de.pseudonymisierung.mainzelliste.matcher.hasher.HashFormatter</class>
+        <class>de.pseudonymisierung.mainzelliste.matcher.hasher.HashFormatter</class>
 		<exclude-unlisted-classes>true</exclude-unlisted-classes>
 		<!-- See /etc/mainzelliste/default.conf for database access config. -->
 	</persistence-unit>
