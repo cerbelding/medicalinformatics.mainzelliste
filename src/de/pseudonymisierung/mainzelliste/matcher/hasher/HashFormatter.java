@@ -40,6 +40,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.OrderColumn;
 import javax.persistence.Transient;
 
 /**
@@ -59,6 +60,7 @@ public class HashFormatter {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "Hashformatter", joinColumns = @JoinColumn(name = "format_id"))
     @Column(name = "format", table = "HashFormatterList")
+    @OrderColumn(name="format_order")
     private List<String> format;
 
     @Transient
