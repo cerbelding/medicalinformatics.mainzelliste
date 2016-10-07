@@ -28,6 +28,8 @@ package de.pseudonymisierung.mainzelliste.matcher.hasher;
 
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
+import de.pseudonymisierung.mainzelliste.dto.Persistor;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -135,14 +137,18 @@ public class HashFormatter {
     }
 
     /**
-     * Returns an instance of the HashFormatter. If an instance is existed, this
-     * instance is returned, otherwise a new instance is created. (Singleton)
+     * Returns an instance of the HashFormatter. If an instance exists, this
+     * instance is returned. Otherwise, the instance is read from the database
+     * or newly created if no instance has been persisted.
      *
      * @return Instance of the HashFormatter
      */
     public static HashFormatter getInstance() {
         if (instance == null) {
-            instance = new HashFormatter();
+        	HashFormatter persistedInstance = Persistor.instance.getHashFormatter();
+            if (persistedInstance == null)
+            	instance = new HashFormatter();
+            else instance = persistedInstance;
         }
 
         return instance;

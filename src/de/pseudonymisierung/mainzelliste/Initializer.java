@@ -97,10 +97,8 @@ public class Initializer implements ServletContextListener {
 		HashFormatter h = HashFormatter.getInstance();
 		
 		if (Config.instance.getHasher() != null) {
-			HashFormatter hf = p.getHashFormatter();
-
-			if (hf == null) {
-				hf = HashFormatter.getInstance();
+			HashFormatter hf = HashFormatter.getInstance();
+			if (p.getHashFormatter() == null) {
 				p.persistHashFormatter(hf);
 			}
 			hf.initialize();
