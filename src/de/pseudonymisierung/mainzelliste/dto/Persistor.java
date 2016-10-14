@@ -92,6 +92,11 @@ public enum Persistor {
 		persistenceOptions.put("openjpa.jdbc.SynchronizeMappings", "buildSchema");
 		persistenceOptions.put("openjpa.jdbc.DriverDataSource", "dbcp");
 
+		// Fix incorrect type mapping for HSQLDB (see https://issues.apache.org/jira/browse/OPENJPA-2671) 
+		if (isHsqldb()) {
+			persistenceOptions.put("openjpa.jdbc.DBDictionary", "(DoubleTypeName=DOUBLE)");			
+		}
+		
 		// Configure OpenJPA to check validity of database connections with a validation query, which can differ
 		// across database systems.
 		if (isHsqldb()) {

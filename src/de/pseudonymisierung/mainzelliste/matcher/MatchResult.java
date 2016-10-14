@@ -73,8 +73,6 @@ public class MatchResult {
 	 * The best (i.e. highest) matching weight found.
 	 */
 	@Basic
-	// explicit specify the data type (needed for HSQLDB)
-	@Column(columnDefinition = "DOUBLE PRECISION")
 	private double bestMatchedWeight;
 
 	/**
