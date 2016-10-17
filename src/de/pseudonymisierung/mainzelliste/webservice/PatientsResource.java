@@ -151,24 +151,22 @@ public class PatientsResource {
 			@QueryParam("callback") String jsonpCallback) throws UnauthorizedException {
 		logger.info("Received GET /patients/jsonp");
 
-		/*
-		 * If a token (type "readPatients") is provided, use this
-		 */
-		if (tokenId != null) {
-			if (jsonpCallback != null) {
-				Pattern pattern = Pattern.compile("^[a-z][a-z0-9_]*$", Pattern.CASE_INSENSITIVE);
-				if (pattern.matcher(jsonpCallback).matches()) {
-					StringBuilder out = new StringBuilder();
-					out.append(jsonpCallback);
-					out.append("(");
-					out.append(getPatientsList(tokenId).toString());
-					out.append(");");
-					return Response.ok().entity(out.toString()).build();
-				}
-			}
+		// Check callback validity
+		Pattern pattern = Pattern.compile("^[a-z][a-z0-9_]*$", Pattern.CASE_INSENSITIVE);
+		if (jsonpCallback == null || !pattern.matcher(jsonpCallback).matches()) {
+			throw new WebApplicationException(Response.status(Status.BAD_REQUEST)
+					.entity(String.format("Callback function is missing or has incorrect format: %s", jsonpCallback))
+					.build());
 		}
-
-		throw new UnauthorizedException();
+		// Get patients as JSONArray. This also handles token verification, i.e. fails for missing or invalid token
+		JSONArray patientData = this.getPatientsList(tokenId);
+		// Build callback statement
+		StringBuilder out = new StringBuilder();
+		out.append(jsonpCallback);
+		out.append("(");
+		out.append(patientData.toString());
+		out.append(");");
+		return Response.ok().entity(out.toString()).build();
 	}
 
 	/**
