@@ -26,20 +26,55 @@
  */
 package de.pseudonymisierung.mainzelliste.matcher;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import blogspot.software_and_algorithms.stern_library.optimization.HungarianAlgorithm;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.Patient;
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 
 /**
  * Represents a Matcher that is used for record linkage. The calculation of the
  * exchange groups are optimized.
  */
 public class FastEpilinkMatcher extends EpilinkMatcher {
+	
+	/**
+	 * For every exchange group, the applicable field weight for every field
+	 * combinations.
+	 */
+	private List<double[][]> exchGrpFieldWeights;
+	
+    @Override
+	public void initialize(Properties props) throws InternalErrorException {
+		super.initialize(props);
+		// Initialize field weights for every exchange group and field combination
+		this.exchGrpFieldWeights = new LinkedList<double[][]>();
+        for (List<String> exchangeGroup : getExchangeGroups()) {
+            int exchangeGroupSize = exchangeGroup.size();
+        	double fieldWeights [][] = new double[exchangeGroupSize][exchangeGroupSize];
+        	for (int leftIndex = 0; leftIndex < exchangeGroupSize; leftIndex++) {
+        		for (int rightIndex = leftIndex; rightIndex < exchangeGroupSize; rightIndex++) {
+        			if (leftIndex == rightIndex)
+        				// Assigning a field to itself -> keep the field weight
+        				fieldWeights[leftIndex][rightIndex] = getWeights().get(exchangeGroup.get(leftIndex));
+        			else {
+        				// Assigning a field to another: Use mean value of individual weights
+        				fieldWeights[leftIndex][rightIndex] = 0.5 * (getWeights().get(exchangeGroup.get(leftIndex))
+        						+ getWeights().get(exchangeGroup.get(rightIndex)));
+        				fieldWeights[rightIndex][leftIndex] = fieldWeights[leftIndex][rightIndex];
+        			}
+        		}
+        	}
+        	this.exchGrpFieldWeights.add(fieldWeights);
+        }
+	}
 
-    /**
+	/**
      * Returns the similarity of two given patients in interval [0,1]. The used
      * exchange groups are optimized.
      *
@@ -56,6 +91,7 @@ public class FastEpilinkMatcher extends EpilinkMatcher {
         Map<String, Field<?>> leftFields = left.getFields();
         Map<String, Field<?>> rightFields = right.getFields();
         
+        Iterator<double[][]> fieldWeightsIterator = this.exchGrpFieldWeights.iterator();
         for (List<String> exchangeGroup : getExchangeGroups()) {
             int exchangeGroupSize = exchangeGroup.size();
 
@@ -65,24 +101,12 @@ public class FastEpilinkMatcher extends EpilinkMatcher {
 			 * is 0 minus the result of comparing field A of the left hand
 			 * patient with field B of the right hand patient.
 			 */
+            // Get the comparison weights for all field combinations of this exchange group
+            double fieldWeights[][] = fieldWeightsIterator.next();
             // The cost matrix
         	double costMatrix [][] = new double[exchangeGroupSize][exchangeGroupSize];
         	/* The comparison weight for any combination of fields. */
-        	double permWeights [][] = new double[exchangeGroupSize][exchangeGroupSize];
-        	for (int leftIndex = 0; leftIndex < exchangeGroupSize; leftIndex++) {
-        		for (int rightIndex = leftIndex; rightIndex < exchangeGroupSize; rightIndex++) {
-        			if (leftIndex == rightIndex)
-        				// Assigning a field to itself -> keep the field weight
-        				permWeights[leftIndex][rightIndex] = getWeights().get(exchangeGroup.get(leftIndex));
-        			else {
-        				// Assigning a field to another: Use mean value of individual weights
-        				permWeights[leftIndex][rightIndex] = 0.5 * (getWeights().get(exchangeGroup.get(leftIndex))
-        						+ getWeights().get(exchangeGroup.get(rightIndex)));
-        				permWeights[rightIndex][leftIndex] = permWeights[leftIndex][rightIndex];
-        			}
-        		}
-        	}
-        	
+
         	// Build cost matrix
         	for (int leftIndex = 0; leftIndex < exchangeGroupSize; leftIndex++) {
         		for (int rightIndex = 0; rightIndex < exchangeGroupSize; rightIndex++) {
@@ -94,14 +118,14 @@ public class FastEpilinkMatcher extends EpilinkMatcher {
         			double thisAssignmentCost;
         			// Prefer matching fields that are both empty by assigning maximum comparison weight 
         			if (leftField.isEmpty() && rightField.isEmpty())
-        				thisAssignmentCost = permWeights[leftIndex][rightIndex];
+        				thisAssignmentCost = fieldWeights[leftIndex][rightIndex];
         			// Discourage assignments where only one field is empty by assigning zero 
         			else if (leftField.isEmpty() || rightField.isEmpty())
         				thisAssignmentCost = 0;
         			else {        				
         				// Otherwise, assign the weighted comparison
         				thisAssignmentCost = getComparators().get(leftFieldName)
-        						.compare(leftFields.get(leftFieldName), rightFields.get(rightFieldName)) * permWeights[leftIndex][rightIndex];
+        						.compare(leftFields.get(leftFieldName), rightFields.get(rightFieldName)) * fieldWeights[leftIndex][rightIndex];
         			}
         			// use negative comparison value because Hungarian Algorithm minimizes
         			costMatrix[leftIndex][rightIndex] = -thisAssignmentCost;
@@ -116,7 +140,7 @@ public class FastEpilinkMatcher extends EpilinkMatcher {
         		// Do not count fields with empty values
         		if (leftFields.get(exchangeGroup.get(leftIndex)).isEmpty() || rightFields.get(exchangeGroup.get(assignment[leftIndex])).isEmpty())
         			continue;
-        		double thisAssignmentWeight = permWeights[leftIndex][assignment[leftIndex]];
+        		double thisAssignmentWeight = fieldWeights[leftIndex][assignment[leftIndex]];
         		double thisAssignmentComp = -costMatrix[leftIndex][assignment[leftIndex]];
         		
         		totalWeight += thisAssignmentComp;
