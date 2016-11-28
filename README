@@ -39,6 +39,8 @@ included in folder "licences" under the listed file names:
 	  Apache Log4j (http://logging.apache.org/log4j/),
 	  Apache OpenJPA 2.2 (http://openjpa.apache.org/): Apache Licence 2.0, apache-2.0.txt
 	- Serp (http://serp.sourceforge.net/): BSD License, bsd-serp.txt
+	- HSQLDB: hsqlLicense.txt
+	- File HungarianAlgorithm.java: HungarianAlgorithm.txt
 
 Furthermore, the following files incorporate code by other authors:
 	- PIDGenerator.java: Java port of the PID generation code by Klaus Pommerening,
