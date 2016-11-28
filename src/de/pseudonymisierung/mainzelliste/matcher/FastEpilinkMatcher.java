@@ -27,34 +27,17 @@
 package de.pseudonymisierung.mainzelliste.matcher;
 
 import java.util.List;
+import java.util.Map;
 
+import blogspot.software_and_algorithms.stern_library.optimization.HungarianAlgorithm;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.Patient;
-import java.util.AbstractMap;
-import java.util.ArrayList;
 
 /**
  * Represents a Matcher that is used for record linkage. The calculation of the
  * exchange groups are optimized.
  */
 public class FastEpilinkMatcher extends EpilinkMatcher {
-
-    private class SimilarityRelation {
-
-        public String fieldnameA;
-        public Field<?> fieldvalueA;
-        public String fieldnameB;
-        public Field<?> fieldvalueB;
-        public double similarity;
-
-        public SimilarityRelation(String fieldnameA, Field<?> fieldvalueA, String fieldnameB, Field<?> fieldvalueB, double simiarity) {
-            this.fieldnameA = fieldnameA;
-            this.fieldvalueA = fieldvalueA;
-            this.fieldnameB = fieldnameB;
-            this.fieldvalueB = fieldvalueB;
-            this.similarity = simiarity;
-        }
-    }
 
     /**
      * Returns the similarity of two given patients in interval [0,1]. The used
@@ -70,59 +53,78 @@ public class FastEpilinkMatcher extends EpilinkMatcher {
         double weightSum = 0;
         double totalWeight = 0;
 
+        Map<String, Field<?>> leftFields = left.getFields();
+        Map<String, Field<?>> rightFields = right.getFields();
+        
         for (List<String> exchangeGroup : getExchangeGroups()) {
             int exchangeGroupSize = exchangeGroup.size();
 
-            List<AbstractMap.SimpleEntry> unassignedPatientAFields = new ArrayList<AbstractMap.SimpleEntry>();
-            for (int i = 0; i < exchangeGroupSize; ++i) {
-                String fieldname = exchangeGroup.get(i);
-                unassignedPatientAFields.add(new AbstractMap.SimpleEntry(fieldname, right.getFields().get(fieldname)));
-            }
-
-            List<SimilarityRelation> assignedPatientFields = new ArrayList<SimilarityRelation>();
-
-            for (int i = 0; i < exchangeGroupSize; ++i) {
-                String fieldname = exchangeGroup.get(i);
-
-                double bestComp = 0.0;
-                AbstractMap.SimpleEntry ref = unassignedPatientAFields.get(0);
-                int bestField = 0;
-
-                for (int j = 0; j < unassignedPatientAFields.size(); ++j) {
-                    double tmpComp = getComparators().get(exchangeGroup.get(i)).compare(left.getFields().get(fieldname), right.getFields().get((String) unassignedPatientAFields.get(j).getKey()));
-
-                    if (tmpComp > bestComp) {
-                        bestComp = tmpComp;
-                        ref = unassignedPatientAFields.get(j);
-                        bestField = j;
-                    }
-                }
-
-                assignedPatientFields.add(new SimilarityRelation(fieldname, left.getFields().get(fieldname), (String) ref.getKey(), (Field<?>) ref.getValue(), bestComp));
-                unassignedPatientAFields.remove(bestField);
-            }
-
-            for (int i = 0; i < assignedPatientFields.size(); ++i) {
-                SimilarityRelation ref = assignedPatientFields.get(i);
-
-                String patAFieldName = ref.fieldnameA;
-                String patBFieldName = ref.fieldnameB;
-
-                Field<?> fieldA = ref.fieldvalueA;
-                Field<?> fieldB = ref.fieldvalueB;
-
-                if (fieldA.isEmpty() || fieldB.isEmpty()) {
-                    continue;
-                }
-
-                double meanFieldWeight = 0.5 * (getWeights().get(patAFieldName) + getWeights().get(patBFieldName));
-                totalWeight += ref.similarity * meanFieldWeight;
-
-                weightSum += meanFieldWeight;
-            }
+			/*
+			 * Find optimal assignment of fields within exchange group by using
+			 * the Hungarian algorithm. The cost of assigning field A to field B
+			 * is 0 minus the result of comparing field A of the left hand
+			 * patient with field B of the right hand patient.
+			 */
+            // The cost matrix
+        	double costMatrix [][] = new double[exchangeGroupSize][exchangeGroupSize];
+        	/* The comparison weight for any combination of fields. */
+        	double permWeights [][] = new double[exchangeGroupSize][exchangeGroupSize];
+        	for (int leftIndex = 0; leftIndex < exchangeGroupSize; leftIndex++) {
+        		for (int rightIndex = leftIndex; rightIndex < exchangeGroupSize; rightIndex++) {
+        			if (leftIndex == rightIndex)
+        				// Assigning a field to itself -> keep the field weight
+        				permWeights[leftIndex][rightIndex] = getWeights().get(exchangeGroup.get(leftIndex));
+        			else {
+        				// Assigning a field to another: Use mean value of individual weights
+        				permWeights[leftIndex][rightIndex] = 0.5 * (getWeights().get(exchangeGroup.get(leftIndex))
+        						+ getWeights().get(exchangeGroup.get(rightIndex)));
+        				permWeights[rightIndex][leftIndex] = permWeights[leftIndex][rightIndex];
+        			}
+        		}
+        	}
+        	
+        	// Build cost matrix
+        	for (int leftIndex = 0; leftIndex < exchangeGroupSize; leftIndex++) {
+        		for (int rightIndex = 0; rightIndex < exchangeGroupSize; rightIndex++) {
+        			String leftFieldName = exchangeGroup.get(leftIndex);
+        			String rightFieldName = exchangeGroup.get(rightIndex);
+        			Field<?> leftField = leftFields.get(leftFieldName);
+        			Field<?> rightField = rightFields.get(rightFieldName);
+        			
+        			double thisAssignmentCost;
+        			// Prefer matching fields that are both empty by assigning maximum comparison weight 
+        			if (leftField.isEmpty() && rightField.isEmpty())
+        				thisAssignmentCost = permWeights[leftIndex][rightIndex];
+        			// Discourage assignments where only one field is empty by assigning zero 
+        			else if (leftField.isEmpty() || rightField.isEmpty())
+        				thisAssignmentCost = 0;
+        			else {        				
+        				// Otherwise, assign the weighted comparison
+        				thisAssignmentCost = getComparators().get(leftFieldName)
+        						.compare(leftFields.get(leftFieldName), rightFields.get(rightFieldName)) * permWeights[leftIndex][rightIndex];
+        			}
+        			// use negative comparison value because Hungarian Algorithm minimizes
+        			costMatrix[leftIndex][rightIndex] = -thisAssignmentCost;
+        		}
+        	}
+        	
+        	// Execute Hungarian algorithm
+        	HungarianAlgorithm hungAlg = new HungarianAlgorithm(costMatrix);
+        	int assignment[] = hungAlg.execute();
+        	
+        	for (int leftIndex = 0; leftIndex < exchangeGroupSize; leftIndex++) {
+        		// Do not count fields with empty values
+        		if (leftFields.get(exchangeGroup.get(leftIndex)).isEmpty() || rightFields.get(exchangeGroup.get(assignment[leftIndex])).isEmpty())
+        			continue;
+        		double thisAssignmentWeight = permWeights[leftIndex][assignment[leftIndex]];
+        		double thisAssignmentComp = -costMatrix[leftIndex][assignment[leftIndex]];
+        		
+        		totalWeight += thisAssignmentComp;
+        		weightSum += thisAssignmentWeight;        
+        	}
         }
 
-        // Uebernommen aus EpilinkMatcher
+        // Adopted from EpilinkMatcher
         for (String fieldName : getNonExchangeFields()) {
             // Ignore empty fields
             if (left.getFields().get(fieldName).isEmpty() || right.getFields().get(fieldName).isEmpty()) {
