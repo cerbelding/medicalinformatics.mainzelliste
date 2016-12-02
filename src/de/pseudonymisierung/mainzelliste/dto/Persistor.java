@@ -46,6 +46,7 @@ import org.apache.log4j.Logger;
 
 
 import de.pseudonymisierung.mainzelliste.Config;
+import de.pseudonymisierung.mainzelliste.Initializer;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGeneratorMemory;
 import de.pseudonymisierung.mainzelliste.IDRequest;
@@ -112,8 +113,14 @@ public enum Persistor {
 		Logger.getLogger(Persistor.class).info("Persistence has initialized successfully.");
 	}
 
-	public void shutdown(ServletContext context) {
-		ClassLoader contextClassLoader = context.getClassLoader();
+	/**
+	 * Shuts down the persistor. This function searches for jdbc drivers loaded by this servlet context and releases
+	 * them explicitly. The DriverManager holds references to its jdbc drivers so the classes of the driver will never
+	 * be unloaded even when the web application which loaded the driver is gone. This will lead to memory leaks on
+	 * context shutdowns and reloads.
+	 */
+	public void shutdown() {
+		ClassLoader contextClassLoader = Initializer.getServletContext().getClassLoader();
 		Enumeration<Driver> drivers = DriverManager.getDrivers();
 		while (drivers.hasMoreElements()) {
 			Driver driver = drivers.nextElement();
@@ -134,6 +141,13 @@ public enum Persistor {
 		}
 	}
 
+	/**
+	 * Check if the driver was loaded by the web app classloader or by one of its children.
+	 *
+	 * @param driver The jdbc driver to test
+	 * @param contextClassLoader The web applications classloader
+	 * @return Returns true if the driver was loaded by the web app classloader or by one of its children
+	 */
 	private boolean checkClassLoader(Driver driver, ClassLoader contextClassLoader) {
 		ClassLoader cl = driver.getClass().getClassLoader();
 		while (cl != null) {
@@ -144,6 +158,11 @@ public enum Persistor {
 		return false;
 	}
 
+	/**
+	 * Special handling when shutting down the mysql jdbc driver. The mysql driver starts a thread that will not exit
+	 * automatically when the driver gets unloaded. Stop that thread explicitly. Using reflections will not cause any
+	 * errors when mysql is not used and the driver is not within the classpath.
+	 */
 	private void handleMySQLShutdown() {
 		try {
 			Class<?> threadClass = Class.forName("com.mysql.jdbc.AbandonedConnectionCleanupThread");

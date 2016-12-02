@@ -90,6 +90,7 @@ public enum Servers {
 	/** The regular time interval after which to check for timed out sessions */
 	private final long sessionCleanupInterval = 60000;
 
+	/** The session cleanup timer. */
 	private final Timer sessionsCleanupTimer;
 
 	/** The loggging instance. */
@@ -159,11 +160,15 @@ public enum Servers {
 				Servers.this.cleanUpSessions();
 			}
 		};
+		// remember the timer instance to be able to shut it down
 		sessionsCleanupTimer = new Timer();
-		sessionsCleanupTimer.schedule(sessionsCleanupThread, new Date(),
-				sessionCleanupInterval);
+		sessionsCleanupTimer.schedule(sessionsCleanupThread, new Date(), sessionCleanupInterval);
 	}
 
+	/**
+	 * Shuts down the session cleanup timer. The session cleanup timer is a thread that must be stopped explicitly on
+	 * context shutdown. Otherwise it will runn forever, preventing the web app classloader to be garbage collected.
+	 */
 	public void shutdown() {
 		// shut down session cleanup timer
 		logger.info("Stopping sessions cleanup timer");
