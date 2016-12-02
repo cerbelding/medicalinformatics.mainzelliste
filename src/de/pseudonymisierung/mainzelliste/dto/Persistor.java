@@ -46,11 +46,17 @@ import org.apache.log4j.Logger;
 
 
 import de.pseudonymisierung.mainzelliste.Config;
+import de.pseudonymisierung.mainzelliste.Initializer;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGeneratorMemory;
 import de.pseudonymisierung.mainzelliste.IDRequest;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.sql.Driver;
+import java.util.Enumeration;
+import javax.servlet.ServletContext;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -106,7 +112,72 @@ public enum Persistor {
 		
 		Logger.getLogger(Persistor.class).info("Persistence has initialized successfully.");
 	}
-	
+
+	/**
+	 * Shut down instance. This method is called upon undeployment and releases
+	 * resources, such as stopping background threads or removing objects that
+	 * would otherwise persist and cause a memory leak. Called by
+	 * {@link de.pseudonymisierung.mainzelliste.webservice.ContextShutdownHook}.
+	 */
+	public void shutdown() {
+		ClassLoader contextClassLoader = Initializer.getServletContext().getClassLoader();
+		Enumeration<Driver> drivers = DriverManager.getDrivers();
+		while (drivers.hasMoreElements()) {
+			Driver driver = drivers.nextElement();
+			Class<?> driverClass = driver.getClass();
+
+			if (checkClassLoader(driver, contextClassLoader)) {
+				if (driverClass.getName().equals("com.mysql.jdbc.Driver")) {
+					// special mysql handling
+					handleMySQLShutdown();
+				}
+				try {
+					logger.info("Deregistering JDBC driver " + driver);
+					DriverManager.deregisterDriver(driver);
+				} catch (SQLException ex) {
+					logger.debug("An error occured during deregistering JDBC driver " + driver, ex);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Check if the driver was loaded by the web app classloader or by one of its children.
+	 *
+	 * @param driver The jdbc driver to test
+	 * @param contextClassLoader The web applications classloader
+	 * @return Returns true if the driver was loaded by the web app classloader or by one of its children
+	 */
+	private boolean checkClassLoader(Driver driver, ClassLoader contextClassLoader) {
+		ClassLoader cl = driver.getClass().getClassLoader();
+		while (cl != null) {
+			if (cl == contextClassLoader)
+				return true; // the driver was loaded by the context class loader or by one of its successor
+			cl = cl.getParent();
+		}
+		return false;
+	}
+
+	/**
+	 * Special handling when shutting down the mysql jdbc driver. The mysql driver starts a thread that will not exit
+	 * automatically when the driver gets unloaded. Stop that thread explicitly. Using reflections will not cause any
+	 * errors when mysql is not used and the driver is not within the classpath.
+	 */
+	private void handleMySQLShutdown() {
+		try {
+			Class<?> threadClass = Class.forName("com.mysql.jdbc.AbandonedConnectionCleanupThread");
+			logger.info("Calling MySQL AbandonedConnectionCleanupThread shutdown");
+			Method shutdownMethod = threadClass.getMethod("shutdown");
+			shutdownMethod.invoke(null);
+		} catch (ClassNotFoundException ex) {
+		} catch (NoSuchMethodException ex) {
+		} catch (SecurityException ex) {
+		} catch (IllegalAccessException ex) {
+		} catch (IllegalArgumentException ex) {
+		} catch (InvocationTargetException ex) {
+		}
+	}
+
 	/**
 	 * Get a patient by one of its IDs.
 	 * 
