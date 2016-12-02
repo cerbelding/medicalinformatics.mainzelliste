@@ -106,7 +106,7 @@ public enum IDGeneratorFactory {
 				}
 				// Get properties for this ID generator from Preferences
 				Properties thisIdProps = new Properties();
-				for (Object key : propIt.keys()) {
+				for (Object key : propIt.keyIterator()) {
 					if (key instanceof String) {
 						thisIdProps.put(key, propIt.getProperty((String)key, ""));
 					}
