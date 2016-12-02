@@ -149,11 +149,16 @@ public class Initializer implements ServletContextListener {
 	 * automatically leading to memory leaks on context shutdowns.
 	 */
 	private void shutdown() {
+		Logger logger = Logger.getLogger(Initializer.class);
+		logger.info("#####Shutting down...");
+
 		// sut down persistor
 		Persistor.instance.shutdown();
 
 		// shut down server manager
 		Servers.instance.shutdown();
+
+		logger.info("#####Shut down complete.");
 	}
 
 	/**
