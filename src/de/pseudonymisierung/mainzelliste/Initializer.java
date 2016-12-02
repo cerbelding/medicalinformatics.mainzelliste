@@ -45,7 +45,9 @@ import de.pseudonymisierung.mainzelliste.dto.Persistor;
  * Context listener.
  * This class is responsible for setting up all singletons in the right order
  * and to fail early if anything goes wrong.
- * It also shuts down all resources.
+ * It is also responsible for calling various shutdown methods on context
+ * shutdown, to stop background threads and remove objects in order to prevent
+ * memory leaks etc.
  */
 public class Initializer implements ServletContextListener {
 

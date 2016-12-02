@@ -166,8 +166,10 @@ public enum Servers {
 	}
 
 	/**
-	 * Shuts down the session cleanup timer. The session cleanup timer is a thread that must be stopped explicitly on
-	 * context shutdown. Otherwise it will runn forever, preventing the web app classloader to be garbage collected.
+	 * Shut down instance. This method is called upon undeployment and releases
+	 * resources, such as stopping background threads or removing objects that
+	 * would otherwise persist and cause a memory leak. Called by
+	 * {@link de.pseudonymisierung.mainzelliste.webservice.ContextShutdownHook}.
 	 */
 	public void shutdown() {
 		// shut down session cleanup timer

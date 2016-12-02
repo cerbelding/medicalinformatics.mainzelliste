@@ -114,10 +114,10 @@ public enum Persistor {
 	}
 
 	/**
-	 * Shuts down the persistor. This function searches for jdbc drivers loaded by this servlet context and releases
-	 * them explicitly. The DriverManager holds references to its jdbc drivers so the classes of the driver will never
-	 * be unloaded even when the web application which loaded the driver is gone. This will lead to memory leaks on
-	 * context shutdowns and reloads.
+	 * Shut down instance. This method is called upon undeployment and releases
+	 * resources, such as stopping background threads or removing objects that
+	 * would otherwise persist and cause a memory leak. Called by
+	 * {@link de.pseudonymisierung.mainzelliste.webservice.ContextShutdownHook}.
 	 */
 	public void shutdown() {
 		ClassLoader contextClassLoader = Initializer.getServletContext().getClassLoader();

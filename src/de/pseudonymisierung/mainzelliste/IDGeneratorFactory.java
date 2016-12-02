@@ -104,7 +104,7 @@ public enum IDGeneratorFactory {
 					 */
 					mem = Persistor.instance.getIDGeneratorMemory(thisIdType);
 				}
-				// Get properties for this ID generator from Preferences
+				// Get properties for this ID generator
 				Properties thisIdProps = new Properties();
 				for (Object key : propIt.keyIterator()) {
 					if (key instanceof String) {
