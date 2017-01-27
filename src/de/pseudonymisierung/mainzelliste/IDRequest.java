@@ -82,7 +82,7 @@ public class IDRequest {
 			CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.EAGER)
 	private Patient assignedPatient;
 
-	/** Date and time of this reqest. */
+	/** Date and time of this request. */
 	private Date timestamp;
 
 	/**
