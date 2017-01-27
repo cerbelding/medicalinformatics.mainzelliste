@@ -356,6 +356,13 @@ public enum Config {
 		Reader reader = new InputStreamReader(configInputStream, "UTF-8");
 		Properties props = new Properties();
 		props.load(reader);
+		// trim property values
+		for (String key : props.stringPropertyNames()) {
+			String value = props.getProperty(key);
+			if (!value.equals(value.trim())) {
+				props.setProperty(key, value.trim());
+		}
+		}
 		configInputStream.close();
 		return props;
 	}

@@ -11,6 +11,9 @@
 # Property names may contain letters, numbers, underscores and dots. Dots define a hierarchical
 # structure on the property names.
 
+# Leading and trailing whitespaces in property values are not allowed and will be removed
+# after loading.
+
 # For a comprehensive documentation of configuration parameters see the configuration manual 
 # ("Konfigurationshandbuch").
 
