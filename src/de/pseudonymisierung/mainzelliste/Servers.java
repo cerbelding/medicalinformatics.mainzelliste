@@ -90,6 +90,9 @@ public enum Servers {
 	/** The regular time interval after which to check for timed out sessions */
 	private final long sessionCleanupInterval = 60000;
 
+	/** The session cleanup timer. */
+	private final Timer sessionsCleanupTimer;
+
 	/** The loggging instance. */
 	Logger logger = Logger.getLogger(Servers.class);
 
@@ -157,8 +160,21 @@ public enum Servers {
 				Servers.this.cleanUpSessions();
 			}
 		};
-		new Timer().schedule(sessionsCleanupThread, new Date(),
-				sessionCleanupInterval);
+		// remember the timer instance to be able to shut it down
+		sessionsCleanupTimer = new Timer();
+		sessionsCleanupTimer.schedule(sessionsCleanupThread, new Date(), sessionCleanupInterval);
+	}
+
+	/**
+	 * Shut down instance. This method is called upon undeployment and releases
+	 * resources, such as stopping background threads or removing objects that
+	 * would otherwise persist and cause a memory leak. Called by
+	 * {@link de.pseudonymisierung.mainzelliste.webservice.ContextShutdownHook}.
+	 */
+	public void shutdown() {
+		// shut down session cleanup timer
+		logger.info("Stopping sessions cleanup timer");
+		sessionsCleanupTimer.cancel();
 	}
 
 	/**

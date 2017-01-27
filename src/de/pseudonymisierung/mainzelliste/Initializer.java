@@ -42,8 +42,12 @@ import com.sun.jersey.spi.container.servlet.WebComponent;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
 /**
+ * Context listener.
  * This class is responsible for setting up all singletons in the right order
  * and to fail early if anything goes wrong.
+ * It is also responsible for calling various shutdown methods on context
+ * shutdown, to stop background threads and remove objects in order to prevent
+ * memory leaks etc.
  */
 public class Initializer implements ServletContextListener {
 
@@ -58,7 +62,7 @@ public class Initializer implements ServletContextListener {
 
 	@Override
 	public void contextDestroyed(ServletContextEvent sce) {
-		// nothing to do here.
+		shutdown();
 	}
 
 	/**
@@ -139,6 +143,24 @@ public class Initializer implements ServletContextListener {
 			}
 		}
 		root.info("#####BEGIN Mainzelliste LOG SESSION");
+	}
+
+	/**
+	 * Shutdown method. Gets called when this web application is about to shutdown. It calls the showdown methods of the
+	 * Persistor- and the Server-class. This is mainly used to release resources that would not be released
+	 * automatically leading to memory leaks on context shutdowns.
+	 */
+	private void shutdown() {
+		Logger logger = Logger.getLogger(Initializer.class);
+		logger.info("#####Shutting down...");
+
+		// sut down persistor
+		Persistor.instance.shutdown();
+
+		// shut down server manager
+		Servers.instance.shutdown();
+
+		logger.info("#####Shut down complete.");
 	}
 
 	/**

@@ -269,6 +269,17 @@ callback.allowSelfsigned = false
 # Operator information of the Mainzelliste operator to display around user forms
 # (defaults to empty/invisible):
 # - Contact: Text to be displayed below all forms
-# - Logo: Path to image to be displayed in the upper right corner
+# - Logo: Path to image to be displayed in the upper right corner. This can either be an absolute path
+#         in the file system, a path within the .war file or a path relative to META-INF/resource
+#         within a .jar file on the class path (e.g. a dependency).
+
 # operator.contact = 
+
+# Logo file: example for absolute path
 # operator.logo = /etc/mainzelliste/logo.png
+
+# Logo file: example for relative path in .war file
+# operator.logo = /WEB-INF/classes/logo.png
+
+# Logo file: example for file in META-INF/resources within a .jar file on the classpath 
+# operator.logo = /logo.png
