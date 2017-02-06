@@ -42,6 +42,33 @@ We have compiled this list from the results of public search engines. If you use
 
 ## Release notes
 
+###1.6.0
+
+This release further enhances the mechanism to choose the UI language and includes some important fixes, notably the contribution of changes to prevent memory leaks contributed by Daniel Volk. Again, upgrading is possible from all previous releases by replacing the binary.   
+
+#### New features:
+
+- The language of the user forms can be set in the configuration file (e.g. `language = en`). This setting overrides all other means of setting the language.
+- The default language is now always English (it used to be the server's system language).
+- If the language is induced from the `Accept-Language` header, all languages listed therein are tried, respecting the preference order. Previously, if for example Albanian (or any other language for which no localization file is included) and German were listed in the header in this order, Mainzelliste did not consider the second choice (German) but used the server language.
+- When a cross origin (CORS) request issues an origin domain not listed as acceptable source, Mainzelliste now cancels the request. Previously, it processed the request nevertheless and relied on the web browser blocking the response. 
+- Trailing whitespace is now trimmed from configuration parameters, as this was a common source of errors.
+- When printing the result of an ID request, the page order is omitted for a better print layout.
+- The logo can now also be read from a relative path within the .war file or from the directory `META-INF/resources` within a .jar file on the class path (contributed by Daniel Volk, see pull request #32).
+  
+
+#### Bug fixes:
+
+- When a text field was set to `null` via a PUT request in JSON format, the string `"null"` was saved in the database and returned upon reading the field. To fix this, `null` values are now converted to empty strings.
+- Setting an empty value for field of type `IntegerField` failed with an exception.
+- Fixed memory leaks caused by the Java preferences system and improper shutdown of resources (contributed by Daniel Volk, see pull request #36).
+- Fixed logging during token creation and dependency errors in some IDEs (contributed by Daniel Volk, see pull request
+  #34).  
+
+#### Other changes:
+
+- Added debug logging about weight generation during record linkage. 
+
 ###1.5.0
 
 This release introduces a couple of new features and bug fixes, the addition of language selection via URL parameter being the only (backward compatible) change to the public API (now version 2.2). We recommend an upgrade to all users, which is possible from any earlier release without any steps necessary other than replacing the binary. The update is fully backwards compatible to all Mainzelliste versions down to 1.0, except for use cases with the requirement that future dates can be entered (these are now rejected by date validation).

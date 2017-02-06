@@ -11,6 +11,9 @@
 # Property names may contain letters, numbers, underscores and dots. Dots define a hierarchical
 # structure on the property names.
 
+# Leading and trailing whitespaces in property values are not allowed and will be removed
+# after loading.
+
 # For a comprehensive documentation of configuration parameters see the configuration manual 
 # ("Konfigurationshandbuch").
 
@@ -220,6 +223,10 @@ result.show = true
 
 # Whether to include Idat in the result page.
 result.printIdat = true
+
+# Set a fixed language for the user interface. Must be a language code for which a
+# MessageBundle exists in the application. Current valid values are "en" and "de"
+# language =
 
 # xDAT servers
 # 

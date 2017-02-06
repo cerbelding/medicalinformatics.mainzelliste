@@ -27,6 +27,8 @@ package de.pseudonymisierung.mainzelliste;
 
 import javax.persistence.Entity;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * A Field consisting of an Integer.
  */
@@ -34,7 +36,7 @@ import javax.persistence.Entity;
 public class IntegerField extends Field<Integer> {
 
 	/** The value of this field. */
-	private int value;
+	private Integer value;
 
 	/**
 	 * Creates an instance with the given value.
@@ -53,7 +55,7 @@ public class IntegerField extends Field<Integer> {
 	 *            A String that can be parsed to an Integer.
 	 */
 	public IntegerField(String value) {
-		this.value = Integer.parseInt(value.trim());
+		this.setValue(value);
 	}
 
 	@Override
@@ -68,7 +70,10 @@ public class IntegerField extends Field<Integer> {
 
 	@Override
 	public void setValue(String s) {
-		this.value = Integer.parseInt(s);
+	    if (StringUtils.isEmpty(s))
+	        this.value = null;
+	    else
+	        this.value = Integer.parseInt(s);
 	}
 
 	@Override
@@ -79,5 +84,13 @@ public class IntegerField extends Field<Integer> {
 	@Override
 	public IntegerField clone() {
 		return new IntegerField(this.value);
+	}
+	
+	@Override
+	public String toString() {
+	    if (value == null)
+	        return "";
+	    else
+	        return String.format("%02d", value);
 	}
 }

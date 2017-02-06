@@ -356,6 +356,13 @@ public enum Config {
 		Reader reader = new InputStreamReader(configInputStream, "UTF-8");
 		Properties props = new Properties();
 		props.load(reader);
+		// trim property values
+		for (String key : props.stringPropertyNames()) {
+			String value = props.getProperty(key);
+			if (!value.equals(value.trim())) {
+				props.setProperty(key, value.trim());
+		}
+		}
 		configInputStream.close();
 		return props;
 	}
@@ -389,7 +396,13 @@ public enum Config {
 
 		// Build a list of preferred locales
 		LinkedList<Locale> preferredLocales = new LinkedList<Locale>();
-		// First preference: URL parameter "language", if set.
+		// First preference: Fixed language in configuration file
+		String languageConfig = Config.instance.getProperty("language");
+		if (languageConfig != null) {
+			Locale configLocale = new Locale(languageConfig);
+			preferredLocales.add(configLocale);
+		}
+		// Second preference: URL parameter "language", if set.
 		String languageParam = req.getParameter("language");
 		if (languageParam != null) {
 			Locale urlLocale = new Locale(languageParam);

@@ -79,6 +79,11 @@ public class CorsResponseFilter implements Filter {
 					httpResponse.addHeader("Access-Control-Allow-Origin", origin);
 				} else {
 					logger.info("Rejecting cross domain request from origin " + origin);
+					// For illegal origin, cancel request with 403 Forbidden.
+					HttpServletResponse resp = (HttpServletResponse) response;
+					resp.setStatus(403);
+					resp.getWriter().println("Rejecting cross domain request from origin " + origin);
+					return;
 				}
 			}
 		}

@@ -187,7 +187,12 @@ public enum PatientBackend {
 			Validator.instance.validateForm(form, true);
 			
 			for(String s: Config.instance.getFieldKeys()){
-				chars.put(s, Field.build(s, form.getFirst(s)));
+				try {
+				    chars.put(s, Field.build(s, form.getFirst(s)));
+				} catch (WebApplicationException we) {
+				    logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
+				    throw we;
+				}
 			}
 
 			p.setFields(chars);
@@ -197,6 +202,7 @@ public enum PatientBackend {
 			pNormalized.setInputFields(chars);
 			
 			match = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
+			logger.debug("Best matching weight: " + match.getBestMatchedWeight());
 			Patient assignedPatient; // The "real" patient that is assigned (match result or new patient) 
 			
 			// If a list of ID types is given in token, return these types
