@@ -42,6 +42,12 @@ We have compiled this list from the results of public search engines. If you use
 
 ## Release notes
 
+###1.6.1
+
+This is a bugfix release for restoring compatibility with Java 7. Version 1.6.0 does not compile with Java versions <8 due to an unimplemented interface method, which has a default implementation in Java 8.
+
+Fix submitted by Stephan Rusch (Universitätsklinikum Freiburg).
+
 ###1.6.0
 
 This release further enhances the mechanism to choose the UI language and includes some important fixes, notably the contribution of changes to prevent memory leaks contributed by Daniel Volk. Again, upgrading is possible from all previous releases by replacing the binary.   
