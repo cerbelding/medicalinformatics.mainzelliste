@@ -304,6 +304,6 @@ public class PropertyIterator implements Serializable {
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException("Not supported yet."); 
-		}        
+		}
 	}
 }
