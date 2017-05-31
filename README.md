@@ -40,6 +40,11 @@ The Mainzelliste API has been implemented in the following projects and software
 
 We have compiled this list from the results of public search engines. If you use the Mainzelliste or its API, we would be glad to include your project in this list. Please don't hestitate to [contact us](mailto:info@mainzelliste.de).
 
+## Contributing
+
+We would love to include your useful changes to the Mainzelliste code in a future official release. See the related [Wiki page](https://bitbucket.org/medicalinformatics/mainzelliste/wiki/Contributing) for further information on contributing code.
+
+
 ## Release notes
 
 ###1.6.1
