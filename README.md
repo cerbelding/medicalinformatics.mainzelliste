@@ -47,6 +47,10 @@ We would love to include your useful changes to the Mainzelliste code in a futur
 
 ## Release notes
 
+### 1.6.2
+
+Adds `<attachClasses>` configuration parameter to Maven WAR Plugin in order to make classes accessible as a library. 
+
 ###1.6.1
 
 This is a bugfix release for restoring compatibility with Java 7. Version 1.6.0 does not compile with Java versions <8 due to an unimplemented interface method, which has a default implementation in Java 8.
