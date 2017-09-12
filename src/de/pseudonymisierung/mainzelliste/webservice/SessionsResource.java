@@ -44,6 +44,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
+import com.sun.jersey.spi.resource.Singleton;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -59,6 +60,7 @@ import de.pseudonymisierung.mainzelliste.Session;
  * access.
  */
 @Path("/sessions")
+@Singleton
 public class SessionsResource {
 	
 	/** The logging instance. */
@@ -75,7 +77,7 @@ public class SessionsResource {
 	 */
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response newSession(@Context HttpServletRequest req) throws JSONException{
+	public synchronized Response newSession(@Context HttpServletRequest req) throws JSONException{
 		logger.info("Request to create session received by host " + req.getRemoteHost());
 		
 		Servers.instance.checkPermission(req, "createSession");
@@ -147,7 +149,7 @@ public class SessionsResource {
 	 */
 	@Path("/{session}")
 	@DELETE
-	public Response deleteSession(
+	public synchronized Response deleteSession(
 			@PathParam("session") String sid,
 			@Context HttpServletRequest req){
 		// No authentication other than knowing the session id.
@@ -200,7 +202,7 @@ public class SessionsResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response newToken(
+	public synchronized Response newToken(
 			@Context HttpServletRequest req,
 			@Context UriInfo uriInfo,
 			@PathParam("session") SessionIdParam sid,
@@ -295,7 +297,7 @@ public class SessionsResource {
 	 */
 	@Path("/{session}/tokens/{tokenid}")
 	@DELETE
-	public Response deleteToken(@PathParam("session") SessionIdParam session,
+	public synchronized Response deleteToken(@PathParam("session") SessionIdParam session,
 			@PathParam("tokenid") String tokenId) {
 		/*
 		 * Knowing the session and the token id authorizes to delete a token.

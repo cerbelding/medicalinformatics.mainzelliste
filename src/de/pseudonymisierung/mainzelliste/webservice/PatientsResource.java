@@ -58,6 +58,7 @@ import org.codehaus.jettison.json.JSONObject;
 import com.sun.jersey.api.uri.UriComponent;
 import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.api.view.Viewable;
+import com.sun.jersey.spi.resource.Singleton;
 
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
@@ -80,6 +81,7 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
  * Resource-based access to patients.
  */
 @Path("/patients")
+@Singleton
 public class PatientsResource {
 	
 	/** The logging instance. */
@@ -130,7 +132,7 @@ public class PatientsResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces({MediaType.TEXT_HTML, MediaType.WILDCARD})
-	public Response newPatientBrowser(
+	public synchronized Response newPatientBrowser(
 			@QueryParam("tokenId") String tokenId,
 			@QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion,
 			MultivaluedMap<String, String> form,
@@ -248,7 +250,7 @@ public class PatientsResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response newPatientJson(
+	public synchronized Response newPatientJson(
 			@QueryParam("tokenId") String tokenId,
 			@Context HttpServletRequest request,
 			@Context UriInfo context,
@@ -332,7 +334,7 @@ public class PatientsResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getPatientsToken(
 			@PathParam("tid") String tid){
-		logger.info("Reveived request to get patient with token " + tid);
+		logger.info("Received request to get patient with token " + tid);
 		// Check if token exists and has the right type. 
 		// Validity of token is checked upon creation
 		Token t = Servers.instance.getTokenByTid(tid);
@@ -489,7 +491,7 @@ public class PatientsResource {
 	 *            The injected HttpServletRequest.
 	 * @return The token that is as authorization the patient. Used for retreiving the redirect URL afterwards.
 	 */
-	private EditPatientToken editPatient(String tokenId, Map<String, String> newFieldValues, HttpServletRequest request) {
+	private synchronized EditPatientToken editPatient(String tokenId, Map<String, String> newFieldValues, HttpServletRequest request) {
 		
 		Token t = Servers.instance.getTokenByTid(tokenId);
 		EditPatientToken tt;

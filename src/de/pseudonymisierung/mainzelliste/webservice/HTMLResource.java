@@ -46,6 +46,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
+import com.sun.jersey.spi.resource.Singleton;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
@@ -67,6 +68,7 @@ import java.net.URL;
  * are served via this resource.
  */
 @Path("/html")
+@Singleton
 public class HTMLResource {
 
 	/** The logging instance. */
@@ -204,7 +206,7 @@ public class HTMLResource {
 	@Path("/admin/editPatient")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.TEXT_HTML)
-	public Response editPatient(
+	public synchronized Response editPatient(
 			@QueryParam("idType") String idType,
 			@QueryParam("idString") String idString,
 			MultivaluedMap<String, String> form,
