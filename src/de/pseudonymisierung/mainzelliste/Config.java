@@ -482,6 +482,10 @@ public enum Config {
 			Properties props = new Properties();
 			InputStream versionInputStream = Initializer.getServletContext().getResourceAsStream("/WEB-INF/classes/version.properties");
 			if (versionInputStream == null) {
+				// Try alternate way of reading file (necessary for running test via the Jersey Test Framework) 
+				versionInputStream = this.getClass().getResourceAsStream("/version.properties");
+			}
+			if (versionInputStream == null) {
 				throw new Error("File version.properties not found!");
 			}
 			props.load(versionInputStream);

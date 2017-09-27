@@ -98,7 +98,14 @@ public enum Persistor {
 		// Other settings
 		persistenceOptions.put("openjpa.jdbc.SynchronizeMappings", "buildSchema");
 		persistenceOptions.put("openjpa.jdbc.DriverDataSource", "dbcp");
-		persistenceOptions.put("openjpa.ConnectionProperties", "testOnBorrow=true, validationQuery=SELECT 1");
+		
+		// For Apache Derby (used in automated tests) an alternate validation query is necessary
+		String validationQuery;
+		if (Config.instance.getProperty("db.driver").equals("org.apache.derby.jdbc.EmbeddedDriver"))
+			validationQuery = "VALUES 1";
+		else
+			validationQuery = "SELECT 1";
+		persistenceOptions.put("openjpa.ConnectionProperties", "testOnBorrow=true, validationQuery=" + validationQuery);
 		
 		emf = Persistence.createEntityManagerFactory("mainzelliste", persistenceOptions);
 		em = emf.createEntityManager();
