@@ -248,6 +248,22 @@ public class Patient {
 	}
 
 	/**
+	 * Add ID if this ID type is not already in ids.
+	 *
+	 * @param ID
+	 *            The ID to add.
+	 * @return true if the id was added successfully, otherwise false (if ID of this type already exists).
+	 */
+	public boolean addId(ID id) {
+		for (ID thisId : ids) {
+			if (thisId.getType().equals(id.getType()))
+				return false;
+		}
+		ids.add(id);
+		return true;
+	}
+
+	/**
 	 * Get the set of IDs of this patient.
 	 * 
 	 * @return The IDs of the patient as unmodifiable set. While the set itself

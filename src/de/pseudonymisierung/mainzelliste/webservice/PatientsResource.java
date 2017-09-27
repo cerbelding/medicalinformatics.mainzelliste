@@ -516,12 +516,28 @@ public class PatientsResource {
 						.build());
 			}
 
-			// Check that the caller is allowed to change the provided fields
-			if (tt.getFields() != null) {
+			// Form fields (union of fields and ids)
+			Set<String> allowedFormFields = tt.getFields();
+			if(tt.getIds() != null) {
+				if (allowedFormFields != null) {
+					allowedFormFields.addAll(tt.getIds());
+				} else {
+					allowedFormFields = tt.getIds();
+				}
+			}
+
+			// Check that the caller is allowed to change the provided fields or ids
+			if(allowedFormFields != null) {
 				for (String fieldName : newFieldValues.keySet()) {
-					if (!tt.getFields().contains(fieldName))
-						throw new InvalidFieldException("No authorization to edit field " + fieldName +
+					if (!allowedFormFields.contains(fieldName)) {
+                        if (IDGeneratorFactory.instance.getExternalIdTypes().contains(fieldName)) {
+                            throw new UnauthorizedException("No authorization to edit external id " + fieldName +
 								" with this token.");
+                        } else {
+                            throw new UnauthorizedException("No authorization to edit field " + fieldName +
+								" with this token.");
+                        }
+					}
 				}
 			}
 			

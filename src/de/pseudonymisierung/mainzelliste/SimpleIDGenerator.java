@@ -80,17 +80,21 @@ public class SimpleIDGenerator implements IDGenerator<IntegerID> {
 	}
 
 	@Override
-	public String correct(String PIDString) {
+	public String correct(String IDString) {
 		try {
-			Integer.parseInt(PIDString);
+			Integer.parseInt(IDString);
 		} catch (NumberFormatException e) {
 			return null;
 		}
-		return PIDString;
+		return IDString;
 	}
 
 	@Override
 	public String getIdType() {
 		return idType;
 	}
+
+	@Override
+	public boolean isExternal() { return false; }
+
 }

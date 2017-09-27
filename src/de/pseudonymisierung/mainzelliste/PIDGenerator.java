@@ -759,4 +759,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	public String getIdType() {
 		return idType;
 	}
+
+	@Override
+	public boolean isExternal() { return false; }
 }

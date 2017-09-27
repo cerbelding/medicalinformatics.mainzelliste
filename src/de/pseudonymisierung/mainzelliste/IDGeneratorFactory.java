@@ -57,6 +57,8 @@ public enum IDGeneratorFactory {
 	 */
 	private String[] idTypes;
 
+	private HashSet<String> extIdTypes;
+
 	/** The logging instance */
 	private Logger logger = Logger.getLogger(this.getClass());
 
@@ -123,6 +125,13 @@ public enum IDGeneratorFactory {
 		}
 		generators = Collections.unmodifiableMap(temp);
 
+		// Find the set of external id types
+		extIdTypes = new HashSet<String>();
+		for (String idType : this.generators.keySet()) {
+			if (this.generators.get(idType).isExternal())
+				extIdTypes.add(idType);
+		}
+
 		logger.info("ID generators have initialized successfully.");
 	}
 
@@ -141,15 +150,26 @@ public enum IDGeneratorFactory {
 	/**
 	 * Generates a set of IDs for a new patient by calling every ID generator
 	 * defined in the configuration.
+	 * For external IDs no values are generated
 	 * 
 	 * @return The set of generated IDs.
 	 */
 	public Set<ID> generateIds() {
 		HashSet<ID> ids = new HashSet<ID>();
 		for (String idType : this.generators.keySet()) {
+			if (!this.generators.get(idType).isExternal())
 			ids.add(this.generators.get(idType).getNext());
 		}
 		return ids;
+	}
+
+	/**
+	 * Get set of external id types
+	 *
+	 * @return The set of external id types.
+	 */
+	public Set<String> getExternalIdTypes() {
+		return this.extIdTypes;
 	}
 
 	/**
@@ -207,6 +227,7 @@ public enum IDGeneratorFactory {
 		if (this.getFactory(idType) == null)
 			throw new InvalidIDException(String.format(
 					"No ID type %s defined!", idType));
+		
 		return this.getFactory(idType).buildId(idString);
 	}
 }

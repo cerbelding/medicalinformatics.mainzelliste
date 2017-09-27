@@ -27,6 +27,8 @@ package de.pseudonymisierung.mainzelliste.webservice;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -156,6 +158,19 @@ public class HTMLResource {
 							idType, idString))
 					.build());
 
+		List<Patient> duplicates = Persistor.instance.getDuplicates(patId);
+		LinkedList<String> duplicateIds = new LinkedList<String>();
+		for (Patient thisPatient : duplicates) {
+			duplicateIds.add(thisPatient.getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
+		}
+
+		List<Patient> possibleDuplicates = Persistor.instance.getPossibleDuplicates(patId);
+		LinkedList<String> possibleDupIds = new LinkedList<String>();
+		for (Patient thisPatient : possibleDuplicates) {
+			possibleDupIds.add(thisPatient.getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
+		}
+		
+		
 		Map <String, Object> map = new HashMap<String, Object>();
 		map.putAll(p.getInputFields());
 		map.put("id", patId.getIdString());
@@ -163,6 +178,9 @@ public class HTMLResource {
 		map.put("tentative", p.getId("pid").isTentative());
 		if (p.getOriginal() != p)
 			map.put("original", p.getOriginal());
+
+		map.put("duplicates", duplicateIds);
+		map.put("possibleDuplicates", possibleDupIds);
 
 		return Response.ok(new Viewable("/editPatientAdmin.jsp", map)).build();
 	}
