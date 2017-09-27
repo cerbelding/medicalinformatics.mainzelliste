@@ -52,6 +52,8 @@ import de.pseudonymisierung.mainzelliste.IDGeneratorMemory;
 import de.pseudonymisierung.mainzelliste.IDRequest;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
+import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Driver;
@@ -373,6 +375,81 @@ public enum Persistor {
 		if (p != null)
 			em.remove(p);
 		em.getTransaction().commit();
+	}
+	
+	/** Get patient with duplicates. Works like
+	 * {@link Persistor#getDuplicates(ID)}, but the requested patient is
+	 * included in the result.
+	 * 
+	 * @param id
+	 *            An ID of the patient to get.
+	 * @return A list containing the requested patient and its duplicates.
+	 * @throws InvalidIDException
+	 *             If no patient with the given ID exists. */
+	public synchronized List<Patient> getPatientWithDuplicates(ID id) throws InvalidIDException {
+		List<Patient> duplicates = getDuplicates(id);
+		Patient p = getPatient(id);
+		duplicates.add(p);
+		return duplicates;
+	}
+	
+	/** Get duplicates of a patient.
+	 * 
+	 * Returns a list of all patients that are marked as duplicates of the given
+	 * patient or of which the given patient is a duplicate. This includes
+	 * transitive relations (duplicate of duplicate), but not the patient which
+	 * is queried.
+	 * 
+	 * @param id
+	 *            An ID of the patient for which to get duplicates.
+	 * @return A list containing the duplicates of the requested patients (empty
+	 *         if none exist).
+	 * @throws InvalidIDException
+	 *             If no patient with the given ID exists. */
+	public synchronized List<Patient> getDuplicates(ID id) throws InvalidIDException {
+		Patient p = getPatient(id);
+		if (p == null)
+			throw new InvalidIDException("No patient found with ID " + id.getIdString() + " of type " + id.getType());
+		Patient root = p.getOriginal();
+		LinkedList<Patient> allInstances = new LinkedList<Patient>();
+		LinkedList<Patient> queue = new LinkedList<Patient>();
+		queue.add(root);
+		TypedQuery<Patient> duplicateQuery = em
+				.createQuery("SELECT p FROM Patient p JOIN p.original o WHERE o=:original", Patient.class);
+		while (!queue.isEmpty()) {
+			Patient thisPatient = queue.remove();
+			if (!thisPatient.equals(p)) {
+				allInstances.add(thisPatient);
+			}
+			duplicateQuery.setParameter("original", thisPatient);
+			queue.addAll(duplicateQuery.getResultList());			
+		}
+		
+		return allInstances;
+	}
+	
+	/**
+	 * Get possible duplicates of a patient. 
+	 * @param id ID of the patient for which to find possible duplicates.
+	 * @return The list of possible duplicates.
+	 */
+	public List<Patient> getPossibleDuplicates(ID id) {
+		Patient p = getPatient(id);
+		if (p == null)
+			return new LinkedList<Patient>();
+		TypedQuery<Patient> q = em.createQuery("SELECT pa FROM IDRequest r JOIN r.assignedPatient pa JOIN r.matchResult m JOIN m.bestMatchedPatient pb "
+				+ "WHERE m.type=:matchResultType AND pa.isTentative=true AND pb=:thisPatient", Patient.class);
+		q.setParameter("matchResultType", MatchResultType.POSSIBLE_MATCH);
+		q.setParameter("thisPatient", p);
+		LinkedList<Patient> result = new LinkedList<Patient>(q.getResultList());
+		if (p.isTentative()) {
+			q = em.createQuery("SELECT pb FROM IDRequest r JOIN r.assignedPatient pa JOIN r.matchResult m JOIN m.bestMatchedPatient pb "
+					+ "WHERE m.type=:matchResultType AND pa.isTentative=true AND pa=:thisPatient", Patient.class);
+			q.setParameter("matchResultType", MatchResultType.POSSIBLE_MATCH);
+			q.setParameter("thisPatient", p);
+			result.addAll(q.getResultList());
+		}
+		return result;
 	}
 	
 	/**

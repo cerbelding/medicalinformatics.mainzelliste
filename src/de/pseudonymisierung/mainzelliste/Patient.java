@@ -455,4 +455,22 @@ public class Patient {
 	public String toString() {
 		return fields.toString();
 	}
+	
+	/** 
+	 * Determine if another patient object is equal to this. Two patient
+	 * objects p1 and p2 are considered equal if they are equal by reference
+	 * (p1==p2) or if they refer to the same object in the database. 
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if (o == null)
+			return false;
+		if (o == this)
+			return true;
+		if (o instanceof Patient && this.getPatientJpaId() == ((Patient) o).getPatientJpaId())
+			return true;
+
+		// Default case
+		return false;
+	}
 }
