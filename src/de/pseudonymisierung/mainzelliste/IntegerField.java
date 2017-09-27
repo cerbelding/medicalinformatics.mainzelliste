@@ -52,7 +52,7 @@ public class IntegerField extends Field<Integer> {
 	 * Creates an instance from a String.
 	 * 
 	 * @param value
-	 *            A String	 that can be parsed to an Integer.
+	 *            A String that can be parsed to an Integer.
 	 */
 	public IntegerField(String value) {
 		this.setValue(value);
@@ -73,7 +73,7 @@ public class IntegerField extends Field<Integer> {
 	    if (StringUtils.isEmpty(s))
 	        this.value = null;
 	    else
-		this.value = Integer.parseInt(s);
+	        this.value = Integer.parseInt(s);
 	}
 
 	@Override
