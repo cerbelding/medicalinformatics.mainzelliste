@@ -6,6 +6,10 @@
 /.project
 /.settings/
 
+# Ignore IntelliJ project files
+.idea
+*.iml
+
 # Ignore Mainzelliste context descriptor and configuration files, as these
 # contain user-defined or even confidential content.
 /WebContent/META-INF/context.xml
