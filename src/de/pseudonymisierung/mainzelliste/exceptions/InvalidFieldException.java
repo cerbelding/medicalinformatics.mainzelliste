@@ -55,6 +55,18 @@ public class InvalidFieldException extends WebApplicationException {
         super(Response.status(Status.BAD_REQUEST).entity(message).build());
 	}
 	
+	/**
+	 * Create an instance with the given error message and HTTP status code.
+	 *
+	 * @param message
+	 *            The error message.
+	 * @param statusCode
+	 *            The HTTP status code to return.
+	 */
+	public InvalidFieldException(String message, Status statusCode) {
+		super(Response.status(statusCode).entity(message).build());
+	}
+
 	@Override
 	public String getMessage() {
 		return super.getMessage();

@@ -30,6 +30,8 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import javax.ws.rs.core.Response.Status;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -119,7 +121,7 @@ public class Token {
 	public void checkTokenType(String expected) {
 		if (expected == null || !expected.equals(this.getType()))
 			throw new InvalidTokenException("Invalid token type: Expected: "
-					+ expected + ", actual: " + this.getType());
+					+ expected + ", actual: " + this.getType(), Status.UNAUTHORIZED);
 	}
 
 	/**
