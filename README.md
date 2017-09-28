@@ -37,6 +37,7 @@ The Mainzelliste API has been implemented in the following projects and software
 - [Electronic data capture system by Fraunhofer FOKUS](https://cdn3.scrivito.com/fokus/57a537e2ec27cb7b/0a3a0655dcc079f58890e39dbdca4781/E-HEALTH_Standards_PB_03-2015_v03.pdf)
 - [Centraxx](http://www.kairos.de/centraxx/)
 - German National Cohort (uses a subset of the API) ([Data protection concept](http://nationale-kohorte.de/wp-content/uploads/2015/07/Treuhandstellenkonzept.pdf))
+- German Center for Cardiovascular Disease (DZHK) ([Data protection concept](https://dzhk.de/fileadmin/user_upload/Datenschutzkonzept_des_DZHK.pdf))
 
 We have compiled this list from the results of public search engines. If you use the Mainzelliste or its API, we would be glad to include your project in this list. Please don't hestitate to [contact us](mailto:info@mainzelliste.de).
 
@@ -46,6 +47,22 @@ We would love to include your useful changes to the Mainzelliste code in a futur
 
 
 ## Release notes
+
+###1.7.0
+
+This release introduces support for externally generated IDs. This feature introduces an incompatible API change; therefore the API version is bumped to 3.0. However, old API versions are still supported by means of the `mainzellisteApiVersion` header, i.e. this software release is fully backwards compatible. 
+
+New features:
+
+- Support for externally generated IDs. See the [Wiki page on this topic](https://bitbucket.org/medicalinformatics/mainzelliste/wiki/External-IDs) for further information on how to use this feature.
+- The admin form for editing patient data now shows duplicates and potential duplicates of the patient.
+
+Bug fixes:
+
+- Trying to edit a field that is not listed as editable in the `editPatient` token lead to HTTP status code 400 (Bad Request) instead of the more suitable 401 (Unauthorized).
+- Edit requests sometimes lead to an error message saying that date fields are missing even when the date was not be edited at all.
+- Some API methods returned inappropriate status codes for certain error conditions. 
+- All writing API methods are now synchronized to prevent race conditions.
 
 ### 1.6.2
 
