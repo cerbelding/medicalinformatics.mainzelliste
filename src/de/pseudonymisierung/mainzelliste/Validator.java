@@ -163,6 +163,21 @@ public enum Validator {
 	}
 
 	/**
+	 * Check if it is needed to validate Dates.
+	 */
+	private <T extends Map<?, ?>> boolean hasToValidateDates(T form) {
+		for (List<String> date : this.dateFields) {
+			for (String fieldName : date) {
+				if (form.containsKey(fieldName)) {
+					return true;
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
 	 * Validates dates in input form according to format definition in
 	 * configuration.
 	 * 
@@ -172,22 +187,24 @@ public enum Validator {
 	 *             If form contains an illegal date or a date field is missing.
 	 */
 	public void validateDates(MultivaluedMap<String, String> form) throws ValidatorException {
-		// List to collect all dates in the form
-		List<String> dateStrings = new LinkedList<String>();
-		for (List<String> thisDateFields : this.dateFields) {
-			StringBuffer dateString = new StringBuffer();
-			for (String fieldName : thisDateFields) {
-				if (!form.containsKey(fieldName)) {
-					throw new ValidatorException(
-							String.format(
-									"Field %s is missing in date definition. Dates must be entered and updated in complete form.",
-									fieldName));
+		if (hasToValidateDates(form)) {
+			// List to collect all dates in the form
+			List<String> dateStrings = new LinkedList<String>();
+			for (List<String> thisDateFields : this.dateFields) {
+				StringBuffer dateString = new StringBuffer();
+				for (String fieldName : thisDateFields) {
+					if (!form.containsKey(fieldName)) {
+						throw new ValidatorException(
+								String.format(
+										"Field %s is missing in date definition. Dates must be entered and updated in complete form.",
+										fieldName));
+					}
+					dateString.append(form.getFirst(fieldName));
 				}
-				dateString.append(form.getFirst(fieldName));
+				dateStrings.add(dateString.toString());
 			}
-			dateStrings.add(dateString.toString());
+			checkDates(this.dateFormat, dateStrings);
 		}
-		checkDates(this.dateFormat, dateStrings);
 	}
 
 	/**
@@ -200,23 +217,35 @@ public enum Validator {
 	 *             If form contains an illegal date or a date field is missing.
 	 */
 	public void validateDates(Map<String, String> form) throws ValidatorException {
-
-		// List to collect all dates in the form
-		List<String> dateStrings = new LinkedList<String>();
-		for (List<String> thisDateFields : this.dateFields) {
-			StringBuffer dateString = new StringBuffer();
-			for (String fieldName : thisDateFields) {
-				if (!form.containsKey(fieldName)) {
-					throw new ValidatorException(
-							String.format(
-									"Field %s is missing in date definition. Dates must be entered and updated in complete form.",
-									fieldName));
-				}
-				dateString.append(form.get(fieldName));
-			}
-			dateStrings.add(dateString.toString());
+		if (hasToValidateDates(form)) {
+			// List to collect all dates in the form
+			List<String> dateStrings = new LinkedList<String>();
+			for (List<String> thisDateFields : this.dateFields) {
+				StringBuffer dateString = new StringBuffer();
+                // check date only if it was entered/changed
+                boolean checkDate = false;
+                for (String fieldName : thisDateFields) {
+                    if (form.containsKey(fieldName)) {
+                        checkDate = true;
+                        break;
+                    }
+                }
+                if (checkDate) {
+                    // check date only if it is complete
+                	for (String fieldName : thisDateFields) {
+                		if (!form.containsKey(fieldName)) {
+                			throw new ValidatorException(
+								String.format(
+										"Field %s is missing in date definition. Dates must be entered and updated in complete form.",
+										fieldName));
+                		}
+                		dateString.append(form.get(fieldName));
+                	}
+                	dateStrings.add(dateString.toString());
+                }
+            }
+			checkDates(this.dateFormat, dateStrings);
 		}
-		checkDates(this.dateFormat, dateStrings);
 	}
 
 	/**
