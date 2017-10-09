@@ -38,6 +38,7 @@ The Mainzelliste API has been implemented in the following projects and software
 - [Centraxx](http://www.kairos.de/centraxx/)
 - German National Cohort (uses a subset of the API) ([Data protection concept](http://nationale-kohorte.de/wp-content/uploads/2015/07/Treuhandstellenkonzept.pdf))
 - German Center for Cardiovascular Disease (DZHK) ([Data protection concept](https://dzhk.de/fileadmin/user_upload/Datenschutzkonzept_des_DZHK.pdf))
+- Platform for medical research by Climedo Health GmbH ([Description of electronic health record component](https://www.climedo.de/digitale-probandenakte/))
 
 We have compiled this list from the results of public search engines. If you use the Mainzelliste or its API, we would be glad to include your project in this list. Please don't hestitate to [contact us](mailto:info@mainzelliste.de).
 
