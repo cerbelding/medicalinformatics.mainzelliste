@@ -249,7 +249,7 @@ result.printIdat = true
 
 # A passphrase used for authentication
 servers.0.apiKey = 
-servers.0.permissions = createSession;showSessionIds;deleteAllPatients;createToken;tt_addPatient;tt_readPatients;tt_editPatient
+servers.0.permissions = createSession;showSessionIds;createToken;tt_addPatient;tt_readPatients;tt_editPatient
 
 
 # Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only)
