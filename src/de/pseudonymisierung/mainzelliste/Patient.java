@@ -425,8 +425,8 @@ public class Patient {
 		// (setting a as duplicate of b when b is a duplicate of a)
 		if (original.getOriginal().sameAs(this)) {
 			CircularDuplicateRelationException e = new CircularDuplicateRelationException(
-					this.getId("pid").getIdString(), original.getId("pid")
-							.getIdString());
+					this.getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString(),
+					original.getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
 			logger.error(e.getMessage());
 			throw e;
 		}
