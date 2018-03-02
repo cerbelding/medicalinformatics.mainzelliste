@@ -177,7 +177,7 @@ public class HTMLResource {
 		map.putAll(p.getInputFields());
 		map.put("id", patId.getIdString());
 		map.put("tokenId", "abc");
-		map.put("tentative", p.getId("pid").isTentative());
+		map.put("tentative", p.getId(IDGeneratorFactory.instance.getDefaultIDType()).isTentative());
 		if (p.getOriginal() != p)
 			map.put("original", p.getOriginal());
 
