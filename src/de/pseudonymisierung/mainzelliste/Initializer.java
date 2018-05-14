@@ -58,6 +58,10 @@ public class Initializer implements ServletContextListener {
 	public void contextInitialized(ServletContextEvent sce) {
 		context = sce.getServletContext();
 		initialize();
+		// only for debugging
+		// TODO: Delete before deployment
+		de.securerecordlinkage.Initializer initializer = new de.securerecordlinkage.Initializer();
+		initializer.contextInitialized(sce);
 	}
 
 	@Override
