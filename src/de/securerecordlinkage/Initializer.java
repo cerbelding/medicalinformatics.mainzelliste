@@ -38,7 +38,7 @@ public class Initializer {
 
         Config c = Config.instance;
         JSONObject configJSON = createInitJSON(c);
-        doRequest("http://echo.jsontest.com/test/value", configJSON.toString());
+        doRequest("https://postman-echo.com/post", configJSON.toString());
 
         log4jSetup();
 
@@ -95,8 +95,13 @@ public class Initializer {
             tmpObj.put("sharedKey", "123abc");
             reqObject.put("localAuthentification", tmpObj);
             tmpObj = new JSONObject();
-            tmpObj.put("url", "https://localhost:8080/ValueList");
+            tmpObj.put("url", "https://postman-echo.com/post");
             reqObject.put("dataService", tmpObj);
+            tmpObj.put("algoType", "epiLink");
+            tmpObj.put("bloomLength", 500);
+            tmpObj.put("threshold_match", config.getProperty("matcher.epilink.threshold_match"));
+            tmpObj.put("threshold_non_match", config.getProperty("matcher.epilink.threshold_non_match"));
+            reqObject.put("algorithm", tmpObj);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -110,9 +115,9 @@ public class Initializer {
         HttpConnector hc = new HttpConnector(config);
         try {
             CloseableHttpResponse result = hc.doAction("POST", url, null, null, "application/json", data, false, false, 5);
-        if(result.getStatusLine().getStatusCode() != 204) {
-            throw new InternalErrorException(result.getStatusLine().toString());
-        }
+            if(result.getStatusLine().getStatusCode() != 204) {
+                throw new InternalErrorException(result.getStatusLine().toString());
+            }
         } catch (HttpConnectorException e) {
             e.printStackTrace();
             logger.error("Cannot connect to http ", e);
