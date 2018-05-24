@@ -2,6 +2,8 @@ package de.securerecordlinkage;
 
 import com.sun.jersey.spi.container.servlet.WebComponent;
 import de.pseudonymisierung.mainzelliste.Config;
+import de.pseudonymisierung.mainzelliste.Field;
+import de.pseudonymisierung.mainzelliste.PlainTextField;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.samply.common.http.HttpConnector;
 import de.samply.common.http.HttpConnectorException;
@@ -9,14 +11,14 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -90,7 +92,6 @@ public class Initializer {
         JSONObject reqObject = new JSONObject();
         JSONObject tmpObj = new JSONObject();
         try {
-            // TODO: Aus Config auslesen
             tmpObj.put("authType", "apiKey");
             tmpObj.put("sharedKey", "123abc");
             reqObject.put("localAuthentification", tmpObj);
@@ -101,6 +102,40 @@ public class Initializer {
             tmpObj.put("bloomLength", 500);
             tmpObj.put("threshold_match", config.getProperty("matcher.epilink.threshold_match"));
             tmpObj.put("threshold_non_match", config.getProperty("matcher.epilink.threshold_non_match"));
+
+            JSONArray exchangeGroups = new JSONArray();
+            for (int i = 0; config.getProperties().containsKey("exchangeGroup." + i); i++) {
+                String[] exchangeFields = config.getProperty("exchangeGroup." + i).split(" *[;,] *");
+                exchangeGroups.put(Arrays.asList(exchangeFields));
+            }
+
+            tmpObj.put("exchangeGroups", exchangeGroups);
+
+            JSONArray fields = new JSONArray();
+            for (String key : config.getFieldKeys()) {
+                String propName = "field." + key;
+                JSONObject field = new JSONObject();
+                field.put("name", key);
+                field.put("frequency", config.getProperty( propName + ".frequency"));
+                field.put("errorRate", config.getProperty(propName + ".errorRate"));
+
+                String comparator = config.getProperty(propName + ".comparator");
+                comparator = comparator.replace("Field", "").replace("Comparator", "");
+                field.put("comparator", comparator);
+
+                //TODO What criterias are needed?
+                Class<? extends Field<?>> fieldType = config.getFieldType(key);
+                if("NGram".equalsIgnoreCase(comparator)) {
+                    field.put("fieldType", "bitmask");
+                }else if(PlainTextField.class.isAssignableFrom(fieldType)){
+                    field.put("fieldType", "string");
+                }else{
+                    field.put("fieldType", fieldType.getName().toLowerCase().replace("field", ""));
+                }
+
+                fields.put(field);
+            }
+
             reqObject.put("algorithm", tmpObj);
         } catch (JSONException e) {
             e.printStackTrace();
