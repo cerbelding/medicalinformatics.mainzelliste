@@ -39,8 +39,8 @@ public class Initializer {
         logger.info("#####Initializing...");
 
         Config c = Config.instance;
-        JSONObject configJSON = createInitJSON(c);
-        doRequest("https://postman-echo.com/post", configJSON.toString());
+        JSONObject configJSON = createLocalInitJSON(c);
+        doRequest("https://postman-echo.com/put", configJSON.toString());
 
         log4jSetup();
 
@@ -88,7 +88,7 @@ public class Initializer {
         root.info("#####BEGIN SecureRecordLinkage LOG SESSION");
     }
 
-    private JSONObject createInitJSON(Config config){
+    private JSONObject createLocalInitJSON(Config config){
         JSONObject reqObject = new JSONObject();
         JSONObject tmpObj = new JSONObject();
         try {
@@ -124,13 +124,17 @@ public class Initializer {
                 field.put("comparator", comparator);
 
                 //TODO What criterias are needed?
+                // TODO: What if we are not working with
                 Class<? extends Field<?>> fieldType = config.getFieldType(key);
                 if("NGram".equalsIgnoreCase(comparator)) {
                     field.put("fieldType", "bitmask");
                 }else if(PlainTextField.class.isAssignableFrom(fieldType)){
                     field.put("fieldType", "string");
                 }else{
-                    field.put("fieldType", fieldType.getName().toLowerCase().replace("field", ""));
+                    String type;
+                    type = fieldType.getName().toLowerCase().replace("field", "");
+                    String [] parts = type.split("\\.");
+                    field.put("fieldType", parts[parts.length-1]);
                 }
 
                 fields.put(field);
@@ -143,14 +147,25 @@ public class Initializer {
         return reqObject;
     }
 
+    // TODO: 1. Create config file for remote init
+    // 2. Read parameters from this file
+    // 3. Use samply.config ?
+    private JSONObject createRemoteInitJSON(Config config){
+        return null;
+    }
+
     private void doRequest(String url, String data) {
         Logger logger = Logger.getLogger(de.pseudonymisierung.mainzelliste.Initializer.class);
         //TODO proxy config
         HashMap config = new HashMap();
         HttpConnector hc = new HttpConnector(config);
         try {
-            CloseableHttpResponse result = hc.doAction("POST", url, null, null, "application/json", data, false, false, 5);
-            if(result.getStatusLine().getStatusCode() != 204) {
+            CloseableHttpResponse result = hc.doAction("PUT", url, null, null, "application/json", data, false, false, 5);
+            if(result.getStatusLine().getStatusCode() == 200) {
+                logger.info("SRL configuration updated. Response Code " + String.valueOf(result.getStatusLine().getStatusCode()));
+            } else if(result.getStatusLine().getStatusCode() == 204){
+                logger.info("SRL configuration initialized. Response Code " + String.valueOf(result.getStatusLine().getStatusCode()));
+            } else {
                 throw new InternalErrorException(result.getStatusLine().toString());
             }
         } catch (HttpConnectorException e) {
