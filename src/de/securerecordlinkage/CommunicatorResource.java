@@ -1,5 +1,6 @@
 package de.securerecordlinkage;
 
+import de.sessionTokenSimulator.PatientRecords;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -54,9 +55,8 @@ public class CommunicatorResource {
     //@Produces(MediaType.APPLICATION_JSON)
     public JSONObject getAllRecords(){
         logger.info("getAllRecords");
-
-        //return null;
-        return jsondummy();
+        PatientRecords records = new PatientRecords();
+        return records.readAllPatients();
     }
 
 
