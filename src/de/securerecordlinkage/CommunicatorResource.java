@@ -12,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 //TODO: Verify against APIkey
+//TODO: Extract PatientRecords class, to use this class independent of Mainzelliste
 @Path("Communicator")
 public class CommunicatorResource {
 
@@ -30,7 +31,9 @@ public class CommunicatorResource {
 
     //-----------------------------------------------------------------------
 
-    /** send linkRecord, which should be linked, to SRL - In Architectur-XML (v6) step 2*/
+    /**
+     * send linkRecord, which should be linked, to SRL - In Architectur-XML (v6) step 2
+     */
     public void sendLinkRecord(JSONObject recordAsJson) {
         logger.info("sendLinkRecord");
 
@@ -38,38 +41,52 @@ public class CommunicatorResource {
 
     }
 
-    /** rest endpoint, used to set a linked record - In Architectur-XML (v6) step 7*/
+    /**
+     * rest endpoint, used to set a linked record - In Architectur-XML (v6) step 7
+     */
     @POST
     @Path("/linkCallBack")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response setLinkRecord(@Context HttpServletRequest req, String json) {
         logger.info("/linkCallBack called");
         logger.info("setLinkRecord");
-        try {
-            JSONObject newLinkRecord = new JSONObject(json);
-            PatientRecords updatePatient = new PatientRecords();
-            return Response.status(updatePatient.updatePatient(newLinkRecord)).build();
-        } catch (Exception e) {
-            logger.error("setLinkRecord failed. " + e.toString());
-            return Response.status(500).build();
+
+        if (!authorizationValidator(req)) {
+            return Response.status(401).build();
+        } else {
+            //APIKey correct, now do the work
+            try {
+                JSONObject newLinkRecord = new JSONObject(json);
+                PatientRecords updatePatient = new PatientRecords();
+                return Response.status(updatePatient.updatePatient(newLinkRecord)).build();
+            } catch (Exception e) {
+                logger.error("setLinkRecord failed. " + e.toString());
+                return Response.status(500).build();
+            }
         }
     }
 
     //-----------------------------------------------------------------------
 
-    /** return all entrys, which schould be compared, to SRL  - In Architectur-XML (v6) step 4*/
+    /**
+     * return all entrys, which schould be compared, to SRL  - In Architectur-XML (v6) step 4
+     */
     @GET
     @Path("/getAllRecords")
     //@Produces(MediaType.APPLICATION_JSON)
-    public Response getAllRecords() {
+    public Response getAllRecords(@Context HttpServletRequest req) {
         logger.info("getAllRecords");
 
-        try {
-            PatientRecords records = new PatientRecords();
-            return Response.ok(records.readAllPatients(), MediaType.APPLICATION_JSON).build();
-        } catch (Exception e) {
-            logger.error("gerAllRecords failed. " + e.toString());
-            return Response.status(500).build();
+        if (!authorizationValidator(req)) {
+            return Response.status(401).build();
+        } else {
+            try {
+                PatientRecords records = new PatientRecords();
+                return Response.ok(records.readAllPatients(), MediaType.APPLICATION_JSON).build();
+            } catch (Exception e) {
+                logger.error("gerAllRecords failed. " + e.toString());
+                return Response.status(500).build();
+            }
         }
     }
 
@@ -80,21 +97,52 @@ public class CommunicatorResource {
     }
 
 
+    //----Helper functions ---------------------------------------------
+    private boolean authorizationValidator(HttpServletRequest request) {
+
+        logger.info("authorizationValidator " + "validate ApiKey");
+        //TODO: get authKey from Config
+        String authKey = "123abc";
+        String authHeader;
+
+        try {
+            authHeader = request.getHeader("Authorization");
+        } catch (Exception e) {
+            logger.error("Failed getting Authorization Header. " + e.toString());
+            return false;
+        }
+
+        if (authHeader == null) {
+            logger.info("Can't find ApiKey in request authHeader==null");
+            return false;
+        }
+
+        if (authHeader.equals(authKey)) {
+            logger.info("ApiKey correct");
+            return true;
+        } else {
+            logger.info("Wrong ApiKey!");
+            return false;
+        }
+
+    }
+
+
     //----Dummy implementation ------------------------------------------
 
     //Temporal object, just for developing purpose
-    private JSONObject jsondummy(){
+    private JSONObject jsondummy() {
         JSONObject reqObject = new JSONObject();
         JSONObject tmpObj = new JSONObject();
         try {
             tmpObj.put("authType", "apiKey");
             tmpObj.put("sharedKey", "123abc");
             reqObject.put("localAuthentification", tmpObj);
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.info("jsondummy exception" + e.getMessage());
         }
 
-        return  reqObject;
+        return reqObject;
     }
 
 }
