@@ -2,14 +2,16 @@ package de.securerecordlinkage;
 
 import de.sessionTokenSimulator.PatientRecords;
 import org.apache.log4j.Logger;
+import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
+//TODO: Verify against APIkey
 @Path("Communicator")
 public class CommunicatorResource {
 
@@ -26,26 +28,32 @@ public class CommunicatorResource {
 
     }
 
-
-
     //-----------------------------------------------------------------------
 
     /** send linkRecord, which should be linked, to SRL - In Architectur-XML (v6) step 2*/
-    public void sendLinkRecord() {
+    public void sendLinkRecord(JSONObject recordAsJson) {
         logger.info("sendLinkRecord");
+
+        SendHelper.doRequest("http://localhost:8079/Communicator/linkCallBack", "POST", recordAsJson.toString());
 
     }
 
     /** rest endpoint, used to set a linked record - In Architectur-XML (v6) step 7*/
-    @PUT
+    @POST
     @Path("/linkCallBack")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Produces setLinkRecord(){
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response setLinkRecord(@Context HttpServletRequest req, String json) {
+        logger.info("/linkCallBack called");
         logger.info("setLinkRecord");
-
-        return null;
+        try {
+            JSONObject newLinkRecord = new JSONObject(json);
+            PatientRecords updatePatient = new PatientRecords();
+            return Response.status(updatePatient.updatePatient(newLinkRecord)).build();
+        } catch (Exception e) {
+            logger.error("setLinkRecord failed. " + e.toString());
+            return Response.status(500).build();
+        }
     }
-
 
     //-----------------------------------------------------------------------
 
@@ -53,10 +61,16 @@ public class CommunicatorResource {
     @GET
     @Path("/getAllRecords")
     //@Produces(MediaType.APPLICATION_JSON)
-    public JSONObject getAllRecords(){
+    public Response getAllRecords() {
         logger.info("getAllRecords");
-        PatientRecords records = new PatientRecords();
-        return records.readAllPatients();
+
+        try {
+            PatientRecords records = new PatientRecords();
+            return Response.ok(records.readAllPatients(), MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            logger.error("gerAllRecords failed. " + e.toString());
+            return Response.status(500).build();
+        }
     }
 
 
@@ -65,6 +79,10 @@ public class CommunicatorResource {
         // Implemented in Class editID
     }
 
+
+    //----Dummy implementation ------------------------------------------
+
+    //Temporal object, just for developing purpose
     private JSONObject jsondummy(){
         JSONObject reqObject = new JSONObject();
         JSONObject tmpObj = new JSONObject();
