@@ -17,10 +17,39 @@ public class PatientRecords {
 
     private Logger logger = Logger.getLogger(this.getClass());
 
-    public JSONObject readAllPatients() {
-        JSONObject reqObject = new JSONObject();
+    /**
+     * public JSONObject readAllPatients() {
+     * JSONObject reqObject = new JSONObject();
+     * JSONArray array = new JSONArray();
+     * try{
+     * List<Patient> patientList = Persistor.instance.getPatients();
+     * for (Patient p : patientList) {
+     * JSONObject fields = new JSONObject();
+     * for (String fieldKey : p.getFields().keySet()) {
+     * fields.put(fieldKey, p.getFields().get(fieldKey));
+     * }
+     * JSONObject ids = new JSONObject();
+     * for (ID id : p.getIds()) {
+     * ids.put(id.getType(), id.getIdString());
+     * }
+     * JSONObject tmpObject = new JSONObject();
+     * tmpObject.put("fields", fields);
+     * tmpObject.put("ids", ids);
+     * array.put(tmpObject);
+     * }
+     * reqObject.put("records", array);
+     * } catch (Exception e) {
+     * logger.info(e);
+     * }
+     * <p>
+     * return reqObject;
+     * }
+     **/
+
+    public JSONArray readAllPatientsAsArray() {
+
         JSONArray array = new JSONArray();
-        try{
+        try {
             List<Patient> patientList = Persistor.instance.getPatients();
             for (Patient p : patientList) {
                 JSONObject fields = new JSONObject();
@@ -36,13 +65,17 @@ public class PatientRecords {
                 tmpObject.put("ids", ids);
                 array.put(tmpObject);
             }
-            reqObject.put("records", array);
+
         } catch (Exception e) {
             logger.info(e);
         }
 
-        return reqObject;
+        return array;
     }
+
+
+
+
 
     public int updatePatient(JSONObject patient){
         boolean updateSuccessful = true;
