@@ -148,8 +148,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
                 <executions>
                     <execution>
@@ -204,8 +204,34 @@
 					<warSourceDirectory>${basedir}/WebContent</warSourceDirectory>
 				</configuration>
 			</plugin>
+
+            <!-- for initializer -->
+            <plugin>
+                <groupId>org.jvnet.jaxb2.maven2</groupId>
+                <artifactId>maven-jaxb2-plugin</artifactId>
+                <version>0.12.3</version>
+                <executions>
+                    <execution>
+                        <id>xjc</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <generateDirectory>src/</generateDirectory>
+                    <schemaDirectory>config/XSD</schemaDirectory>
+                    <catalog>catalog.xml</catalog>
+                    <episode>true</episode>
+                    <locale>en</locale>
+                    <args>
+                        <arg>-no-header</arg>
+                    </args>
+                    <strict>false</strict>
+                </configuration>
+            </plugin>
         </plugins>
-        
+
         <!-- Eingefügt um "Plugin execution not covered by lifecycle configuration" zu beheben -->
 
         <pluginManagement>

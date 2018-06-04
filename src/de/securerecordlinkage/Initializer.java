@@ -7,6 +7,7 @@ import de.pseudonymisierung.mainzelliste.PlainTextField;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.samply.common.http.HttpConnector;
 import de.samply.common.http.HttpConnectorException;
+import de.securerecordlinkage.initializer.config.ExternalServer;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
@@ -92,11 +93,13 @@ public class Initializer {
         JSONObject reqObject = new JSONObject();
         JSONObject tmpObj = new JSONObject();
         try {
+
+            de.securerecordlinkage.initializer.Config configInitializer = de.securerecordlinkage.initializer.Config.instance;
             tmpObj.put("authType", "apiKey");
-            tmpObj.put("sharedKey", "123abc");
+            tmpObj.put("sharedKey", configInitializer.getLocalMainzelliste().getApiKey());
             reqObject.put("localAuthentification", tmpObj);
             tmpObj = new JSONObject();
-            tmpObj.put("url", "https://postman-echo.com/post");
+            tmpObj.put("url", configInitializer.getLocalMainzelliste().getUrl());
             reqObject.put("dataService", tmpObj);
             tmpObj.put("algoType", "epiLink");
             tmpObj.put("bloomLength", 500);
@@ -145,6 +148,33 @@ public class Initializer {
             e.printStackTrace();
         }
         return reqObject;
+    }
+
+    private List<JSONObject> createRemoteInitJSON() {
+        List<ExternalServer> servers = de.securerecordlinkage.initializer.Config.instance.getConfig().getServers().getServer();
+        List<JSONObject> results = new ArrayList<>();
+
+        try {
+
+            for (ExternalServer server : servers) {
+                JSONObject reqObject = new JSONObject();
+                JSONObject tmpObj = new JSONObject();
+                JSONObject authObj = new JSONObject();
+
+                tmpObj.put("url", server.getUrl());
+                authObj.put("authType", "apikey");
+                authObj.put("authType", server.getApiKey());
+                tmpObj.put("authentication", authObj);
+                reqObject.put("connectionProfile", tmpObj);
+
+                results.add(reqObject);
+            }
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return results;
     }
 
     // TODO: 1. Create config file for remote init
