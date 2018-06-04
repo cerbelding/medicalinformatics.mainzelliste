@@ -10,6 +10,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 //TODO: Verify against APIkey
 //TODO: Extract PatientRecords class, to use this class independent of Mainzelliste
@@ -74,15 +75,19 @@ public class CommunicatorResource {
     @GET
     @Path("/getAllRecords")
     //@Produces(MediaType.APPLICATION_JSON)
-    public Response getAllRecords(@Context HttpServletRequest req) {
+    public Response getAllRecords(@Context HttpServletRequest req, @Context UriInfo info) {
         logger.info("getAllRecords");
-
         if (!authorizationValidator(req)) {
             return Response.status(401).build();
         } else {
             try {
+                logger.info(info.getQueryParameters());
+                logger.info(info.getQueryParameters().get("pagesize"));
                 PatientRecords records = new PatientRecords();
-                return Response.ok(records.readAllPatients(), MediaType.APPLICATION_JSON).build();
+                records.readAllPatientsAsArray();
+
+                return Response.ok(records.readAllPatientsAsArray(), MediaType.APPLICATION_JSON).build();
+                //return Response.ok(records.readAllPatients(), MediaType.APPLICATION_JSON).build();
             } catch (Exception e) {
                 logger.error("gerAllRecords failed. " + e.toString());
                 return Response.status(500).build();
@@ -95,7 +100,6 @@ public class CommunicatorResource {
     public void processCallback() {
         // Implemented in Class editID
     }
-
 
     //----Helper functions ---------------------------------------------
     private boolean authorizationValidator(HttpServletRequest request) {
