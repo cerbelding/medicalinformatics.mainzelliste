@@ -43,4 +43,18 @@ public class PatientRecords {
 
         return reqObject;
     }
+
+    public int updatePatient(JSONObject patient){
+        boolean updateSuccessful = true;
+
+        if(updateSuccessful==true){
+            return 200;
+        }
+        else{
+            return 500;
+        }
+
+
+
+    }
 }
