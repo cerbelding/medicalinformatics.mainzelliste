@@ -62,7 +62,8 @@ public class SrlIDGenerator implements IDGenerator<IntegerID> {
 		this.mem.set("counter", Integer.toString(this.counter));
 		this.mem.commit();
 
-		// TODO: Send Request to SRL (linkRecord)
+
+		// TODO: Send Request to SRL (linkRecord) or to LinkageServer, if initialising
 
 		return newID;
 	}

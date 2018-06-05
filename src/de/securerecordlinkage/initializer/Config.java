@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 
 public enum Config {
@@ -35,21 +36,12 @@ public enum Config {
     private final Logger logger = LoggerFactory.getLogger(Config.class);
     private final HashMap<String, String> proxyConfig = new HashMap<>();
     private Initializer config;
-    private String fallback;
+
     // samply config
     private Configuration proxyConfiguration;
 
     public Initializer getConfig() {
         return config;
-    }
-
-    @SuppressWarnings("unused")
-    public String getFallback() {
-        return fallback;
-    }
-
-    public void setFallback(String fallback) {
-        this.fallback = fallback;
     }
 
     public HashMap<String, String> getProxyConfig() {
@@ -62,6 +54,19 @@ public enum Config {
     //endregion Properties
 
     Config() {
+        try {
+            init();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
     }
 
     public Server getLocalMainzelliste() {
@@ -76,8 +81,9 @@ public enum Config {
      * @throws ParserConfigurationException
      * @throws SAXException
      */
-    public void init() throws IOException, JAXBException, ParserConfigurationException, SAXException {
+    public void init() throws IOException, JAXBException, ParserConfigurationException, SAXException, URISyntaxException {
 
+        String fallback = new File(Config.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile().getAbsolutePath();
         File configFile = FileFinderUtil.findFile("initializer.config.xml", "samply", fallback);
         logger.info("Config file found: " + configFile.getAbsolutePath());
 
