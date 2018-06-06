@@ -4,6 +4,7 @@ import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
+import de.securerecordlinkage.CommunicatorResource;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
@@ -56,13 +57,8 @@ public class PatientRecords {
                 for (String fieldKey : p.getFields().keySet()) {
                     fields.put(fieldKey, p.getFields().get(fieldKey));
                 }
-                JSONObject ids = new JSONObject();
-                for (ID id : p.getIds()) {
-                    ids.put(id.getType(), id.getIdString());
-                }
                 JSONObject tmpObject = new JSONObject();
                 tmpObject.put("fields", fields);
-                tmpObject.put("ids", ids);
                 array.put(tmpObject);
             }
 
@@ -73,9 +69,26 @@ public class PatientRecords {
         return array;
     }
 
+    public void linkPatient(Patient p, String IDType, String IDString) {
+        try {
+            JSONObject recordAsJSON = new JSONObject();
+            JSONObject tmpObj = new JSONObject();
+            tmpObj.put("IDType", IDType);
+            tmpObj.put("IDString", IDString);
+            recordAsJSON.put("id", tmpObj);
 
+            JSONObject fields = new JSONObject();
+            for (String fieldKey : p.getFields().keySet()) {
+                fields.put(fieldKey, p.getFields().get(fieldKey));
+            }
+            recordAsJSON.put("fields", fields);
+            CommunicatorResource rs = new CommunicatorResource();
+            rs.sendLinkRecord(recordAsJSON);
 
-
+        } catch (Exception e) {
+            logger.info(e);
+        }
+    }
 
     public int updatePatient(JSONObject patient){
         boolean updateSuccessful = true;
@@ -86,8 +99,5 @@ public class PatientRecords {
         else{
             return 500;
         }
-
-
-
     }
 }

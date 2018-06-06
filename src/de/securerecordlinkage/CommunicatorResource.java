@@ -47,9 +47,17 @@ public class CommunicatorResource {
      */
     public void sendLinkRecord(JSONObject recordAsJson) {
         logger.info("sendLinkRecord");
-
-        SendHelper.doRequest("http://localhost:8079/Communicator/linkCallBack", "POST", recordAsJson.toString());
-
+        try {
+            JSONObject recordToSend = new JSONObject();
+            JSONObject callbackObj = new JSONObject();
+            callbackObj.put("url", "http://localhost:8079/Communicator/linkCallBack");
+            callbackObj.put("id", recordAsJson.get("id"));
+            recordToSend.put("callback", callbackObj);
+            recordToSend.put("fields", recordAsJson.get("fields"));
+            SendHelper.doRequest("http://localhost:8079/Communicator/linkCallBack", "POST", recordToSend.toString());
+        } catch (Exception e) {
+            logger.error(e);
+        }
     }
 
     /**

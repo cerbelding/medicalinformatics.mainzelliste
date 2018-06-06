@@ -85,4 +85,7 @@ public class ExternalIDGenerator implements IDGenerator<ExternalID>{
 
     @Override
 	public boolean isExternal() { return true; }
+
+    @Override
+    public boolean isSrl() { return false; }
 }

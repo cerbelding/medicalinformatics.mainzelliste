@@ -3,30 +3,30 @@
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Affero General Public License as published by the Free 
+ * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License 
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Additional permission under GNU GPL version 3 section 7:
  *
- * If you modify this Program, or any covered work, by linking or combining it 
- * with Jersey (https://jersey.java.net) (or a modified version of that 
- * library), containing parts covered by the terms of the General Public 
- * License, version 2.0, the licensors of this Program grant you additional 
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Jersey (https://jersey.java.net) (or a modified version of that
+ * library), containing parts covered by the terms of the General Public
+ * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
- * 
- * 
+ *
+ *
  * This file is a Java port of the PID generation code by Klaus Pommerening.
  * The original copyright notice follows:
- * 
+ *
  **** PIDgen.c *************************************************
  *                                                             *
  * Functions to support a pseudonymization service             *
@@ -34,7 +34,7 @@
  * Klaus Pommerening, IMSD, Johannes-Gutenberg-Universitaet,   *
  *   Mainz, 3. April 2001                                      *
  *-------------------------------------------------------------*
- * Version 1.00, 29. Mai 2004                                  * 
+ * Version 1.00, 29. Mai 2004                                  *
  ***************************************************************
  */
 package de.pseudonymisierung.mainzelliste;
@@ -50,27 +50,27 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
  * Here go all the mathematics involved in generating, checking and correcting
  * PIDs. Methods here have package visibility only. A user should call the static
  * methods of class PID.
- * 
+ *
  * For the theorem, confer publication of Faldum and Pommerening.
- * 
+ *
  * This class is a C-to-Java-port with generous approval by its author,
  * Klaus Pommerening.
- * 
+ *
  * @see "Faldum, Andreas and Pommerening, Klaus: An optimal code for patient identifiers. Computer Methods and Programs in Biomedicine 79 (2005), 81–88."
  */
 public class PIDGenerator implements IDGenerator<PID>{
-	
+
 	/** The ID type this generator instance produces. */
 	private String idType;
 	/** The IDGeneratorMemory instance for this generator. */
 	private IDGeneratorMemory mem;
-	
+
 	/** Private key for PID generation. */
 	@SuppressWarnings("javadoc") // One comment is sufficient, but Eclipse marks a warning otherwise.
 	private int key1, key2, key3;
 	/** Counter, increased with every created PID. */
 	private int counter = 1;
-	/** Randomizer instance. */ 
+	/** Randomizer instance. */
 	private Random rand;
 	/**  Internal variable of the algorithm. */
 	private static int NN = 1073741824;
@@ -91,10 +91,10 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/** Set to 1 after first call to rndsetup */
 	private boolean RSET = false;
-	
+
 	/**
 	 * alphabet for PIDs
-	 * 
+	 *
 	 * A codeword is transformed into a PID by replacing each of the
 	 * 5-bit-integers by the corresponding character of the alphabet.
 	 */
@@ -102,17 +102,17 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/** The logging instance. */
 	private Logger logger = Logger.getLogger(this.getClass());
-	
+
 	/**
 	 * Empty constructor. Needed by IDGeneratorFactory in order to instantiate
 	 * an object via reflection.
 	 */
-	PIDGenerator() {		
+	PIDGenerator() {
 	}
-	
-	/** 
+
+	/**
 	 * Create a PID for the given counter. PIDs are created in a deterministic order.
-	 * This method returns the i-th PID of this generator. 
+	 * This method returns the i-th PID of this generator.
 	 * @param counter Order of the PID to get.
 	 * @return The generated PID string.
 	 */
@@ -122,7 +122,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Check PID. Up to two errors are recognized.
-	 * 
+	 *
 	 * @param pid The PID to check.
 	 * @return true if pid is a correct PID, false otherwise.
 	 */
@@ -157,10 +157,10 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Tries to correct a PID.
-	 * 
+	 *
 	 * Up to two errors are recognized, errors with one changed character or a
 	 * transposition of two adjacent characters can be corrected.
-	 * 
+	 *
 	 * @param PIDString
 	 *            The PID to correct.
 	 * @return PIDString, if it is a correct PID, the corrected PID if PIDString
@@ -252,9 +252,9 @@ public class PIDGenerator implements IDGenerator<PID>{
 	/**
 	 * Initialize random generator. Set global variables rndfact, rndlim. Must
 	 * be called before first use of rndext.
-	 * 
+	 *
 	 * Error handling: Values > 12 of rndwith are treated as = 12
-	 * 
+	 *
 	 * @param rndwidth
 	 *            The desired random width.
 	 */
@@ -274,13 +274,13 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Randomize a number
-	 * 
+	 *
 	 * Replace first rndwidth bits of x with random bits
-	 * 
+	 *
 	 * Error handling: If x >= rndfact, overflowing bits are dropped.
-	 * 
+	 *
 	 * Used in encr
-	 * 
+	 *
 	 * @param x
 	 *            Integer, 0 <= x < rndfact.
 	 * @return x with first rndwidth bits of x replaced by random bits
@@ -362,12 +362,12 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Permutation of the bits of x.
-	 * 
+	 *
 	 * Split the input x into six 5-bit-chunks, permute each chunk with the same
 	 * fixed permutation This transformation is bijective on 30-bit-integers.
 	 * Error handling: If x is not in the required range, overflowing bits are
 	 * dropped. Used in encr.
-	 * 
+	 *
 	 * @param x
 	 *            The value which to permute, assumed to be an unsigned 30-bit
 	 *            Integer.
@@ -397,7 +397,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Encrypt x with keys k1, k2, k3, and k4 = k1+k2+k3 mod 2^30.
-	 * 
+	 *
 	 * The encryption consists of 4 rounds; each round consists of:
 	 * <ul>
 	 * <li>first rot30_6,
@@ -406,12 +406,12 @@ public class PIDGenerator implements IDGenerator<PID>{
 	 * </ul>
 	 * Between rounds 2 and 3 apply bitmix. This transformation is bijective on
 	 * 30-bit-integers, if all ki are odd.
-	 * 
+	 *
 	 * Error handling: If ki is even, it's replaced with ki + 1. If x is not in
 	 * the required range, overflowing bits are dropped.
-	 * 
+	 *
 	 * Used in PIDgen
-	 * 
+	 *
 	 * @param x
 	 *            The value to encrypt. Assumed to be an unsigned
 	 *            30-bit-Integer.
@@ -443,7 +443,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Split a 30-bit integer x into an array p of six 5-bit-integers.
-	 * 
+	 *
 	 * Error handling: If x is not in the required range, overflowing bits are
 	 * dropped. Used in PIDgen
 	 */
@@ -469,14 +469,14 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Arithmetic in the Galois field F_32.
-	 * 
+	 *
 	 * t is a primitive element with t^5 = t^2 + 1. Multiply the 5 bit input x =
 	 * (x4, x3, x2, x1, x0) with t^e where 0 <= e <= 3; the algorithm is
 	 * described in the documentation.
-	 * 
+	 *
 	 * Error handling: If x has more then 5 bits, overflowing bits are dropped.
 	 * If e is < 0 or > 3, it's treated as 0, i. e. the function returns x.
-	 * 
+	 *
 	 * Used in multf32
 	 */
 	@SuppressWarnings("javadoc")
@@ -501,10 +501,10 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Transform to codeword.
-	 * 
+	 *
 	 * Transform an array p of six 5-bit-integers into a codeword, consisting of
 	 * eight 5-bit-integers. Used in PIDgen.
-	 * 
+	 *
 	 * @param p
 	 *            Array of six Integers, assumed to be unsigned 5-bit.
 	 * @return Array of eight Integers in the range of unsigned 5-bit-Numbers.
@@ -522,7 +522,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Generate PID.
-	 * 
+	 *
 	 */
 	@SuppressWarnings("javadoc")
 	private String PIDgen(int x) {
@@ -550,7 +550,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Transform a string s into a codeword c.
-	 * 
+	 *
 	 * If s has length != 8 or contains a character not in the alphabet sigma,
 	 * the function returns 0 and the output variable c is meaningless. Note:
 	 * Lowercase letters are converted to uppercase. Otherwise c is the codeword
@@ -652,7 +652,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Output weighted sum.
-	 * 
+	 *
 	 * Output the weighted sum t p[0] + t^2 p[1] + t^3 p[2] + t^4 p[3] + t^5
 	 * p[4] + t^6 p[5] in F_32. Used in encode and PIDcheck.
 	 */
@@ -662,13 +662,13 @@ public class PIDGenerator implements IDGenerator<PID>{
 		int i;
 		s = 0;
 		for (i = 0; i <= 5; i++)
-			s = s ^ PIDGenerator.multf32(p[i], i + 1); 
+			s = s ^ PIDGenerator.multf32(p[i], i + 1);
 		return s;
 	}
 
 	/**
 	 * Output weighted sum.
-	 * 
+	 *
 	 * Output the weighted sum t^2 p[0] + t^4 p[1] + t^6 p[2] + t^8 p[3] + t^10
 	 * p[4] + t^12 p[5] in F_32. Used in encode and PIDcheck.
 	 */
@@ -684,11 +684,11 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	/**
 	 * Arithmetic in the Galois field F_32.
-	 * 
+	 *
 	 * t is a primitive element with t^5 = t^2 + 1. Multiply the 5 bit input x =
 	 * (x4, x3, x2, x1, x0) with t^e where e is an unsigned integer. Error
 	 * handling: If x has more then 5 bits, overflowing bits are dropped.
-	 * 
+	 *
 	 * Used in wsum1, wsum2, and PIDcheck.
 	 */
 	@SuppressWarnings("javadoc")
@@ -711,7 +711,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 		this.counter = Integer.parseInt(memCounter);
 
 		this.idType = idType;
-		
+
 		try {
 			int key1 = Integer.parseInt(props.getProperty("k1"));
 			int key2 = Integer.parseInt(props.getProperty("k2"));
@@ -724,7 +724,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 			this.key1 = key1;
 			this.key2 = key2;
 			this.key3 = key3;
-			this.rndsetup(rndwidth);			
+			this.rndsetup(rndwidth);
 		} catch (NumberFormatException e) {
 			logger.fatal("Number format error in configuration of IDGenerator for ID type " + idType, e);
 			throw new InternalErrorException(e);
@@ -762,4 +762,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	@Override
 	public boolean isExternal() { return false; }
+
+	@Override
+	public boolean isSrl() { return false; }
 }

@@ -28,14 +28,16 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import org.codehaus.jettison.json.JSONObject;
+
 import java.util.Properties;
 
 
 /**
- * Simple ID generator that outputs consecutive IntegerIDs. For testing purposes
+ * Simple ID generator that outputs consecutive SrlIDs. For testing purposes
  * or to produce IDs for a database.
  */
-public class SrlIDGenerator implements IDGenerator<IntegerID> {
+public class SrlIDGenerator implements IDGenerator<SrlID> {
 
 	/** Internal counter. Incremented on every ID creation. */
 	int counter;
@@ -56,21 +58,17 @@ public class SrlIDGenerator implements IDGenerator<IntegerID> {
 	}
 
 	@Override
-	public synchronized IntegerID getNext() {
-		IntegerID newID = new IntegerID(Integer.toString(this.counter + 1), idType);
+	public synchronized SrlID getNext() {
+		SrlID newID = new SrlID(Integer.toString(this.counter + 1), idType);
 		this.counter++;
 		this.mem.set("counter", Integer.toString(this.counter));
 		this.mem.commit();
-
-
-		// TODO: Send Request to SRL (linkRecord) or to LinkageServer, if initialising
-
 		return newID;
 	}
 
 	@Override
-	public IntegerID buildId(String id) {
-		return new IntegerID(id, this.idType);
+	public SrlID buildId(String id) {
+		return new SrlID(id, this.idType);
 	}
 
 	@Override
@@ -101,4 +99,6 @@ public class SrlIDGenerator implements IDGenerator<IntegerID> {
 	@Override
 	public boolean isExternal() { return false; }
 
+	@Override
+	public boolean isSrl() { return true; }
 }

@@ -97,4 +97,6 @@ public class SimpleIDGenerator implements IDGenerator<IntegerID> {
 	@Override
 	public boolean isExternal() { return false; }
 
+	@Override
+	public boolean isSrl() { return false; }
 }

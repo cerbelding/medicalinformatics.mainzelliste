@@ -109,4 +109,6 @@ public interface IDGenerator<I extends ID> {
 	 * generated IDs.
 	 */
 	public boolean isExternal();
+
+	public boolean isSrl();
 }

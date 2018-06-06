@@ -20,6 +20,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import de.sessionTokenSimulator.PatientRecords;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
@@ -57,10 +58,10 @@ public enum PatientBackend {
 
 	/** The logging instance */
 	private Logger logger = Logger.getLogger(this.getClass());
-        
+
 	/** The TLS context depending on the configuration parameters */
 	private SSLConnectionSocketFactory sslsf;
-        
+
 	/**
 	 * Creates an instance. Invoked on first access to {@link PatientBackend#instance}.
 	 */
@@ -102,7 +103,7 @@ public enum PatientBackend {
 	 * is created. If a possible match is found and the form has an entry
 	 * "sureness" whose value can be parsed to true (by Boolean.parseBoolean()),
 	 * a new patient is created. Otherwise, return null.
-	 * 
+	 *
 	 * @param tokenId
 	 *            ID of a valid "addPatient" token.
 	 * @param form
@@ -163,7 +164,7 @@ public enum PatientBackend {
 			 *  3. Thread A deletes t and exits synchronized block
 			 *  4. Thread B enters synchronized block with invalid token
 			 */
-			
+
 			t = (AddPatientToken) Servers.instance.getTokenByTid(tokenId);
 
 			if(t == null){
@@ -177,13 +178,13 @@ public enum PatientBackend {
 			logger.info("Handling ID Request with token " + t.getId());
 			Patient p = new Patient();
 			Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
-			
+
 			// get fields transmitted from MDAT server
 			for (String key : t.getFields().keySet())
 			{
 				form.add(key, t.getFields().get(key));
 			}
-			
+
 			// get externally generated ids transmitted from MDAT server
 			for (String key : t.getIds().keySet())
 			{
@@ -191,7 +192,7 @@ public enum PatientBackend {
 			}
 
 			Validator.instance.validateForm(form, true);
-			
+
 			for(String s: Config.instance.getFieldKeys()){
 				try {
 				    chars.put(s, Field.build(s, form.getFirst(s)));
@@ -202,15 +203,15 @@ public enum PatientBackend {
 			}
 
 			p.setFields(chars);
-			
+
 			// Normalization, Transformation
 			Patient pNormalized = Config.instance.getRecordTransformer().transform(p);
 			pNormalized.setInputFields(chars);
-			
+
 			match = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
 			logger.debug("Best matching weight: " + match.getBestMatchedWeight());
-			Patient assignedPatient; // The "real" patient that is assigned (match result or new patient) 
-			
+			Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
+
 			// If a list of ID types is given in token, return these types
 			Set<String> idTypes;
 			idTypes = t.getRequestedIdTypes();
@@ -224,21 +225,24 @@ public enum PatientBackend {
 			case MATCH :
 				for (String idType : idTypes)
 					returnIds.add(match.getBestMatchedPatient().getOriginal().getId(idType));
-				
+
 				assignedPatient = match.getBestMatchedPatient();
 				// log token to separate concurrent request in the log file
-				logger.info("Found match with ID " + returnIds.get(0).getIdString() + " for ID request " + t.getId()); 
+				logger.info("Found match with ID " + returnIds.get(0).getIdString() + " for ID request " + t.getId());
 				break;
-				
+
 			case NON_MATCH :
 			case POSSIBLE_MATCH :
-				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH 
+				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH
 				&& (form.getFirst("sureness") == null || !Boolean.parseBoolean(form.getFirst("sureness")))) {
-					return new IDRequest(p.getFields(), idTypes, match, null);
+					return new IDRequest(p.getFields(), idTypes, match, null, t);
 				}
 
 				// Generate internal IDs
-				Set<ID> newIds = IDGeneratorFactory.instance.generateIds();			
+				boolean eagerGeneration = Boolean
+						.parseBoolean(Config.instance.getProperty("idgenerators.eagerGeneration"));
+				Set<ID> newIds = eagerGeneration ? IDGeneratorFactory.instance.generateIds()
+						: IDGeneratorFactory.instance.generateIds(idTypes);
 
 				// Import external IDs
 				for (String extIDType : IDGeneratorFactory.instance.getExternalIdTypes()) {
@@ -258,11 +262,18 @@ public enum PatientBackend {
 						newIds.add(extId);
 					}
 				}
+
 				pNormalized.setIds(newIds);
+
+				// Send requests for SRL IDs
+				for (String srlIDType : IDGeneratorFactory.instance.getSrlIdTypes()) {
+						PatientRecords records = new PatientRecords();
+						records.linkPatient(pNormalized, srlIDType, pNormalized.getId(srlIDType).getIdString());
+				}
 
 				for (String idType : idTypes) {
 					ID thisID = pNormalized.getId(idType);
-					returnIds.add(thisID);				
+					returnIds.add(thisID);
 					logger.info("Created new ID " + thisID.getIdString() + " for ID request " + (t == null ? "(null)" : t.getId()));
 				}
 				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH)
@@ -270,25 +281,25 @@ public enum PatientBackend {
 					pNormalized.setTentative(true);
 					for (ID thisId : returnIds)
 						thisId.setTentative(true);
-					logger.info("New ID " + returnIds.get(0).getIdString() + " is tentative. Found possible match with ID " + 
+					logger.info("New ID " + returnIds.get(0).getIdString() + " is tentative. Found possible match with ID " +
 							match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
 				}
 				assignedPatient = pNormalized;
 				break;
-		
+
 			default :
 				logger.error("Illegal match result: " + match.getResultType());
 				throw new InternalErrorException();
 			}
 
 			logger.info("Weight of best match: " + match.getBestMatchedWeight());
-			
-			request = new IDRequest(p.getFields(), idTypes, match, assignedPatient);
-			
+
+			request = new IDRequest(p.getFields(), idTypes, match, assignedPatient, t);
+
 			ret.put("request", request);
 
 			Persistor.instance.addIdRequest(request);
-			
+
 			if(t != null && ! Config.instance.debugIsOn())
 				Servers.instance.deleteToken(t.getId());
 		}
@@ -303,16 +314,16 @@ public enum PatientBackend {
 
 				if (apiVersion.majorVersion >= 2) {
 					// Collect ids for Callback object
-					JSONArray idsJson = new JSONArray(); 
-					
+					JSONArray idsJson = new JSONArray();
+
 					for (ID thisID : returnIds) {
 						idsJson.put(thisID.toJSON());
 					}
-					
+
 					reqBody.put("tokenId", t.getId())
 					.put("ids", idsJson);
 
-				} else {  // API version 1.0 
+				} else {  // API version 1.0
 					if (returnIds.size() > 1) {
 						throw new WebApplicationException(
 								Response.status(Status.BAD_REQUEST)
@@ -320,12 +331,12 @@ public enum PatientBackend {
 										"but several were requested. Set mainzellisteApiVersion to a " +
 										"value >= 2.0 or request only one ID type in token.")
 										.build());
-					}					
+					}
 					reqBody.put("tokenId", t.getId())
 						.put("id", returnIds.get(0).getIdString());
 				}
-                                
-				HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();                                
+
+				HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
 				HttpPost callbackReq = new HttpPost(callback);
 				callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
 				callbackReq.setHeader("User-Agent", Config.instance.getUserAgentString());
@@ -340,7 +351,7 @@ public enum PatientBackend {
 					throw new InternalErrorException("Request to callback failed!");
 				}
 				// TODO: Server-Antwort auslesen
-                
+
 			} catch (JSONException e) {
 				logger.error("Internal serializitaion error: ", e);
 				throw new InternalErrorException("Internal serializitaion error!");
@@ -354,7 +365,7 @@ public enum PatientBackend {
 
 	/**
 	 * Set fields of a patient to new values.
-	 * 
+	 *
 	 * @param patientId
 	 *            ID of the patient to edit.
 	 * @param newFieldValues
@@ -366,7 +377,7 @@ public enum PatientBackend {
 	public void editPatient(ID patientId, Map<String, String> newFieldValues) {
 		// Check that provided ID is valid
 		if (patientId == null) {
-			// Calling methods should provide a legal id, therefore log an error if id is null 
+			// Calling methods should provide a legal id, therefore log an error if id is null
 			logger.error("editPatient called with null id.");
 			throw new InternalErrorException("An internal error occured: editPatients called with null. Please contact the administrator.");
 		}
