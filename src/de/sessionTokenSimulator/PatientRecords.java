@@ -9,6 +9,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.util.Base64;
+import java.util.BitSet;
 import java.util.List;
 
 // 1. Read all Patients and save in Communicator Format
@@ -111,7 +112,8 @@ public class PatientRecords {
                     if (field != null && !field.isEmpty()) {
                         BloomFilterTransformer transformer = new BloomFilterTransformer();
                         resultField = transformer.transform((PlainTextField) field);
-                        byte[] encodedBytes = Base64.getEncoder().encode(resultField.getValue().toString().getBytes());
+
+                        byte[] encodedBytes = Base64.getEncoder().encode(((HashedField) resultField).getValue().toByteArray());
                         resultField = new PlainTextField(new String(encodedBytes));
                     } else {
                         resultField = field;
@@ -128,5 +130,23 @@ public class PatientRecords {
         }
 
         return fields;
+    }
+
+    /**
+     * Conversion of a BitSet to a String representation.
+     *
+     * @param hash A BitSet
+     * @return A String of length hash.size() where the i-th position is set to
+     * "1" if the i-th bit of hash is set and "0" otherwise.
+     */
+    private String BitSet2String(BitSet hash) {
+        StringBuffer result = new StringBuffer(hash.size());
+        for (int i = 0; i < hash.length(); i++) {
+            if (hash.get(i))
+                result.append("1");
+            else
+                result.append("0");
+        }
+        return result.toString();
     }
 }
