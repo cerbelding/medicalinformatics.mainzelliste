@@ -5,6 +5,7 @@ import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.securerecordlinkage.CommunicatorResource;
+import de.pseudonymisierung.mainzelliste.Config;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
@@ -49,13 +50,24 @@ public class PatientRecords {
 
     public JSONArray readAllPatientsAsArray() {
 
+        Config config = Config.instance;
         JSONArray array = new JSONArray();
         try {
             List<Patient> patientList = Persistor.instance.getPatients();
             for (Patient p : patientList) {
                 JSONObject fields = new JSONObject();
                 for (String fieldKey : p.getFields().keySet()) {
-                    fields.put(fieldKey, p.getFields().get(fieldKey));
+                    String FieldName = "field." + fieldKey + ".transformers";
+                    if (!config.getProperty(FieldName).isEmpty()) {
+                        if (config.getProperty(FieldName).contains("Decomposer")) {
+                            String fieldValue = String.valueOf(p.getFields().get(fieldKey));
+                            fieldValue = fieldValue.substring(1, fieldValue.length()-2);
+                            fieldValue = fieldValue.replaceAll(",","");
+                            fields.put(fieldKey, fieldValue.trim());
+                        }
+                    } else {
+                        fields.put(fieldKey, p.getFields().get(fieldKey));
+                    }
                 }
                 JSONObject tmpObject = new JSONObject();
                 tmpObject.put("fields", fields);
