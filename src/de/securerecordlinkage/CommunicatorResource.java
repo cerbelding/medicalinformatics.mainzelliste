@@ -34,6 +34,8 @@ public class CommunicatorResource {
 
     private String requestedIDType = "SRL1";
     private String baseCommunicatorURL = "http://localhost:8079/Communicator/getAllRecords";
+    private String callBackLinkURL = "http://localhost:8079/Communicator/linkCallBack";
+    private String secureEpiLinkRemoteURL = "http://localhost:8079/Communicator/linkCallBack";
 
     // Read config with SRL links to know where to send the request
     public void init() {
@@ -50,11 +52,12 @@ public class CommunicatorResource {
         try {
             JSONObject recordToSend = new JSONObject();
             JSONObject callbackObj = new JSONObject();
-            callbackObj.put("url", "http://localhost:8079/Communicator/linkCallBack");
+            callbackObj.setEscapeForwardSlashAlways(false);
+            callbackObj.put("url", callBackLinkURL);
             callbackObj.put("id", recordAsJson.get("id"));
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
-            SendHelper.doRequest("http://localhost:8079/Communicator/linkCallBack", "POST", recordToSend.toString());
+            SendHelper.doRequest(secureEpiLinkRemoteURL, "POST", recordAsJson.toString());
         } catch (Exception e) {
             logger.error(e);
         }
@@ -68,7 +71,7 @@ public class CommunicatorResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response setLinkRecord(@Context HttpServletRequest req, String json) {
         logger.info("/linkCallBack called");
-        logger.info("setLinkRecord");
+        logger.info("setLinkRecord()");
 
         if (!authorizationValidator(req)) {
             return Response.status(401).build();
@@ -95,7 +98,7 @@ public class CommunicatorResource {
     @Path("/getAllRecords")
     //@Produces(MediaType.APPLICATION_JSON)
     public Response getAllRecords(@Context HttpServletRequest req, @Context UriInfo info) {
-        logger.info("getAllRecords");
+        logger.info("getAllRecords()");
         if (!authorizationValidator(req)) {
             return Response.status(401).build();
         } else {
@@ -114,16 +117,10 @@ public class CommunicatorResource {
         }
     }
 
-    //TODO: still necessary?
-    // Process callback
-    public void processCallback() {
-        // Implemented in Class editID
-    }
-
     //----Helper functions ---------------------------------------------
     private boolean authorizationValidator(HttpServletRequest request) {
 
-        logger.info("authorizationValidator " + "validate ApiKey");
+        logger.info("authorizationValidator() " + "validate ApiKey");
         //TODO: get authKey from Config
         String authKey = "123abc";
         String authHeader;
@@ -153,7 +150,7 @@ public class CommunicatorResource {
     private JSONObject prepareReturnDataSet(JSONArray records) throws JSONException {
         //TODO: handle page 0 and > last page
 
-        logger.info("prepareReturnDataSet");
+        logger.info("prepareReturnDataSet()");
 
         JSONObject answerObject = new JSONObject();
 
@@ -233,7 +230,7 @@ public class CommunicatorResource {
      * @param newToDate
      */
     private void setQueryParameter(List<String> newPage, List<String> newPageSize, List<String> newToDate, List<String> newRequestedIDType) {
-        logger.info("setQueryParameter: " + "newPage: " + newPage + ", newPageSize: " + newPageSize + ", newToDate" + newToDate + ", newRequestedIDType" + newRequestedIDType);
+        logger.info("setQueryParameter(): " + "newPage: " + newPage + ", newPageSize: " + newPageSize + ", newToDate" + newToDate + ", newRequestedIDType" + newRequestedIDType);
 
         if (newPage != null) {
             if (newPage.get(0).matches("[0-9]+") == true) {
@@ -284,6 +281,7 @@ public class CommunicatorResource {
 
     //Temporal object, just for developing purpose
     private JSONObject jsondummy() {
+        logger.info("jsondummy()");
         JSONObject reqObject = new JSONObject();
         JSONObject tmpObj = new JSONObject();
         try {
