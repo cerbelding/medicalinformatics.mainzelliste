@@ -37,11 +37,11 @@ public class Initializer {
 
         Config c = Config.instance;
         JSONObject configJSON = createLocalInitJSON(c);
-        SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", configJSON.toString());
+//        SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", configJSON.toString());
 
         de.securerecordlinkage.initializer.Config selConfing = de.securerecordlinkage.initializer.Config.instance;
         JSONObject remoteInitJSON = createRemoteInitJSON(selConfing);
-        SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", remoteInitJSON.toString());
+//        SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", remoteInitJSON.toString());
 
         log4jSetup();
 
