@@ -1,9 +1,6 @@
 package de.sessionTokenSimulator;
 
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.Field;
-import de.pseudonymisierung.mainzelliste.Patient;
-import de.pseudonymisierung.mainzelliste.PlainTextField;
+import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
 import de.securerecordlinkage.CommunicatorResource;
@@ -63,24 +60,29 @@ public class PatientRecords {
                     Field<?> field = p.getFields().get(fieldKey);
                     Field<?> resultField;
 
-                    if (field instanceof PlainTextField) {
-                        if (!config.getProperty(FieldName).isEmpty() && config.getProperty(FieldName)
+                    if ((field instanceof PlainTextField) || (field instanceof CompoundField)) {
+                        if (config.getProperty(FieldName) != null && config.getProperty(FieldName)
                                                                               .contains("Decomposer")) {
                             String fieldValue = String.valueOf(p.getFields().get(fieldKey));
                             fieldValue = fieldValue.substring(1, fieldValue.length() - 2);
                             fieldValue = fieldValue.replaceAll(",", "");
-                            field.setValue(fieldValue);
+                            field = new PlainTextField(fieldValue.trim());
                         }
 
-                        BloomFilterTransformer transformer = new BloomFilterTransformer();
-                        resultField = transformer.transform((PlainTextField) field);
-                        byte[] encodedBytes = Base64.getEncoder().encode(resultField.getValue().toString().getBytes());
-                        resultField.setValue(new String(encodedBytes));
+                        if (field != null && !field.isEmpty()) {
+                            BloomFilterTransformer transformer = new BloomFilterTransformer();
+                            resultField = transformer.transform((PlainTextField) field);
+                            byte[] encodedBytes = Base64.getEncoder().encode(resultField.getValue().toString().getBytes());
+                            resultField = new PlainTextField(new String(encodedBytes));
+                        }
+                        else {
+                            resultField = field;
+                        }
                     } else {
                         resultField = field;
                     }
 
-                    fields.put(fieldKey, resultField);
+                    fields.put(fieldKey, resultField.getValue());
                 }
                 JSONObject tmpObject = new JSONObject();
                 tmpObject.put("fields", fields);
