@@ -35,13 +35,23 @@ public class Initializer {
         Logger logger = Logger.getLogger(de.pseudonymisierung.mainzelliste.Initializer.class);
         logger.info("#####Initializing...");
 
-        Config c = Config.instance;
-        JSONObject configJSON = createLocalInitJSON(c);
-//        SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", configJSON.toString());
+        try {
+            Config c = Config.instance;
+            JSONObject configJSON = createLocalInitJSON(c);
+            SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", configJSON.toString());
+        } catch (Exception e) {
+            logger.error("initialize() - Could not send initJSON " + e.toString());
+            //e.printStackTrace();
+        }
 
-        de.securerecordlinkage.initializer.Config selConfing = de.securerecordlinkage.initializer.Config.instance;
-        JSONObject remoteInitJSON = createRemoteInitJSON(selConfing);
-//        SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", remoteInitJSON.toString());
+        try {
+            de.securerecordlinkage.initializer.Config selConfing = de.securerecordlinkage.initializer.Config.instance;
+            JSONObject remoteInitJSON = createRemoteInitJSON(selConfing);
+            SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", remoteInitJSON.toString());
+        } catch (Exception e) {
+            logger.error("initialize() - Could not send remoteJSON " + e.toString());
+            //e.printStackTrace();
+        }
 
         log4jSetup();
 
