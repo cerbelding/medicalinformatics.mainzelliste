@@ -33,9 +33,10 @@ public class CommunicatorResource {
     private int page = 1;
 
     private String requestedIDType = "SRL1";
-    private String baseCommunicatorURL = "http://localhost:8079/Communicator/getAllRecords";
-    private String callBackLinkURL = "http://localhost:8079/Communicator/linkCallBack";
-    private String secureEpiLinkRemoteURL = "http://localhost:8079/Communicator/linkCallBack";
+    private String baseCommunicatorURL = "http://localhost:8082/Communicator/getAllRecords";
+    private String callBackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
+    private String secureEpiLinkRemoteURL = "http://localhost:8082/Communicator/linkCallBack";
+    private String apiKey = "123abc";
 
     // Read config with SRL links to know where to send the request
     public void init() {
@@ -122,7 +123,7 @@ public class CommunicatorResource {
 
         logger.info("authorizationValidator() " + "validate ApiKey");
         //TODO: get authKey from Config
-        String authKey = "123abc";
+        String authKey = apiKey;
         String authHeader;
 
         try {
