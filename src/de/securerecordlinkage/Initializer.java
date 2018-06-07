@@ -37,7 +37,11 @@ public class Initializer {
 
         Config c = Config.instance;
         JSONObject configJSON = createLocalInitJSON(c);
-        SendHelper.doRequest("https://postman-echo.com/put", "PUT", configJSON.toString());
+        SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", configJSON.toString());
+
+        de.securerecordlinkage.initializer.Config selConfing = de.securerecordlinkage.initializer.Config.instance;
+        JSONObject remoteInitJSON = createRemoteInitJSON(selConfing);
+        SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", remoteInitJSON.toString());
 
         log4jSetup();
 
@@ -176,7 +180,7 @@ public class Initializer {
     // TODO: 1. Create config file for remote init
     // 2. Read parameters from this file
     // 3. Use samply.config ?
-    private JSONObject createRemoteInitJSON(Config config){
+    private JSONObject createRemoteInitJSON(de.securerecordlinkage.initializer.Config config) {
         return null;
     }
 
