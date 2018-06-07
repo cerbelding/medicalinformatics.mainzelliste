@@ -48,44 +48,12 @@ public class PatientRecords {
      **/
 
     public JSONArray readAllPatientsAsArray() {
-
-        Config config = Config.instance;
         JSONArray array = new JSONArray();
         try {
             List<Patient> patientList = Persistor.instance.getPatients();
             for (Patient p : patientList) {
-                JSONObject fields = new JSONObject();
-                for (String fieldKey : p.getFields().keySet()) {
-                    String FieldName = "field." + fieldKey + ".transformers";
-                    Field<?> field = p.getFields().get(fieldKey);
-                    Field<?> resultField;
-
-                    if ((field instanceof PlainTextField) || (field instanceof CompoundField)) {
-                        if (config.getProperty(FieldName) != null && config.getProperty(FieldName)
-                                                                              .contains("Decomposer")) {
-                            String fieldValue = String.valueOf(p.getFields().get(fieldKey));
-                            fieldValue = fieldValue.substring(1, fieldValue.length() - 2);
-                            fieldValue = fieldValue.replaceAll(",", "");
-                            field = new PlainTextField(fieldValue.trim());
-                        }
-
-                        if (field != null && !field.isEmpty()) {
-                            BloomFilterTransformer transformer = new BloomFilterTransformer();
-                            resultField = transformer.transform((PlainTextField) field);
-                            byte[] encodedBytes = Base64.getEncoder().encode(resultField.getValue().toString().getBytes());
-                            resultField = new PlainTextField(new String(encodedBytes));
-                        }
-                        else {
-                            resultField = field;
-                        }
-                    } else {
-                        resultField = field;
-                    }
-
-                    fields.put(fieldKey, resultField.getValue());
-                }
                 JSONObject tmpObject = new JSONObject();
-                tmpObject.put("fields", fields);
+                tmpObject.put("fields", getFieldsObject(p));
                 array.put(tmpObject);
             }
         } catch (Exception e) {
@@ -102,12 +70,7 @@ public class PatientRecords {
             tmpObj.put("IDType", IDType);
             tmpObj.put("IDString", IDString);
             recordAsJSON.put("id", tmpObj);
-
-            JSONObject fields = new JSONObject();
-            for (String fieldKey : p.getFields().keySet()) {
-                fields.put(fieldKey, p.getFields().get(fieldKey));
-            }
-            recordAsJSON.put("fields", fields);
+            recordAsJSON.put("fields", getFieldsObject(p));
             CommunicatorResource rs = new CommunicatorResource();
             rs.sendLinkRecord(recordAsJSON);
         } catch (Exception e) {
@@ -124,5 +87,46 @@ public class PatientRecords {
         } else {
             return 500;
         }
+    }
+
+    public JSONObject getFieldsObject(Patient p) {
+        Config config = Config.instance;
+        JSONObject fields = new JSONObject();
+
+        try {
+            for (String fieldKey : p.getFields().keySet()) {
+                String FieldName = "field." + fieldKey + ".transformers";
+                Field<?> field = p.getFields().get(fieldKey);
+                Field<?> resultField;
+
+                if ((field instanceof PlainTextField) || (field instanceof CompoundField)) {
+                    if (config.getProperty(FieldName) != null && config.getProperty(FieldName)
+                            .contains("Decomposer")) {
+                        String fieldValue = String.valueOf(p.getFields().get(fieldKey));
+                        fieldValue = fieldValue.substring(1, fieldValue.length() - 2);
+                        fieldValue = fieldValue.replaceAll(",", "");
+                        field = new PlainTextField(fieldValue.trim());
+                    }
+
+                    if (field != null && !field.isEmpty()) {
+                        BloomFilterTransformer transformer = new BloomFilterTransformer();
+                        resultField = transformer.transform((PlainTextField) field);
+                        byte[] encodedBytes = Base64.getEncoder().encode(resultField.getValue().toString().getBytes());
+                        resultField = new PlainTextField(new String(encodedBytes));
+                    } else {
+                        resultField = field;
+                    }
+                } else {
+                    resultField = field;
+                }
+
+                fields.put(fieldKey, resultField.getValue());
+            }
+
+        } catch (Exception e) {
+            logger.info(e);
+        }
+
+        return fields;
     }
 }
