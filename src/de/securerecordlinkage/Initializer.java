@@ -32,22 +32,37 @@ public class Initializer {
     }
 
     private void initialize() {
-        Logger logger = Logger.getLogger(de.pseudonymisierung.mainzelliste.Initializer.class);
+        Logger logger = Logger.getLogger(de.securerecordlinkage.Initializer.class);
         logger.info("#####Initializing...");
 
         try {
+            logger.info("initialize - SRL");
             Config c = Config.instance;
             JSONObject configJSON = createLocalInitJSON(c);
-            SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", configJSON.toString());
+            SendHelper.doRequest(c.getProperty("srl.initLocal"), "PUT", configJSON.toString());
+
         } catch (Exception e) {
             logger.error("initialize() - Could not send initJSON " + e.toString());
             //e.printStackTrace();
         }
 
         try {
-            de.securerecordlinkage.initializer.Config selConfing = de.securerecordlinkage.initializer.Config.instance;
-            JSONObject remoteInitJSON = createRemoteInitJSON(selConfing);
-            SendHelper.doRequest("https://192.168.12.154:8080/init/local", "PUT", remoteInitJSON.toString());
+            logger.info("initialize - Communicator");
+            Config c = Config.instance;
+            CommunicatorResource.init(c);
+
+        } catch (Exception e) {
+            logger.error("initialize() - Could not load configuration and init communicator");
+            //e.printStackTrace();
+        }
+        //Init Communicator Ressource
+
+
+        try {
+            de.securerecordlinkage.initializer.Config selConfig = de.securerecordlinkage.initializer.Config.instance;
+            JSONObject remoteInitJSON = createRemoteInitJSON(selConfig);
+            //SendHelper.doRequest(selConfig.getProperty("srl.initLocal"), "PUT", remoteInitJSON.toString());
+
         } catch (Exception e) {
             logger.error("initialize() - Could not send remoteJSON " + e.toString());
             //e.printStackTrace();
