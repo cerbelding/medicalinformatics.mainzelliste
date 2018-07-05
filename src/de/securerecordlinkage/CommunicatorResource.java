@@ -183,7 +183,7 @@ public class CommunicatorResource {
 
         //Create URLs for paging navigation and add to JSON
         int minPage = 1;
-        int lastPage = ((int) Math.ceil(Double.valueOf(records.length()) / Double.valueOf(pageSize)));
+        int lastPage = ((int) Math.ceil((double) records.length() / (double) pageSize));
         if ((page - 1) > 0) {
             minPage = (page - 1);
         }
@@ -206,7 +206,7 @@ public class CommunicatorResource {
 
         answerObject.put("total", records.length());
         answerObject.put("currentPageNumber", page);
-        answerObject.put("lastPageNumber", (int) Math.ceil(Double.valueOf(records.length()) / Double.valueOf(pageSize)));
+        answerObject.put("lastPageNumber", (int) Math.ceil((double) records.length() / (double) pageSize));
         answerObject.put("pageSize", pageSize);
         answerObject.put("toDate", toDate);
 
@@ -238,15 +238,15 @@ public class CommunicatorResource {
     /**
      * Function sets Parameter which can be used to query the records
      *
-     * @param newPage
-     * @param newPageSize
-     * @param newToDate
+     * @param newPage new value for page number.
+     * @param newPageSize new value for pageSize - how many records each site max. includes
+     * @param newToDate new value for toDate - maximum time of the newest entry (TODO: not implemented yet)
      */
     private void setQueryParameter(List<String> newPage, List<String> newPageSize, List<String> newToDate, List<String> newRequestedIDType) {
         logger.info("setQueryParameter(): " + "newPage: " + newPage + ", newPageSize: " + newPageSize + ", newToDate" + newToDate + ", newRequestedIDType" + newRequestedIDType);
 
         if (newPage != null) {
-            if (newPage.get(0).matches("[0-9]+") == true) {
+            if (newPage.get(0).matches("[0-9]+")) {
                 logger.debug("set newPage to: " + newPage);
                 page = Integer.valueOf(newPage.get(0));
             } else {
@@ -257,7 +257,7 @@ public class CommunicatorResource {
         }
 
         if (newPageSize != null) {
-            if (newPageSize.get(0).matches("[0-9]+") == true) {
+            if (newPageSize.get(0).matches("[0-9]+")) {
                 logger.debug("set newPageSize to: " + newPageSize);
                 pageSize = Integer.valueOf(newPageSize.get(0));
             } else {
@@ -268,7 +268,7 @@ public class CommunicatorResource {
         }
 
         if (newToDate != null) {
-            if (newToDate.get(0).matches("[0-9]+") == true) {
+            if (newToDate.get(0).matches("[0-9]+")) {
                 logger.debug("set newToDate to: " + newToDate);
                 toDate = Integer.valueOf(newToDate.get(0));
             } else {
