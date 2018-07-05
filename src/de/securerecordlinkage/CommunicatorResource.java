@@ -1,5 +1,6 @@
 package de.securerecordlinkage;
 
+import de.pseudonymisierung.mainzelliste.Config;
 import de.sessionTokenSimulator.PatientRecords;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
@@ -19,7 +20,7 @@ import java.util.List;
 @Path("Communicator")
 public class CommunicatorResource {
 
-    private Logger logger = Logger.getLogger(this.getClass());
+    private static Logger logger = Logger.getLogger("de.securerecordlinkage.CommunicatorResource");
 
     // 2a. Re-send linkRecord to SRL
     // 2b. Process callback from SRL (linkRecord)
@@ -32,14 +33,25 @@ public class CommunicatorResource {
     private int toDate = 0;
     private int page = 1;
 
-    private String requestedIDType = "SRL1";
-    private String baseCommunicatorURL = "http://localhost:8082/Communicator/getAllRecords";
-    private String callBackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
-    private String secureEpiLinkRemoteURL = "http://localhost:8082/Communicator/linkCallBack";
-    private String apiKey = "123abc";
+    private static String requestedIDType = "SRL1";
+    private static String baseCommunicatorURL = "http://localhost:8082/Communicator/getAllRecords";
+    private static String callBackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
+    private static String secureEpiLinkRemoteURL = "http://localhost:8082/Communicator/linkCallBack";
+    private static String apiKey = "123abc";
 
     // Read config with SRL links to know where to send the request
-    public void init() {
+    //TODO: make init non static to communicate with X partners
+    public static void init(Config config) {
+        logger.info("Load config variables for communicator");
+
+        requestedIDType = config.getProperty("srl.requestedIDType");
+        baseCommunicatorURL = config.getProperty("srl.baseCommunicatorURL");
+        callBackLinkURL = config.getProperty("srl.callBackLinkURL");
+        secureEpiLinkRemoteURL = config.getProperty("srl.secureEpiLinkRemoteURL");
+        apiKey = config.getProperty("srl.apiKey");
+
+        logger.info("requestedIDType: " + requestedIDType + " baseCommunicatorURL: " + baseCommunicatorURL + " callBackLinkURL: " + callBackLinkURL + " secureEpiLinkRemoteURL: " + secureEpiLinkRemoteURL);
+
 
     }
 
