@@ -4,14 +4,14 @@
 # a variety of szenarios. At least, the sections "Database setup" and "xDAT servers"
 # should be adjusted to the local environment.
 
-# General format: Key-value pairs, separated by spaces, tabs, "=", ":". 
+# General format: Key-value pairs, separated by spaces, tabs, "=", ":".
 # Lines starting with "#" are comments. Comments appended to a line are not possible!
 # See Javadoc for java.util.Properties#load(Reader) for details.
 
 # Property names may contain letters, numbers, underscores and dots. Dots define a hierarchical
 # structure on the property names.
 
-# For a comprehensive documentation of configuration parameters see the configuration manual 
+# For a comprehensive documentation of configuration parameters see the configuration manual
 # ("Konfigurationshandbuch").
 
 # debug mode: If set to true, token handling is disabled (i.e. no tokens are necessary).
@@ -24,20 +24,20 @@ dist = Mainzelliste
 
 # Uncomment this for PostgreSQL
 db.driver = org.postgresql.Driver
-db.url = jdbc:postgresql://localhost:5432/mainzelliste
+db.url = jdbc:postgresql://localhost:5432/mainzelliste3
 
 # Uncomment this for MySQL
 # db.driver = com.mysql.jdbc.Driver
 # db.url = jdbc:mysql://localhost:3306/mainzelliste
 
-db.username = postgres
-db.password = postgres
+db.username = mainzelliste
+db.password = mainzelliste
 
 # Logging
 #
 # By default, logs are written to stdout. Uncomment the following values to log to a file
 # instead.
- 
+
 #log.filename = /var/log/tomcat6/mainzelliste.log
 #log.level = DEBUG
 
@@ -47,16 +47,16 @@ db.password = postgres
 # where fieldname is a unique identifier and fieldtype the name of a subclass of Field.
 # Input data from the field will be stored in objects of that class.
 #
-# Every field defined here must either be contained in the input form 
+# Every field defined here must either be contained in the input form
 # WEB-INF/jsp/patientFormElements.jsp (with corresponding "name"-Tag) or
-# be provided in the createPatient Token 
+# be provided in the createPatient Token
 
 # In order to deactivate fields temporarily, it is sufficient to comment out the field definition.
 
 field.vorname.type = PlainTextField
 field.nachname.type = PlainTextField
 field.geburtsname.type = PlainTextField
-field.geburtstag.type = IntegerField 
+field.geburtstag.type = IntegerField
 field.geburtsmonat.type = IntegerField
 field.geburtsjahr.type = IntegerField
 field.plz.type = PlainTextField
@@ -108,7 +108,7 @@ exchangeGroup.0 = vorname, nachname, geburtsname
 # Transformations for a field {fieldname} are defined by
 # field.{fieldname}.transformers = {transformerlist}, where
 # transformerlist is a comma-separated list of names of subclasses of FieldTransformer.
-# 
+#
 # The first transformer in the list is applied to the input field as defined in the field definition;
 # i.e. the type parameter IN of the first transformer must match the class of the field.
 # Every subsequent transformer is applied to the output of its predecessor; i.e. its type parameter IN
@@ -193,7 +193,7 @@ matcher.epilink.threshold_non_match = 0.6
 
 
 # ID-Generators
-# 
+#
 # idgenerators: A comma-seperated list of identifiers of ID-Generators, corresponding to ID types.
 
 # For every generator:
@@ -231,12 +231,12 @@ result.printIdat = true
 # language =
 
 # xDAT servers
-# 
+#
 # Known Permissions / Token Types:
-# 
+#
 # - showSessionIds: see own sessions via GET /sessions
 # - createSession: create session via POST /sessions
-# 
+#
 # - createToken: create tokens -- in addition, permission "tt_x" is req'd, where x is one of these TOKEN TYPES:
 #   - tt_addPatient: allows to generate one (1) ID. Token is invalidated afterwards even if an existing ID was returned.
 #	- tt_readPatients: allows to read IDAT or pseudonyms of patients
@@ -247,7 +247,7 @@ servers.0.apiKey = testApi
 servers.0.permissions = createSession;showSessionIds;deleteAllPatients;createToken;tt_addPatient;tt_readPatients;tt_editPatient
 
 # Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only)
- 
+
 # Allow only requests from localhost (e.g. for developing)
 # servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1
 
@@ -260,7 +260,7 @@ servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1;192.168.56.0/24
 # Allowed origins for cross origin resource sharing (CORS), multiple values separated by ";"
 servers.allowedOrigins = chrome-extension://fdmmgilgnpjigdojojpjoooidkmcomcm
 
-# servers.allowedOrigins = https://mdat-server.example.org 
+# servers.allowedOrigins = https://mdat-server.example.org
 
 # Allowed Format of callback
 callback.allowedFormat = https://.*
@@ -278,7 +278,7 @@ callback.allowSelfsigned = false
 #         in the file system, a path within the .war file or a path relative to META-INF/resource
 #         within a .jar file on the class path (e.g. a dependency).
 
-# operator.contact = 
+# operator.contact =
 
 # Logo file: example for absolute path
 # operator.logo = /etc/mainzelliste/logo.png
@@ -286,5 +286,13 @@ callback.allowSelfsigned = false
 # Logo file: example for relative path in .war file
 # operator.logo = /WEB-INF/classes/logo.png
 
-# Logo file: example for file in META-INF/resources within a .jar file on the classpath 
+# Logo file: example for file in META-INF/resources within a .jar file on the classpath
 # operator.logo = /logo.png
+
+srl.requestedIDType = SRL1
+srl.baseCommunicatorURL = http://192.168.0.101:8066/Communicator/getAllRecords
+srl.callBackLinkURL = http://192.168.0.101:8066/Communicator/linkCallBack
+srl.secureEpiLinkRemoteURL = http://192.168.0.101:8080/init/dkfz
+srl.apiKey = 123abc
+
+srl.initLocal = http://192.168.0.101:8080/init/local
