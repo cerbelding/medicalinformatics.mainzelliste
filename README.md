@@ -49,7 +49,7 @@ We would love to include your useful changes to the Mainzelliste code in a futur
 
 ## Release notes
 
-###1.7.0
+### 1.7.0
 
 This release introduces support for externally generated IDs. This feature introduces an incompatible API change; therefore the API version is bumped to 3.0. However, old API versions are still supported by means of the `mainzellisteApiVersion` header, i.e. this software release is fully backwards compatible. 
 
