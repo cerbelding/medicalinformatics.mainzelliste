@@ -118,7 +118,7 @@ public class CommunicatorResource {
             try {
                 logger.info("Query parameters: " + info.getQueryParameters());
 
-                setQueryParameter(info.getQueryParameters().get("page"), info.getQueryParameters().get("pagesize"), info.getQueryParameters().get("todate"), info.getQueryParameters().get("requestedIDType"));
+                setQueryParameter(info.getQueryParameters().get("page"), info.getQueryParameters().get("pageSize"), info.getQueryParameters().get("toDate"), info.getQueryParameters().get("requestedIDType"));
                 PatientRecords records = new PatientRecords();
 
                 return Response.ok(prepareReturnDataSet(records.readAllPatientsAsArray()), MediaType.APPLICATION_JSON).build();
@@ -300,7 +300,7 @@ public class CommunicatorResource {
         try {
             tmpObj.put("authType", "apiKey");
             tmpObj.put("sharedKey", "123abc");
-            reqObject.put("localAuthentification", tmpObj);
+            reqObject.put("localAuthentication", tmpObj);
         } catch (Exception e) {
             logger.info("jsondummy exception" + e.getMessage());
         }
