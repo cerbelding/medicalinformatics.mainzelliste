@@ -6,11 +6,13 @@ import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
 import de.securerecordlinkage.CommunicatorResource;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.util.Base64;
 import java.util.BitSet;
 import java.util.List;
+import java.util.Random;
 
 // 1. Read all Patients and save in Communicator Format
 // 2. Encode the fields with BloomFilter
@@ -55,8 +57,16 @@ public class PatientRecords {
             for (Patient p : patientList) {
                 JSONObject tmpObject = new JSONObject();
                 tmpObject.put("fields", getFieldsObject(p));
+                //TODO: use real IDs
+                JSONArray idandIDTypeArray = new JSONArray();
+                idandIDTypeArray.put(getIDObject(p));
+                tmpObject.put("ids", idandIDTypeArray);
                 array.put(tmpObject);
+
+
             }
+
+            //IDGeneratorFactory.instance.getSrlIdTypes();
         } catch (Exception e) {
             logger.info(e);
         }
@@ -88,6 +98,22 @@ public class PatientRecords {
         } else {
             return 500;
         }
+    }
+
+    public JSONObject getIDObject(Patient p){
+        JSONObject fields = new JSONObject();
+        try {
+            fields.put("idType", "lid");
+
+            //TODO: only for testing, use real IDs
+            Random rand = new Random();
+            int  n = rand.nextInt(50000) + 1;
+
+            fields.put("idString", String.valueOf(n));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return fields;
     }
 
     public JSONObject getFieldsObject(Patient p) {

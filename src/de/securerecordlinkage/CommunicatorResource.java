@@ -230,6 +230,7 @@ public class CommunicatorResource {
         //return the whole list
         //answerObject.put("records", records);
 
+        logger.info("send DataSet");
 
         return answerObject;
 
