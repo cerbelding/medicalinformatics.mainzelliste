@@ -10,9 +10,9 @@
   <init:servers>
     <!--1 or more repetitions:-->
     <init:server>
-      <init:apiKey>string</init:apiKey>
-      <init:url>http://www.sample.org/turbine/circum</init:url>
-      <init:idType>string</init:idType>
+      <init:apiKey>einKey</init:apiKey>
+      <init:url>192.168.0.101:8081</init:url>
+      <init:idType>lid</init:idType>
     </init:server>
   </init:servers>
 </init:initializer>
