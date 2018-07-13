@@ -27,7 +27,7 @@
     <xs:complexType name="server">
         <xs:sequence>
             <xs:element name="apiKey" type="xs:string"/>
-            <xs:element name="url" type="xs:anyURI"/>
+            <xs:element name="url" type="xs:string"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="externalServer">
