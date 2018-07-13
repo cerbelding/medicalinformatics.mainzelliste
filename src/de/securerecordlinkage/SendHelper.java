@@ -14,6 +14,7 @@ public class SendHelper {
         //TODO proxy config
         HashMap config = new HashMap();
         HttpConnector hc = new HttpConnector(config);
+        logger.info("action: "+ action + ", data: " + data + ", url: " + url);
         try {
             CloseableHttpResponse result = hc.doAction(action, url, null, null, "application/json", data, false, false, 5);
             if (result.getStatusLine().getStatusCode() == 200) {

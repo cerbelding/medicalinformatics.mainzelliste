@@ -41,6 +41,9 @@ public class Initializer {
             JSONObject configJSON = createLocalInitJSON(c);
             SendHelper.doRequest(c.getProperty("srl.initLocal"), "PUT", configJSON.toString());
 
+
+            //Only For Tests!! We init a second local SRL TODO: delete
+
         } catch (Exception e) {
             logger.error("initialize() - Could not send initJSON " + e.toString());
             //e.printStackTrace();
@@ -59,9 +62,11 @@ public class Initializer {
 
 
         try {
-            de.securerecordlinkage.initializer.Config selConfig = de.securerecordlinkage.initializer.Config.instance;
-            JSONObject remoteInitJSON = createRemoteInitJSON(selConfig);
-            //SendHelper.doRequest(selConfig.getProperty("srl.initLocal"), "PUT", remoteInitJSON.toString());
+            //de.securerecordlinkage.initializer.Config selConfig = de.securerecordlinkage.initializer.Config.instance;
+            Config c = Config.instance;
+            //List<JSONObject> remoteInitJSON = createRemoteInitJSON();
+            JSONObject remoteInitJSON = createRemoteInitJSON();
+            SendHelper.doRequest(c.getProperty("srl.secureEpiLinkRemoteURL"), "PUT", remoteInitJSON.toString());
 
         } catch (Exception e) {
             logger.error("initialize() - Could not send remoteJSON " + e.toString());
@@ -117,19 +122,21 @@ public class Initializer {
     private JSONObject createLocalInitJSON(Config config){
         JSONObject reqObject = new JSONObject();
         JSONObject tmpObj = new JSONObject();
+        JSONObject dateServiceObj = new JSONObject();
         try {
 
-            de.securerecordlinkage.initializer.Config configInitializer = de.securerecordlinkage.initializer.Config.instance;
+            //de.securerecordlinkage.initializer.Config configInitializer = de.securerecordlinkage.initializer.Config.instance;
             tmpObj.put("authType", "apiKey");
-            tmpObj.put("sharedKey", configInitializer.getLocalMainzelliste().getApiKey());
-            reqObject.put("localAuthentification", tmpObj);
+            tmpObj.put("sharedKey", config.getProperty("srl.apiKey"));
+            reqObject.put("localAuthentication", tmpObj);
+            dateServiceObj = new JSONObject();
+            dateServiceObj.put("url", config.getProperty("srl.baseCommunicatorURL"));
+            reqObject.put("dataService", dateServiceObj);
             tmpObj = new JSONObject();
-            tmpObj.put("url", configInitializer.getLocalMainzelliste().getUrl());
-            reqObject.put("dataService", tmpObj);
-            tmpObj.put("algoType", "epiLink");
+            tmpObj.put("algoType", "epilink");
             tmpObj.put("bloomLength", 500);
-            tmpObj.put("threshold_match", config.getProperty("matcher.epilink.threshold_match"));
-            tmpObj.put("threshold_non_match", config.getProperty("matcher.epilink.threshold_non_match"));
+            tmpObj.put("threshold_match", Float.valueOf(config.getProperty("matcher.epilink.threshold_match")));
+            tmpObj.put("threshold_non_match", Float.valueOf(config.getProperty("matcher.epilink.threshold_non_match")));
 
             JSONArray exchangeGroups = new JSONArray();
             for (int i = 0; config.getProperties().containsKey("exchangeGroup." + i); i++) {
@@ -141,14 +148,21 @@ public class Initializer {
 
             JSONArray fields = new JSONArray();
             for (String key : config.getFieldKeys()) {
+
                 String propName = "field." + key;
+
                 JSONObject field = new JSONObject();
                 field.put("name", key);
-                field.put("frequency", config.getProperty( propName + ".frequency"));
-                field.put("errorRate", config.getProperty(propName + ".errorRate"));
+                float frequency = Float.valueOf(config.getProperty("matcher.epilink." + key +  ".frequency"));
+                float errorRate = Float.valueOf(config.getProperty("matcher.epilink." + key +  ".errorRate"));
+
+                field.put("frequency", frequency);
+                field.put("errorRate", errorRate);
+
+                field.put("bitlength", 500);
 
                 String comparator = config.getProperty(propName + ".comparator");
-                comparator = comparator.replace("Field", "").replace("Comparator", "");
+                comparator = comparator.replace("Field", "").replace("Comparator", "").replace("NGram", "nGram").replace("Binary", "binary");
                 field.put("comparator", comparator);
 
                 //TODO What criterias are needed?
@@ -168,6 +182,8 @@ public class Initializer {
                 fields.put(field);
             }
 
+            tmpObj.put("fields", fields);
+
             reqObject.put("algorithm", tmpObj);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -175,9 +191,14 @@ public class Initializer {
         return reqObject;
     }
 
-    private List<JSONObject> createRemoteInitJSON() {
+    // TODO: 1. Create config file for remote init
+    // 2. Read parameters from this file
+    // 3. Use samply.config ?
+    //private List<JSONObject> createRemoteInitJSON() {
+    private JSONObject createRemoteInitJSON() {
         List<ExternalServer> servers = de.securerecordlinkage.initializer.Config.instance.getConfig().getServers().getServer();
-        List<JSONObject> results = new ArrayList<>();
+        //List<JSONObject> results = new ArrayList<>();
+        JSONObject results = new JSONObject();
 
         try {
 
@@ -187,12 +208,33 @@ public class Initializer {
                 JSONObject authObj = new JSONObject();
 
                 tmpObj.put("url", server.getUrl());
-                authObj.put("authType", "apikey");
-                authObj.put("authType", server.getApiKey());
-                tmpObj.put("authentication", authObj);
-                reqObject.put("connectionProfile", tmpObj);
+                tmpObj.put("idType", "lid");
 
-                results.add(reqObject);
+                authObj.put("authType", "apiKey");
+                authObj.put("sharedKey", server.getApiKey());
+                tmpObj.put("authentication", authObj);
+                //reqObject.put("connectionProfile", tmpObj);
+
+                results.put("connectionProfile", tmpObj);
+                //results.add(reqObject);
+            }
+
+            //TODO: linkageService missing
+            for (ExternalServer server : servers) {
+                JSONObject reqObject = new JSONObject();
+                JSONObject tmpObj = new JSONObject();
+                JSONObject authObj = new JSONObject();
+
+                tmpObj.put("url", server.getUrl());
+                tmpObj.put("idType", "lid");
+
+                authObj.put("authType", "apiKey");
+                authObj.put("sharedKey", server.getApiKey());
+                tmpObj.put("authentication", authObj);
+                //reqObject.put("linkageService", tmpObj);
+
+                results.put("linkageService", tmpObj);
+                //results.add(reqObject);
             }
 
 
@@ -201,13 +243,5 @@ public class Initializer {
         }
         return results;
     }
-
-    // TODO: 1. Create config file for remote init
-    // 2. Read parameters from this file
-    // 3. Use samply.config ?
-    private JSONObject createRemoteInitJSON(de.securerecordlinkage.initializer.Config config) {
-        return null;
-    }
-
 
 }
