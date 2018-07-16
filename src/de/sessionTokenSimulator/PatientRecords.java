@@ -78,8 +78,8 @@ public class PatientRecords {
         try {
             JSONObject recordAsJSON = new JSONObject();
             JSONObject tmpObj = new JSONObject();
-            tmpObj.put("IDType", IDType);
-            tmpObj.put("IDString", IDString);
+            tmpObj.put("idType", IDType);
+            tmpObj.put("idString", IDString);
             recordAsJSON.put("id", tmpObj);
             recordAsJSON.put("fields", getFieldsObject(p));
             CommunicatorResource rs = new CommunicatorResource();
@@ -103,7 +103,7 @@ public class PatientRecords {
     public JSONObject getIDObject(Patient p){
         JSONObject fields = new JSONObject();
         try {
-            fields.put("idType", "lid");
+            fields.put("idType", "sel1_sel2");
 
             //TODO: only for testing, use real IDs
             Random rand = new Random();
@@ -119,6 +119,7 @@ public class PatientRecords {
     public JSONObject getFieldsObject(Patient p) {
         Config config = Config.instance;
         JSONObject fields = new JSONObject();
+        Base64.Encoder encoder = Base64.getEncoder();
 
         try {
             for (String fieldKey : p.getFields().keySet()) {
@@ -138,8 +139,12 @@ public class PatientRecords {
                     if (field != null && !field.isEmpty()) {
                         BloomFilterTransformer transformer = new BloomFilterTransformer();
                         resultField = transformer.transform((PlainTextField) field);
+                        logger.info("resultField: " + resultField);
 
-                        byte[] encodedBytes = Base64.getEncoder().encode(((HashedField) resultField).getValue().toByteArray());
+                        byte[] encodedBytes = encoder.encode(((HashedField) resultField).getValue().toByteArray());
+
+                        logger.info("encodedBytes:" + encodedBytes);
+                        logger.info("encodedBytes length:" + encodedBytes.length);
                         resultField = new PlainTextField(new String(encodedBytes));
                     } else {
                         resultField = field;

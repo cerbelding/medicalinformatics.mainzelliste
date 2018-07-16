@@ -39,6 +39,8 @@ public class CommunicatorResource {
     private static String secureEpiLinkRemoteURL = "http://localhost:8082/Communicator/linkCallBack";
     private static String apiKey = "123abc";
 
+    public static String linkRequestURL = "http://192.168.0.101:8080/linkRecord/dkfz";
+
     // Read config with SRL links to know where to send the request
     //TODO: make init non static to communicate with X partners
     public static void init(Config config) {
@@ -60,6 +62,7 @@ public class CommunicatorResource {
     /**
      * send linkRecord, which should be linked, to SRL - In Architectur-XML (v6) step 2
      */
+    //TODO: request with url paramater
     public void sendLinkRecord(JSONObject recordAsJson) {
         logger.info("sendLinkRecord");
         try {
@@ -67,10 +70,11 @@ public class CommunicatorResource {
             JSONObject callbackObj = new JSONObject();
             callbackObj.setEscapeForwardSlashAlways(false);
             callbackObj.put("url", callBackLinkURL);
-            callbackObj.put("id", recordAsJson.get("id"));
+            callbackObj.put("patientId", recordAsJson.get("id"));
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
-            SendHelper.doRequest(secureEpiLinkRemoteURL, "POST", recordAsJson.toString());
+            //TODO: Use a linkRequestURL in (config and everywhere...) instead of hard coding
+            SendHelper.doRequest("http://192.168.0.101:8080/linkRecord/dkfz", "POST", recordToSend.toString());
         } catch (Exception e) {
             logger.error(e);
         }
@@ -80,7 +84,7 @@ public class CommunicatorResource {
      * rest endpoint, used to set a linked record - In Architectur-XML (v6) step 7
      */
     @POST
-    @Path("/linkCallBack")
+    @Path("/linkCallback")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response setLinkRecord(@Context HttpServletRequest req, String json) {
         logger.info("/linkCallBack called");

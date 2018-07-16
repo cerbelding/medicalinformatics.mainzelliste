@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 
+//TODO: run in threads
 public class SendHelper {
     static void doRequest(String url, String action, String data) {
         Logger logger = Logger.getLogger(de.pseudonymisierung.mainzelliste.Initializer.class);
