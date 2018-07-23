@@ -153,7 +153,11 @@ public class PatientRecords {
                     resultField = field;
                 }
 
-                fields.put(fieldKey, resultField.getValue());
+                if (resultField.getValue().toString().isEmpty()) {
+                    fields.put(fieldKey, JSONObject.NULL);
+                } else {
+                    fields.put(fieldKey, resultField.getValue());
+                }
             }
 
         } catch (Exception e) {

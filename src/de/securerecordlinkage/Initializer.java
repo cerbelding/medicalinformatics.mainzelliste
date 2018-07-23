@@ -143,7 +143,6 @@ public class Initializer {
             reqObject.put("dataService", dateServiceObj);
             tmpObj = new JSONObject();
             tmpObj.put("algoType", "epilink");
-            tmpObj.put("bloomLength", 500);
             tmpObj.put("threshold_match", Float.valueOf(config.getProperty("matcher.epilink.threshold_match")));
             tmpObj.put("threshold_non_match", Float.valueOf(config.getProperty("matcher.epilink.threshold_non_match")));
 
@@ -168,24 +167,25 @@ public class Initializer {
                 field.put("frequency", frequency);
                 field.put("errorRate", errorRate);
 
-                field.put("bitlength", 500);
-
                 String comparator = config.getProperty(propName + ".comparator");
-                comparator = comparator.replace("Field", "").replace("Comparator", "").replace("NGram", "nGram").replace("Binary", "binary");
+                comparator = comparator.replace("Field", "").replace("Comparator", "").replace("NGram", "dice").toLowerCase();
                 field.put("comparator", comparator);
 
                 //TODO What criterias are needed?
                 // TODO: What if we are not working with
                 Class<? extends Field<?>> fieldType = config.getFieldType(key);
-                if("NGram".equalsIgnoreCase(comparator)) {
+                if("Dice".equalsIgnoreCase(comparator)) {
                     field.put("fieldType", "bitmask");
+                    field.put("bitlength", 500);
                 }else if(PlainTextField.class.isAssignableFrom(fieldType)){
                     field.put("fieldType", "string");
+                    field.put("bitlength", 240);
                 }else{
                     String type;
                     type = fieldType.getName().toLowerCase().replace("field", "");
                     String [] parts = type.split("\\.");
                     field.put("fieldType", parts[parts.length-1]);
+                    field.put("bitlength", 17);
                 }
 
                 fields.put(field);
