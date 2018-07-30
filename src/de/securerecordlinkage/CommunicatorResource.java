@@ -9,11 +9,12 @@ import org.codehaus.jettison.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.net.URLEncoder;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
-//TODO: Verify against APIkey
 //TODO: Extract PatientRecords class, to use this class independent of Mainzelliste
 @Path("Communicator")
 public class CommunicatorResource {
@@ -26,7 +27,7 @@ public class CommunicatorResource {
     // 4b. Send Request to ML to get all records
     // 4c. Send all Records to SRL
 
-    //TODO: from config
+    //Set with individual values in request
     private int pageSize = 50;
     private int toDate = 0;
     private int page = 1;
@@ -60,18 +61,17 @@ public class CommunicatorResource {
     /**
      * send linkRecord, which should be linked, to SRL - In Architectur-XML (v6) step 2
      */
-    //TODO: request with url paramater
-    public void sendLinkRecord(String IDType, String IDString, JSONObject recordAsJson) {
+    public void sendLinkRecord(JSONObject recordAsJson, String url) {
         logger.info("sendLinkRecord");
         try {
             JSONObject recordToSend = new JSONObject();
             JSONObject callbackObj = new JSONObject();
             callbackObj.setEscapeForwardSlashAlways(false);
-            callbackObj.put("url", callBackLinkURL + "?idType=" + IDType + "&" + "idString=" + IDString);
+            callbackObj.put("url", callBackLinkURL);
+            callbackObj.put("patientId", recordAsJson.get("id"));
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
-            //TODO: Use a linkRequestURL in (config and everywhere...) instead of hard coding
-            SendHelper.doRequest("http://192.168.0.101:8080/linkRecord/dkfz", "POST", recordToSend.toString());
+            SendHelper.doRequest(url, "POST", recordToSend.toString());
         } catch (Exception e) {
             logger.error(e);
         }
@@ -108,15 +108,19 @@ public class CommunicatorResource {
     /**
      * return all entrys, which schould be compared, to SRL  - In Architectur-XML (v6) step 4
      */
+    //TODO: add extra link name with remoteID after getAllRecords
+    //TODO: if no extra link name, send no ids with getAllRecords
     @GET
-    @Path("/getAllRecords")
+    @Path("/{remoteID}/getAllRecords")
     //@Produces(MediaType.APPLICATION_JSON)
-    public Response getAllRecords(@Context HttpServletRequest req, @Context UriInfo info) {
+    public Response getAllRecords(@Context HttpServletRequest req, @Context UriInfo info, @PathParam("remoteID") String remoteID) {
         logger.info("getAllRecords()");
         if (!authorizationValidator(req)) {
             return Response.status(401).build();
         } else {
+
             try {
+                logger.info("Path paramater remoteID:" + remoteID);
                 logger.info("Query parameters: " + info.getQueryParameters());
 
                 setQueryParameter(info.getQueryParameters().get("page"), info.getQueryParameters().get("pageSize"), info.getQueryParameters().get("toDate"), info.getQueryParameters().get("requestedIDType"));
@@ -135,7 +139,6 @@ public class CommunicatorResource {
     private boolean authorizationValidator(HttpServletRequest request) {
 
         logger.info("authorizationValidator() " + "validate ApiKey");
-        //TODO: get authKey from Config
         String authKey = apiKey;
         String authHeader;
 
@@ -189,11 +192,11 @@ public class CommunicatorResource {
             minPage = (page - 1);
         }
 
-        selfObject.put("href", baseCommunicatorURL + "/" + requestedIDType);
-        firstObject.put("href", baseCommunicatorURL + "/" + requestedIDType + "?" + "page=" + 1 + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
-        prevObject.put("href", baseCommunicatorURL + "/" + requestedIDType + "?" + "page=" + minPage + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
-        nextObject.put("href", baseCommunicatorURL + "/" + requestedIDType + "?" + "page=" + (page + 1) + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
-        lastObject.put("href", baseCommunicatorURL + "/" + requestedIDType + "?" + "page=" + lastPage + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
+        selfObject.put("href", baseCommunicatorURL);
+        firstObject.put("href", baseCommunicatorURL + "?" + "page=" + 1 + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
+        prevObject.put("href", baseCommunicatorURL + "?" + "page=" + minPage + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
+        nextObject.put("href", baseCommunicatorURL + "?" + "page=" + (page + 1) + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
+        lastObject.put("href", baseCommunicatorURL + "?" + "page=" + lastPage + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
 
         linkObject.setEscapeForwardSlashAlways(false);
 
@@ -210,10 +213,6 @@ public class CommunicatorResource {
         answerObject.put("lastPageNumber", (int) Math.ceil((double) records.length() / (double) pageSize));
         answerObject.put("pageSize", pageSize);
         answerObject.put("toDate", toDate);
-
-        // TODO: Remove hard-coded, take from the configuration
-        answerObject.put("localId", "DKFZ");
-        answerObject.put("remoteId", "TUD");
 
         //Add record entrys for specific paging request
         if (page > 0 && page <= lastPage) {

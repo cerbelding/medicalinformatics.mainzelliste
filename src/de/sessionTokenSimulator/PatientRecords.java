@@ -57,9 +57,13 @@ public class PatientRecords {
             for (Patient p : patientList) {
                 JSONObject tmpObject = new JSONObject();
                 tmpObject.put("fields", getFieldsObject(p));
-                // TODO: use real IDs
-                tmpObject.put("id", getRandomID());
+                //TODO: use real IDs
+                JSONArray idandIDTypeArray = new JSONArray();
+                idandIDTypeArray.put(getIDObject(p));
+                tmpObject.put("ids", idandIDTypeArray);
                 array.put(tmpObject);
+
+
             }
 
             //IDGeneratorFactory.instance.getSrlIdTypes();
@@ -70,12 +74,17 @@ public class PatientRecords {
         return array;
     }
 
+    //TODO: request with url paramater
     public void linkPatient(Patient p, String IDType, String IDString) {
         try {
             JSONObject recordAsJSON = new JSONObject();
+            JSONObject tmpObj = new JSONObject();
+            tmpObj.put("idType", IDType);
+            tmpObj.put("idString", IDString);
+            recordAsJSON.put("id", tmpObj);
             recordAsJSON.put("fields", getFieldsObject(p));
             CommunicatorResource rs = new CommunicatorResource();
-            rs.sendLinkRecord(IDType, IDString, recordAsJSON);
+            rs.sendLinkRecord(recordAsJSON, "http://192.168.0.101:8080/linkRecord/dkfz");
         } catch (Exception e) {
             logger.info(e);
         }
@@ -92,11 +101,20 @@ public class PatientRecords {
         }
     }
 
-    public String getRandomID(){
-        //TODO: only for testing, use real IDs
-        Random rand = new Random();
-        int  n = rand.nextInt(50000) + 1;
-        return String.valueOf(n);
+    public JSONObject getIDObject(Patient p){
+        JSONObject fields = new JSONObject();
+        try {
+            fields.put("idType", "sel1_sel2");
+
+            //TODO: only for testing, use real IDs
+            Random rand = new Random();
+            int  n = rand.nextInt(50000) + 1;
+
+            fields.put("idString", String.valueOf(n));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return fields;
     }
 
     public JSONObject getFieldsObject(Patient p) {
