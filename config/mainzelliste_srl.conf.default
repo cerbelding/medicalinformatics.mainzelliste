@@ -289,10 +289,10 @@ callback.allowSelfsigned = false
 # Logo file: example for file in META-INF/resources within a .jar file on the classpath
 # operator.logo = /logo.png
 
-srl.requestedIDType = SRL1
+srl.requestedIDType = srlid
 srl.baseCommunicatorURL = http://192.168.0.101:8066/Communicator/getAllRecords
 srl.callBackLinkURL = http://192.168.0.101:8066/Communicator/linkCallBack
 srl.secureEpiLinkRemoteURL = http://192.168.0.101:8080/init/dkfz
-srl.apiKey = 123abc
+srl.apiKey = mainzellisteApiKey apiKey="123abc"
 
 srl.initLocal = http://192.168.0.101:8080/init/local
