@@ -109,12 +109,11 @@ public class CommunicatorResource {
     /**
      * return all entrys, which schould be compared, to SRL  - In Architectur-XML (v6) step 4
      */
-    //TODO: add extra link name with remoteID after getAllRecords
-    //TODO: if no extra link name, send no ids with getAllRecords
+    //TODO: make remoteID optional and if not set give answers back without ids
     @GET
-    @Path("/getAllRecords")
+    @Path("/getAllRecords/{remoteID}")
     //@Produces(MediaType.APPLICATION_JSON)
-    public Response getAllRecords(@Context HttpServletRequest req, @Context UriInfo info) {
+    public Response getAllRecords(@Context HttpServletRequest req, @Context UriInfo info, @PathParam("remoteID") String remoteID) {
         logger.info("getAllRecords()");
         if (!authorizationValidator(req)) {
             return Response.status(401).build();
@@ -122,11 +121,12 @@ public class CommunicatorResource {
 
             try {
                 logger.info("Query parameters: " + info.getQueryParameters());
+                logger.info("Path parameters: " + remoteID);
 
                 setQueryParameter(info.getQueryParameters().get("page"), info.getQueryParameters().get("pageSize"), info.getQueryParameters().get("toDate"), info.getQueryParameters().get("requestedIDType"));
                 PatientRecords records = new PatientRecords();
 
-                return Response.ok(prepareReturnDataSet(records.readAllPatientsAsArray()), MediaType.APPLICATION_JSON).build();
+                return Response.ok(prepareReturnDataSet(records.readAllPatientsAsArray(), remoteID), MediaType.APPLICATION_JSON).build();
                 //return Response.ok(records.readAllPatientsAsArray(), MediaType.APPLICATION_JSON).build();
             } catch (Exception e) {
                 logger.error("gerAllRecords failed. " + e.toString());
@@ -165,7 +165,7 @@ public class CommunicatorResource {
 
     }
 
-    private JSONObject prepareReturnDataSet(JSONArray records) throws JSONException {
+    private JSONObject prepareReturnDataSet(JSONArray records, String remoteID) throws JSONException {
         //TODO: handle page 0 and > last page
 
         logger.info("prepareReturnDataSet()");
@@ -193,11 +193,11 @@ public class CommunicatorResource {
             minPage = (page - 1);
         }
 
-        selfObject.put("href", baseCommunicatorURL + "/" + requestedIDType);
-        firstObject.put("href", baseCommunicatorURL + "/" + requestedIDType + "?" + "page=" + 1 + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
-        prevObject.put("href", baseCommunicatorURL + "/" + requestedIDType + "?" + "page=" + minPage + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
-        nextObject.put("href", baseCommunicatorURL + "/" + requestedIDType + "?" + "page=" + (page + 1) + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
-        lastObject.put("href", baseCommunicatorURL + "/" + requestedIDType + "?" + "page=" + lastPage + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
+        selfObject.put("href", baseCommunicatorURL + "/" + remoteID);
+        firstObject.put("href", baseCommunicatorURL + "/" + remoteID + "?" + "page=" + 1 + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
+        prevObject.put("href", baseCommunicatorURL + "/" + remoteID + "?" + "page=" + minPage + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
+        nextObject.put("href", baseCommunicatorURL + "/" + remoteID + "?" + "page=" + (page + 1) + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
+        lastObject.put("href", baseCommunicatorURL + "/" + remoteID + "?" + "page=" + lastPage + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
 
         linkObject.setEscapeForwardSlashAlways(false);
 
