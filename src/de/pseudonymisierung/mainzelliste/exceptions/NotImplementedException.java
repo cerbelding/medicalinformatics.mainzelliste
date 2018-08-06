@@ -39,15 +39,15 @@ public class NotImplementedException extends WebApplicationException {
 	private static final long serialVersionUID = 4679822464201106826L;
 	
 	/** The default error message. */
-	private static String message = "Functionality not implemented yet.";
-	
+	private static final String defaultMessage = "Functionality not implemented yet.";
+
 	/** Create an instance with the default error message. */
 	public NotImplementedException() {
-		super(Response.status(Status.SERVICE_UNAVAILABLE).entity(message).build());
+		super(Response.status(Status.SERVICE_UNAVAILABLE).entity(defaultMessage).build());
 	}
-	
-	@Override
-	public String getMessage() {
-		return message;
-	}
+
+	/** Create an instance with the default message, detailed in an detailMessage. */
+	public NotImplementedException(String detailMessage) {
+        super(Response.status(Status.SERVICE_UNAVAILABLE).entity(defaultMessage + ": " + detailMessage).build());
+    }
 }
