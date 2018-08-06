@@ -1,0 +1,28 @@
+# Template properties for initializer
+#
+# Lokale Mainzelliste
+#
+# Local ID of this mainzelliste distribution instance.
+localID = dkfz
+localSELUrl = http://192.168.0.101:8066/Communicator
+localApiKey = mainzellisteApiKey apiKey="123abc"
+
+# field bitlength
+field.vorname.bitlength = 500
+field.nachname.bitlength = 500
+field.geburtsname.bitlength = 500
+field.geburtstag.bitlength = 5
+field.geburtsmonat.bitlength = 4
+field.geburtsjahr.bitlength = 12
+field.plz.bitlength = 80
+field.ort.bitlength = 500
+
+#
+# xDAT servers
+#
+
+# A passphrase used for authentication
+servers.0.apiKey = mainzellisteApiKey apiKey="123qwerty"
+servers.0.remoteId = tud
+servers.0.idType = link:dkfz:tud
+servers.0.remoteSELUrl = http://192.168.0.101:8080

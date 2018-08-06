@@ -1,6 +1,6 @@
 package de.securerecordlinkage;
 
-import de.pseudonymisierung.mainzelliste.Config;
+import de.securerecordlinkage.initializer.Config;
 import de.sessionTokenSimulator.PatientRecords;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
@@ -33,27 +33,28 @@ public class CommunicatorResource {
     private int toDate = 0;
     private int page = 1;
 
-    private static String requestedIDType = "SRL1";
+    private static String localId;
+    private static String remoteId;
     private static String baseCommunicatorURL = "http://localhost:8082/Communicator/getAllRecords";
-    private static String callBackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
-    private static String secureEpiLinkRemoteURL = "http://localhost:8082/Communicator/linkCallBack";
+//    private static String callBackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
+// private static String secureEpiLinkRemoteURL = "http://localhost:8082/Communicator/linkCallBack";
     private static String apiKey = "123abc";
 
     public static String linkRequestURL = "http://192.168.0.101:8080/linkRecord/dkfz";
 
     // Read config with SRL links to know where to send the request
     //TODO: make init non static to communicate with X partners
-    public static void init(Config config) {
+    public static void init(Config config, String id) {
         logger.info("Load config variables for communicator");
 
-        requestedIDType = config.getProperty("srl.requestedIDType");
-        baseCommunicatorURL = config.getProperty("srl.baseCommunicatorURL");
-        callBackLinkURL = config.getProperty("srl.callBackLinkURL");
-        secureEpiLinkRemoteURL = config.getProperty("srl.secureEpiLinkRemoteURL");
-        apiKey = config.getProperty("srl.apiKey");
+        localId = config.getLocalID();
+        remoteId = id;
+        baseCommunicatorURL = config.getServers().get(remoteId).getUrl();
+//        callBackLinkURL = config.getProperty("srl.callBackLinkURL");
+//        secureEpiLinkRemoteURL = config.getProperty("srl.secureEpiLinkRemoteURL");
+        apiKey = config.getServers().get(remoteId).getApiKey();
 
-        logger.info("requestedIDType: " + requestedIDType + " baseCommunicatorURL: " + baseCommunicatorURL + " callBackLinkURL: " + callBackLinkURL + " secureEpiLinkRemoteURL: " + secureEpiLinkRemoteURL);
-
+        logger.info("remoteID: " + remoteId + " baseCommunicatorURL: " + baseCommunicatorURL);
 
     }
 
@@ -69,7 +70,7 @@ public class CommunicatorResource {
             JSONObject recordToSend = new JSONObject();
             JSONObject callbackObj = new JSONObject();
             callbackObj.setEscapeForwardSlashAlways(false);
-            callbackObj.put("url", callBackLinkURL + "?idType=" + idType + "&" + "idString=" + idString);
+            callbackObj.put("url", baseCommunicatorURL+"/linkCallBack" + "?idType=" + idType + "&" + "idString=" + idString);
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
             SendHelper.doRequest(url, "POST", recordToSend.toString());
@@ -123,13 +124,13 @@ public class CommunicatorResource {
                 logger.info("Query parameters: " + info.getQueryParameters());
                 logger.info("Path parameters: " + remoteID);
 
-                setQueryParameter(info.getQueryParameters().get("page"), info.getQueryParameters().get("pageSize"), info.getQueryParameters().get("toDate"), info.getQueryParameters().get("requestedIDType"));
+                setQueryParameter(info.getQueryParameters().get("page"), info.getQueryParameters().get("pageSize"), info.getQueryParameters().get("toDate"));
                 PatientRecords records = new PatientRecords();
 
                 return Response.ok(prepareReturnDataSet(records.readAllPatientsAsArray(), remoteID), MediaType.APPLICATION_JSON).build();
                 //return Response.ok(records.readAllPatientsAsArray(), MediaType.APPLICATION_JSON).build();
             } catch (Exception e) {
-                logger.error("gerAllRecords failed. " + e.toString());
+                logger.error("getAllRecords failed. " + e.toString());
                 return Response.status(500).build();
             }
         }
@@ -215,9 +216,8 @@ public class CommunicatorResource {
         answerObject.put("pageSize", pageSize);
         answerObject.put("toDate", toDate);
 
-        // TODO: Remove hard-coded, take from the configuration
-        answerObject.put("localId", "DKFZ");
-        answerObject.put("remoteId", "TUD");
+        answerObject.put("localId", localId);
+        answerObject.put("remoteId", remoteId);
 
         //Add record entrys for specific paging request
         if (page > 0 && page <= lastPage) {
@@ -252,8 +252,8 @@ public class CommunicatorResource {
      * @param newPageSize new value for pageSize - how many records each site max. includes
      * @param newToDate new value for toDate - maximum time of the newest entry (TODO: not implemented yet)
      */
-    private void setQueryParameter(List<String> newPage, List<String> newPageSize, List<String> newToDate, List<String> newRequestedIDType) {
-        logger.info("setQueryParameter(): " + "newPage: " + newPage + ", newPageSize: " + newPageSize + ", newToDate" + newToDate + ", newRequestedIDType" + newRequestedIDType);
+    private void setQueryParameter(List<String> newPage, List<String> newPageSize, List<String> newToDate) {
+        logger.info("setQueryParameter(): " + "newPage: " + newPage + ", newPageSize: " + newPageSize + ", newToDate" + newToDate);
 
         if (newPage != null) {
             if (newPage.get(0).matches("[0-9]+")) {
@@ -287,16 +287,6 @@ public class CommunicatorResource {
         } else {
             logger.debug("toDate is not sent via request. Using default value: " + toDate);
         }
-
-        if (newRequestedIDType != null) {
-
-            logger.debug("set newRequestedIDType to: " + newRequestedIDType);
-            requestedIDType = newRequestedIDType.get(0);
-
-        } else {
-            logger.debug("newRequestedIDType is not sent via request. Using default value: " + requestedIDType);
-        }
-
 
     }
 

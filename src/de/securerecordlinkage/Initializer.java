@@ -6,8 +6,12 @@ import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.PlainTextField;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
-import de.securerecordlinkage.initializer.config.ExternalServer;
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.samply.common.http.HttpConnector;
+import de.samply.common.http.HttpConnectorException;
+import de.securerecordlinkage.initializer.Server;
 import de.sessionTokenSimulator.PatientRecords;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -37,22 +41,26 @@ public class Initializer {
     private void initialize() {
         Logger logger = Logger.getLogger(de.securerecordlinkage.Initializer.class);
         logger.info("#####Initializing...");
+        Config c = Config.instance;
+        de.securerecordlinkage.initializer.Config srlConfig = de.securerecordlinkage.initializer.Config.instance;
 
         try {
             logger.info("initialize - SRL");
-            Config c = Config.instance;
             JSONObject configJSON = createLocalInitJSON(c);
-            SendHelper.doRequest(c.getProperty("srl.initLocal"), "PUT", configJSON.toString());
+            SendHelper.doRequest(srlConfig.getLocalSELUrl(), "PUT", configJSON.toString());
         } catch (Exception e) {
             logger.error("initialize() - Could not send initJSON " + e.toString());
             //e.printStackTrace();
         }
 
+        // TODO: Only the first remote server is taken at the moment
+        // Who decides which server is taken in case we have more than one
+        HashMap<String, Server> remoteServers = srlConfig.instance.getServers();
+        Server server = remoteServers.entrySet().iterator().next().getValue();
+
         try {
             logger.info("initialize - Communicator");
-            Config c = Config.instance;
-            CommunicatorResource.init(c);
-
+            CommunicatorResource.init(srlConfig, server.getId());
         } catch (Exception e) {
             logger.error("initialize() - Could not load configuration and init communicator");
             //e.printStackTrace();
@@ -60,12 +68,9 @@ public class Initializer {
         //Init Communicator Ressource
 
         try {
-            //de.securerecordlinkage.initializer.Config selConfig = de.securerecordlinkage.initializer.Config.instance;
-            Config c = Config.instance;
-            //List<JSONObject> remoteInitJSON = createRemoteInitJSON();
-            JSONObject remoteInitJSON = createRemoteInitJSON();
-            SendHelper.doRequest(c.getProperty("srl.secureEpiLinkRemoteURL"), "PUT", remoteInitJSON.toString());
 
+            JSONObject remoteInitJSON = createRemoteInitJSON(server);
+            SendHelper.doRequest(server.getUrl()+"/initRemote/"+server.getId(), "PUT", remoteInitJSON.toString());
 
             //TODO: only test to simulate send patient LÖSCHEN bitte LÖSCH mich
             //this.wait(1000);
@@ -129,12 +134,12 @@ public class Initializer {
         JSONObject dateServiceObj = new JSONObject();
         try {
 
-            //de.securerecordlinkage.initializer.Config configInitializer = de.securerecordlinkage.initializer.Config.instance;
+            de.securerecordlinkage.initializer.Config srlConfig = de.securerecordlinkage.initializer.Config.instance;
             tmpObj.put("authType", "apiKey");
-            tmpObj.put("sharedKey", config.getProperty("srl.apiKey"));
+            tmpObj.put("sharedKey", srlConfig.getLocalApiKey());
             reqObject.put("localAuthentication", tmpObj);
             dateServiceObj = new JSONObject();
-            dateServiceObj.put("url", config.getProperty("srl.baseCommunicatorURL"));
+            dateServiceObj.put("url", srlConfig.getLocalSELUrl());
             reqObject.put("dataService", dateServiceObj);
             tmpObj = new JSONObject();
             tmpObj.put("algoType", "epilink");
@@ -168,19 +173,33 @@ public class Initializer {
 
                 //TODO What criterias are needed?
                 // TODO: What if we are not working with
+                // TODO: Default values for fields move to Configuration or variables
+                HashMap<String, Integer> fieldBitLength = srlConfig.getFieldBitLength();
                 Class<? extends Field<?>> fieldType = config.getFieldType(key);
                 if("Dice".equalsIgnoreCase(comparator)) {
                     field.put("fieldType", "bitmask");
-                    field.put("bitlength", 500);
+                    if (fieldBitLength.containsKey(key)) {
+                        field.put("bitlength", fieldBitLength.get(key));
+                    } else {
+                        field.put("bitlength", 500);
+                    }
                 }else if(PlainTextField.class.isAssignableFrom(fieldType)){
                     field.put("fieldType", "string");
-                    field.put("bitlength", 240);
+                    if (fieldBitLength.containsKey(key)) {
+                        field.put("bitlength", fieldBitLength.get(key));
+                    } else {
+                        field.put("bitlength", 240);
+                    }
                 }else{
                     String type;
                     type = fieldType.getName().toLowerCase().replace("field", "");
                     String [] parts = type.split("\\.");
                     field.put("fieldType", parts[parts.length-1]);
-                    field.put("bitlength", 17);
+                    if (fieldBitLength.containsKey(key)) {
+                        field.put("bitlength", fieldBitLength.get(key));
+                    } else {
+                        field.put("bitlength", 17);
+                    }
                 }
 
                 fields.put(field);
@@ -199,53 +218,33 @@ public class Initializer {
     // 2. Read parameters from this file
     // 3. Use samply.config ?
     //private List<JSONObject> createRemoteInitJSON() {
-    private JSONObject createRemoteInitJSON() {
-        List<ExternalServer> servers = de.securerecordlinkage.initializer.Config.instance.getConfig().getServers().getServer();
-        //List<JSONObject> results = new ArrayList<>();
-        JSONObject results = new JSONObject();
-
+    private JSONObject createRemoteInitJSON(Server server) {
+        JSONObject reqObject = new JSONObject();
         try {
 
-            for (ExternalServer server : servers) {
-                JSONObject reqObject = new JSONObject();
-                JSONObject tmpObj = new JSONObject();
-                JSONObject authObj = new JSONObject();
+            JSONObject tmpObj = new JSONObject();
+            JSONObject authObj = new JSONObject();
 
-                tmpObj.put("url", server.getUrl());
-                tmpObj.put("idType", "lid");
+            tmpObj.put("url", server.getUrl());
+            authObj.put("authType", "apiKey");
+            authObj.put("sharedKey", server.getApiKey());
+            tmpObj.put("authentication", authObj);
 
-                authObj.put("authType", "apiKey");
-                authObj.put("sharedKey", server.getApiKey());
-                tmpObj.put("authentication", authObj);
-                //reqObject.put("connectionProfile", tmpObj);
-
-                results.put("connectionProfile", tmpObj);
-                //results.add(reqObject);
-            }
+            reqObject.put("connectionProfile", tmpObj);
 
             //TODO: linkageService missing
-            for (ExternalServer server : servers) {
-                JSONObject reqObject = new JSONObject();
-                JSONObject tmpObj = new JSONObject();
-                JSONObject authObj = new JSONObject();
-
-                tmpObj.put("url", server.getUrl());
-                tmpObj.put("idType", "lid");
-
-                authObj.put("authType", "apiKey");
-                authObj.put("sharedKey", server.getApiKey());
-                tmpObj.put("authentication", authObj);
-                //reqObject.put("linkageService", tmpObj);
-
-                results.put("linkageService", tmpObj);
-                //results.add(reqObject);
-            }
-
 
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return results;
+        return reqObject;
     }
 
+    /**
+     * Gets the injected ServletContext.
+     * @return The injected ServletContext.
+     */
+    public static ServletContext getServletContext() {
+        return configurationContext;
+    }
 }

@@ -201,7 +201,7 @@ matcher.epilink.threshold_non_match = 0.6
 # additional parameters depend on the ID generator used.
 #
 # Additional params for PIDGenerator (k1, k2, k3, rndwidth) are defined here.
-idgenerators = pid, intid, extid, srlid
+idgenerators = pid, intid, extid, link:dkfz:tud
 idgenerator.pid = PIDGenerator
 idgenerator.pid.k1 = 1
 idgenerator.pid.k2 = 2
@@ -213,7 +213,7 @@ idgenerator.intid = SimpleIDGenerator
 
 idgenerator.extid = ExternalIDGenerator
 
-idgenerator.srlid = SrlIDGenerator
+idgenerator.link:dkfz:tud = SrlIDGenerator
 
 # Output of result
 
@@ -288,11 +288,3 @@ callback.allowSelfsigned = false
 
 # Logo file: example for file in META-INF/resources within a .jar file on the classpath
 # operator.logo = /logo.png
-
-srl.requestedIDType = srlid
-srl.baseCommunicatorURL = http://192.168.0.101:8066/Communicator/getAllRecords
-srl.callBackLinkURL = http://192.168.0.101:8066/Communicator/linkCallBack
-srl.secureEpiLinkRemoteURL = http://192.168.0.101:8080/initRemote/dkfz
-srl.apiKey = mainzellisteApiKey apiKey="123abc"
-
-srl.initLocal = http://192.168.0.101:8080/initLocal
