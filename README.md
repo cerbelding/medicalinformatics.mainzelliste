@@ -34,11 +34,11 @@ The Mainzelliste API has been implemented in the following projects and software
 - [OpenClinica](https://openclinica.com/) (see [presentation on integrating Mainzelliste and other software](https://community.openclinica.com/sites/fileuploads/akaza/cms-community/Tomas%20Skripcak%20-%20Lessons%20learned.pdf))
 - [secuTrial](http://secutrial.com) (see [modules description](http://www.secutrial.com/module/))
 - [Semantic Clinical Registry System for Rare Diseases](http://aksw.org/Projects/SCRS.html)
-- [MOSAIC](https://mosaic-greifswald.de/) (Mainzelliste interface used by "Trusted-Third-Party-Dispatcher", see [Bialke et al. A workflow-driven approach to integrate generic software modules in a Trusted Third Party. Journal of Translational Medicine 2015, 13:176](http://www.translational-medicine.com/content/13/1/176)
+- [MOSAIC](https://mosaic-greifswald.de/) (the external interface of the "Trusted Third Party Dispatcher" is oriented towards the token-based concept of the Mainzelliste API, see [Bialke et al., J Transl Med. 2015, 13:176](http://www.translational-medicine.com/content/13/1/176))
+- [German Center for Cardiovascular Disease (DZHK)](https://dzhk.de) (see MOSAIC and the [data protection concept](https://dzhk.de/fileadmin/user_upload/Datenschutzkonzept_des_DZHK.pdf))
+- [German National Cohort](https://nako.de) (uses a subset of the API, cf. [data protection concept](http://nationale-kohorte.de/wp-content/uploads/2015/07/Treuhandstellenkonzept.pdf))
 - [Electronic data capture system by Fraunhofer FOKUS](https://cdn3.scrivito.com/fokus/57a537e2ec27cb7b/0a3a0655dcc079f58890e39dbdca4781/E-HEALTH_Standards_PB_03-2015_v03.pdf)
 - [Centraxx](http://www.kairos.de/centraxx/)
-- German National Cohort (uses a subset of the API) ([Data protection concept](http://nationale-kohorte.de/wp-content/uploads/2015/07/Treuhandstellenkonzept.pdf))
-- German Center for Cardiovascular Disease (DZHK) ([Data protection concept](https://dzhk.de/fileadmin/user_upload/Datenschutzkonzept_des_DZHK.pdf))
 - Platform for medical research by Climedo Health GmbH ([Description of electronic health record component](https://www.climedo.de/digitale-probandenakte/))
 
 We have compiled this list from the results of public search engines. If you use the Mainzelliste or its API, we would be glad to include your project in this list. Please don't hestitate to [contact us](mailto:info@mainzelliste.de).
