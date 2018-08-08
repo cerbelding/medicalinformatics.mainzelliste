@@ -80,6 +80,12 @@ public enum Persistor {
 	/** String with which database identifers are quoted. */
 	private String identifierQuoteString = null;
 	
+	/** Number of retries for initializing database connection. */
+	private int dbconnect_retry_count = 100;
+
+	/** Number of milliseconds to wait between retries for initializing database connection. */
+	private int dbconnect_retry_wait = 100;
+
 	/** Creates the singleton instance with the configured database connection. */
 	private Persistor() {
 		
@@ -618,15 +624,27 @@ public enum Persistor {
 		if (Config.instance.getProperty("db.username") != null) connectionProps.put("user",  Config.instance.getProperty("db.username"));
 		if (Config.instance.getProperty("db.password") != null) connectionProps.put("password",  Config.instance.getProperty("db.password"));
 		String url = Config.instance.getProperty("db.url");
-		try {
-			Class.forName(Config.instance.getProperty("db.driver"));
-			return DriverManager.getConnection(url, connectionProps);
-		} catch (ClassNotFoundException e) {
-			logger.fatal("Could not find database driver!", e);
-			throw new Error(e);
-		} catch (SQLException e) {
-			logger.fatal("SQL error while getting database connection!", e);
-			throw new Error(e);
+
+		for(int count=0; true; count++) {
+			try {
+				Class.forName(Config.instance.getProperty("db.driver"));
+				return DriverManager.getConnection(url, connectionProps);
+			} catch (ClassNotFoundException e) {
+				logger.fatal("Could not find database driver!", e);
+				throw new Error(e);
+			} catch (SQLException e) {
+				if (count < dbconnect_retry_count) {
+					logger.warn("SQL error while getting database connection; retrying.");
+				} else {
+					logger.fatal("SQL error while getting database connection; giving up.", e);
+					throw new Error(e);
+				}
+			}
+			try{
+				Thread.sleep(dbconnect_retry_wait);
+			} catch (InterruptedException e){
+				continue;
+			}
 		}
 	}
 	
