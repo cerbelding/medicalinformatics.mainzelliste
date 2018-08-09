@@ -21,6 +21,7 @@ Mainzelliste is used in various medical joint research projects, including:
 - [German Cancer Consortium](https://ccp-it.dktk.dkfz.de/)
 - Cluster for Individualized Immune Intervention (Ci3) ([Meeting abstract on IT concept](http://www.egms.de/static/de/meetings/gmds2014/14gmds106.shtml))
 - Studies conducted by the [LASER group](http://www.la-ser.com/)
+- The [MIRACUM consortium](http://www.miracum.org/miracolix-tools)
 
 Another important use case is pseudonymization in central biobanks, for example:
 
