@@ -16,7 +16,7 @@ Java developers should have a look at [Mainzelliste.Client](https://bitbucket.or
 
 Mainzelliste is used in various medical joint research projects, including:
 
-- German Mukoviszidose Register ([Data protection concept](http://muko.info/fileadmin/redaktion/datei_gruppen/muko_institut/2015_06_24_Datenschutzkonzept_Mukoviszidose-Register_2.0.pdf))
+- German Mukoviszidose Register ([Data protection concept](https://www.muko.info/fileadmin/user_upload/angebote/qualitaetsmanagement/register/datenschutzkonzept.pdf))
 - European chILD-EU register ([Ethics/Data Safety](http://www.klinikum.uni-muenchen.de/Child-EU/en/register/ethics_data_safety/index.html))
 - [German Cancer Consortium](https://ccp-it.dktk.dkfz.de/)
 - Cluster for Individualized Immune Intervention (Ci3) ([Meeting abstract on IT concept](http://www.egms.de/static/de/meetings/gmds2014/14gmds106.shtml))
