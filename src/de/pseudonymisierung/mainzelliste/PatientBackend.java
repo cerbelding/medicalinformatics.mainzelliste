@@ -193,11 +193,13 @@ public enum PatientBackend {
 			Validator.instance.validateForm(form, true);
 			
 			for(String s: Config.instance.getFieldKeys()){
-				try {
-				    chars.put(s, Field.build(s, form.getFirst(s)));
-				} catch (WebApplicationException we) {
-				    logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
-				    throw we;
+				if (form.containsKey(s)) {
+					try {
+						chars.put(s, Field.build(s, form.getFirst(s)));
+					} catch (WebApplicationException we) {
+						logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
+						throw we;
+					}
 				}
 			}
 
