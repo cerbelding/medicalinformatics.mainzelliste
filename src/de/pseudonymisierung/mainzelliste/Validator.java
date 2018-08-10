@@ -261,7 +261,7 @@ public enum Validator {
 	 *             If the form contains an error.
 	 */
 	public void validateForm(MultivaluedMap<String, String> form, boolean checkFieldKeys) throws ValidatorException {
-		// Check that all fields are present in form
+		// Check that all required fields are present in form
 		if (checkFieldKeys)
 			checkFieldKeys(form);
 		// Check fields values
@@ -307,10 +307,10 @@ public enum Validator {
 	 *             If a configured field is missing in the map keys.
 	 */
 	private void checkFieldKeys(Map<String, ?> form) throws ValidatorException {
-		for(String s: Config.instance.getFieldKeys()){
+		for(String s: requiredFields){
 			if (!form.containsKey(s)) {
-				logger.error("Field " + s + " not found in input data!");
-				throw new ValidatorException("Field " + s + " not found in input data!");
+				logger.error("Required field " + s + " not found in input data!");
+				throw new ValidatorException("Required field " + s + " not found in input data!");
 			}
 		}
 	}
