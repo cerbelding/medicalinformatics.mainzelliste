@@ -325,14 +325,24 @@ public enum PatientBackend {
 				logger.info("Found match with ID " + returnIds.get(0).getIdString() + " for ID request " + t.getId());
 
 				// Add optional fields if they are not already entered
-				Map<String, String> newFieldValues = new HashMap<String, String>();
+//				Map<String, String> newFieldValues = new HashMap<String, String>();
+				Map<String, Field<?>> fieldSet = new HashMap<String, Field<?>>(assignedPatient.getFields());
+				Map<String, Field<?>> inputFieldSet = new HashMap<String, Field<?>>(assignedPatient.getInputFields());
+				boolean updatePatient = false;
+
 				for (String key : pNormalized.getFields().keySet()) {
 					if (!assignedPatient.getFields().containsKey(key)) {
-						newFieldValues.put(key, pNormalized.getFields().get(key).toString());
+						updatePatient = true;
+						fieldSet.put(key, Field.build(key, pNormalized.getFields().get(key).toString()));
+						inputFieldSet.put(key, Field.build(key, pNormalized.getInputFields().get(key).toString()));
 					}
 				}
-				assignedPatient.getFields();
-				pNormalized.getFields();
+
+				if (updatePatient) {
+					assignedPatient.setFields(fieldSet);
+					assignedPatient.setInputFields(inputFieldSet);
+					Persistor.instance.updatePatient(assignedPatient);
+				}
 
 				break;
 
