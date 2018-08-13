@@ -4,6 +4,7 @@ import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
 import de.securerecordlinkage.CommunicatorResource;
+import de.securerecordlinkage.initializer.Config;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -20,6 +21,9 @@ import java.util.Random;
 public class PatientRecords {
 
     private Logger logger = Logger.getLogger(this.getClass());
+    private int numPatients = 0;
+    private int numMatch = 0;
+    private int numNonMatch = 0;
 
     /**
      * public JSONObject readAllPatients() {
@@ -70,7 +74,6 @@ public class PatientRecords {
         return array;
     }
 
-    //TODO: request with url paramater from config
     public void linkPatient(Patient p, String IDType, String IDString) {
         try {
             JSONObject recordAsJSON = new JSONObject();
@@ -80,7 +83,36 @@ public class PatientRecords {
             recordAsJSON.put("id", tmpObj);
             recordAsJSON.put("fields", getFieldsObject(p));
             CommunicatorResource rs = new CommunicatorResource();
-            rs.sendLinkRecord("http://192.168.0.101:8080/linkRecord/dkfz", IDType, IDString, recordAsJSON);
+            de.securerecordlinkage.initializer.Config c = de.securerecordlinkage.initializer.Config.instance;
+            String[] parts = IDType.split(":");
+            String remoteId = parts[parts.length-1];
+            rs.sendLinkRecord(c.getLocalSELUrl()+"/linkRecord/" + remoteId, IDType, IDString, recordAsJSON);
+        } catch (Exception e) {
+            logger.info(e);
+        }
+    }
+
+    public void matchPatients(String remoteId) {
+        try {
+            List<Patient> patientList = Persistor.instance.getPatients();
+            numPatients = patientList.size();
+            logger.info(numPatients + " patients to be matched");
+            logger.info("Matching started...");
+            for (Patient p: patientList) {
+                matchPatient(p, remoteId);
+            }
+        } catch (Exception e) {
+            logger.info(e);
+        }
+    }
+
+    public void matchPatient(Patient p, String remoteId) {
+        try {
+            JSONObject recordAsJSON = new JSONObject();
+            recordAsJSON.put("fields", getFieldsObject(p));
+            CommunicatorResource rs = new CommunicatorResource();
+            de.securerecordlinkage.initializer.Config c = de.securerecordlinkage.initializer.Config.instance;
+            rs.sendMatchRecord(c.getLocalSELUrl()+"/matchRecord/" + remoteId, recordAsJSON);
         } catch (Exception e) {
             logger.info(e);
         }
@@ -97,6 +129,19 @@ public class PatientRecords {
         }
     }
 
+    public void countMatchResult(boolean match) {
+        if (match) {
+            numMatch = numMatch + 1;
+        } else {
+            numNonMatch = numNonMatch + 1;
+        }
+
+        if ((numMatch + numNonMatch) == numPatients) {
+            logger.info("Matching completed.");
+            logger.info(numMatch + " were found.");
+        }
+    }
+
     public String getRandomID(){
             //TODO: only for testing, use real IDs
             Random rand = new Random();
@@ -105,7 +150,7 @@ public class PatientRecords {
     }
 
     public JSONObject getFieldsObject(Patient p) {
-        Config config = Config.instance;
+        de.pseudonymisierung.mainzelliste.Config config = de.pseudonymisierung.mainzelliste.Config.instance;
         JSONObject fields = new JSONObject();
         Base64.Encoder encoder = Base64.getEncoder();
 

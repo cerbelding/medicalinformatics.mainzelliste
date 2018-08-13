@@ -79,6 +79,26 @@ public class CommunicatorResource {
         }
     }
 
+    //-----------------------------------------------------------------------
+
+    /**
+     * send matchRecord, which should be linked, to SRL - In Architectur-XML Demostrator (Prozess M) step 1
+     */
+    public void sendMatchRecord(String url, JSONObject recordAsJson) {
+        logger.info("sendMatchRecord");
+        try {
+            JSONObject recordToSend = new JSONObject();
+            JSONObject callbackObj = new JSONObject();
+            callbackObj.setEscapeForwardSlashAlways(false);
+            callbackObj.put("url", baseCommunicatorURL+"/matchCallBack");
+            recordToSend.put("callback", callbackObj);
+            recordToSend.put("fields", recordAsJson.get("fields"));
+            SendHelper.doRequest(url, "POST", recordToSend.toString());
+        } catch (Exception e) {
+            logger.error(e);
+        }
+    }
+
     /**
      * rest endpoint, used to set a linked record - In Architectur-XML (v6) step 7
      */
@@ -100,6 +120,30 @@ public class CommunicatorResource {
                 return Response.status(updatePatient.updatePatient(newLinkRecord)).build();
             } catch (Exception e) {
                 logger.error("setLinkRecord failed. " + e.toString());
+                return Response.status(500).build();
+            }
+        }
+    }
+
+    /**
+     * rest endpoint, used to set a linked record - In Architectur-XML (v6) step 7
+     */
+    @POST
+    @Path("/matchCallback")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addMatchResult(@Context HttpServletRequest req, String json) {
+        logger.info("/matchCallBack called");
+        logger.info("addMatchResult");
+
+        if (!authorizationValidator(req)) {
+            return Response.status(401).build();
+        } else {
+            //APIKey correct, now do the work
+            try {
+                // Call countMatchResult
+                return Response.status(200).build();
+            } catch (Exception e) {
+                logger.error("addMatchResult failed. " + e.toString());
                 return Response.status(500).build();
             }
         }
