@@ -30,12 +30,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.List;
+import java.util.*;
 import javax.persistence.*;
 
 import de.pseudonymisierung.mainzelliste.*;
@@ -49,7 +44,6 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Driver;
-import java.util.Enumeration;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -367,9 +361,15 @@ public enum Persistor {
 
 
 	public synchronized  void deletePatient(ID id){
-        anonymizeIdRequests(id);
+        Set<ID> allPatientIDs = getAllPatientIDs(id);
+
+	    anonymizeIdRequests(id);
         deletePatientIDAT(id);
-        deleteId(id);
+
+        for (ID specificPatientID : allPatientIDs){
+            deleteId(specificPatientID);
+        }
+
     }
 
     /**
@@ -451,6 +451,12 @@ public enum Persistor {
 
     }
 
+    private synchronized Set<ID> getAllPatientIDs(ID id){
+
+        Patient patient = getPatient(id);
+        return patient.getIds();
+
+    }
 
 	/** Get patient with duplicates. Works like
 	 * {@link Persistor#getDuplicates(ID)}, but the requested patient is

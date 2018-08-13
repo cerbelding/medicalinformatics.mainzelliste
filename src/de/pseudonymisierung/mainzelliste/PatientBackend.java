@@ -323,6 +323,17 @@ public enum PatientBackend {
 				Persistor.instance.updatePatient(assignedPatient);
 				// log token to separate concurrent request in the log file
 				logger.info("Found match with ID " + returnIds.get(0).getIdString() + " for ID request " + t.getId());
+
+				// Add optional fields if they are not already entered
+				Map<String, String> newFieldValues = new HashMap<String, String>();
+				for (String key : pNormalized.getFields().keySet()) {
+					if (!assignedPatient.getFields().containsKey(key)) {
+						newFieldValues.put(key, pNormalized.getFields().get(key).toString());
+					}
+				}
+				assignedPatient.getFields();
+				pNormalized.getFields();
+
 				break;
 
 			case NON_MATCH :
