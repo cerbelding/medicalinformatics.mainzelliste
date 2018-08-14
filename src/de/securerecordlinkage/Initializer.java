@@ -236,6 +236,8 @@ public class Initializer {
 
             //TODO: linkageService missing
 
+            reqObject.put("matchingAllowed", "true");
+
         } catch (JSONException e) {
             e.printStackTrace();
         }

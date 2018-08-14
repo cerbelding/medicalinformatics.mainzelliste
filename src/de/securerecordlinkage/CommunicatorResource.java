@@ -358,6 +358,8 @@ public class CommunicatorResource {
     @Path("/triggerMatch/{remoteID}")
     public void triggerMatch(@PathParam("remoteID") String remoteID){
 
+        logger.info("trigger matcher started");
+        logger.info("trigger matcher " + remoteID);
         PatientRecords pr = new PatientRecords();
         pr.matchPatients(remoteID);
     }
