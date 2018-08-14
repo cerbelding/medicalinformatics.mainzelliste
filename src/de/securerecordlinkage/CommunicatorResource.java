@@ -1,5 +1,6 @@
 package de.securerecordlinkage;
 
+import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.securerecordlinkage.initializer.Config;
 import de.sessionTokenSimulator.PatientRecords;
 import org.apache.log4j.Logger;
@@ -350,6 +351,15 @@ public class CommunicatorResource {
         }
 
         return reqObject;
+    }
+
+    //TODO: search a better place and add return http statuscode
+    @GET
+    @Path("/triggerMatch/{remoteID}")
+    public void triggerMatch(@PathParam("remoteID") String remoteID){
+
+        PatientRecords pr = new PatientRecords();
+        pr.matchPatients(remoteID);
     }
 
 }
