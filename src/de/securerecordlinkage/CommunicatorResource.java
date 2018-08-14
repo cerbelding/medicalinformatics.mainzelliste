@@ -35,9 +35,9 @@ public class CommunicatorResource {
 
     private static String localId;
     private static String remoteId;
-    private static String baseCommunicatorURL = "http://localhost:8082/Communicator/getAllRecords";
+    private static String baseCommunicatorURL = "http://localhost:8082/";
 //    private static String callBackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
-// private static String secureEpiLinkRemoteURL = "http://localhost:8082/Communicator/linkCallBack";
+    private static String localDataServiceURL = "http://localhost:8082/Communicator/getAllRecords";
     private static String apiKey = "123abc";
 
     public static String linkRequestURL = "http://192.168.0.101:8080/linkRecord/dkfz";
@@ -51,10 +51,10 @@ public class CommunicatorResource {
         remoteId = id;
         baseCommunicatorURL = config.getServers().get(remoteId).getUrl();
 //        callBackLinkURL = config.getProperty("srl.callBackLinkURL");
-//        secureEpiLinkRemoteURL = config.getProperty("srl.secureEpiLinkRemoteURL");
+        localDataServiceURL = config.getLocalDataServiceUrl();
         apiKey = config.getServers().get(remoteId).getApiKey();
 
-        logger.info("remoteID: " + remoteId + " baseCommunicatorURL: " + baseCommunicatorURL);
+        logger.info("remoteID: " + remoteId + " baseCommunicatorURL: " + localDataServiceURL);
 
     }
 

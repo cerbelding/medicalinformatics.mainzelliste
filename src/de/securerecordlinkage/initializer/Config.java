@@ -52,6 +52,7 @@ public enum Config {
 	private final String localID;
 	private final String localSELUrl;
 	private final String localApiKey;
+	private final String localDataServiceUrl;
 
 	private final HashMap<String, Server> remoteServers = new HashMap<String, Server>();
 
@@ -114,6 +115,7 @@ public enum Config {
 		localID = props.getProperty("localID");
 		localSELUrl = props.getProperty("localSELUrl");
 		localApiKey = props.getProperty("localApiKey");
+		localDataServiceUrl = props.getProperty("localDataServiceUrl");
 
 		// Read field bitlength from configuration
 		Pattern pattern = Pattern.compile("field\\.(\\w+)\\.bitlength");
@@ -201,6 +203,7 @@ public enum Config {
 		return localSELUrl;
 	}
 	public String getLocalApiKey() {return localApiKey; }
+	public String getLocalDataServiceUrl() {return localDataServiceUrl;}
 
 	public HashMap<String, Integer> getFieldBitLength() {
 		return fieldBitlength;
