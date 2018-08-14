@@ -53,6 +53,8 @@ public enum Config {
 	private final String localSELUrl;
 	private final String localApiKey;
 	private final String localDataServiceUrl;
+	private final String localCallbackLinkUrl;
+	private final String localCallbackMatchUrl;
 
 	private final HashMap<String, Server> remoteServers = new HashMap<String, Server>();
 
@@ -116,6 +118,8 @@ public enum Config {
 		localSELUrl = props.getProperty("localSELUrl");
 		localApiKey = props.getProperty("localApiKey");
 		localDataServiceUrl = props.getProperty("localDataServiceUrl");
+		localCallbackLinkUrl = props.getProperty("localCallbackLinkUrl");
+		localCallbackMatchUrl = props.getProperty("localCallbackMatchUrl");
 
 		// Read field bitlength from configuration
 		Pattern pattern = Pattern.compile("field\\.(\\w+)\\.bitlength");
@@ -204,6 +208,8 @@ public enum Config {
 	}
 	public String getLocalApiKey() {return localApiKey; }
 	public String getLocalDataServiceUrl() {return localDataServiceUrl;}
+	public String getLocalCallbackLinkUrl() {return localCallbackLinkUrl; }
+	public String getLocalCallbackMatchUrl() {return localCallbackMatchUrl; }
 
 	public HashMap<String, Integer> getFieldBitLength() {
 		return fieldBitlength;

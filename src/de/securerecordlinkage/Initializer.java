@@ -136,7 +136,7 @@ public class Initializer {
         try {
 
             de.securerecordlinkage.initializer.Config srlConfig = de.securerecordlinkage.initializer.Config.instance;
-            reqObject.put("localID", srlConfig.getLocalID());
+            reqObject.put("localId", srlConfig.getLocalID());
             tmpObj.put("authType", "apiKey");
             tmpObj.put("sharedKey", srlConfig.getLocalApiKey());
             reqObject.put("localAuthentication", tmpObj);
@@ -236,7 +236,7 @@ public class Initializer {
 
             //TODO: linkageService missing
 
-            reqObject.put("matchingAllowed", "true");
+            reqObject.put("matchingAllowed", true);
 
         } catch (JSONException e) {
             e.printStackTrace();

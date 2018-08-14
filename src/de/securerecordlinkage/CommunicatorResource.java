@@ -37,7 +37,8 @@ public class CommunicatorResource {
     private static String localId;
     private static String remoteId;
     private static String baseCommunicatorURL = "http://localhost:8082/";
-//    private static String callBackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
+    private static String localCallbackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
+    private static String localCallbackMatchURL = "http://localhost:8082/Communicator/matchCallBack";
     private static String localDataServiceURL = "http://localhost:8082/Communicator/getAllRecords";
     private static String apiKey = "123abc";
 
@@ -51,7 +52,8 @@ public class CommunicatorResource {
         localId = config.getLocalID();
         remoteId = id;
         baseCommunicatorURL = config.getServers().get(remoteId).getUrl();
-//        callBackLinkURL = config.getProperty("srl.callBackLinkURL");
+        localCallbackLinkURL = config.getLocalCallbackLinkUrl();
+        localCallbackMatchURL = config.getLocalCallbackMatchUrl();
         localDataServiceURL = config.getLocalDataServiceUrl();
         apiKey = config.getServers().get(remoteId).getApiKey();
 
@@ -71,7 +73,7 @@ public class CommunicatorResource {
             JSONObject recordToSend = new JSONObject();
             JSONObject callbackObj = new JSONObject();
             callbackObj.setEscapeForwardSlashAlways(false);
-            callbackObj.put("url", baseCommunicatorURL+"/linkCallBack" + "?idType=" + idType + "&" + "idString=" + idString);
+            callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType + "&" + "idString=" + idString);
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
             SendHelper.doRequest(url, "POST", recordToSend.toString());
@@ -91,7 +93,7 @@ public class CommunicatorResource {
             JSONObject recordToSend = new JSONObject();
             JSONObject callbackObj = new JSONObject();
             callbackObj.setEscapeForwardSlashAlways(false);
-            callbackObj.put("url", baseCommunicatorURL+"/matchCallBack");
+            callbackObj.put("url", localCallbackMatchURL);
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
             SendHelper.doRequest(url, "POST", recordToSend.toString());
