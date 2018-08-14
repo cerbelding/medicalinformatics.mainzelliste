@@ -47,7 +47,7 @@ public class Initializer {
         try {
             logger.info("initialize - SRL");
             JSONObject configJSON = createLocalInitJSON(c);
-            SendHelper.doRequest(srlConfig.getLocalSELUrl(), "PUT", configJSON.toString());
+            SendHelper.doRequest(srlConfig.getLocalSELUrl() + "/initLocal", "PUT", configJSON.toString());
         } catch (Exception e) {
             logger.error("initialize() - Could not send initJSON " + e.toString());
             //e.printStackTrace();
@@ -69,8 +69,9 @@ public class Initializer {
 
         try {
 
+            //remote Init
             JSONObject remoteInitJSON = createRemoteInitJSON(server);
-            SendHelper.doRequest(server.getUrl()+"/initRemote/"+server.getId(), "PUT", remoteInitJSON.toString());
+            SendHelper.doRequest(srlConfig.getLocalSELUrl()+"/initRemote/"+server.getId(), "PUT", remoteInitJSON.toString());
 
             //TODO: only test to simulate send patient LÖSCHEN bitte LÖSCH mich
             //this.wait(1000);
@@ -135,11 +136,12 @@ public class Initializer {
         try {
 
             de.securerecordlinkage.initializer.Config srlConfig = de.securerecordlinkage.initializer.Config.instance;
+            reqObject.put("localID", srlConfig.getLocalID());
             tmpObj.put("authType", "apiKey");
             tmpObj.put("sharedKey", srlConfig.getLocalApiKey());
             reqObject.put("localAuthentication", tmpObj);
             dateServiceObj = new JSONObject();
-            dateServiceObj.put("url", srlConfig.getLocalSELUrl());
+            dateServiceObj.put("url", srlConfig.getLocalDataServiceUrl());
             reqObject.put("dataService", dateServiceObj);
             tmpObj = new JSONObject();
             tmpObj.put("algoType", "epilink");
