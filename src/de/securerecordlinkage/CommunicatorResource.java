@@ -55,7 +55,7 @@ public class CommunicatorResource {
         localCallbackLinkURL = config.getLocalCallbackLinkUrl();
         localCallbackMatchURL = config.getLocalCallbackMatchUrl();
         localDataServiceURL = config.getLocalDataServiceUrl();
-        apiKey = config.getServers().get(remoteId).getApiKey();
+        apiKey = config.getLocalApiKey();
 
         logger.info("remoteID: " + remoteId + " baseCommunicatorURL: " + localDataServiceURL);
 

@@ -138,7 +138,7 @@ public class Initializer {
             de.securerecordlinkage.initializer.Config srlConfig = de.securerecordlinkage.initializer.Config.instance;
             reqObject.put("localId", srlConfig.getLocalID());
             tmpObj.put("authType", "apiKey");
-            tmpObj.put("sharedKey", srlConfig.getLocalApiKey());
+            tmpObj.put("sharedKey", srlConfig.getSharedKey());
             reqObject.put("localAuthentication", tmpObj);
             dateServiceObj = new JSONObject();
             dateServiceObj.put("url", srlConfig.getLocalDataServiceUrl());

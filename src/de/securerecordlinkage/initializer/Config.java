@@ -207,6 +207,11 @@ public enum Config {
 		return localSELUrl;
 	}
 	public String getLocalApiKey() {return localApiKey; }
+	public String getSharedKey() {
+		String [] parts = localApiKey.split("=");
+		String sharedKey = parts[parts.length-1].trim();
+		return sharedKey.substring(1,sharedKey.length()-1);
+	}
 	public String getLocalDataServiceUrl() {return localDataServiceUrl;}
 	public String getLocalCallbackLinkUrl() {return localCallbackLinkUrl; }
 	public String getLocalCallbackMatchUrl() {return localCallbackMatchUrl; }
