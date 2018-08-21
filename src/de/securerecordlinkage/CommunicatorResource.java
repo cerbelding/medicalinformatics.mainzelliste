@@ -133,9 +133,9 @@ public class CommunicatorResource {
      * rest endpoint, used to set a linked record - In Architectur-XML (v6) step 7
      */
     @POST
-    @Path("/matchCallback")
+    @Path("/matchCallback/{remoteID}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response addMatchResult(@Context HttpServletRequest req, String json) {
+    public Response addMatchResult(@Context HttpServletRequest req, String json, @PathParam("remoteID") String remoteID) {
         logger.info("/matchCallBack called");
         logger.info("addMatchResult");
 
@@ -144,7 +144,11 @@ public class CommunicatorResource {
         } else {
             //APIKey correct, now do the work
             try {
+
+                //if(json.match==true)
                 // Call countMatchResult
+                MatchCounter.incrementNumMatch(remoteID);
+
                 return Response.status(200).build();
             } catch (Exception e) {
                 logger.error("addMatchResult failed. " + e.toString());
@@ -359,12 +363,21 @@ public class CommunicatorResource {
     //TODO: search a better place and add return http statuscode
     @GET
     @Path("/triggerMatch/{remoteID}")
-    public void triggerMatch(@PathParam("remoteID") String remoteID){
+    public Response triggerMatch(@PathParam("remoteID") String remoteID) throws JSONException {
 
         logger.info("trigger matcher started");
         logger.info("trigger matcher " + remoteID);
+
+        JSONObject answerObject = new JSONObject();
+
+
+        //TODO: PatientRecords should use a generic interface, so we don't have to use a specific PatientRecords object here
         PatientRecords pr = new PatientRecords();
-        pr.matchPatients(remoteID);
+        Integer totalAmount = pr.matchPatients(remoteID);
+
+        answerObject.put("totalAmount", totalAmount);
+        MatchCounter.setNumAll(remoteID, totalAmount);
+        return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
     }
 
     @GET
@@ -377,12 +390,11 @@ public class CommunicatorResource {
         int n = rand.nextInt(1000) + 1;
 
         JSONObject answerObject = new JSONObject();
-        answerObject.put("totalMatches", n);
+        answerObject.put("totalAmount", MatchCounter.getNumAll(remoteID));
+        answerObject.put("totalMatches", MatchCounter.getNumMatch(remoteID));
         answerObject.put("matchingStatus", "in progress");
 
         return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
-
-
     }
 
 }

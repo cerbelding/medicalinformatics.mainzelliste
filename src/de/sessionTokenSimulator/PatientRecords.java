@@ -22,8 +22,6 @@ public class PatientRecords {
 
     private Logger logger = Logger.getLogger(this.getClass());
     private int numPatients = 0;
-    private int numMatch = 0;
-    private int numNonMatch = 0;
 
     /**
      * public JSONObject readAllPatients() {
@@ -93,7 +91,7 @@ public class PatientRecords {
     }
 
 
-    public void matchPatients(String remoteId) {
+    public Integer matchPatients(String remoteId) {
         try {
             List<Patient> patientList = Persistor.instance.getPatients();
             numPatients = patientList.size();
@@ -105,6 +103,8 @@ public class PatientRecords {
         } catch (Exception e) {
             logger.info(e);
         }
+
+        return numPatients;
     }
 
     public void matchPatient(Patient p, String remoteId) {
@@ -127,19 +127,6 @@ public class PatientRecords {
             return 200;
         } else {
             return 500;
-        }
-    }
-
-    public void countMatchResult(boolean match) {
-        if (match) {
-            numMatch = numMatch + 1;
-        } else {
-            numNonMatch = numNonMatch + 1;
-        }
-
-        if ((numMatch + numNonMatch) == numPatients) {
-            logger.info("Matching completed.");
-            logger.info(numMatch + " were found.");
         }
     }
 
