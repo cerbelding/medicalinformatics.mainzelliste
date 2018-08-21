@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
+import java.util.Random;
 
 //TODO: Verify against APIkey
 //TODO: Extract PatientRecords class, to use this class independent of Mainzelliste
@@ -364,6 +365,24 @@ public class CommunicatorResource {
         logger.info("trigger matcher " + remoteID);
         PatientRecords pr = new PatientRecords();
         pr.matchPatients(remoteID);
+    }
+
+    @GET
+    @Path("/triggerMatch/status/{remoteID}")
+    public Response triggerMatchStatus(@PathParam("remoteID") String remoteID) throws JSONException {
+
+        logger.info("triggerMatchStatus requested for remoteID: " + remoteID);
+
+        Random rand = new Random();
+        int n = rand.nextInt(1000) + 1;
+
+        JSONObject answerObject = new JSONObject();
+        answerObject.put("totalMatches", n);
+        answerObject.put("matchingStatus", "in progress");
+
+        return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
+
+
     }
 
 }

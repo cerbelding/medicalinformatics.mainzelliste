@@ -20,7 +20,9 @@
 		<filter-name>Mainzelliste - CorsResponseFilter</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
-	<filter>
+
+
+    <filter>
 		<filter-name>Mainzelliste</filter-name>
 		<filter-class>com.sun.jersey.spi.container.servlet.ServletContainer</filter-class>
 	  	<init-param>
@@ -74,9 +76,5 @@
 		<auth-method>DIGEST</auth-method>
 		<realm-name>IDAT-Admin</realm-name>
 	</login-config>
-
-
-
-
 
 </web-app>
