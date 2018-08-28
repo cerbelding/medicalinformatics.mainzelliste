@@ -138,6 +138,8 @@ public class CommunicatorResource {
     public Response addMatchResult(@Context HttpServletRequest req, String json, @PathParam("remoteID") String remoteID) {
         logger.info("/matchCallBack called");
         logger.info("addMatchResult");
+        logger.info("request: " + req.getQueryString());
+        logger.info("json: " + json);
 
         if (!authorizationValidator(req)) {
             return Response.status(401).build();
@@ -147,7 +149,23 @@ public class CommunicatorResource {
 
                 //if(json.match==true)
                 // Call countMatchResult
-                MatchCounter.incrementNumMatch(remoteID);
+                if (json.contains("\"match\":true")){
+                    logger.info("matchCallback: match=" + true);
+                    MatchCounter.incrementNumMatch(remoteID);
+                }
+                else{
+                    //Count nonMatches
+                    logger.info("matchCallback: non match");
+                    MatchCounter.incrementNumNonMatch(remoteID);
+                }
+
+                if(json.contains("\"tentativeMatch\":true")){
+                    logger.info("matchCallback: tentativeMatch=" + true);
+                    TentativeMatchCounter.incrementNumMatch(remoteID);
+                }
+
+
+                //{"result":{"match":false,"tentativeMatch":true}}
 
                 return Response.status(200).build();
             } catch (Exception e) {
@@ -342,24 +360,6 @@ public class CommunicatorResource {
 
     }
 
-    //----Dummy implementation ------------------------------------------
-
-    //Temporal object, just for developing purpose
-    private JSONObject jsondummy() {
-        logger.info("jsondummy()");
-        JSONObject reqObject = new JSONObject();
-        JSONObject tmpObj = new JSONObject();
-        try {
-            tmpObj.put("authType", "apiKey");
-            tmpObj.put("sharedKey", "123abc");
-            reqObject.put("localAuthentication", tmpObj);
-        } catch (Exception e) {
-            logger.info("jsondummy exception" + e.getMessage());
-        }
-
-        return reqObject;
-    }
-
     //TODO: search a better place and add return http statuscode
     @GET
     @Path("/triggerMatch/{remoteID}")
@@ -386,13 +386,16 @@ public class CommunicatorResource {
 
         logger.info("triggerMatchStatus requested for remoteID: " + remoteID);
 
-        Random rand = new Random();
-        int n = rand.nextInt(1000) + 1;
-
         JSONObject answerObject = new JSONObject();
         answerObject.put("totalAmount", MatchCounter.getNumAll(remoteID));
         answerObject.put("totalMatches", MatchCounter.getNumMatch(remoteID));
+        answerObject.put("totalTentativeMatches", TentativeMatchCounter.getNumMatch(remoteID));
         answerObject.put("matchingStatus", "in progress");
+
+        logger.info("triggerMatchStatus response: " + answerObject);
+        if(MatchCounter.getNumMatch(remoteID) + MatchCounter.getNumNonMatch(remoteID) >= MatchCounter.getNumAll(remoteID)){
+            answerObject.put("matchingStatus", "finished");
+        }
 
         return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
     }

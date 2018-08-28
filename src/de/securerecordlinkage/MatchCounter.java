@@ -35,6 +35,16 @@ public class MatchCounter {
         MatchCounter.numMatch.put(remoteID, newValue);
     }
 
+    public static void incrementNumNonMatch(String remoteID) {
+        if (!MatchCounter.numNonMatch.containsKey(remoteID)) {
+            MatchCounter.numNonMatch.put(remoteID, 0);
+        }
+        ;
+        Integer oldValue = MatchCounter.numNonMatch.get(remoteID);
+        Integer newValue = oldValue + 1;
+        MatchCounter.numNonMatch.put(remoteID, newValue);
+    }
+
     public static Integer getNumNonMatch(String remoteID) {
         return MatchCounter.numNonMatch.get(remoteID);
     }
