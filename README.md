@@ -276,3 +276,4 @@ As an open source project, Mainzelliste profits from contributions from the rese
 - Dirk Langner, Universitätsmedizin Greifswald
 - Matthias Lemmer, Universität Marburg
 - Project FP7-305653-chILD-EU
+- Ziad Sehili, Universität Leipzig
