@@ -44,6 +44,7 @@ public class CommunicatorResource {
     private static String apiKey = "123abc";
 
     public static String linkRequestURL = "http://192.168.0.101:8080/linkRecord/dkfz";
+    public static String linkAllRequestURL = "http://192.168.0.101:8080/linkRecords/dkfz";
 
     // Read config with SRL links to know where to send the request
     //TODO: make init non static to communicate with X partners
@@ -77,6 +78,27 @@ public class CommunicatorResource {
             callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType + "&" + "idString=" + idString);
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
+            SendHelper.doRequest(url, "POST", recordToSend.toString());
+        } catch (Exception e) {
+            logger.error(e);
+        }
+    }
+
+    /**
+     * send linkRecord, which should be linked, to SRL - In Architectur-XML (v6) step 2
+     */
+    //TODO: change idType and idString to map params
+    public void sendLinkRecords(String url, String idType, JSONArray recordsAsJson) {
+        logger.info("sendLinkRecords");
+        try {
+            JSONObject recordToSend = new JSONObject();
+            JSONObject callbackObj = new JSONObject();
+            callbackObj.setEscapeForwardSlashAlways(false);
+            callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType);
+            recordToSend.put("callback", callbackObj);
+            recordToSend.put("total", recordsAsJson.length());
+            recordToSend.put("toDate", toDate);
+            recordToSend.put("fields", recordsAsJson);
             SendHelper.doRequest(url, "POST", recordToSend.toString());
         } catch (Exception e) {
             logger.error(e);

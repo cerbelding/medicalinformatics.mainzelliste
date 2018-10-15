@@ -90,6 +90,37 @@ public class PatientRecords {
         }
     }
 
+    public Integer linkPatients(String IDType) {
+        JSONArray array = new JSONArray();
+        int index = 0;
+        try {
+            List<Patient> patientList = Persistor.instance.getPatients();
+            numPatients = patientList.size();
+            logger.info(numPatients + " patients to be matched");
+            logger.info("Linking started...");
+            for (Patient p: patientList) {
+                String IDString = p.getId(IDType).getIdString();
+                if (IDString.equals(String.valueOf(index))) {
+                    JSONObject tmpObject = new JSONObject();
+                    tmpObject.put("fields", getFieldsObject(p));
+                    array.put(tmpObject);
+                }
+                else {
+                    throw new Exception("Delete Secure Record Linkage IDs before new linkage");
+                }
+            }
+            CommunicatorResource rs = new CommunicatorResource();
+            de.securerecordlinkage.initializer.Config c = de.securerecordlinkage.initializer.Config.instance;
+            String[] parts = IDType.split(":");
+            String remoteId = parts[parts.length-1];
+            rs.sendLinkRecords(c.getLocalSELUrl()+"/linkRecords/" + remoteId, IDType, array);
+
+        } catch (Exception e) {
+            logger.info(e);
+        }
+
+        return numPatients;
+    }
 
     public Integer matchPatients(String remoteId) {
         try {
