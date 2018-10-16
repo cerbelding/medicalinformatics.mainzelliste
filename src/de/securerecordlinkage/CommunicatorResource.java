@@ -14,8 +14,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 //TODO: Verify against APIkey
 //TODO: Extract PatientRecords class, to use this class independent of Mainzelliste
@@ -41,7 +40,8 @@ public class CommunicatorResource {
     private static String localCallbackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
     private static String localCallbackMatchURL = "http://localhost:8082/Communicator/matchCallBack";
     private static String localDataServiceURL = "http://localhost:8082/Communicator/getAllRecords";
-    private static String apiKey = "123abc";
+    private static List<String> apiKey = new ArrayList<>();
+    private static String authenticationType = "apiKey";
 
     public static String linkRequestURL = "http://192.168.0.101:8080/linkRecord/dkfz";
     public static String linkAllRequestURL = "http://192.168.0.101:8080/linkRecords/dkfz";
@@ -57,7 +57,8 @@ public class CommunicatorResource {
         localCallbackLinkURL = config.getLocalCallbackLinkUrl();
         localCallbackMatchURL = config.getLocalCallbackMatchUrl();
         localDataServiceURL = config.getLocalDataServiceUrl();
-        apiKey = config.getLocalApiKey();
+        apiKey.add(config.getLocalApiKey());
+        authenticationType = config.getLocalAuthenticationType();
 
         logger.info("remoteID: " + remoteId + " baseCommunicatorURL: " + localDataServiceURL);
 
@@ -231,6 +232,16 @@ public class CommunicatorResource {
     //----Helper functions ---------------------------------------------
     private boolean authorizationValidator(HttpServletRequest request) {
 
+        Map<String, List<String>> allowedAuthTypesAndValues = new HashMap<>();
+
+        allowedAuthTypesAndValues.put(authenticationType, apiKey);
+
+        AuthorizationValidator authorizationValidator = new AuthorizationValidator(allowedAuthTypesAndValues);
+        return authorizationValidator.validate(request);
+
+
+
+        /*
         logger.info("authorizationValidator() " + "validate ApiKey");
         //TODO: get authKey from Config
         String authKey = apiKey;
@@ -255,6 +266,7 @@ public class CommunicatorResource {
             logger.info("Wrong ApiKey!");
             return false;
         }
+        */
 
     }
 
@@ -434,12 +446,22 @@ public class CommunicatorResource {
         answerObject.put("totalAmount", MatchCounter.getNumAll(remoteID));
         answerObject.put("totalMatches", MatchCounter.getNumMatch(remoteID));
         answerObject.put("totalTentativeMatches", TentativeMatchCounter.getNumMatch(remoteID));
-        answerObject.put("matchingStatus", "in progress");
 
         logger.info("triggerMatchStatus response: " + answerObject);
-        if(MatchCounter.getNumMatch(remoteID) + MatchCounter.getNumNonMatch(remoteID) >= MatchCounter.getNumAll(remoteID)){
-            answerObject.put("matchingStatus", "finished");
+
+        try {
+            answerObject.put("matchingStatus", "in progress");
+            if(MatchCounter.getNumMatch(remoteID) + MatchCounter.getNumNonMatch(remoteID) >= MatchCounter.getNumAll(remoteID)){
+                answerObject.put("matchingStatus", "finished");
+            }
+            logger.info("getNumMatch:" + MatchCounter.getNumMatch(remoteID) + " getNumNonMatch: " + MatchCounter.getNumNonMatch(remoteID) + " getNumAll: " + MatchCounter.getNumAll(remoteID));
+
+            logger.info("triggerMatchStatus (with progress status) response: " + answerObject);
+        } catch (JSONException e) {
+            logger.info("matchingStatus could not be set");
+            logger.error(e.getMessage());
         }
+
 
         return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
     }
