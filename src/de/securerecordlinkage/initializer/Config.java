@@ -55,6 +55,8 @@ public enum Config {
 	private final String localDataServiceUrl;
 	private final String localCallbackLinkUrl;
 	private final String localCallbackMatchUrl;
+	private final String localAuthenticationType;
+
 
 	private final HashMap<String, Server> remoteServers = new HashMap<String, Server>();
 
@@ -120,6 +122,8 @@ public enum Config {
 		localDataServiceUrl = props.getProperty("localDataServiceUrl");
 		localCallbackLinkUrl = props.getProperty("localCallbackLinkUrl");
 		localCallbackMatchUrl = props.getProperty("localCallbackMatchUrl");
+		localAuthenticationType = props.getProperty("localAuthenticationType");
+
 
 		// Read field bitlength from configuration
 		Pattern pattern = Pattern.compile("field\\.(\\w+)\\.bitlength");
@@ -207,6 +211,8 @@ public enum Config {
 		return localSELUrl;
 	}
 	public String getLocalApiKey() {return localApiKey; }
+	public String getLocalAuthenticationType() {return localAuthenticationType; }
+
 	public String getSharedKey() {
 		String [] parts = localApiKey.split("=");
 		String sharedKey = parts[parts.length-1].trim();
