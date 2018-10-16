@@ -137,9 +137,14 @@ public class Initializer {
 
             de.securerecordlinkage.initializer.Config srlConfig = de.securerecordlinkage.initializer.Config.instance;
             reqObject.put("localId", srlConfig.getLocalID());
-            tmpObj.put("authType", "apiKey");
-            tmpObj.put("sharedKey", srlConfig.getSharedKey());
-            reqObject.put("localAuthentication", tmpObj);
+            tmpObj.put("authType", srlConfig.getLocalAuthenticationType());
+
+            tmpObj.put("sharedKey", srlConfig.getLocalApiKey());
+
+            if(srlConfig.getLocalAuthenticationType().equals("apiKey")){
+                reqObject.put("localAuthentication", tmpObj);
+            }
+
             dateServiceObj = new JSONObject();
             dateServiceObj.put("url", srlConfig.getLocalDataServiceUrl());
             reqObject.put("dataService", dateServiceObj);
@@ -229,7 +234,9 @@ public class Initializer {
 
             tmpObj.put("url", server.getUrl());
             authObj.put("authType", "apiKey");
+            //TODO: if authentication type == apikey, has to be part of server object
             authObj.put("sharedKey", server.getApiKey());
+
             tmpObj.put("authentication", authObj);
 
             reqObject.put("connectionProfile", tmpObj);
