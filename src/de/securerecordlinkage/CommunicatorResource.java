@@ -392,7 +392,6 @@ public class CommunicatorResource {
 
         JSONObject answerObject = new JSONObject();
 
-
         //TODO: PatientRecords should use a generic interface, so we don't have to use a specific PatientRecords object here
         PatientRecords pr = new PatientRecords();
         Integer totalAmount = pr.matchPatients(remoteID);
@@ -400,6 +399,29 @@ public class CommunicatorResource {
         answerObject.put("totalAmount", totalAmount);
         MatchCounter.setNumAll(remoteID, totalAmount);
         return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
+    }
+
+    // Find better name
+    // Triggers the first link process (M:N) for two patient list instances
+    // Call only once, if repeated, the SRL IDs should be first deleted
+    @GET
+    @Path("/triggerLink/{remoteID}")
+    public Response triggerLink(@PathParam("remoteID") String remoteID) throws JSONException {
+        try {
+            logger.info("trigger linker started");
+            logger.info("trigger linker " + remoteID);
+
+            JSONObject answerObject = new JSONObject();
+
+            PatientRecords pr = new PatientRecords();
+            Integer totalAmount = pr.linkPatients(remoteID);
+
+            answerObject.put("totalAmount", totalAmount);
+            return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            logger.error("SRL IDs cannot be generated: " + e.toString());
+            return Response.status(500).build();
+        }
     }
 
     @GET

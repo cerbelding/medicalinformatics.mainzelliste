@@ -48,6 +48,12 @@ public class ExternalIDGenerator implements IDGenerator<ExternalID>{
      * 
      * @return true
      */
+
+    @Override
+    public void reset(String idType) {
+        //
+    }
+
     @Override
     public boolean verify(String id) {
         return true;

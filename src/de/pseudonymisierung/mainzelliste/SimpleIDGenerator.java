@@ -90,6 +90,11 @@ public class SimpleIDGenerator implements IDGenerator<IntegerID> {
 	}
 
 	@Override
+	public void reset(String idType) {
+		//
+	}
+
+	@Override
 	public String getIdType() {
 		return idType;
 	}

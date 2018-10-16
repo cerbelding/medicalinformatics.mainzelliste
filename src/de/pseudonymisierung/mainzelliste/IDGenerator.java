@@ -58,6 +58,7 @@ public interface IDGenerator<I extends ID> {
 	 */
 	void init(IDGeneratorMemory mem, String idType, Properties props);
 
+	void reset(String idType);
 	/**
 	 * This is the method to call to generate a new unique (in its type) ID.
 	 * 

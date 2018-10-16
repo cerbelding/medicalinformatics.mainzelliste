@@ -732,6 +732,11 @@ public class PIDGenerator implements IDGenerator<PID>{
 	}
 
 	@Override
+	public void reset(String idType) {
+		//
+	}
+
+	@Override
 	public synchronized PID getNext() {
 		String pid = createPIDString(this.counter + 1);
 		this.counter++;

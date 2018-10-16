@@ -2,6 +2,7 @@ package de.sessionTokenSimulator;
 
 import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
 import de.securerecordlinkage.CommunicatorResource;
 import de.securerecordlinkage.initializer.Config;
@@ -82,15 +83,14 @@ public class PatientRecords {
             recordAsJSON.put("fields", getFieldsObject(p));
             CommunicatorResource rs = new CommunicatorResource();
             de.securerecordlinkage.initializer.Config c = de.securerecordlinkage.initializer.Config.instance;
-            String[] parts = IDType.split(":");
-            String remoteId = parts[parts.length-1];
+            String remoteId = getRemoteID(IDType);
             rs.sendLinkRecord(c.getLocalSELUrl()+"/linkRecord/" + remoteId, IDType, IDString, recordAsJSON);
         } catch (Exception e) {
             logger.info(e);
         }
     }
 
-    public Integer linkPatients(String IDType) {
+    public Integer linkPatients(String remoteID) {
         JSONArray array = new JSONArray();
         int index = 0;
         try {
@@ -98,22 +98,36 @@ public class PatientRecords {
             numPatients = patientList.size();
             logger.info(numPatients + " patients to be matched");
             logger.info("Linking started...");
+            CommunicatorResource rs = new CommunicatorResource();
+            de.securerecordlinkage.initializer.Config c = de.securerecordlinkage.initializer.Config.instance;
+            String IDType = getIDType(c.getLocalID(), remoteID);
+            IDGenerator<? extends ID> factory = IDGeneratorFactory.instance.getFactory(IDType);
+
+            if (factory == null) {
+                throw new InvalidIDException("ID type " + IDType + " not defined!");
+            }
+
+            factory.reset(IDType);
+
             for (Patient p: patientList) {
+                Patient existingPatient = Persistor.instance.getPatient(new SrlID(String.valueOf(index+1), IDType));
+                index = index + 1;
+                if (existingPatient != null && existingPatient != p) {
+                    throw new Exception("Delete Secure Record Linkage IDs before new linkage");
+                }
                 String IDString = p.getId(IDType).getIdString();
+                if (existingPatient == null) {
+                    Persistor.instance.updatePatient(p);
+                }
                 if (IDString.equals(String.valueOf(index))) {
                     JSONObject tmpObject = new JSONObject();
                     tmpObject.put("fields", getFieldsObject(p));
                     array.put(tmpObject);
-                }
-                else {
+                } else {
                     throw new Exception("Delete Secure Record Linkage IDs before new linkage");
                 }
             }
-            CommunicatorResource rs = new CommunicatorResource();
-            de.securerecordlinkage.initializer.Config c = de.securerecordlinkage.initializer.Config.instance;
-            String[] parts = IDType.split(":");
-            String remoteId = parts[parts.length-1];
-            rs.sendLinkRecords(c.getLocalSELUrl()+"/linkRecords/" + remoteId, IDType, array);
+            rs.sendLinkRecords(c.getLocalSELUrl()+"/linkRecords/" + remoteID, IDType, array);
 
         } catch (Exception e) {
             logger.info(e);
@@ -235,5 +249,19 @@ public class PatientRecords {
                 result.append("0");
         }
         return result.toString();
+    }
+
+    private String getRemoteID(String IDType) {
+        if (IDType != null && !IDType.isEmpty()) {
+            String [] parts = IDType.split("-");
+            if (parts.length == 3) {
+                return parts[2];
+            }
+        }
+        return "";
+    }
+
+    private String getIDType(String localID, String remoteID) {
+        return "link-"+localID+"-"+remoteID;
     }
 }

@@ -53,8 +53,13 @@ public class SrlIDGenerator implements IDGenerator<SrlID> {
 		String memCounter = mem.get("counter");
 		if(memCounter == null) memCounter = "0";
 		this.counter = Integer.parseInt(memCounter);
-
 		this.idType = idType;
+	}
+
+	@Override
+	public void reset(String idType) {
+		this.mem.set("counter", "0");
+		this.mem.commit();
 	}
 
 	@Override
