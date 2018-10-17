@@ -397,20 +397,24 @@ public class CommunicatorResource {
     //TODO: search a better place and add return http statuscode
     @GET
     @Path("/triggerMatch/{remoteID}")
-    public Response triggerMatch(@PathParam("remoteID") String remoteID) throws JSONException {
+    public Response triggerMatch(@Context HttpServletRequest request, @PathParam("remoteID") String remoteID) throws JSONException {
 
-        logger.info("trigger matcher started");
-        logger.info("trigger matcher " + remoteID);
+        if (authorizationValidator(request)) {
+            logger.info("trigger matcher started");
+            logger.info("trigger matcher " + remoteID);
 
-        JSONObject answerObject = new JSONObject();
+            JSONObject answerObject = new JSONObject();
 
-        //TODO: PatientRecords should use a generic interface, so we don't have to use a specific PatientRecords object here
-        PatientRecords pr = new PatientRecords();
-        Integer totalAmount = pr.matchPatients(remoteID);
+            //TODO: PatientRecords should use a generic interface, so we don't have to use a specific PatientRecords object here
+            PatientRecords pr = new PatientRecords();
+            Integer totalAmount = pr.matchPatients(remoteID);
 
-        answerObject.put("totalAmount", totalAmount);
-        MatchCounter.setNumAll(remoteID, totalAmount);
-        return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
+            answerObject.put("totalAmount", totalAmount);
+            MatchCounter.setNumAll(remoteID, totalAmount);
+            return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
+        } else {
+            return Response.status(401).build();
+        }
     }
 
     // Find better name
@@ -418,27 +422,32 @@ public class CommunicatorResource {
     // Call only once, if repeated, the SRL IDs should be first deleted
     @GET
     @Path("/triggerLink/{remoteID}")
-    public Response triggerLink(@PathParam("remoteID") String remoteID) throws JSONException {
-        try {
-            logger.info("trigger linker started");
-            logger.info("trigger linker " + remoteID);
+    public Response triggerLink(@Context HttpServletRequest request, @PathParam("remoteID") String remoteID) throws JSONException {
+        if (authorizationValidator(request)) {
+            try {
+                logger.info("trigger linker started");
+                logger.info("trigger linker " + remoteID);
 
-            JSONObject answerObject = new JSONObject();
+                JSONObject answerObject = new JSONObject();
 
-            PatientRecords pr = new PatientRecords();
-            Integer totalAmount = pr.linkPatients(remoteID);
+                PatientRecords pr = new PatientRecords();
+                Integer totalAmount = pr.linkPatients(remoteID);
 
-            answerObject.put("totalAmount", totalAmount);
-            return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
-        } catch (Exception e) {
-            logger.error("SRL IDs cannot be generated: " + e.toString());
-            return Response.status(500).build();
+                answerObject.put("totalAmount", totalAmount);
+                return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
+            } catch (Exception e) {
+                logger.error("SRL IDs cannot be generated: " + e.toString());
+                return Response.status(500).build();
+            }
+        } else {
+            return Response.status(401).build();
         }
     }
 
     @GET
     @Path("/triggerMatch/status/{remoteID}")
     public Response triggerMatchStatus(@PathParam("remoteID") String remoteID) throws JSONException {
+
 
         logger.info("triggerMatchStatus requested for remoteID: " + remoteID);
 

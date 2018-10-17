@@ -34,8 +34,6 @@ public class AuthorizationValidator {
 
         logger.info("authorizationValidator() " + "validate ApiKey");
 
-
-
         List<String> apiKeys = allowedAuthTypesAndValues.get("apiKey");
         String authHeader;
 
@@ -52,7 +50,9 @@ public class AuthorizationValidator {
         }
 
         for (String apiKey : apiKeys){
-            if (authHeader.equals("apiKey apiKey=\""+apiKey + "\"")) {
+            //if (authHeader.equals("apiKey apiKey=\""+apiKey + "\"")) {
+            if (authHeader.equals("apiKey apiKey=" + apiKey + "")) {
+
                 logger.info("ApiKey correct");
                 return true;
             }
