@@ -59,6 +59,7 @@ public class SrlIDGenerator implements IDGenerator<SrlID> {
 	@Override
 	public void reset(String idType) {
 		this.mem.set("counter", "0");
+		this.counter = 0;
 		this.mem.commit();
 	}
 

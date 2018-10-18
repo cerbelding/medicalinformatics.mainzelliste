@@ -112,7 +112,7 @@ public class PatientRecords {
             for (Patient p: patientList) {
                 Patient existingPatient = Persistor.instance.getPatient(new SrlID(String.valueOf(index+1), IDType));
                 index = index + 1;
-                if (existingPatient != null && existingPatient != p) {
+                if (existingPatient != null && !existingPatient.equals(p)) {
                     throw new Exception("Delete Secure Record Linkage IDs before new linkage");
                 }
                 String IDString = p.getId(IDType).getIdString();
