@@ -164,8 +164,8 @@ public class PatientRecords {
         }
     }
 
-    public int updatePatient(JSONObject patient) {
-        logger.info("updatePatient(" + patient + ")");
+    public int updateRecord(String idType, String tmpRef, String linkageId) {
+        logger.info("updatePatient(" + tmpRef + ") -> " + linkageId + ")");
         boolean updateSuccessful = true;
 
         if (updateSuccessful == true) {

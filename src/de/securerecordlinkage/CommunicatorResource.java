@@ -3,6 +3,7 @@ package de.securerecordlinkage;
 import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.securerecordlinkage.initializer.Config;
 import de.sessionTokenSimulator.PatientRecords;
+import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -141,10 +142,35 @@ public class CommunicatorResource {
         } else {
             //APIKey correct, now do the work
             try {
-                JSONObject newLinkRecord = new JSONObject(json);
-                //TODO: Maybe as an Interface implementation, to unbind from Mainzelliste
-                PatientRecords updatePatient = new PatientRecords();
-                return Response.status(updatePatient.updatePatient(newLinkRecord)).build();
+                JSONObject jsonObject = new JSONObject(json);
+                PatientRecords pr = new PatientRecords();
+                String idType = req.getParameter("idType");
+                String idString = req.getParameter("idString");
+                if (idString != null) {
+                    JSONObject resObject = (JSONObject) jsonObject.get("result");
+                    if (resObject == null) {
+                        logger.error("setLinkRecord failed. " + jsonObject.get("error"));
+                        return Response.status(500).build();
+                    }
+                    return Response.status(pr.updateRecord(idType, idString, resObject.get("linkageId").toString())).build();
+                }
+                else {
+                    JSONArray resArray = (JSONArray) jsonObject.get("result");
+                    if (resArray == null) {
+                        logger.error("setLinkRecord failed. " + jsonObject.get("error"));
+                        return Response.status(500).build();
+                    } else {
+                        for (int i = 0; i < resArray.length(); i++) {
+                            JSONObject tmpObj = resArray.getJSONObject(i);
+                            int status = pr.updateRecord(idType, Integer.toString(i+1), tmpObj.get("linkageId").toString());
+                            if (status == 500) {
+                                logger.error("setLinkRecord failed. ");
+                                return Response.status(500).build();
+                            }
+                        }
+                    }
+                    return Response.status(200).build();
+                }
             } catch (Exception e) {
                 logger.error("setLinkRecord failed. " + e.toString());
                 return Response.status(500).build();
