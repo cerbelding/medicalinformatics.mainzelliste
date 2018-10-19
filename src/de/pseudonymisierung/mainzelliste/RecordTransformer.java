@@ -26,6 +26,7 @@
 package de.pseudonymisierung.mainzelliste;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -95,13 +96,14 @@ public class RecordTransformer {
 	/**
 	 * Transforms a patient by transforming all of its fields. Fields for which
 	 * no transformer is found (i.e. the field name is not in .keySet()) are
-	 * passed unchanged. 
-	 * @param input The record to transform. 
+	 * passed unchanged, as well as IDs.
+	 * @param input The record to transform.
 	 * @return The transformed record.
 	 */
 	public Patient transform(Patient input) {
 		Map<String, Field<?>> inFields = input.getFields();
 		Patient output = new Patient();
+		output.setIds(new HashSet<>(input.getIds()));
 		HashMap<String, Field<?>> outFields = new HashMap<String, Field<?>>();
 		/* iterate over input fields and transform each */
 		for (String fieldName : inFields.keySet()) {
