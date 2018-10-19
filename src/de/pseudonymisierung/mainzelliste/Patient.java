@@ -27,6 +27,7 @@ package de.pseudonymisierung.mainzelliste;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import de.pseudonymisierung.mainzelliste.exceptions.CircularDuplicateRelationException;
+import de.pseudonymisierung.mainzelliste.exceptions.ConflictingDataException;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 
 /**
@@ -96,6 +98,8 @@ public class Patient {
 	public static Map<String, Field<?>> stringToFields(String fieldsJsonString) {
 		try {
 			Map<String, Field<?>> fields = new HashMap<String, Field<?>>();
+			if (fieldsJsonString == null)
+				return fields;
 			JSONObject fieldsJson = new JSONObject(fieldsJsonString);
 			Iterator<?> it = fieldsJson.keys();
 			while (it.hasNext()) {
@@ -125,6 +129,49 @@ public class Patient {
 	}
 
 	/**
+	 * Updates empty or missing fields and external Ids from another Patient
+	 * object. Modifies the object and returns it.
+	 * 
+	 * @param from The patient object from which to update fields.
+	 * @return The modified patient object on which the method is called.
+	 */
+	public Patient updateFrom(Patient from) {
+		// Put updated fields in new map
+		Map<String, Field<?>> newFields = new HashMap<String, Field<?>>();
+		for (String fieldName : from.getFields().keySet()) {
+			// If field is null or empty, update
+			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
+				newFields.put(fieldName, from.getFields().get(fieldName));
+				// otherwise leave old value
+			} else {
+				newFields.put(fieldName, this.fields.get(fieldName));
+			}
+		}
+
+		Set<String> externalIdTypes = IDGeneratorFactory.instance.getExternalIdTypes();
+		for (ID thisId : from.getIds()) {
+			if (externalIdTypes.contains(thisId.getType())) {
+				String idType = thisId.getType();
+				ID myId = this.getId(idType);
+				if (myId == null) {
+					this.addId(thisId);
+				} else {
+					if (!myId.equals(thisId)) {
+						throw new ConflictingDataException(
+								String.format("ID of type $s should be updated with value %s but already has value %s",
+										idType, thisId.getIdString(), myId.getIdString()));
+					}
+				}
+			}
+		}
+		// Set fields to updated map. This is more safe than setting fields
+		// direct
+		// because setFields does other stuff
+		this.setFields(newFields);
+		return this;
+	}
+
+    /**
 	 * The map of fields of this patient. Field names are map keys, the
 	 * corresponding Field objects are the values. The fields are not persisted
 	 * by this map (therefore the {@literal @Transient} annotation), as this
@@ -135,7 +182,7 @@ public class Patient {
 	 * @see #fieldsString
 	 */
 	@Transient
-	private Map<String, Field<?>> fields;
+	private Map<String, Field<?>> fields = new HashMap<>();
 
 	/**
 	 * Serialization of the fields as JSON string for efficient storage in the
@@ -152,7 +199,7 @@ public class Patient {
 	 */
 	@OneToMany(cascade = { CascadeType.DETACH, CascadeType.MERGE,
 			CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
-	private Set<ID> ids;
+	private Set<ID> ids = new HashSet<>();
 
 	/**
 	 * Input fields as read from form (before transformation). Used to display
@@ -162,7 +209,7 @@ public class Patient {
 	 * @see #inputFieldsString
 	 */
 	@Transient
-	private Map<String, Field<?>> inputFields;
+	private Map<String, Field<?>> inputFields = new HashMap<>();
 
 	/**
 	 * Serialization of the input fields as JSON string for efficient storage in

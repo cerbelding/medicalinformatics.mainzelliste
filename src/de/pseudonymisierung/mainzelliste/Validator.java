@@ -351,4 +351,14 @@ public enum Validator {
 			}
 		}
 	}
+
+    /**
+     * Return the names of fields that are configured as required.
+     * 
+     * @return The set of names of required fields (empty if no required fields
+     *         exist).
+     */
+    public Set<String> getRequiredFields() {
+        return requiredFields;
+    }
 }

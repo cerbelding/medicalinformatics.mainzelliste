@@ -37,6 +37,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.apache.log4j.Logger;
 
@@ -339,8 +340,10 @@ public class EpilinkMatcher implements Matcher {
 		
 		for (Patient b : patientList)
 		{
-			// assert that the persons have the same Fields 
-			assert (a.getFields().keySet().equals(b.getFields().keySet()));
+			// assert that the persons have the fields required for matching
+			if (!Stream.of(a, b).allMatch(p -> p.getFields().keySet().containsAll(comparators.keySet())))
+				continue;
+			
 			double weight = calculateWeight(a, b);
 			if (weight > bestWeight)
 			{
