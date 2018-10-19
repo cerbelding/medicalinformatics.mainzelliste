@@ -6,7 +6,7 @@
 
     <groupId>de.pseudonymisierung.mainzelliste</groupId>
     <artifactId>mainzelliste</artifactId>
-    <version>1.7.0-RC1-SEL02</version>
+    <version>1.7.0-RC1-SEL03</version>
     <packaging>war</packaging>
 
     <parent>

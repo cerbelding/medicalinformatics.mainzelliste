@@ -1,11 +1,26 @@
+# General security configuration
+localAuthenticationType = apiKey
+localApiKey = 123abc
+servers.0.apiKey = 123qwerty
+#TODO: server AuthenticationTypes
+
+
 # Template properties for initializer
 #
 # Lokale Mainzelliste
 #
 # Local ID of this mainzelliste distribution instance.
 localID = dkfz
-localSELUrl = http://192.168.0.101:8066/Communicator
-localApiKey = mainzellisteApiKey apiKey="123abc"
+localSELUrl = http://localhost:8081
+
+
+localCallbackLinkUrl = http://192.168.0.102:8066/Communicator/linkCallback
+#TODO Everything after matchCallback should be set per remote not add once
+localCallbackMatchUrl = http://192.168.0.102:8066/Communicator/matchCallback/tud
+
+
+localDataServiceUrl = http://192.168.0.102:8066/Communicator/getAllRecords
+
 
 # field bitlength
 field.vorname.bitlength = 500
@@ -22,7 +37,8 @@ field.ort.bitlength = 500
 #
 
 # A passphrase used for authentication
-servers.0.apiKey = mainzellisteApiKey apiKey="123qwerty"
+
 servers.0.remoteId = tud
 servers.0.idType = link:dkfz:tud
-servers.0.remoteSELUrl = http://192.168.0.101:8080
+servers.0.remoteSELUrl = http://192.168.0.101:8082
+

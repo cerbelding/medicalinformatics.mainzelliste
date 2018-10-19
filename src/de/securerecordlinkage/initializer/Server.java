@@ -4,6 +4,7 @@ package de.securerecordlinkage.initializer;
 public class Server {
     protected String id;
     protected String apiKey;
+    //TODO: implement different authentication types
     protected String idType;
     protected String url;
 
