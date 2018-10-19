@@ -28,6 +28,7 @@ package de.pseudonymisierung.mainzelliste;
 import javax.persistence.Entity;
 
 import org.apache.commons.lang.StringUtils;
+import org.codehaus.jettison.json.JSONObject;
 
 /**
  * A Field consisting of an Integer.
@@ -77,8 +78,8 @@ public class IntegerField extends Field<Integer> {
 	}
 
 	@Override
-	public Integer getValueJSON() {
-		return this.value;
+	public Object getValueJSON() {
+		return this.value == null ? JSONObject.NULL : this.value;
 	}
 
 	@Override
