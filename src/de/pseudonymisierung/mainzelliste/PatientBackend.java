@@ -210,7 +210,7 @@ public enum PatientBackend {
 						.entity("Neither complete IDAT nor an external ID has been given as input!").build());
 			}
 			
-			Patient idMatch = null;
+			final Patient idMatch;
 			MatchResult idatMatch = null;
 			
 			if (hasIdat) {
@@ -251,7 +251,7 @@ public enum PatientBackend {
 						MatchResult finalIdatMatch = idatMatch; // Make final copy for using in stream
 						boolean conflict = !externalIds.stream().allMatch(id -> {
 							ID idOfMatch = finalIdatMatch.getBestMatchedPatient().getId(id.getType());
-							return id.getIdString().equals(idOfMatch.getIdString());
+							return (idOfMatch == null || id.getIdString().equals(idOfMatch.getIdString()));
 						});
 						
 						if (conflict) {
@@ -270,7 +270,9 @@ public enum PatientBackend {
 				
 				if (idMatches.size() == 1) { // Found patient with matching external ID
 					idMatch = idMatches.iterator().next();
-					boolean idMatchHasIdat = idMatch.getFields().keySet().containsAll(Validator.instance.getRequiredFields());
+					//boolean idMatchHasIdat = idMatch.getFields().keySet().containsAll(Validator.instance.getRequiredFields());
+					boolean idMatchHasIdat = Validator.instance.getRequiredFields().stream().allMatch(f -> 
+					idMatch.getFields().containsKey(f) && !idMatch.getFields().get(f).isEmpty());
 					// Check if IDAT of input and match (if present) matches
 					if (hasIdat && idMatchHasIdat) {
 						MatchResult matchWithIdMatch = Config.instance.getMatcher().match(pNormalized, Arrays.asList(idMatch));
@@ -280,19 +282,21 @@ public enum PatientBackend {
 									.entity("Found existing patient with matching external ID but conflicting IDAT!")
 									.build());							
 						}
-						// If an IDAT match exists, check if it is the same patient
-						if (idatMatch != null && (idatMatch.getResultType() == MatchResultType.MATCH 
-								) &&
-								!idatMatch.getBestMatchedPatient().equals(idMatch)) {
-									throw new WebApplicationException(
-											Response.status(Status.CONFLICT)
-											.entity("External ID and IDAT match with different patients, respectively!")
-											.build());																
-								}
-
 					}
+					// If an IDAT match exists, check if it is the same patient
+					if (idatMatch != null && (idatMatch.getResultType() == MatchResultType.MATCH 
+							) &&
+							!idatMatch.getBestMatchedPatient().equals(idMatch)) {
+								throw new WebApplicationException(
+										Response.status(Status.CONFLICT)
+										.entity("External ID and IDAT match with different patients, respectively!")
+										.build());																
+							}
+
 					// TODO: Felder / IDs aktualisieren
 					match = new MatchResult(MatchResultType.MATCH, idMatch, 1.0);
+				} else {
+				    idMatch = null;
 				}
 			} else {
 				match = idatMatch;
@@ -337,16 +341,6 @@ public enum PatientBackend {
 					String extIDString = form.getFirst(extIDType);
 					if (extIDString != null) {
 						ID extId = IDGeneratorFactory.instance.buildId(extIDType, extIDString);
-						if (Persistor.instance.getPatient(extId) != null) {
-								logger.info("Request to add patient with existing external ID " + extId.toString());
-								throw new WebApplicationException(
-										Response.status(Status.CONFLICT)
-												.entity("Cannot create a new patient with the supplied external ID, " +
-														"because it is already in use. " +
-														"Please check external ID and repeat the request.")
-												.build());
-
-						}
 						newIds.add(extId);
 					}
 				}

@@ -71,7 +71,7 @@ public class IntegerField extends Field<Integer> {
 
 	@Override
 	public void setValue(String s) {
-	    if (StringUtils.isEmpty(s))
+	    if (StringUtils.isEmpty(s) || "null".equals(s))
 	        this.value = null;
 	    else
 	        this.value = Integer.parseInt(s);

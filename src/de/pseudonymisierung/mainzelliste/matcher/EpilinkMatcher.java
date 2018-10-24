@@ -41,8 +41,10 @@ import java.util.stream.Stream;
 
 import org.apache.log4j.Logger;
 
+
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.Patient;
+import de.pseudonymisierung.mainzelliste.Validator;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 
@@ -187,24 +189,24 @@ public class EpilinkMatcher implements Matcher {
 			}
 			Iterator<Map.Entry<String, Field<?>>> itRight = fieldsToCompareRight.entrySet().iterator(); 
 			Iterator<Map.Entry<String, Field<?>>> itLeft = fieldsToCompareLeft.entrySet().iterator();
-			
-            // process fields (left and right) until end is reached on one side
-            while (itRight.hasNext() && itLeft.hasNext()) {
-                // Search for next empty field on right side
-                if (itRight.next().getValue().isEmpty()) {
-                    // Now go to next empty field on the left 
-                    while (itLeft.hasNext()) {
-                        if (itLeft.next().getValue().isEmpty()) {
-                            // If empty fields have been found on each side, 
-                            // remove them and continue with search on right side         
-                            itRight.remove();
-                            itLeft.remove();
-                            break;
-                        }
-                    }
-                }
-            }        
-							
+
+			// process fields (left and right) until end is reached on one side
+			while (itRight.hasNext() && itLeft.hasNext()) {
+				// Search for next empty field on right side
+				if (isEmptyOrNull(itRight.next().getValue())) {
+					// Now go to next empty field on the left
+					while (itLeft.hasNext()) {
+						if (isEmptyOrNull(itLeft.next().getValue())) {
+							// If empty fields have been found on each side,
+							// remove them and continue with search on right side
+							itRight.remove();
+							itLeft.remove();
+							break;
+						}
+					}
+				}
+			}
+
 			List<List<String>> permutations = permutations(new LinkedList<String>(fieldsToCompareRight.keySet()));
 			
 			double bestPermWeight = Double.NEGATIVE_INFINITY; 
@@ -219,8 +221,8 @@ public class EpilinkMatcher implements Matcher {
 				{
 					String fieldName = fieldIterator.next();
 					// Do not consider empty fields
-					if (fieldsToCompareLeft.get(fieldName).isEmpty() || 
-							fieldsToCompareRight.get(fieldNamePerm).isEmpty())
+					if (isEmptyOrNull(fieldsToCompareLeft.get(fieldName))
+					        || isEmptyOrNull(fieldsToCompareRight.get(fieldNamePerm)))
 						continue;
 					
 					// account mean value of field weights
@@ -243,7 +245,7 @@ public class EpilinkMatcher implements Matcher {
 		for (String fieldName : nonExchangeFields)
 		{
 			// Ignore empty fields
-			if (left.getFields().get(fieldName).isEmpty() || right.getFields().get(fieldName).isEmpty())
+			if (isEmptyOrNull(left.getFields().get(fieldName)) || isEmptyOrNull(right.getFields().get(fieldName)))
 				continue;
 			
 			double fieldWeight = weights.get(fieldName);
@@ -341,7 +343,7 @@ public class EpilinkMatcher implements Matcher {
 		for (Patient b : patientList)
 		{
 			// assert that the persons have the fields required for matching
-			if (!Stream.of(a, b).allMatch(p -> p.getFields().keySet().containsAll(comparators.keySet())))
+			if (!Stream.of(a, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields())))
 				continue;
 			
 			double weight = calculateWeight(a, b);
@@ -359,5 +361,9 @@ public class EpilinkMatcher implements Matcher {
 		} else {
 			return new MatchResult(MatchResultType.NON_MATCH, null, bestWeight);
 		}				
+	}
+	
+	private boolean isEmptyOrNull(Field<?> f) {
+	    return (f== null || f.isEmpty());
 	}
 }
