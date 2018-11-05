@@ -11,10 +11,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import java.util.Base64;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 // 1. Read all Patients and save in Communicator Format
 // 2. Encode the fields with BloomFilter
@@ -165,14 +162,30 @@ public class PatientRecords {
     }
 
     public int updateRecord(String idType, String tmpRef, String linkageId) {
-        logger.info("updatePatient(" + tmpRef + ") -> " + linkageId + ")");
-        boolean updateSuccessful = true;
+        try {
+            logger.info("updatePatient(" + tmpRef + ") -> " + linkageId + ")");
 
-        if (updateSuccessful == true) {
-            return 200;
-        } else {
+            ID oldId = new SrlID(tmpRef, idType);
+            ID newId = IDGeneratorFactory.instance.buildId(idType, linkageId);
+
+            Patient p = Persistor.instance.getPatient(oldId);
+            Set<ID> newIds = new HashSet<ID>();
+            Set<ID> listIds = p.getIds();
+            for (ID id : listIds) {
+                if (id.getType().equals(idType)) {
+                    newIds.add(newId);
+                } else {
+                    newIds.add(id);
+                }
+            }
+            p.setIds(newIds);
+            Persistor.instance.updatePatient(p);
+        } catch (Exception e) {
+            logger.info(e);
             return 500;
         }
+
+        return 200;
     }
 
     public String getRandomID(){
