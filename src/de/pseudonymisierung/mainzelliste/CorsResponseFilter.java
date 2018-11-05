@@ -76,7 +76,10 @@ public class CorsResponseFilter implements Filter {
 			if (origin != null) {
 				if (origin.equals(thisHostAndScheme) || Config.instance.originAllowed(origin)) {
 					logger.debug("Allowing cross domain request from origin " + origin);
+                    // Necessary to let JavaScript application communicate with mainzelliste/SEL
 					httpResponse.addHeader("Access-Control-Allow-Origin", origin);
+                    httpResponse.addHeader("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,PATCH,OPTIONS");
+                    httpResponse.addHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
 				} else {
 					logger.info("Rejecting cross domain request from origin " + origin);
 					// For illegal origin, cancel request with 403 Forbidden.
