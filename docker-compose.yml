@@ -1,0 +1,14 @@
+version: "3"
+services:
+  db:
+    image: postgres:9.5-alpine
+    environment:
+      - POSTGRES_DB=mainzelliste
+      - POSTGRES_USER=mainzelliste
+      - POSTGRES_PASSWORD=mainzelliste
+  mainzelliste:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
