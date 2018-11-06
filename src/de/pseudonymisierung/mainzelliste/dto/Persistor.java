@@ -624,7 +624,6 @@ public enum Persistor {
 		if (Config.instance.getProperty("db.username") != null) connectionProps.put("user",  Config.instance.getProperty("db.username"));
 		if (Config.instance.getProperty("db.password") != null) connectionProps.put("password",  Config.instance.getProperty("db.password"));
 		String url = Config.instance.getProperty("db.url");
-
 		for(int count=0; true; count++) {
 			try {
 				Class.forName(Config.instance.getProperty("db.driver"));
