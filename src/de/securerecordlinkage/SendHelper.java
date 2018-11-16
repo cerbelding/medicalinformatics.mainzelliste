@@ -15,6 +15,10 @@ public class SendHelper {
         //TODO proxy config
         HashMap config = new HashMap();
         HttpConnector hc = new HttpConnector(config);
+
+        //TODO: read from config, send per variable. for local and remote
+        hc.addCustomHeader("Authorization", "apiKey apiKey=\"123qwerty\"");
+
         logger.info("action: "+ action + ", data: " + data + ", url: " + url);
         try {
             CloseableHttpResponse result = hc.doAction(action, url, null, null, "application/json", data, false, false, 5);

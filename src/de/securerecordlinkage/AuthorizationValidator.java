@@ -50,8 +50,8 @@ public class AuthorizationValidator {
         }
 
         for (String apiKey : apiKeys){
-            //if (authHeader.equals("apiKey apiKey=\""+apiKey + "\"")) {
-            if (authHeader.equals("apiKey apiKey=" + apiKey + "")) {
+            if (authHeader.equals("apiKey apiKey=\""+apiKey + "\"")) {
+            //if (authHeader.equals("apiKey apiKey=" + apiKey + "")) {
 
                 logger.info("ApiKey correct");
                 return true;
