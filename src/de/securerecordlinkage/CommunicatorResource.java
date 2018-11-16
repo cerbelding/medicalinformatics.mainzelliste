@@ -425,7 +425,11 @@ public class CommunicatorResource {
     @Path("/triggerMatch/{remoteID}")
     public Response triggerMatch(@Context HttpServletRequest request, @PathParam("remoteID") String remoteID) throws JSONException {
 
-        if (authorizationValidator(request)) {
+        //TODO: change back to validation, if validation is necessary
+        boolean test = true;
+
+        //if (authorizationValidator(request)) {
+        if (test) {
             logger.info("trigger matcher started");
             logger.info("trigger matcher " + remoteID);
 
@@ -449,7 +453,13 @@ public class CommunicatorResource {
     @GET
     @Path("/triggerLink/{remoteID}")
     public Response triggerLink(@Context HttpServletRequest request, @PathParam("remoteID") String remoteID) throws JSONException {
-        if (authorizationValidator(request)) {
+
+
+        boolean test = true;
+
+        //if (authorizationValidator(request)) {
+        if (test) {
+        //if (authorizationValidator(request)) {
             try {
                 logger.info("trigger linker started");
                 logger.info("trigger linker " + remoteID);
