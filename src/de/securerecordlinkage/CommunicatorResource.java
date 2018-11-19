@@ -128,6 +128,27 @@ public class CommunicatorResource {
     }
 
     /**
+     * send linkRecord, which should be linked, to SRL - In Architectur-XML (v6) step 2
+     */
+    //TODO: change idType and idString to map params
+    public void sendMatchRecords(String url, JSONArray recordsAsJson) {
+        logger.info("sendMatchRecords");
+        try {
+            JSONObject recordToSend = new JSONObject();
+            JSONObject callbackObj = new JSONObject();
+            callbackObj.setEscapeForwardSlashAlways(false);
+            callbackObj.put("url", localCallbackLinkURL);
+            recordToSend.put("callback", callbackObj);
+            recordToSend.put("total", recordsAsJson.length());
+            recordToSend.put("toDate", toDate);
+            recordToSend.put("fields", recordsAsJson);
+            SendHelper.doRequest(url, "POST", recordToSend.toString());
+        } catch (Exception e) {
+            logger.error(e);
+        }
+    }
+
+    /**
      * rest endpoint, used to set a linked record - In Architectur-XML (v6) step 7
      */
     @POST
@@ -451,8 +472,8 @@ public class CommunicatorResource {
     // Triggers the first link process (M:N) for two patient list instances
     // Call only once, if repeated, the SRL IDs should be first deleted
     @GET
-    @Path("/triggerLink/{remoteID}")
-    public Response triggerLink(@Context HttpServletRequest request, @PathParam("remoteID") String remoteID) throws JSONException {
+    @Path("/triggerMNLink/{remoteID}")
+    public Response triggerMNlink(@Context HttpServletRequest request, @PathParam("remoteID") String remoteID) throws JSONException {
 
 
         boolean test = true;
@@ -467,7 +488,7 @@ public class CommunicatorResource {
                 JSONObject answerObject = new JSONObject();
 
                 PatientRecords pr = new PatientRecords();
-                Integer totalAmount = pr.linkPatients(remoteID);
+                Integer totalAmount = pr.linkPatients(remoteID, "linkRecords");
 
                 answerObject.put("totalAmount", totalAmount);
                 return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
@@ -479,6 +500,41 @@ public class CommunicatorResource {
             return Response.status(401).build();
         }
     }
+
+    // Find better name
+    // Triggers the first link process (M:N) for two patient list instances
+    // Call only once, if repeated, the SRL IDs should be first deleted
+    @GET
+    @Path("/triggerMNMatch/{remoteID}")
+    public Response triggerMNmatch(@Context HttpServletRequest request, @PathParam("remoteID") String remoteID) throws JSONException {
+
+
+        boolean test = true;
+
+        //if (authorizationValidator(request)) {
+        if (test) {
+            //if (authorizationValidator(request)) {
+            try {
+                logger.info("trigger linker started");
+                logger.info("trigger linker " + remoteID);
+
+                JSONObject answerObject = new JSONObject();
+
+                PatientRecords pr = new PatientRecords();
+                Integer totalAmount = pr.linkPatients(remoteID, "matchRecords");
+
+                answerObject.put("totalAmount", totalAmount);
+                return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
+            } catch (Exception e) {
+                logger.error("SRL IDs cannot be generated: " + e.toString());
+                return Response.status(500).build();
+            }
+        } else {
+            return Response.status(401).build();
+        }
+    }
+
+
 
     @GET
     @Path("/triggerMatch/status/{remoteID}")
