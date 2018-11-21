@@ -155,6 +155,9 @@ public enum Config {
 				if (props.containsKey("servers." + i + ".remoteSELUrl")) {
 					s.setUrl(props.getProperty("servers." + i + ".remoteSELUrl"));
 				}
+				if (props.containsKey("servers." + i + "linkageService")) {
+					s.setLinkageService(props.getProperty("servers." + i + ".linkageService"));
+				}
 				remoteServers.put(s.getId(), s);
 				i = i + 1;
 			} else {

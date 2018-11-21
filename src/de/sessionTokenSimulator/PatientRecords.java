@@ -70,6 +70,20 @@ public class PatientRecords {
         return array;
     }
 
+    public int getCount() {
+        JSONArray array = new JSONArray();
+        try {
+            List<Patient> patientList = Persistor.instance.getPatients();
+            return patientList.size();
+
+            //IDGeneratorFactory.instance.getSrlIdTypes();
+        } catch (Exception e) {
+            logger.info(e);
+        }
+
+        return 0;
+    }
+
     public void linkPatient(Patient p, String IDType, String IDString) {
         try {
             JSONObject recordAsJSON = new JSONObject();
