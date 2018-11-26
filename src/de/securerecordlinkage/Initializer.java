@@ -73,11 +73,6 @@ public class Initializer {
             JSONObject remoteInitJSON = createRemoteInitJSON(server);
             SendHelper.doRequest(srlConfig.getLocalSELUrl()+"/initRemote/"+server.getId(), "PUT", remoteInitJSON.toString());
 
-            //TODO: only test to simulate send patient LÖSCHEN bitte LÖSCH mich
-            //this.wait(1000);
-            //List<Patient> patientList = Persistor.instance.getPatients();
-            //PatientRecords prs = new PatientRecords();
-            //prs.linkPatient(patientList.get(1), "sel1_sel2", "dsfdsfsdfdsf");
         } catch (Exception e) {
             logger.error("initialize() - Could not send remoteJSON " + e.toString());
             //e.printStackTrace();
