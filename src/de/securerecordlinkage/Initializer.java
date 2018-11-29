@@ -3,15 +3,8 @@ package de.securerecordlinkage;
 import com.sun.jersey.spi.container.servlet.WebComponent;
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
-import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.PlainTextField;
-import de.pseudonymisierung.mainzelliste.dto.Persistor;
-import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import de.samply.common.http.HttpConnector;
-import de.samply.common.http.HttpConnectorException;
 import de.securerecordlinkage.initializer.Server;
-import de.sessionTokenSimulator.PatientRecords;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -47,7 +40,7 @@ public class Initializer {
         try {
             logger.info("initialize - SRL");
             JSONObject configJSON = createLocalInitJSON(c);
-            SendHelper.doRequest(srlConfig.getLocalSELUrl() + "/initLocal", "PUT", configJSON.toString());
+            HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl() + "/initLocal", "PUT", configJSON.toString());
         } catch (Exception e) {
             logger.error("initialize() - Could not send initJSON " + e.toString());
             //e.printStackTrace();
@@ -71,7 +64,7 @@ public class Initializer {
 
             //remote Init
             JSONObject remoteInitJSON = createRemoteInitJSON(server);
-            SendHelper.doRequest(srlConfig.getLocalSELUrl()+"/initRemote/"+server.getId(), "PUT", remoteInitJSON.toString());
+            HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl()+"/initRemote/"+server.getId(), "PUT", remoteInitJSON.toString());
 
         } catch (Exception e) {
             logger.error("initialize() - Could not send remoteJSON " + e.toString());

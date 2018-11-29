@@ -1,9 +1,7 @@
 package de.securerecordlinkage;
 
-import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.securerecordlinkage.initializer.Config;
 import de.sessionTokenSimulator.PatientRecords;
-import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -84,7 +82,7 @@ public class CommunicatorResource {
             callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType + "&" + "idString=" + idString);
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
-            SendHelper.doRequest(url, "POST", recordToSend.toString());
+            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString());
         } catch (Exception e) {
             logger.error(e);
         }
@@ -105,7 +103,7 @@ public class CommunicatorResource {
             recordToSend.put("total", recordsAsJson.length());
             recordToSend.put("toDate", toDate);
             recordToSend.put("fields", recordsAsJson);
-            SendHelper.doRequest(url, "POST", recordToSend.toString());
+            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString());
         } catch (Exception e) {
             logger.error(e);
         }
@@ -125,7 +123,7 @@ public class CommunicatorResource {
             callbackObj.put("url", localCallbackMatchURL);
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
-            SendHelper.doRequest(url, "POST", recordToSend.toString());
+            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString());
         } catch (Exception e) {
             logger.error(e);
         }
@@ -146,7 +144,7 @@ public class CommunicatorResource {
             recordToSend.put("total", recordsAsJson.length());
             recordToSend.put("toDate", toDate);
             recordToSend.put("fields", recordsAsJson);
-            SendHelper.doRequest(url, "POST", recordToSend.toString());
+            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString());
         } catch (Exception e) {
             logger.error(e);
         }
@@ -557,7 +555,7 @@ public class CommunicatorResource {
 
                 String url = baseLinkageServiceURL + "/freshIDs/" + localId + "?count=" + totalAmount;
 
-                SendHelper.doRequest(url, "GET", null );
+                HTTPSendHelper.doRequest(url, "GET", null );
 
                 answerObject.put("totalAmount", totalAmount);
                 return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
