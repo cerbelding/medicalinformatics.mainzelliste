@@ -4,6 +4,7 @@ import com.sun.jersey.spi.container.servlet.WebComponent;
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.PlainTextField;
+import de.securerecordlinkage.helperClasses.Header;
 import de.securerecordlinkage.initializer.Server;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
@@ -25,6 +26,8 @@ public class Initializer {
 
     /** The injected ServletContext. */
     private static ServletContext configurationContext;
+    private static Logger logger = null;
+
     
     public void contextInitialized(ServletContextEvent sce) {
         configurationContext = sce.getServletContext();
@@ -32,19 +35,16 @@ public class Initializer {
     }
 
     private void initialize() {
-        Logger logger = Logger.getLogger(de.securerecordlinkage.Initializer.class);
-        logger.info("#####Initializing...");
-        Config c = Config.instance;
+
+        initLogger();
+        logger.info("#####initialize()...");
+        Config config = Config.instance;
         de.securerecordlinkage.initializer.Config srlConfig = de.securerecordlinkage.initializer.Config.instance;
 
-        try {
-            logger.info("initialize - SRL");
-            JSONObject configJSON = createLocalInitJSON(c);
-            HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl() + "/initLocal", "PUT", configJSON.toString());
-        } catch (Exception e) {
-            logger.error("initialize() - Could not send initJSON " + e.toString());
-            //e.printStackTrace();
-        }
+
+        initializeLocalSecureEpiLinkServer(config, srlConfig);
+
+
 
         // TODO: Only the first remote server is taken at the moment
         // Who decides which server is taken in case we have more than one
@@ -58,10 +58,8 @@ public class Initializer {
             logger.error("initialize() - Could not load configuration and init communicator");
             //e.printStackTrace();
         }
-        //Init Communicator Ressource
 
         try {
-
             //remote Init
             JSONObject remoteInitJSON = createRemoteInitJSON(server);
             HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl()+"/initRemote/"+server.getId(), "PUT", remoteInitJSON.toString());
@@ -82,6 +80,21 @@ public class Initializer {
         java.util.logging.Logger webComponentLogger = java.util.logging.Logger.getLogger(WebComponent.class.getName());
         webComponentLogger.setLevel(Level.SEVERE);
         logger.info("#####Startup succeeded. Ready to take requests.");
+    }
+
+    private void initializeLocalSecureEpiLinkServer(Config c, de.securerecordlinkage.initializer.Config srlConfig) {
+        ArrayList<Header> headers = new ArrayList<Header>();
+        Header httpHeader = new Header("Authorization", srlConfig.getLocalApiKey());
+        headers.add(httpHeader);
+
+        try {
+            logger.info("initialize - SRL");
+            JSONObject configJSON = createLocalInitJSON(c);
+            HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl() + "/initLocal", "PUT", configJSON.toString(), headers);
+        } catch (Exception e) {
+            logger.error("initialize() - Could not send initJSON " + e.toString());
+            e.printStackTrace();
+        }
     }
 
     private void log4jSetup() {
@@ -245,5 +258,10 @@ public class Initializer {
      */
     public static ServletContext getServletContext() {
         return configurationContext;
+    }
+
+    private static void initLogger(){
+        logger = Logger.getLogger(Initializer.class);
+        logger.info("SecureRecordLinkage Initializer initLogger()");
     }
 }
