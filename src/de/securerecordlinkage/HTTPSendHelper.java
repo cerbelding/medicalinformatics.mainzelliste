@@ -16,20 +16,20 @@ public class HTTPSendHelper {
     private static Logger logger = null;
 
     static void doRequest(String url, String action, String data) {
-        initLogger();
         doRequest(url, action, data, null);
-
     }
 
-    static void doRequest(String url, String action, String data, ArrayList<Header> header) {
-        logger.info("doRequest(" + url + ", " + action + ", " + data + "," + header + ")");
+    static void doRequest(String url, String action, String data, ArrayList<Header> headers) {
+        initLogger();
+        logger.info("doRequest(" + String.valueOf(url) + ", " + String.valueOf(action) + ", " + String.valueOf(data) + "," + String.valueOf(headers) + ")");
+
         try {
             //TODO proxy config
             HashMap config = new HashMap();
             HttpConnector httpConnector = new HttpConnector(config);
 
-            if (header != null) {
-                addHeadersToHttpConnector(header, httpConnector);
+            if (headers != null) {
+                addHeadersToHttpConnector(headers, httpConnector);
             }
 
             CloseableHttpResponse result = httpConnector.doAction(action, url, null, null, "application/json", data, false, false, 5);
