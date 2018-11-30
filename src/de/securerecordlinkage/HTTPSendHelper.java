@@ -15,11 +15,11 @@ public class HTTPSendHelper {
 
     private static Logger logger = null;
 
-    static void doRequest(String url, String action, String data) {
-        doRequest(url, action, data, null);
+    static CloseableHttpResponse doRequest(String url, String action, String data) {
+        return doRequest(url, action, data, null);
     }
 
-    static void doRequest(String url, String action, String data, ArrayList<Header> headers) {
+    static CloseableHttpResponse doRequest(String url, String action, String data, ArrayList<Header> headers) {
         initLogger();
         logger.info("doRequest(" + String.valueOf(url) + ", " + String.valueOf(action) + ", " + String.valueOf(data) + "," + String.valueOf(headers) + ")");
 
@@ -32,12 +32,14 @@ public class HTTPSendHelper {
                 addHeadersToHttpConnector(headers, httpConnector);
             }
 
-            CloseableHttpResponse result = httpConnector.doAction(action, url, null, null, "application/json", data, false, false, 5);
-            httpStatusEvaluation(result);
+            CloseableHttpResponse httpResult = httpConnector.doAction(action, url, null, null, "application/json", data, false, false, 5);
+            httpStatusEvaluation(httpResult);
+            return httpResult;
 
         } catch (HttpConnectorException e) {
             e.printStackTrace();
             logger.error("Cannot connect to http ", e);
+            return null;
         }
     }
 
