@@ -7,6 +7,7 @@ import de.pseudonymisierung.mainzelliste.PlainTextField;
 import de.securerecordlinkage.configuration.ConfigLoader;
 import de.securerecordlinkage.helperClasses.Header;
 import de.securerecordlinkage.configuration.Server;
+import de.securerecordlinkage.helperClasses.HeaderHelper;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -41,7 +42,6 @@ public class Initializer {
         logger.info("#####initialize()...");
         Config config = Config.instance;
         ConfigLoader srlConfig = ConfigLoader.instance;
-
 
         sendInitLocalToOwnSecureEpiLinker(config, srlConfig);
 
@@ -79,9 +79,7 @@ public class Initializer {
     }
 
     private void sendInitLocalToOwnSecureEpiLinker(Config c, ConfigLoader srlConfig) {
-        ArrayList<Header> headers = new ArrayList<Header>();
-        Header httpHeader = new Header("Authorization", srlConfig.getLocalApiKey());
-        headers.add(httpHeader);
+        ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", srlConfig.getLocalApiKey());
 
         try {
             logger.info("initialize - SRL");
@@ -94,9 +92,7 @@ public class Initializer {
     }
 
     private void sendInitRemoteToOwnSecureEpiLinker(ConfigLoader srlConfig, Server remoteServer) {
-        ArrayList<Header> headers = new ArrayList<Header>();
-        Header httpHeader = new Header("Authorization", remoteServer.getApiKey());
-        headers.add(httpHeader);
+        ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", srlConfig.getLocalApiKey());
 
         try {
             //remote Init
@@ -108,6 +104,7 @@ public class Initializer {
             //e.printStackTrace();
         }
     }
+
 
     private void log4jSetup() {
         Logger root = Logger.getRootLogger();
@@ -158,7 +155,6 @@ public class Initializer {
                 reqObject.put("localAuthentication", tmpObj);
             }
 
-            dateServiceObj = new JSONObject();
             dateServiceObj.put("url", srlConfig.getLocalDataServiceUrl());
             reqObject.put("dataService", dateServiceObj);
             tmpObj = new JSONObject();
