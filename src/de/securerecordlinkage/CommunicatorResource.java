@@ -1,6 +1,8 @@
 package de.securerecordlinkage;
 
 import de.securerecordlinkage.configuration.ConfigLoader;
+import de.securerecordlinkage.helperClasses.Header;
+import de.securerecordlinkage.helperClasses.HeaderHelper;
 import de.securerecordlinkage.helperClasses.MatchCounter;
 import de.securerecordlinkage.helperClasses.TentativeMatchCounter;
 import de.sessionTokenSimulator.PatientRecords;
@@ -44,8 +46,9 @@ public class CommunicatorResource {
     private static String localCallbackMatchURL = "http://localhost:8082/Communicator/matchCallBack";
     private static String localDataServiceURL = "http://localhost:8082/Communicator/getAllRecords";
 
-    private static List<String> apiKey = new ArrayList<>();
-    private static String authenticationType = "apiKey";
+    private static String localApiKey = "test123";
+    private static List<String> authenticationKeys = new ArrayList<>();
+    private static String authenticationType = "authenticationKeys";
 
     public static String linkRequestURL = "http://192.168.0.101:8080/linkRecord/dkfz";
     public static String linkAllRequestURL = "http://192.168.0.101:8080/linkRecords/dkfz";
@@ -62,8 +65,12 @@ public class CommunicatorResource {
         localCallbackLinkURL = config.getLocalCallbackLinkUrl();
         localCallbackMatchURL = config.getLocalCallbackMatchUrl();
         localDataServiceURL = config.getLocalDataServiceUrl();
-        apiKey.add(config.getLocalApiKey());
+        //TODO: Better name, because in the future this should not only be keys, also other authentication values
+        authenticationKeys.add(config.getLocalApiKey());
+        localApiKey = config.getLocalApiKey();
+
         authenticationType = config.getLocalAuthenticationType();
+
 
         logger.info("remoteID: " + remoteId + " baseCommunicatorURL: " + localDataServiceURL);
 
@@ -84,7 +91,9 @@ public class CommunicatorResource {
             callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType + "&" + "idString=" + idString);
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
-            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString());
+
+            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", localApiKey);
+            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
         } catch (Exception e) {
             logger.error(e);
         }
@@ -105,7 +114,9 @@ public class CommunicatorResource {
             recordToSend.put("total", recordsAsJson.length());
             recordToSend.put("toDate", toDate);
             recordToSend.put("fields", recordsAsJson);
-            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString());
+
+            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", localApiKey);
+            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
         } catch (Exception e) {
             logger.error(e);
         }
@@ -125,7 +136,9 @@ public class CommunicatorResource {
             callbackObj.put("url", localCallbackMatchURL);
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
-            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString());
+
+            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", localApiKey);
+            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
         } catch (Exception e) {
             logger.error(e);
         }
@@ -146,7 +159,9 @@ public class CommunicatorResource {
             recordToSend.put("total", recordsAsJson.length());
             recordToSend.put("toDate", toDate);
             recordToSend.put("fields", recordsAsJson);
-            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString());
+
+            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", localApiKey);
+            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
         } catch (Exception e) {
             logger.error(e);
         }
@@ -285,7 +300,7 @@ public class CommunicatorResource {
 
         Map<String, List<String>> allowedAuthTypesAndValues = new HashMap<>();
 
-        allowedAuthTypesAndValues.put(authenticationType, apiKey);
+        allowedAuthTypesAndValues.put(authenticationType, authenticationKeys);
 
         AuthorizationValidator authorizationValidator = new AuthorizationValidator(allowedAuthTypesAndValues);
         return authorizationValidator.validate(request);
@@ -295,7 +310,7 @@ public class CommunicatorResource {
         /*
         logger.info("authorizationValidator() " + "validate ApiKey");
         //TODO: get authKey from ConfigLoader
-        String authKey = apiKey;
+        String authKey = authenticationKeys;
         String authHeader;
 
         try {
