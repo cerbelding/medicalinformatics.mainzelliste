@@ -4,8 +4,9 @@ import com.sun.jersey.spi.container.servlet.WebComponent;
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.PlainTextField;
+import de.securerecordlinkage.configuration.ConfigLoader;
 import de.securerecordlinkage.helperClasses.Header;
-import de.securerecordlinkage.initializer.Server;
+import de.securerecordlinkage.configuration.Server;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -39,38 +40,23 @@ public class Initializer {
         initLogger();
         logger.info("#####initialize()...");
         Config config = Config.instance;
-        de.securerecordlinkage.initializer.Config srlConfig = de.securerecordlinkage.initializer.Config.instance;
+        ConfigLoader srlConfig = ConfigLoader.instance;
 
 
-        initializeLocalSecureEpiLinkServer(config, srlConfig);
+        sendInitLocalToOwnSecureEpiLinker(config, srlConfig);
 
-
-
-        // TODO: Only the first remote server is taken at the moment
-        // Who decides which server is taken in case we have more than one
+        // TODO: Only the first remote remoteServer is taken at the moment
+        // Who decides which remoteServer is taken in case we have more than one
         HashMap<String, Server> remoteServers = srlConfig.instance.getServers();
-        Server server = remoteServers.entrySet().iterator().next().getValue();
+        Server remoteServer = remoteServers.entrySet().iterator().next().getValue();
 
-        try {
-            logger.info("initialize - Communicator");
-            CommunicatorResource.init(srlConfig, server.getId());
-        } catch (Exception e) {
-            logger.error("initialize() - Could not load configuration and init communicator");
-            //e.printStackTrace();
-        }
+        initializeCommunicatorResource(srlConfig, remoteServer);
 
-        try {
-            //remote Init
-            JSONObject remoteInitJSON = createRemoteInitJSON(server);
-            HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl()+"/initRemote/"+server.getId(), "PUT", remoteInitJSON.toString());
+        sendInitRemoteToOwnSecureEpiLinker(srlConfig, remoteServer);
 
-        } catch (Exception e) {
-            logger.error("initialize() - Could not send remoteJSON " + e.toString());
-            //e.printStackTrace();
-        }
+
 
         log4jSetup();
-
         /*
          * Limit Jersey logging to avoid spamming the log with "the request body has been consumed" messages
          * (see http://stackoverflow.com/questions/2011895/how-to-fix-jersey-post-request-parameters-warning).
@@ -82,7 +68,17 @@ public class Initializer {
         logger.info("#####Startup succeeded. Ready to take requests.");
     }
 
-    private void initializeLocalSecureEpiLinkServer(Config c, de.securerecordlinkage.initializer.Config srlConfig) {
+    private void initializeCommunicatorResource(ConfigLoader srlConfig, Server remoteServer) {
+        try {
+            logger.info("initialize - Communicator");
+            CommunicatorResource.init(srlConfig, remoteServer.getId());
+        } catch (Exception e) {
+            logger.error("initialize() - Could not load configuration and init communicator");
+            //e.printStackTrace();
+        }
+    }
+
+    private void sendInitLocalToOwnSecureEpiLinker(Config c, ConfigLoader srlConfig) {
         ArrayList<Header> headers = new ArrayList<Header>();
         Header httpHeader = new Header("Authorization", srlConfig.getLocalApiKey());
         headers.add(httpHeader);
@@ -97,9 +93,25 @@ public class Initializer {
         }
     }
 
+    private void sendInitRemoteToOwnSecureEpiLinker(ConfigLoader srlConfig, Server remoteServer) {
+        ArrayList<Header> headers = new ArrayList<Header>();
+        Header httpHeader = new Header("Authorization", remoteServer.getApiKey());
+        headers.add(httpHeader);
+
+        try {
+            //remote Init
+            JSONObject remoteInitJSON = createRemoteInitJSON(remoteServer);
+            HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl()+"/initRemote/"+remoteServer.getId(), "PUT", remoteInitJSON.toString(), headers);
+
+        } catch (Exception e) {
+            logger.error("initialize() - Could not send remoteJSON " + e.toString());
+            //e.printStackTrace();
+        }
+    }
+
     private void log4jSetup() {
         Logger root = Logger.getRootLogger();
-        //root.setLevel(Config.instance.getLogLevel());
+        //root.setLevel(ConfigLoader.instance.getLogLevel());
         String logFileName = Config.instance.getProperty("log.filename");
         if (logFileName == null) {
             root.info("Using default logging output.");
@@ -120,7 +132,7 @@ public class Initializer {
 
                 root.addAppender(app);
         //        root.info("Logger setup to log on level "
-        //                + Config.instance.getLogLevel() + " to " + logFileName);
+        //                + ConfigLoader.instance.getLogLevel() + " to " + logFileName);
             } catch (IOException e) {
                 root.fatal("Unable to log to " + logFileName + ": "
                         + e.getMessage());
@@ -136,7 +148,7 @@ public class Initializer {
         JSONObject dateServiceObj = new JSONObject();
         try {
 
-            de.securerecordlinkage.initializer.Config srlConfig = de.securerecordlinkage.initializer.Config.instance;
+            ConfigLoader srlConfig = ConfigLoader.instance;
             reqObject.put("localId", srlConfig.getLocalID());
             tmpObj.put("authType", srlConfig.getLocalAuthenticationType());
 

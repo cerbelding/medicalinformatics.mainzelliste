@@ -23,27 +23,23 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.securerecordlinkage.initializer;
+package de.securerecordlinkage.configuration;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
- * can be referenced by Config.instance. The configuration is read from the
+ * can be referenced by ConfigLoader.instance. The configuration is read from the
  * properties file specified as parameter
  * de.pseudonymisierung.mainzelliste.ConfigurationFile in context.xml (see
  * {@link Properties#load(InputStream) java.util.Properties}).
  */
-public enum Config {
+public enum ConfigLoader {
 
 	/** The singleton instance */
 	instance;
@@ -70,15 +66,15 @@ public enum Config {
 	private Properties props;
 
 	/** Logging instance */
-	private Logger logger = Logger.getLogger(Config.class);
+	private Logger logger = Logger.getLogger(ConfigLoader.class);
 
 	/**
-	 * Creates an instance. Invoked on first access to Config.instance. Reads
+	 * Creates an instance. Invoked on first access to ConfigLoader.instance. Reads
 	 * the configuration file.
 	 *
 	 */
 	@SuppressWarnings("unchecked")
-    Config() {
+	ConfigLoader() {
 		props = new Properties();
 		try {
 			// Check if path to configuration file is given in context descriptor
@@ -108,7 +104,7 @@ public enum Config {
 				}
 			}
 
-			logger.info("Config read successfully");
+			logger.info("ConfigLoader read successfully");
 			logger.debug(props);
 
 		} catch (IOException e)	{
@@ -123,6 +119,7 @@ public enum Config {
 		localCallbackLinkUrl = props.getProperty("localCallbackLinkUrl");
 		localCallbackMatchUrl = props.getProperty("localCallbackMatchUrl");
 		localAuthenticationType = props.getProperty("localAuthenticationType");
+
 
 
 		// Read field bitlength from configuration
@@ -155,9 +152,13 @@ public enum Config {
 				if (props.containsKey("servers." + i + ".remoteSELUrl")) {
 					s.setUrl(props.getProperty("servers." + i + ".remoteSELUrl"));
 				}
-				if (props.containsKey("servers." + i + "linkageService")) {
+				if (props.containsKey("servers." + i + ".linkageService")) {
 					s.setLinkageService(props.getProperty("servers." + i + ".linkageService"));
 				}
+				if (props.containsKey("servers." + i + ".apiKey")) {
+					s.setLinkageService(props.getProperty("servers." + i + ".apiKey"));
+				}
+
 				remoteServers.put(s.getId(), s);
 				i = i + 1;
 			} else {

@@ -59,7 +59,7 @@ import java.net.URL;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
- * can be referenced by Config.instance. The configuration is read from the
+ * can be referenced by ConfigLoader.instance. The configuration is read from the
  * properties file specified as parameter
  * de.pseudonymisierung.mainzelliste.ConfigurationFile in context.xml (see
  * {@link java.util.Properties#load(InputStream) java.util.Properties}).
@@ -93,7 +93,7 @@ public enum Config {
 	private Set<String> allowedOrigins;
 	
 	/**
-	 * Creates an instance. Invoked on first access to Config.instance. Reads
+	 * Creates an instance. Invoked on first access to ConfigLoader.instance. Reads
 	 * the configuration file.
 	 * 
 	 * @throws InternalErrorException
@@ -131,7 +131,7 @@ public enum Config {
 				}
 			}			
 
-			logger.info("Config read successfully");
+			logger.info("ConfigLoader read successfully");
 			logger.debug(props);
 			
 		} catch (IOException e)	{

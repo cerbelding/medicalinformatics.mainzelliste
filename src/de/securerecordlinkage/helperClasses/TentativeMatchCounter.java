@@ -1,4 +1,4 @@
-package de.securerecordlinkage;
+package de.securerecordlinkage.helperClasses;
 
 import java.util.HashMap;
 import java.util.Map;

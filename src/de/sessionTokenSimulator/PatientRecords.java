@@ -5,10 +5,9 @@ import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
 import de.securerecordlinkage.CommunicatorResource;
-import de.securerecordlinkage.initializer.Config;
+import de.securerecordlinkage.configuration.ConfigLoader;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.util.*;
@@ -93,7 +92,7 @@ public class PatientRecords {
             recordAsJSON.put("id", tmpObj);
             recordAsJSON.put("fields", getFieldsObject(p));
             CommunicatorResource rs = new CommunicatorResource();
-            de.securerecordlinkage.initializer.Config c = de.securerecordlinkage.initializer.Config.instance;
+            ConfigLoader c = ConfigLoader.instance;
             String remoteId = getRemoteID(IDType);
             rs.sendLinkRecord(c.getLocalSELUrl()+"/linkRecord/" + remoteId, IDType, IDString, recordAsJSON);
         } catch (Exception e) {
@@ -110,7 +109,7 @@ public class PatientRecords {
             logger.info(numPatients + " patients to be matched");
             logger.info("Linking started...");
             CommunicatorResource rs = new CommunicatorResource();
-            de.securerecordlinkage.initializer.Config c = de.securerecordlinkage.initializer.Config.instance;
+            ConfigLoader c = ConfigLoader.instance;
 
 
             if (matchMode.equals("linkRecords")) {
@@ -182,7 +181,7 @@ public class PatientRecords {
             JSONObject recordAsJSON = new JSONObject();
             recordAsJSON.put("fields", getFieldsObject(p));
             CommunicatorResource rs = new CommunicatorResource();
-            de.securerecordlinkage.initializer.Config c = de.securerecordlinkage.initializer.Config.instance;
+            ConfigLoader c = ConfigLoader.instance;
             rs.sendMatchRecord(c.getLocalSELUrl()+"/matchRecord/" + remoteId, recordAsJSON);
         } catch (Exception e) {
             logger.info(e);

@@ -1,4 +1,4 @@
-package de.securerecordlinkage.initializer;
+package de.securerecordlinkage.configuration;
 
 import de.samply.common.config.Configuration;
 import de.samply.common.config.ObjectFactory;
@@ -11,12 +11,9 @@ import org.xml.sax.SAXException;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 

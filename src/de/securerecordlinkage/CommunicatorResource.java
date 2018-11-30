@@ -1,6 +1,8 @@
 package de.securerecordlinkage;
 
-import de.securerecordlinkage.initializer.Config;
+import de.securerecordlinkage.configuration.ConfigLoader;
+import de.securerecordlinkage.helperClasses.MatchCounter;
+import de.securerecordlinkage.helperClasses.TentativeMatchCounter;
 import de.sessionTokenSimulator.PatientRecords;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
@@ -50,7 +52,7 @@ public class CommunicatorResource {
 
     // Read config with SRL links to know where to send the request
     //TODO: make init non static to communicate with X partners
-    public static void init(Config config, String id) {
+    public static void init(ConfigLoader config, String id) {
         logger.info("Load config variables for communicator");
 
         localId = config.getLocalID();
@@ -292,7 +294,7 @@ public class CommunicatorResource {
 
         /*
         logger.info("authorizationValidator() " + "validate ApiKey");
-        //TODO: get authKey from Config
+        //TODO: get authKey from ConfigLoader
         String authKey = apiKey;
         String authHeader;
 

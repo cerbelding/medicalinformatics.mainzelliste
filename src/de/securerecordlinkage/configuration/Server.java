@@ -1,5 +1,5 @@
 
-package de.securerecordlinkage.initializer;
+package de.securerecordlinkage.configuration;
 
 public class Server {
     protected String id;
