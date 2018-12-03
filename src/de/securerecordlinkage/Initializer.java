@@ -79,12 +79,10 @@ public class Initializer {
     }
 
     private void sendInitLocalToOwnSecureEpiLinker(Config c, ConfigLoader srlConfig) {
-        ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", srlConfig.getLocalApiKey());
-
         try {
             logger.info("initialize - SRL");
             JSONObject configJSON = createLocalInitJSON(c);
-            HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl() + "/initLocal", "PUT", configJSON.toString(), headers);
+            HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl() + "/initLocal", "PUT", configJSON.toString());
         } catch (Exception e) {
             logger.error("initialize() - Could not send initJSON " + e.toString());
             e.printStackTrace();
@@ -92,7 +90,7 @@ public class Initializer {
     }
 
     private void sendInitRemoteToOwnSecureEpiLinker(ConfigLoader srlConfig, Server remoteServer) {
-        ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", srlConfig.getLocalApiKey());
+        ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + srlConfig.getLocalApiKey() + "\"");
 
         try {
             //remote Init

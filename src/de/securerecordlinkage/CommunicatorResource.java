@@ -92,7 +92,7 @@ public class CommunicatorResource {
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
 
-            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", localApiKey);
+            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + localApiKey + "\"");
             HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
         } catch (Exception e) {
             logger.error(e);
@@ -113,9 +113,10 @@ public class CommunicatorResource {
             recordToSend.put("callback", callbackObj);
             recordToSend.put("total", recordsAsJson.length());
             recordToSend.put("toDate", toDate);
-            recordToSend.put("fields", recordsAsJson);
+            recordToSend.put("records", recordsAsJson);
 
-            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", localApiKey);
+            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + localApiKey + "\"");
+            
             HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
         } catch (Exception e) {
             logger.error(e);
@@ -137,7 +138,7 @@ public class CommunicatorResource {
             recordToSend.put("callback", callbackObj);
             recordToSend.put("fields", recordAsJson.get("fields"));
 
-            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", localApiKey);
+            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + localApiKey + "\"");
             HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
         } catch (Exception e) {
             logger.error(e);
@@ -158,9 +159,9 @@ public class CommunicatorResource {
             recordToSend.put("callback", callbackObj);
             recordToSend.put("total", recordsAsJson.length());
             recordToSend.put("toDate", toDate);
-            recordToSend.put("fields", recordsAsJson);
+            recordToSend.put("records", recordsAsJson);
 
-            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", localApiKey);
+            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + localApiKey + "\"");
             HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
         } catch (Exception e) {
             logger.error(e);
@@ -304,35 +305,6 @@ public class CommunicatorResource {
 
         AuthorizationValidator authorizationValidator = new AuthorizationValidator(allowedAuthTypesAndValues);
         return authorizationValidator.validate(request);
-
-
-
-        /*
-        logger.info("authorizationValidator() " + "validate ApiKey");
-        //TODO: get authKey from ConfigLoader
-        String authKey = authenticationKeys;
-        String authHeader;
-
-        try {
-            authHeader = request.getHeader("Authorization");
-        } catch (Exception e) {
-            logger.error("Failed getting Authorization Header. " + e.toString());
-            return false;
-        }
-
-        if (authHeader == null) {
-            logger.info("Can't find ApiKey in request authHeader==null");
-            return false;
-        }
-
-        if (authHeader.equals(authKey)) {
-            logger.info("ApiKey correct");
-            return true;
-        } else {
-            logger.info("Wrong ApiKey!");
-            return false;
-        }
-        */
 
     }
 
