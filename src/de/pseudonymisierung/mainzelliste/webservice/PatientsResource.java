@@ -374,7 +374,7 @@ public class PatientsResource {
 				}
 			}
 			
-			if (t.hasDataItem("resultAllIds")) {
+			if (Boolean.TRUE.equals(t.getData().get("resultAllIds"))) {
                 try {
                     List<JSONObject> returnIds = patient.getIds().stream().map(i -> i.toJSON())
                             .collect(Collectors.toList());
@@ -383,9 +383,7 @@ public class PatientsResource {
                     logger.error("Error while transforming patient ids into JSON", e);
                     throw new InternalErrorException("Error while transforming patient ids into JSON");
                 }           			    
-			}
-			
-			if (! t.hasDataItem("resultAllIds") && t.hasDataItem("resultIds")) {
+			} else if (t.hasDataItem("resultIds")) {
 				try {
 					@SuppressWarnings("unchecked")
 					List<String> idTypes = (List<String>) t.getDataItemList("resultIds");
