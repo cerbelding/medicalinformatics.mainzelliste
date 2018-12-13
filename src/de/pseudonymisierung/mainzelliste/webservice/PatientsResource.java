@@ -33,6 +33,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -372,7 +374,18 @@ public class PatientsResource {
 				}
 			}
 			
-			if (t.hasDataItem("resultIds")) {
+			if (t.hasDataItem("resultAllIds")) {
+                try {
+                    List<JSONObject> returnIds = patient.getIds().stream().map(i -> i.toJSON())
+                            .collect(Collectors.toList());
+                    thisPatient.put("ids", returnIds);
+                } catch (JSONException e) {
+                    logger.error("Error while transforming patient ids into JSON", e);
+                    throw new InternalErrorException("Error while transforming patient ids into JSON");
+                }           			    
+			}
+			
+			if (! t.hasDataItem("resultAllIds") && t.hasDataItem("resultIds")) {
 				try {
 					@SuppressWarnings("unchecked")
 					List<String> idTypes = (List<String>) t.getDataItemList("resultIds");
@@ -385,6 +398,14 @@ public class PatientsResource {
 					logger.error("Error while transforming patient ids into JSON", e);
 					throw new InternalErrorException("Error while transforming patient ids into JSON");
 				}			
+			} if (Boolean.TRUE.equals(t.getData().get("resultAllIdTypes"))) {
+			    try {
+                    thisPatient.put("idTypes", new JSONArray(
+                            patient.getIds().stream().map(i -> i.getType()).collect(Collectors.toList())));
+			    } catch (JSONException e) {
+			        logger.error("Error while transforming ID types into JSON", e);
+			        throw new InternalErrorException("Error while transforming ID types into JSON");
+			    }
 			}
 			
 			ret.put(thisPatient);
