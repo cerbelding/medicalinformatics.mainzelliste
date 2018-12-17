@@ -6,6 +6,9 @@ import de.securerecordlinkage.helperClasses.HeaderHelper;
 import de.securerecordlinkage.helperClasses.MatchCounter;
 import de.securerecordlinkage.helperClasses.TentativeMatchCounter;
 import de.sessionTokenSimulator.PatientRecords;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -544,7 +547,22 @@ public class CommunicatorResource {
 
                 String url = baseLinkageServiceURL + "/freshIDs/" + localId + "?count=" + totalAmount;
 
-                HTTPSendHelper.doRequest(url, "GET", null );
+                CloseableHttpResponse result = HTTPSendHelper.doRequest(url, "GET", null );
+                if (result.getStatusLine().getStatusCode() > 200) {
+                    return Response.status(result.getStatusLine().getStatusCode()).build();
+                }
+
+                HttpEntity entity = result.getEntity();
+                if (entity != null) {
+                    String entityString = EntityUtils.toString(entity,"UTF-8");
+                    JSONObject tmpObj = new JSONObject(entityString);
+                    JSONArray resArray = (JSONArray)tmpObj.get("linkageIds");
+                    String idType = "link-"+localId+"-"+remoteID;
+                    int status = pr.updateRecords(idType, resArray);
+                    if (status > 200) {
+                        return Response.status(status).build();
+                    }
+                }
 
                 answerObject.put("totalAmount", totalAmount);
                 return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();

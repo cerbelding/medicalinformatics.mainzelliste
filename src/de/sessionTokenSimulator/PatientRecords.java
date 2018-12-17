@@ -215,6 +215,35 @@ public class PatientRecords {
         return 200;
     }
 
+    public int updateRecords(String idType, JSONArray linkageIds) {
+        try {
+            List<Patient> patientList = Persistor.instance.getPatients();
+            int i = 0;
+            for (Patient p : patientList) {
+                String linkageId = linkageIds.get(i).toString();
+                ID newId = IDGeneratorFactory.instance.buildId(idType, linkageId);
+                Set<ID> newIds = new HashSet<ID>();
+                Set<ID> listIds = p.getIds();
+                for (ID id : listIds) {
+                    if (id.getType().equals(idType)) {
+                        newIds.add(newId);
+                    } else {
+                        newIds.add(id);
+                    }
+                }
+                p.setIds(newIds);
+                Persistor.instance.updatePatient(p);
+                i++;
+            }
+        } catch (Exception e) {
+            logger.info(e);
+            return 500;
+        }
+
+        return 200;
+    }
+
+
     public String getRandomID(){
             //TODO: only for testing, use real IDs
             Random rand = new Random();
