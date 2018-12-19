@@ -224,11 +224,16 @@ public class PatientRecords {
                 ID newId = IDGeneratorFactory.instance.buildId(idType, linkageId);
                 Set<ID> newIds = new HashSet<ID>();
                 Set<ID> listIds = p.getIds();
+                boolean newIDAlreadyExistsinDB = false;
                 for (ID id : listIds) {
                     if (id.getType().equals(idType)) {
+                        newIDAlreadyExistsinDB = true;
                         newIds.add(newId);
                     } else {
                         newIds.add(id);
+                    }
+                    if(!newIDAlreadyExistsinDB){
+                        newIds.add(newId);
                     }
                 }
                 p.setIds(newIds);
