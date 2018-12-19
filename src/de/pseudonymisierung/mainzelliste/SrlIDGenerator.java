@@ -79,11 +79,7 @@ public class SrlIDGenerator implements IDGenerator<SrlID> {
 
 	@Override
 	public boolean verify(String id) {
-		try {
-			Integer.parseInt(id);
-		} catch (NumberFormatException e) {
-			return false;
-		}
+		//TODO: verify. No verification yet
 		return true;
 	}
 
