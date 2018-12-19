@@ -5,10 +5,12 @@ import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.PlainTextField;
 import de.securerecordlinkage.configuration.ConfigLoader;
+import de.securerecordlinkage.helperClasses.HTTPSendHelper;
 import de.securerecordlinkage.helperClasses.Header;
 import de.securerecordlinkage.configuration.Server;
 import de.securerecordlinkage.helperClasses.HeaderHelper;
 import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.codehaus.jettison.json.JSONArray;
@@ -19,7 +21,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Level;
+
+
 
 /**
  * 
@@ -57,15 +60,19 @@ public class Initializer {
 
 
         log4jSetup();
+
         /*
          * Limit Jersey logging to avoid spamming the log with "the request body has been consumed" messages
          * (see http://stackoverflow.com/questions/2011895/how-to-fix-jersey-post-request-parameters-warning).
          * This applies to use cases where all fields are transmitted via the "addPatient" token and the
          * POST /patients request is intentionally empty.
          */
+        /*
         java.util.logging.Logger webComponentLogger = java.util.logging.Logger.getLogger(WebComponent.class.getName());
         webComponentLogger.setLevel(Level.SEVERE);
         logger.info("#####Startup succeeded. Ready to take requests.");
+        */
+
     }
 
     private void initializeCommunicatorResource(ConfigLoader srlConfig, Server remoteServer) {
@@ -79,8 +86,8 @@ public class Initializer {
     }
 
     private void sendInitLocalToOwnSecureEpiLinker(Config c, ConfigLoader srlConfig) {
+        logger.info("sendInitLocalToOwnSecureEpiLinker");
         try {
-            logger.info("initialize - SRL");
             JSONObject configJSON = createLocalInitJSON(c);
             HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl() + "/initLocal", "PUT", configJSON.toString());
         } catch (Exception e) {
@@ -90,8 +97,8 @@ public class Initializer {
     }
 
     private void sendInitRemoteToOwnSecureEpiLinker(ConfigLoader srlConfig, Server remoteServer) {
+        logger.info("sendInitRemoteToOwnSecureEpiLinker");
         ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + srlConfig.getLocalApiKey() + "\"");
-
         try {
             //remote Init
             JSONObject remoteInitJSON = createRemoteInitJSON(remoteServer);
@@ -106,8 +113,9 @@ public class Initializer {
 
     private void log4jSetup() {
         Logger root = Logger.getRootLogger();
-        //root.setLevel(ConfigLoader.instance.getLogLevel());
-        String logFileName = Config.instance.getProperty("log.filename");
+
+        Logger.getRootLogger().setLevel(Level.WARN);
+        String logFileName = "/usr/local/tomcat/logs/secureRecordLinkage.log";
         if (logFileName == null) {
             root.info("Using default logging output.");
         } else {
@@ -119,11 +127,11 @@ public class Initializer {
 
                 // In production mode, avoid spamming the servlet container's
                 // logfile.
-                if (!Config.instance.debugIsOn()) {
-                    root.warn("Redirecting SecureRecordLinkage log to " + logFileName
-                            + ".");
-                    root.removeAllAppenders();
-                }
+                //if (!Config.instance.debugIsOn()) {
+                //    root.warn("Redirecting SecureRecordLinkage log to " + logFileName
+                //            + ".");
+                //    root.removeAllAppenders();
+                //}
 
                 root.addAppender(app);
         //        root.info("Logger setup to log on level "
@@ -248,7 +256,7 @@ public class Initializer {
 
             reqObject.put("connectionProfile", tmpObj);
 
-            //TODO: linkageService missing
+            //TODO: linkageServiceBaseURL missing
 
             reqObject.put("matchingAllowed", true);
 

@@ -152,13 +152,9 @@ public enum ConfigLoader {
 				if (props.containsKey("servers." + i + ".remoteSELUrl")) {
 					s.setUrl(props.getProperty("servers." + i + ".remoteSELUrl"));
 				}
-				if (props.containsKey("servers." + i + ".linkageService")) {
-					s.setLinkageService(props.getProperty("servers." + i + ".linkageService"));
+				if (props.containsKey("servers." + i + ".linkageServiceBaseURL")) {
+					s.setLinkageServiceBaseURL(props.getProperty("servers." + i + ".linkageServiceBaseURL"));
 				}
-				if (props.containsKey("servers." + i + ".apiKey")) {
-					s.setLinkageService(props.getProperty("servers." + i + ".apiKey"));
-				}
-
 				remoteServers.put(s.getId(), s);
 				i = i + 1;
 			} else {

@@ -1,10 +1,7 @@
 package de.securerecordlinkage;
 
 import de.securerecordlinkage.configuration.ConfigLoader;
-import de.securerecordlinkage.helperClasses.Header;
-import de.securerecordlinkage.helperClasses.HeaderHelper;
-import de.securerecordlinkage.helperClasses.MatchCounter;
-import de.securerecordlinkage.helperClasses.TentativeMatchCounter;
+import de.securerecordlinkage.helperClasses.*;
 import de.sessionTokenSimulator.PatientRecords;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -43,7 +40,7 @@ public class CommunicatorResource {
     private static String localId;
     private static String remoteId;
     private static String baseCommunicatorURL = "http://localhost:8082/";
-    private static String baseLinkageServiceURL = "http://192.168.0.104:5000";
+    private static String baseLinkageServiceURL = "http://0.0.0.0:5000";
 
     private static String localCallbackLinkURL = "http://localhost:8082/Communicator/linkCallBack";
     private static String localCallbackMatchURL = "http://localhost:8082/Communicator/matchCallBack";
@@ -64,7 +61,7 @@ public class CommunicatorResource {
         localId = config.getLocalID();
         remoteId = id;
         baseCommunicatorURL = config.getServers().get(remoteId).getUrl();
-        baseLinkageServiceURL = config.getServers().get(remoteId).getLinkageService();
+        baseLinkageServiceURL = config.getServers().get(remoteId).getLinkageServiceBaseURL();
         localCallbackLinkURL = config.getLocalCallbackLinkUrl();
         localCallbackMatchURL = config.getLocalCallbackMatchUrl();
         localDataServiceURL = config.getLocalDataServiceUrl();
@@ -529,52 +526,6 @@ public class CommunicatorResource {
     }
 
 
-
-    @GET
-    @Path("/initIDs/{remoteID}")
-    public Response generateIDs(@Context HttpServletRequest request, @PathParam("remoteID") String remoteID) throws JSONException {
-//        if (authorizationValidator(request)) {
-            try {
-                logger.info("trigger linker started");
-                logger.info("trigger linker " + remoteID);
-
-                JSONObject answerObject = new JSONObject();
-
-                PatientRecords pr = new PatientRecords();
-                Integer totalAmount  = pr.getCount();
-
-                logger.info("total amount: " + totalAmount);
-
-                String url = baseLinkageServiceURL + "/freshIDs/" + localId + "?count=" + totalAmount;
-
-                CloseableHttpResponse result = HTTPSendHelper.doRequest(url, "GET", null );
-                if (result.getStatusLine().getStatusCode() > 200) {
-                    return Response.status(result.getStatusLine().getStatusCode()).build();
-                }
-
-                HttpEntity entity = result.getEntity();
-                if (entity != null) {
-                    String entityString = EntityUtils.toString(entity,"UTF-8");
-                    JSONObject tmpObj = new JSONObject(entityString);
-                    JSONArray resArray = (JSONArray)tmpObj.get("linkageIds");
-                    String idType = "link-"+localId+"-"+remoteID;
-                    int status = pr.updateRecords(idType, resArray);
-                    if (status > 200) {
-                        return Response.status(status).build();
-                    }
-                }
-
-                answerObject.put("totalAmount", totalAmount);
-                return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
-            } catch (Exception e) {
-                logger.error("SRL IDs cannot be generated: " + e.toString());
-                return Response.status(500).build();
-            }
-//        } else {
-//        return Response.status(401).build();
-//        }
-    }
-
     @GET
     @Path("/triggerMatch/status/{remoteID}")
     public Response triggerMatchStatus(@PathParam("remoteID") String remoteID) throws JSONException {
@@ -605,5 +556,51 @@ public class CommunicatorResource {
 
         return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
     }
+
+    @GET
+    @Path("/initIDs/{remoteID}")
+    public Response generateIDs(@Context HttpServletRequest request, @PathParam("remoteID") String remoteID) throws JSONException {
+//        if (authorizationValidator(request)) {
+        try {
+            logger.info("trigger linker started");
+            logger.info("trigger linker " + remoteID);
+
+            JSONObject answerObject = new JSONObject();
+
+            PatientRecords pr = new PatientRecords();
+            Integer totalAmount  = pr.getCount();
+
+            logger.info("total amount: " + totalAmount);
+
+            String url = baseLinkageServiceURL + "/freshIDs/" + localId + "?count=" + totalAmount;
+
+            CloseableHttpResponse result = HTTPSendHelper.doRequest(url, "GET", null );
+            if (result.getStatusLine().getStatusCode() > 200) {
+                return Response.status(result.getStatusLine().getStatusCode()).build();
+            }
+
+            HttpEntity entity = result.getEntity();
+            if (entity != null) {
+                String entityString = EntityUtils.toString(entity,"UTF-8");
+                JSONObject tmpObj = new JSONObject(entityString);
+                JSONArray resArray = (JSONArray)tmpObj.get("linkageIds");
+                String idType = "link-"+localId+"-"+remoteID;
+                int status = pr.updateRecords(idType, resArray);
+                if (status > 200) {
+                    return Response.status(status).build();
+                }
+            }
+
+            answerObject.put("totalAmount", totalAmount);
+            return Response.ok(answerObject, MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            logger.error("SRL IDs cannot be generated: " + e.toString());
+            return Response.status(500).build();
+        }
+//        } else {
+//        return Response.status(401).build();
+//        }
+    }
+
 
 }

@@ -41,4 +41,6 @@ field.ort.bitlength = 500
 servers.0.remoteId = tud
 servers.0.idType = link:dkfz:tud
 servers.0.remoteSELUrl = http://192.168.0.101:8082
+servers.0.linkageServiceBaseURL = http://localhost:5000
+
 

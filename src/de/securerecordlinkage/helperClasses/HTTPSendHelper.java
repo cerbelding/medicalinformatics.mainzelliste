@@ -1,9 +1,8 @@
-package de.securerecordlinkage;
+package de.securerecordlinkage.helperClasses;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.samply.common.http.HttpConnector;
 import de.samply.common.http.HttpConnectorException;
-import de.securerecordlinkage.helperClasses.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.log4j.Logger;
 
@@ -15,11 +14,11 @@ public class HTTPSendHelper {
 
     private static Logger logger = null;
 
-    static CloseableHttpResponse doRequest(String url, String action, String data) {
+    public static CloseableHttpResponse doRequest(String url, String action, String data) {
         return doRequest(url, action, data, null);
     }
 
-    static CloseableHttpResponse doRequest(String url, String action, String data, ArrayList<Header> headers) {
+    public static CloseableHttpResponse doRequest(String url, String action, String data, ArrayList<Header> headers) {
         initLogger();
         logger.info("doRequest(" + String.valueOf(url) + ", " + String.valueOf(action) + ", " + String.valueOf(data) + "," + String.valueOf(headers) + ")");
 

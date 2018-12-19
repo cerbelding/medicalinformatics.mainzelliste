@@ -7,7 +7,7 @@ public class Server {
     //TODO: implement different authentication types
     protected String idType;
     protected String url;
-    protected String linkageService;
+    protected String linkageServiceBaseURL;
 
     Server() {
 
@@ -117,7 +117,7 @@ public class Server {
      *     {@link String }
      *
      */
-    public String getLinkageService() { return linkageService; }
+    public String getLinkageServiceBaseURL() { return linkageServiceBaseURL; }
 
     /**
      * Sets the value of the url property.
@@ -127,8 +127,8 @@ public class Server {
      *     {@link String }
      *
      */
-    public void setLinkageService(String value) {
-        this.linkageService = value;
+    public void setLinkageServiceBaseURL(String value) {
+        this.linkageServiceBaseURL = value;
     }
 
 }
