@@ -220,7 +220,7 @@ idgenerator.intid = SimpleIDGenerator
 # ElasticIDGenerator is used for randomly generated id types with the flexible length and vocabulary
 # Additional params for ElasticIDGenerator are defined here.
 # idgenerator.elasticid = ElasticIDGenerator
-# idgenerator.elasticid.vocabulary= 23456789ACDEFGHJKMNPQURTUVWXYZ
+# idgenerator.elasticid.vocabulary = 23456789ACDEFGHJKMNPQURTUVWXYZ
 # idgenerator.elasticid.length = 7
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
