@@ -50,7 +50,7 @@ import java.util.Random;
 /**
  * This generator creates IDs from a vocabulary that can be set with cofnig
  */
-public class MasterIDGenerator implements IDGenerator<MasterID>{
+public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 
 	/** The ID type this generator instance produces. */
 	private String idType;
@@ -74,7 +74,7 @@ public class MasterIDGenerator implements IDGenerator<MasterID>{
 	 * Empty constructor. Needed by IDGeneratorFactory in order to instantiate
 	 * an object via reflection.
 	 */
-	public MasterIDGenerator() {
+	public ElasticIDGenerator() {
 	}
 
 	/**
@@ -118,7 +118,7 @@ public class MasterIDGenerator implements IDGenerator<MasterID>{
 	}
 
 	@Override
-	public synchronized MasterID getNext() {
+	public synchronized ElasticID getNext() {
 
 		String id = null;
 
@@ -131,14 +131,14 @@ public class MasterIDGenerator implements IDGenerator<MasterID>{
 		mem.set("counter", Integer.toString(this.counter));
 		mem.commit();
 
-		return new MasterID(id, idType);
+		return new ElasticID(id, idType);
 	}
 	/**
 		This method checks if a patient exists in database
 	 	@return returns true when the patient exists in database, otherwise false
 	 */
 	private boolean checkPidExists(String pid) {
-		Patient patient = Persistor.instance.getPatient(new MasterID(pid, getIdType()));
+		Patient patient = Persistor.instance.getPatient(new ElasticID(pid, getIdType()));
 		return patient != null;
 	}
 
@@ -153,8 +153,8 @@ public class MasterIDGenerator implements IDGenerator<MasterID>{
 	}
 
 	@Override
-	public MasterID buildId(String id) {
-		return new MasterID(id, getIdType());
+	public ElasticID buildId(String id) {
+		return new ElasticID(id, getIdType());
 	}
 
 	@Override

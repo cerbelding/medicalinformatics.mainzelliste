@@ -13,7 +13,7 @@
     <class>de.pseudonymisierung.mainzelliste.IDGeneratorMemory</class>
     <class>de.pseudonymisierung.mainzelliste.IntegerID</class>
     <class>de.pseudonymisierung.mainzelliste.ExternalID</class>
-    <class>de.pseudonymisierung.mainzelliste.MasterID</class>
+    <class>de.pseudonymisierung.mainzelliste.ElasticID</class>
     <class>de.pseudonymisierung.mainzelliste.matcher.MatchResult</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <!-- See /etc/mainzelliste/default.conf for database access config. -->

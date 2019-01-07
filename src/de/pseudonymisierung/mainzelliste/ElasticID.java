@@ -5,18 +5,18 @@ import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import javax.persistence.Entity;
 
 @Entity
-public class MasterID extends ID {
+public class ElasticID extends ID {
 
-    public MasterID(String pid, String idType) throws InvalidIDException{
+    public ElasticID(String pid, String idType) throws InvalidIDException{
         super(pid, idType);
     }
 
     @Override
     public boolean equals(Object arg0) {
-        if(!(arg0 instanceof MasterID))
+        if(!(arg0 instanceof ElasticID))
             return false;
 
-        MasterID other = (MasterID)arg0;
+        ElasticID other = (ElasticID)arg0;
         return other.idString.equals(idString);
     }
 

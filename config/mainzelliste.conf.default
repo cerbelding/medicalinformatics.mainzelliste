@@ -205,7 +205,7 @@ matcher.epilink.threshold_non_match = 0.6
 idgenerators = pid, intid
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
-# idgenerators = pid, intid, extid, masterid
+# idgenerators = pid, intid, extid, elasticid
 
 # Additional params for PIDGenerator (k1, k2, k3, rndwidth) are defined here.
 idgenerator.pid = PIDGenerator
@@ -217,10 +217,11 @@ idgenerator.pid.rndwidth = 0
 
 idgenerator.intid = SimpleIDGenerator
 
-# Additional params for MasterIDGenerator are defined here.
-idgenerator.masterid = MasterIDGenerator
-idgenerator.masterid.vocabulary= 23456789ACDEFGHJKMNPQURTUVWXYZ
-idgenerator.masterid.length = 7
+# ElasticIDGenerator is used for randomly generated id types with the flexible length and vocabulary
+# Additional params for ElasticIDGenerator are defined here.
+# idgenerator.elasticid = ElasticIDGenerator
+# idgenerator.elasticid.vocabulary= 23456789ACDEFGHJKMNPQURTUVWXYZ
+# idgenerator.elasticid.length = 7
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
 # idgenerator.extid = ExternalIDGenerator
