@@ -507,13 +507,13 @@ public enum PatientBackend {
 				ID patientExtId = pToEdit.getId(idType);
 				if (patientExtId != null) {
 					Set<ID> patientIds = pToEdit.getIds();
-					Set<ID> newIds = new HashSet<ID>();
+					Set<ID> newIds = new HashSet<>();
 					for (ID id : patientIds) {
 						if (!id.getType().equals(idType)) {
 							newIds.add(id);
 						}
 					}
-					pToEdit.setIds(patientIds);
+					pToEdit.setIds(newIds);
 				}
 				pToEdit.addId(extId);
 			}
