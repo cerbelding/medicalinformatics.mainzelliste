@@ -59,7 +59,9 @@ public class Initializer {
 
 
 
-        log4jSetup();
+        //log4jSetup();
+
+
 
         /*
          * Limit Jersey logging to avoid spamming the log with "the request body has been consumed" messages
@@ -89,6 +91,7 @@ public class Initializer {
         logger.info("sendInitLocalToOwnSecureEpiLinker");
         try {
             JSONObject configJSON = createLocalInitJSON(c);
+            logger.info(configJSON);
             HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl() + "/initLocal", "PUT", configJSON.toString());
         } catch (Exception e) {
             logger.error("initialize() - Could not send initJSON " + e.toString());
@@ -102,11 +105,12 @@ public class Initializer {
         try {
             //remote Init
             JSONObject remoteInitJSON = createRemoteInitJSON(remoteServer);
+            logger.info(remoteInitJSON);
             HTTPSendHelper.doRequest(srlConfig.getLocalSELUrl()+"/initRemote/"+remoteServer.getId(), "PUT", remoteInitJSON.toString(), headers);
 
         } catch (Exception e) {
             logger.error("initialize() - Could not send remoteJSON " + e.toString());
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -241,29 +245,32 @@ public class Initializer {
     // 3. Use samply.config ?
     //private List<JSONObject> createRemoteInitJSON() {
     private JSONObject createRemoteInitJSON(Server server) {
-        JSONObject reqObject = new JSONObject();
+        JSONObject rootJSON = new JSONObject();
         try {
 
-            JSONObject tmpObj = new JSONObject();
-            JSONObject authObj = new JSONObject();
+            JSONObject connectionProfileJSON = new JSONObject();
+            JSONObject localAuthenticationJSON = new JSONObject();
+            JSONObject linkageServiceJSON = new JSONObject();
 
-            tmpObj.put("url", server.getUrl());
-            authObj.put("authType", "apiKey");
+            connectionProfileJSON.put("url", server.getUrl());
+            localAuthenticationJSON.put("authType", "apiKey");
             //TODO: if authentication type == apikey, has to be part of server object
-            authObj.put("sharedKey", server.getApiKey());
+            localAuthenticationJSON.put("sharedKey", server.getApiKey());
 
-            tmpObj.put("authentication", authObj);
+            connectionProfileJSON.put("authentication", localAuthenticationJSON);
 
-            reqObject.put("connectionProfile", tmpObj);
+            rootJSON.put("connectionProfile", connectionProfileJSON);
 
-            //TODO: linkageServiceBaseURL missing
+            linkageServiceJSON.put("url", server.getLinkageServiceBaseURL());
+            rootJSON.put("linkageService", linkageServiceJSON);
+            //TODO: linkageServiceAuthentification is missing
 
-            reqObject.put("matchingAllowed", true);
+            rootJSON.put("matchingAllowed", true);
 
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return reqObject;
+        return rootJSON;
     }
 
     /**
@@ -276,6 +283,12 @@ public class Initializer {
 
     private static void initLogger(){
         logger = Logger.getLogger(Initializer.class);
+
+        //FileAppender fileAppender = new FileAppender();
+        //fileAppender.setLayout();
+
+
+        //logger.addAppender();
         logger.info("SecureRecordLinkage Initializer initLogger()");
     }
 }
