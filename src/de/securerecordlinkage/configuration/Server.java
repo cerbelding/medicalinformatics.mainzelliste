@@ -1,13 +1,21 @@
 
 package de.securerecordlinkage.configuration;
 
+
+//TODO: Is this class really used?
 public class Server {
     protected String id;
     protected String apiKey;
     //TODO: implement different authentication types
     protected String idType;
     protected String url;
+
+
     protected String linkageServiceBaseURL;
+
+    protected String linkageServiceAuthType;
+    protected String linkageServiceSharedKey;
+
 
     Server() {
 
@@ -129,6 +137,23 @@ public class Server {
      */
     public void setLinkageServiceBaseURL(String value) {
         this.linkageServiceBaseURL = value;
+    }
+
+
+    public String getLinkageServiceAuthType() {
+        return linkageServiceAuthType;
+    }
+
+    public void setLinkageServiceAuthType(String linkageServiceAuthType) {
+        this.linkageServiceAuthType = linkageServiceAuthType;
+    }
+
+    public String getLinkageServiceSharedKey() {
+        return linkageServiceSharedKey;
+    }
+
+    public void setLinkageServiceSharedKey(String linkageServiceSharedKey) {
+        this.linkageServiceSharedKey = linkageServiceSharedKey;
     }
 
 }

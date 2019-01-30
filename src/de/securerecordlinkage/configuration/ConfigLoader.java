@@ -54,6 +54,7 @@ public enum ConfigLoader {
 	private final String localAuthenticationType;
 
 
+
 	private final HashMap<String, Server> remoteServers = new HashMap<String, Server>();
 
 	/** Default paths from where configuration is read if no path is given in the context descriptor */
@@ -141,21 +142,28 @@ public enum ConfigLoader {
 
 		while (found) {
 			if (props.containsKey("servers." + i + ".remoteId")){
-				Server s = new Server();
-				s.setId(props.getProperty("servers." + i + ".remoteId"));
+				Server server = new Server();
+				server.setId(props.getProperty("servers." + i + ".remoteId"));
 				if (props.containsKey("servers." + i + ".apiKey")) {
-					s.setApiKey(props.getProperty("servers." + i + ".apiKey"));
+					server.setApiKey(props.getProperty("servers." + i + ".apiKey"));
 				}
 				if (props.containsKey("servers." + i + ".idType")) {
-					s.setIdType(props.getProperty("servers." + i + ".idType"));
+					server.setIdType(props.getProperty("servers." + i + ".idType"));
 				}
 				if (props.containsKey("servers." + i + ".remoteSELUrl")) {
-					s.setUrl(props.getProperty("servers." + i + ".remoteSELUrl"));
+					server.setUrl(props.getProperty("servers." + i + ".remoteSELUrl"));
 				}
 				if (props.containsKey("servers." + i + ".linkageServiceBaseURL")) {
-					s.setLinkageServiceBaseURL(props.getProperty("servers." + i + ".linkageServiceBaseURL"));
+					server.setLinkageServiceBaseURL(props.getProperty("servers." + i + ".linkageServiceBaseURL"));
 				}
-				remoteServers.put(s.getId(), s);
+				if (props.containsKey("servers." + i + ".linkageServiceAuthType")) {
+					server.setLinkageServiceAuthType(props.getProperty("servers." + i + ".linkageServiceAuthType"));
+				}
+				if (props.containsKey("servers." + i + ".linkageServiceSharedKey")) {
+					server.setLinkageServiceSharedKey(props.getProperty("servers." + i + ".linkageServiceSharedKey"));
+				}
+
+				remoteServers.put(server.getId(), server);
 				i = i + 1;
 			} else {
 				found = false;
@@ -221,6 +229,11 @@ public enum ConfigLoader {
 	}
 	*/
 	public String getLocalDataServiceUrl() {return localDataServiceUrl;}
+
+
+
+
+
 	public String getLocalCallbackLinkUrl() {return localCallbackLinkUrl; }
 	public String getLocalCallbackMatchUrl() {return localCallbackMatchUrl; }
 

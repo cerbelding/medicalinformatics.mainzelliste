@@ -250,20 +250,27 @@ public class Initializer {
 
             JSONObject connectionProfileJSON = new JSONObject();
             JSONObject localAuthenticationJSON = new JSONObject();
-            JSONObject linkageServiceJSON = new JSONObject();
 
             connectionProfileJSON.put("url", server.getUrl());
             localAuthenticationJSON.put("authType", "apiKey");
             //TODO: if authentication type == apikey, has to be part of server object
             localAuthenticationJSON.put("sharedKey", server.getApiKey());
-
             connectionProfileJSON.put("authentication", localAuthenticationJSON);
+
 
             rootJSON.put("connectionProfile", connectionProfileJSON);
 
+
+            JSONObject linkageServiceJSON = new JSONObject();
             linkageServiceJSON.put("url", server.getLinkageServiceBaseURL());
+
+            JSONObject linkageServiceAuthenticationJSON = new JSONObject();
+            linkageServiceAuthenticationJSON.put("authType", server.getLinkageServiceAuthType());
+            linkageServiceAuthenticationJSON.put("sharedKey", server.getLinkageServiceSharedKey());
+
+            linkageServiceJSON.put("authentication", linkageServiceAuthenticationJSON);
+
             rootJSON.put("linkageService", linkageServiceJSON);
-            //TODO: linkageServiceAuthentification is missing
 
             rootJSON.put("matchingAllowed", true);
 
