@@ -85,19 +85,20 @@ public class CommunicatorResource {
     public void sendLinkRecord(String url, String idType, String idString, JSONObject recordAsJson) {
         logger.info("sendLinkRecord");
         try {
-            JSONObject recordToSend = new JSONObject();
-            JSONObject callbackObj = new JSONObject();
-            callbackObj.setEscapeForwardSlashAlways(false);
-            callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType + "&" + "idString=" + idString);
-            recordToSend.put("callback", callbackObj);
-            recordToSend.put("fields", recordAsJson.get("fields"));
 
-            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + localApiKey + "\"");
-            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
+            JSONObject recordToSendJSON = new JSONObject();
+            JSONObject callbackObj = getCallBackURLasJSON(idType, idString);
+
+            recordToSendJSON.put("callback", callbackObj);
+            recordToSendJSON.put("fields", recordAsJson.get("fields"));
+
+            sendHTTPPOSTWithAuthorizationHeader(url, recordToSendJSON);
+
         } catch (Exception e) {
             logger.error(e);
         }
     }
+
 
     /**
      * send linkRecord, which should be linked, to SRL - In Architectur-XML (v6) step 2
@@ -106,22 +107,20 @@ public class CommunicatorResource {
     public void sendLinkRecords(String url, String idType, JSONArray recordsAsJson) {
         logger.info("sendLinkRecords");
         try {
-            JSONObject recordToSend = new JSONObject();
-            JSONObject callbackObj = new JSONObject();
-            callbackObj.setEscapeForwardSlashAlways(false);
-            callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType);
-            recordToSend.put("callback", callbackObj);
-            recordToSend.put("total", recordsAsJson.length());
-            recordToSend.put("toDate", toDate);
-            recordToSend.put("records", recordsAsJson);
+            JSONObject recordToSendJSON = new JSONObject();
+            JSONObject callbackObj = getCallBackURLasJSON(idType, "");
 
-            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + localApiKey + "\"");
-            
-            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
+            recordToSendJSON.put("callback", callbackObj);
+            recordToSendJSON.put("total", recordsAsJson.length());
+            recordToSendJSON.put("toDate", toDate);
+            recordToSendJSON.put("records", recordsAsJson);
+
+            sendHTTPPOSTWithAuthorizationHeader(url, recordToSendJSON);
         } catch (Exception e) {
             logger.error(e);
         }
     }
+
 
     //-----------------------------------------------------------------------
 
@@ -131,15 +130,13 @@ public class CommunicatorResource {
     public void sendMatchRecord(String url, JSONObject recordAsJson) {
         logger.info("sendMatchRecord");
         try {
-            JSONObject recordToSend = new JSONObject();
-            JSONObject callbackObj = new JSONObject();
-            callbackObj.setEscapeForwardSlashAlways(false);
-            callbackObj.put("url", localCallbackMatchURL);
-            recordToSend.put("callback", callbackObj);
-            recordToSend.put("fields", recordAsJson.get("fields"));
+            JSONObject recordToSendJSON = new JSONObject();
+            JSONObject callbackObj = getCallBackURLasJSON();
 
-            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + localApiKey + "\"");
-            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
+            recordToSendJSON.put("callback", callbackObj);
+            recordToSendJSON.put("fields", recordAsJson.get("fields"));
+
+            sendHTTPPOSTWithAuthorizationHeader(url, recordToSendJSON);
         } catch (Exception e) {
             logger.error(e);
         }
@@ -152,21 +149,49 @@ public class CommunicatorResource {
     public void sendMatchRecords(String url, JSONArray recordsAsJson) {
         logger.info("sendMatchRecords");
         try {
-            JSONObject recordToSend = new JSONObject();
-            JSONObject callbackObj = new JSONObject();
-            callbackObj.setEscapeForwardSlashAlways(false);
-            callbackObj.put("url", localCallbackLinkURL);
-            recordToSend.put("callback", callbackObj);
-            recordToSend.put("total", recordsAsJson.length());
-            recordToSend.put("toDate", toDate);
-            recordToSend.put("records", recordsAsJson);
+            JSONObject recordToSendJSON = new JSONObject();
+            JSONObject callbackObj = getCallBackURLasJSON();
 
-            ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + localApiKey + "\"");
-            HTTPSendHelper.doRequest(url, "POST", recordToSend.toString(), headers);
+            recordToSendJSON.put("callback", callbackObj);
+            recordToSendJSON.put("total", recordsAsJson.length());
+            recordToSendJSON.put("toDate", toDate);
+            recordToSendJSON.put("records", recordsAsJson);
+
+            sendHTTPPOSTWithAuthorizationHeader(url, recordToSendJSON);
         } catch (Exception e) {
             logger.error(e);
         }
     }
+
+
+    private JSONObject getCallBackURLasJSON() throws JSONException {
+        logger.debug("getCallBackURLasJSON()");
+        JSONObject callbackObj = new JSONObject();
+        callbackObj.setEscapeForwardSlashAlways(false);
+        callbackObj.put("url", localCallbackMatchURL);
+        return callbackObj;
+    }
+
+
+    private JSONObject getCallBackURLasJSON(String idType, String idString) throws JSONException {
+        logger.debug("getCallBackURLasJSON(" + idType + "," + idString + ")");
+        JSONObject callbackObj = new JSONObject();
+        callbackObj.setEscapeForwardSlashAlways(false);
+        if(idString.length()==0 || idString.isEmpty()){
+            callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType);
+        }
+        if(idString.length()>0){
+            callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType + "&" + "idString=" + idString);
+        }
+        return callbackObj;
+    }
+
+
+    private void sendHTTPPOSTWithAuthorizationHeader(String url, JSONObject recordToSendJSON) {
+        ArrayList<Header> headers = HeaderHelper.addHeaderToNewCreatedArrayList("Authorization", "apiKey apiKey=\"" + localApiKey + "\"");
+        HTTPSendHelper.doRequest(url, "POST", recordToSendJSON.toString(), headers);
+    }
+
 
     /**
      * rest endpoint, used to set a linked record - In Architectur-XML (v6) step 7
@@ -237,8 +262,6 @@ public class CommunicatorResource {
             //APIKey correct, now do the work
             try {
 
-                //if(json.match==true)
-                // Call countMatchResult
                 if (json.contains("\"match\":true")){
                     logger.info("matchCallback: match=" + true);
                     MatchCounter.incrementNumMatch(remoteID);
@@ -253,9 +276,6 @@ public class CommunicatorResource {
                     logger.info("matchCallback: tentativeMatch=" + true);
                     TentativeMatchCounter.incrementNumMatch(remoteID);
                 }
-
-
-                //{"result":{"match":false,"tentativeMatch":true}}
 
                 return Response.status(200).build();
             } catch (Exception e) {
