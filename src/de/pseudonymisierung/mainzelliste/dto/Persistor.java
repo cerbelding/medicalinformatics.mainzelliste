@@ -389,7 +389,12 @@ public enum Persistor {
 			em.remove(p);
 		em.getTransaction().commit();
 	}
-	
+
+	public synchronized void deleteId (ID id) {
+		em.getTransaction().begin();
+		em.remove(id);
+		em.getTransaction().commit();
+	}
 	/** Get patient with duplicates. Works like
 	 * {@link Persistor#getDuplicates(ID)}, but the requested patient is
 	 * included in the result.

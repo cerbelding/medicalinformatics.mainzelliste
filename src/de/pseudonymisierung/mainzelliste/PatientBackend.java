@@ -490,7 +490,7 @@ public enum PatientBackend {
 		pToEdit.setInputFields(pNormalized.getInputFields());
 
 		for (String idType : IDGeneratorFactory.instance.getExternalIdTypes()) {
-			if (newFieldValues.containsKey(idType)) {
+			if (newFieldValues.containsKey(idType)) {				
 				// check if this external id is already in use
 				ID extId = IDGeneratorFactory.instance.buildId(idType, newFieldValues.get(idType));
 				if (Persistor.instance.getPatient(extId) != null) {
@@ -511,6 +511,8 @@ public enum PatientBackend {
 					for (ID id : patientIds) {
 						if (!id.getType().equals(idType)) {
 							newIds.add(id);
+						} else {
+							Persistor.instance.deleteId(id);
 						}
 					}
 					pToEdit.setIds(newIds);
