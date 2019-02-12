@@ -512,6 +512,7 @@ public enum PatientBackend {
 						if (!id.getType().equals(idType)) {
 							newIds.add(id);
 						} else {
+
 							Persistor.instance.deleteId(id);
 						}
 					}

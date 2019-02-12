@@ -392,7 +392,7 @@ public enum Persistor {
 
 	public synchronized void deleteId (ID id) {
 		em.getTransaction().begin();
-		em.remove(id);
+		em.remove(em.merge(id));
 		em.getTransaction().commit();
 	}
 	/** Get patient with duplicates. Works like
