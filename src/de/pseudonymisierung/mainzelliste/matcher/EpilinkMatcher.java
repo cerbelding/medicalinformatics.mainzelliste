@@ -366,4 +366,8 @@ public class EpilinkMatcher implements Matcher {
 	private boolean isEmptyOrNull(Field<?> f) {
 	    return (f== null || f.isEmpty());
 	}
+	
+	private boolean isEmptyOrNull(Field<?> f) {
+	    return (f== null || f.isEmpty());
+	}
 }
