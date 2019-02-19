@@ -1,11 +1,11 @@
-FROM maven:alpine AS build
+## The maven-samply image needs to be build locally by using verbis.maven Dockerfile
+FROM maven-samply AS build
 COPY ./ /workingdir/
-RUN cd /workingdir && \
-    mvn clean && \
+WORKDIR /workingdir
+RUN mvn clean && \
     mvn install && \
-    mvn package && \
-    mkdir -p /workingdir/extracted && \ 
-    cd /workingdir/extracted && \
+    mkdir -p extracted && \
+    cd extracted && \
     unzip /workingdir/target/mainzelliste-*.war
 
 FROM tomcat:8-jre8-alpine
