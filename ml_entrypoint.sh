@@ -8,6 +8,15 @@
 : "${ML_DB_USER:=mainzelliste}"
 : "${ML_DB_PASS:=mainzelliste}"
 
+## process docker secrets
+if [ -e "$ML_DB_NAME_FILE" ]; then \
+    ML_DB_NAME=$(cat ML_DB_NAME_FILE) \
+;fi && if [ -e "$ML_DB_USER_FILE" ]; then \
+   ML_DB_USER=$(cat ML_DB_USER_FILE) \
+;fi && if [ -e "$ML_DB_PASS_FILE" ]; then \
+    ML_DB_PASS=$(cat ML_DB_PASS_FILE) \
+;fi
+
 if [ -e /mainzelliste.conf.default ]; then
 	echo "Generating new mainzelliste.conf from environment variables."
 	sed -e "s|# db.driver = org.postgresql.Driver|db.driver = $ML_DB_DRIVER|g ; \
