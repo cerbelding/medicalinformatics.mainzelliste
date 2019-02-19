@@ -8,7 +8,5 @@ services:
       - POSTGRES_PASSWORD=mainzelliste
   mainzelliste:
     build: .
-    ports:
-      - "8080:8080"
     depends_on:
       - db
