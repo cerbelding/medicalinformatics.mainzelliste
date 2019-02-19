@@ -8,16 +8,13 @@
 : "${ML_DB_USER:=mainzelliste}"
 : "${ML_DB_PASS:=mainzelliste}"
 
-if [ -e /etc/mainzelliste/mainzelliste.conf.docker ]; then
+if [ -e /mainzelliste.conf.default ]; then
 	echo "Generating new mainzelliste.conf from environment variables."
-	sed -e "s/ML_DB_DRIVER/$ML_DB_DRIVER/g ; \
-		s/ML_DB_TYPE/$ML_DB_TYPE/g ;\
-		s/ML_DB_HOST/$ML_DB_HOST/g ;\
-		s/ML_DB_PORT/$ML_DB_PORT/g ;\
-		s/ML_DB_NAME/$ML_DB_NAME/g ;\
-		s/ML_DB_USER/$ML_DB_USER/g ;\
-		s/ML_DB_PASS/$ML_DB_PASS/g" \
-		/etc/mainzelliste/mainzelliste.conf.docker \
+	sed -e "s|# db.driver = org.postgresql.Driver|db.driver = $ML_DB_DRIVER|g ; \
+		s|# db.url = jdbc:postgresql://localhost:5432/mainzelliste|db.url = jdbc:$ML_DB_TYPE://$ML_DB_HOST:$ML_DB_PORT/$ML_DB_NAME|g ;\
+		s|db.username = mainzelliste|db.username = $ML_DB_USER|g ;\
+		s|db.password = mainzelliste|db.password = $ML_DB_PASS|g" \
+		/mainzelliste.conf.default \
 		> /etc/mainzelliste/mainzelliste.conf
 else
 	echo "Applying user-provided mainzelliste.conf."
