@@ -7,6 +7,6 @@ services:
       - POSTGRES_USER=mainzelliste
       - POSTGRES_PASSWORD=mainzelliste
   mainzelliste:
-    build: .
+    image: vm-129-150.cloud.dkfz-heidelberg.de/mainzelliste
     depends_on:
       - db

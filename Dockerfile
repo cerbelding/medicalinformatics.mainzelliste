@@ -1,5 +1,5 @@
 ## The maven-samply image needs to be build locally by using verbis.maven Dockerfile
-FROM maven-samply AS build
+FROM vm-129-150.cloud.dkfz-heidelberg.de/maven-samply AS build
 COPY ./ /workingdir/
 WORKDIR /workingdir
 RUN mvn clean && \
