@@ -10,11 +10,13 @@
 
 ## process docker secrets
 if [ -e "$ML_DB_NAME_FILE" ]; then \
-    ML_DB_NAME=$(cat ML_DB_NAME_FILE) \
+    ML_DB_NAME=$(cat $ML_DB_NAME_FILE) \
 ;fi && if [ -e "$ML_DB_USER_FILE" ]; then \
-   ML_DB_USER=$(cat ML_DB_USER_FILE) \
+   ML_DB_USER=$(cat $ML_DB_USER_FILE) \
 ;fi && if [ -e "$ML_DB_PASS_FILE" ]; then \
-    ML_DB_PASS=$(cat ML_DB_PASS_FILE) \
+    ML_DB_PASS=$(cat $ML_DB_PASS_FILE) \
+;fi && if [ -e "$ML_API_KEY_FILE" ]; then \
+    ML_API_KEY=$(cat $ML_API_KEY_FILE) \
 ;fi
 
 if [ -e /mainzelliste.conf.default ]; then
