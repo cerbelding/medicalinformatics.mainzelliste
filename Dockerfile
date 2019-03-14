@@ -9,6 +9,9 @@ RUN mvn clean && \
     unzip /workingdir/target/mainzelliste-*.war
 
 FROM tomcat:8-jre8-alpine
+
+ENV ML_CONFIG_FILE ""
+
 RUN rm -r /usr/local/tomcat/webapps/*
 COPY --from=build /workingdir/extracted/ /usr/local/tomcat/webapps/ROOT/
 COPY ./ml_entrypoint.sh /ml_entrypoint.sh
