@@ -2,11 +2,14 @@ version: "3"
 services:
   db:
     image: postgres:9.5-alpine
+    container_name: mainzelliste_database_container
     environment:
       - POSTGRES_DB=mainzelliste
       - POSTGRES_USER=mainzelliste
       - POSTGRES_PASSWORD=mainzelliste
   mainzelliste:
-    image: vm-129-150.cloud.dkfz-heidelberg.de/mainzelliste:psd
+    image: mainzelliste
+    container_name: mainzelliste_container
+    build: .
     depends_on:
       - db
