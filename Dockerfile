@@ -1,5 +1,6 @@
-## The maven-samply image needs to be build locally by using verbis.maven Dockerfile
-FROM vm-129-150.cloud.dkfz-heidelberg.de/maven-samply AS build
+## The samply maven image needs to be build locally by using following command:
+## docker-compose -f ./docker/samply-maven/docker-compose.maven.yml build --build-arg PROXY_HOST=<yourProxyHost> --build-arg PROXY_PORT=<yourProxyPort>
+FROM samply-maven AS build
 COPY ./ /workingdir/
 WORKDIR /workingdir
 RUN mvn clean && \

@@ -1,0 +1,55 @@
+<settings
+    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd"
+    xmlns="http://maven.apache.org/SETTINGS/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <proxies>
+        <proxy>
+            <id>httpProxy</id>
+            <active>false</active>
+            <protocol>http</protocol>
+            <host/>
+            <port/>
+            <username/>
+            <password/>
+            <nonProxyHosts/>
+        </proxy>
+        <proxy>
+            <id>httpsProxy</id>
+            <active>false</active>
+            <protocol>https</protocol>
+            <host/>
+            <port/>
+            <username/>
+            <password/>
+            <nonProxyHosts/>
+        </proxy>
+    </proxies>
+    <profiles>
+        <profile>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                    <id>oss-snapshots</id>
+                    <url>https://maven.samply.de/nexus/content/repositories/oss-snapshots</url>
+                </repository>
+                <repository>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>oss-releases</id>
+                    <url>https://maven.samply.de/nexus/content/repositories/oss-releases</url>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+</settings>
