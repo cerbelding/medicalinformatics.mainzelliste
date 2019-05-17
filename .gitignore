@@ -14,3 +14,4 @@
 # contain user-defined or even confidential content.
 /WebContent/META-INF/context.xml
 /config/*.conf
+/config/mainzelliste.conf
