@@ -277,7 +277,17 @@ public enum Config {
 	public boolean debugIsOn()
 	{
 		String debugMode = this.props.getProperty("debug");
-		return (debugMode != null && debugMode.equals("true"));
+		return (debugMode.trim() != null && debugMode.equals("true"));
+	}
+
+	/**
+	 * Checks whether this instance has audit trailing enabled by the administrator.
+	 *
+	 * @return true if audit trail is enabled.
+	 */
+	public boolean auditTrailIsOn() {
+		String audittrail = this.props.getProperty("gcp.audittrail");
+		return (audittrail.trim() != null && audittrail.equals("true"));
 	}
 	
 	/**

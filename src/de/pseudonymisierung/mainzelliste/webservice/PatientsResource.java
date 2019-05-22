@@ -60,6 +60,7 @@ import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.spi.resource.Singleton;
 
+import de.pseudonymisierung.mainzelliste.AuditTrail;
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.ID;
@@ -386,6 +387,16 @@ public class PatientsResource {
 					throw new InternalErrorException("Error while transforming patient ids into JSON");
 				}			
 			}
+			//Write audit trail
+			if (Config.instance.auditTrailIsOn()) {
+				AuditTrail at = PatientBackend.instance.buildAuditTrailRecord(tid,
+						idString,
+						idType,
+						"read",
+						thisPatient.toString(),
+						null);
+				Persistor.instance.createAuditTrail(at);
+			}
 			
 			ret.put(thisPatient);
 		}
@@ -541,8 +552,8 @@ public class PatientsResource {
 					}
 				}
 			}
-			
-			PatientBackend.instance.editPatient(tt.getPatientId(), newFieldValues);
+
+			PatientBackend.instance.editPatient(tt.getPatientId(), newFieldValues, tokenId);
 		} // end of synchronized block
 		
 		if (!Config.instance.debugIsOn())

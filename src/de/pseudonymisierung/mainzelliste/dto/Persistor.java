@@ -44,7 +44,7 @@ import javax.persistence.TypedQuery;
 
 import org.apache.log4j.Logger;
 
-
+import de.pseudonymisierung.mainzelliste.AuditTrail;
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Initializer;
 import de.pseudonymisierung.mainzelliste.ID;
@@ -388,6 +388,34 @@ public enum Persistor {
 		if (p != null)
 			em.remove(p);
 		em.getTransaction().commit();
+	}
+
+	/**
+	 * Persist the given AuditTrail instance.
+	 *
+	 * @param at The audit trail record built by the caller.
+	 */
+	public synchronized void createAuditTrail(AuditTrail at) {
+		em.getTransaction().begin();
+		em.persist(at);
+		em.getTransaction().commit();
+		em.refresh(at);
+	}
+
+	public synchronized List<AuditTrail> getAuditTrail(String idString, String idType) {
+		EntityManager em = emf.createEntityManager();
+		TypedQuery<AuditTrail> q = em.createQuery("SELECT a FROM AuditTrail a WHERE a.idValue = :idString AND a.idType = :idType", AuditTrail.class);
+		q.setParameter("idString", idString);
+		q.setParameter("idType", idType);
+		List<AuditTrail> result = q.getResultList();
+
+		if (result.isEmpty()) {
+			em.close();
+			return null;
+		}
+
+		em.close();
+		return result;
 	}
 	
 	/** Get patient with duplicates. Works like

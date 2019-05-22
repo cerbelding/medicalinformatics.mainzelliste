@@ -46,6 +46,39 @@ p.buttons {
 	padding: 1em;
 	background-color: rgb(229,235,241);
 }
+.tabelle_audit {
+
+	table-layout: fixed;
+	width: 100%;
+	background-color: rgb(229,235,241);
+	border: 1px solid #ddd;
+	border-collapse: collapse;
+}
+
+.tabelle_audit tr {
+	border: 1px solid #ddd;
+}
+
+.tabelle_audit tr:hover {
+	background-color: #ddd;
+}
+
+.tabelle_audit td {
+	width: 150px;
+	border: 1px solid #ddd;
+}
+
+.tabelle_audit th {
+	width: 150px;
+	border: 1px solid #ddd;
+	padding-top: 12px;
+	padding-bottom: 12px;
+	text-align: left;
+}
+
+.json_content {
+	word-wrap: break-word;
+}
 .patienten_daten {
  	max-width: 50em; 
  	margin: auto;

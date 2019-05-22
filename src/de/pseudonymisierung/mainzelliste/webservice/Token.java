@@ -43,6 +43,7 @@ import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
+import javax.ws.rs.core.Response;
 
 /**
  * A temporary "ticket" to realize authorization and/or access to a resource.
@@ -108,6 +109,9 @@ public class Token {
 		else
 			throw new InvalidTokenException("Token type " + this.type
 					+ " unknown!");
+		if (Config.instance.auditTrailIsOn()) {
+			this.checkAuditTrail();
+		}
 	}
 
 	/**
@@ -547,6 +551,36 @@ public class Token {
 			// If it does, this indicates a bug
 			throw new Error(e);
 		}
+	}
+
+	private void checkAuditTrail() {
+		if (!this.getData().containsKey("auditTrail"))
+			throw new InvalidTokenException("Invalid Token object, audtiTrail key is not specified", Response.Status.BAD_REQUEST);
+
+		// check format
+		Map<String,?> auditTrail;
+		try {
+			auditTrail = this.getDataItemMap("auditTrail");
+		} catch (ClassCastException e) {
+			throw new InvalidTokenException(
+					"Field 'auditTrail' has wrong format. Expected map of key/value pairs, received: "
+							+ this.getData().get("auditTrail"));
+		}
+
+		// check keys
+		if (   auditTrail == null ||
+				!auditTrail.keySet().contains("username") ||
+				!auditTrail.keySet().contains("remoteSystem") ||
+				!auditTrail.keySet().contains("reasonForChange"))
+			throw new InvalidTokenException(
+					"Field 'auditTrail' has wrong format. One or more keys are missing, received: "
+							+ this.getData().get("auditTrail"));
+
+		// check for null or missing values
+		if (    auditTrail.values().contains(null) || auditTrail.values().contains(""))
+			throw new InvalidTokenException(
+					"Field 'auditTrail' has wrong format. One or more values are missing, received: "
+							+ this.getData().get("auditTrail"));
 	}
 
 }

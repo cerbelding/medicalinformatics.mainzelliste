@@ -230,7 +230,7 @@ public class SessionsResource {
 		t.checkValidity(Servers.instance.getRequestApiVersion(req));
 
 		//Token erstellen, speichern und URL zurückgeben
-  		Servers.instance.registerToken(s.getId(), t);
+		Servers.instance.registerToken(s.getId(), t, req.getRemoteAddr());
 		
 		URI newUri = UriBuilder
 				.fromUri(req.getRequestURL().toString())

@@ -1,5 +1,7 @@
 <%@page import="java.util.List"%>
 <%@page import="de.pseudonymisierung.mainzelliste.dto.Persistor"%>
+<%@page import="java.util.ResourceBundle"%>
+<%@page import="de.pseudonymisierung.mainzelliste.Config"%>
 <%@page import="javax.ws.rs.core.Response.Status"%>
 <%@page import="javax.ws.rs.core.Response"%>
 <%@page import="javax.ws.rs.WebApplicationException"%>
@@ -12,6 +14,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%
+	ResourceBundle bundle = Config.instance.getResourceBundle(request);
 	String idTypes[] = IDGeneratorFactory.instance.getIDTypes();
 	String defaultIdType = IDGeneratorFactory.instance.getDefaultIDType();
 	JSONObject originalIds;
@@ -105,6 +108,17 @@ function fillOriginalId() {
 							value="<%= originalIds.has(defaultIdType) ? originalIds.get(defaultIdType) : "" %>">
 						</td>
 					</tr>
+					<% if (Config.instance.auditTrailIsOn()) { %>
+					<tr>
+						<td><label><%=bundle.getString("reasonForChange")%></label>
+						</td>
+						<td>
+						</td>
+						<td><input type="text" name="reasonForChange" id="reasonForChnage"
+								   value="Ticket-ID etc">
+						</td>
+					</tr>
+					<% } %>
 				</table>
         </fieldset>
         <fieldset class="patienten_daten">
@@ -141,10 +155,24 @@ function fillOriginalId() {
 				<p class="buttons">
 					<input type="submit" value="Speichern">
 				</p>				
-			</form>
-			<form method="POST" onsubmit="return confirm('Patienten wirklich löschen?');">
+			</form>                                <br>
+			<h3><%=bundle.getString("deletePatient")%></h3>
+			<form method="POST" onsubmit="return confirm('<%=bundle.getString("confirmDelete")%>');">
+				<% if (Config.instance.auditTrailIsOn()) { %>
+				<table class="daten_tabelle">
+					<tr>
+						<td><label><%=bundle.getString("reasonForDelete")%></label>
+						</td>
+						<td>
+						</td>
+						<td><input type="text" name="reasonForDelete" id="reasonForDelete"
+								   value="Ticket-ID etc">
+						</td>
+					</tr>
+				</table>
+				<% } %>
 				<p class="buttons">
-					<input type="submit" value="Löschen" name="delete"/>
+					<input type="submit" value="<%=bundle.getString("delete")%>" name="delete"/>
 				</p>
 			</form>
 		</div>
