@@ -288,6 +288,8 @@ public enum PatientBackend {
 			
 			ret.put("request", request);
 
+			Persistor.instance.addIdRequest(request);
+
 			if (Config.instance.auditTrailIsOn()) {
 				for (ID id : assignedPatient.getIds()) {
 					AuditTrail at = buildAuditTrailRecord(tokenId,
