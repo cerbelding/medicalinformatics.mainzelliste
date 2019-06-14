@@ -30,20 +30,19 @@ public class AuditTrail implements Serializable {
     @JsonIgnore
     private Long auditTrailJpaId;
     @Temporal(javax.persistence.TemporalType.TIMESTAMP)
-    private Date timestmp;
+    private Date timestamp;
     private String idValue;
     private String idType;
     private String username;
     private String remoteSystem;
     private String remoteIp;
-    private String changedField;
     private String typeOfChange;
     private String reasonForChange;
     private String oldValue;
     private String newValue;
 
     public AuditTrail(Date timestmp, String idValue, String idType, String username, String remoteSystem, String remoteIp, String typeOfChange, String reasonForChange, String oldValue, String newValue) {
-        this.timestmp = timestmp;
+        this.timestamp = timestmp;
         this.idValue = idValue;
         this.idType = idType;
         this.username = username;
@@ -59,12 +58,12 @@ public class AuditTrail implements Serializable {
         return auditTrailJpaId;
     }
 
-    public Date getTimestmp() {
-        return timestmp;
+    public Date getTimestamp() {
+        return timestamp;
     }
 
-    public void setTimestmp(Date timestmp) {
-        this.timestmp = timestmp;
+    public void setTimestamp(Date timestamp) {
+        this.timestamp = timestamp;
     }
 
     public String getIdValue() {
