@@ -255,7 +255,7 @@ public class HTMLResource {
 							id.getType(),
 							(Config.instance.debugIsOn()) ? "debug" : "ADMINISTRATOR",
 							(Config.instance.debugIsOn()) ? "debug" : "MAINZELLISTE INSTANCE",
-							"localhost",
+							req.getRemoteAddr(),
 							"delete",
 							(Config.instance.debugIsOn()) ? "debug" : "ADMINSTRATIVE " + form.get("reasonForDelete"),
 							pToDelete.toString(),
