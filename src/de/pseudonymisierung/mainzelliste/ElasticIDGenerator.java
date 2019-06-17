@@ -63,7 +63,9 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	private int idLength = 8;
 
 	/**
-	 * vocabulary for the generated IDs
+	 * Vocabulary for the generated IDs. <p>
+	 * The value is read from mainzelliste configuration. If no value is applied, 
+	 * default will be used: <strong>0123456789ACDEFGHJKLMNPQRTUVWXYZ</strong>
 	 */
 	private char vocabulary[] = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
 
