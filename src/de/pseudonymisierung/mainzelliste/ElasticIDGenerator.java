@@ -77,25 +77,6 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	public ElasticIDGenerator() {
 	}
 
-	/**
-	 * Create a id for the given counter. IDs are generated from vocabulary for a specific length.
-	 * This method returns the i-th Id of this generator.
-	 * @param counter Order of the ID to get.
-	 * @return The generated PID string.
-	 */
-	private String createPIDString(int counter) {
-
-		Random randomGenerator = new Random(counter);
-		StringBuilder stringBuilder = new StringBuilder();
-
-		for(int i = 0; i < idLength; i++){
-			int randomNumber = randomGenerator.nextInt(this.vocabulary.length);
-			stringBuilder.append(this.vocabulary[randomNumber]);
-		}
-
-		return stringBuilder.toString();
-	}
-
 	@Override
 	public void init(IDGeneratorMemory mem, String idType, Properties props) {
 		this.mem = mem;
@@ -115,6 +96,25 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 			logger.fatal("Number format error in configuration of IDGenerator for ID type " + idType, e);
 			throw new InternalErrorException(e);
 		}
+	}
+
+	/**
+	 * Create a id for the given counter. IDs are generated from vocabulary for a specific length.
+	 * This method returns the i-th Id of this generator.
+	 * @param counter Order of the ID to get.
+	 * @return The generated PID string.
+	 */
+	private String createPIDString(int counter) {
+
+		Random randomGenerator = new Random(counter);
+		StringBuilder stringBuilder = new StringBuilder();
+
+		for(int i = 0; i < idLength; i++){
+			int randomNumber = randomGenerator.nextInt(this.vocabulary.length);
+			stringBuilder.append(this.vocabulary[randomNumber]);
+		}
+
+		return stringBuilder.toString();
 	}
 
 	@Override
