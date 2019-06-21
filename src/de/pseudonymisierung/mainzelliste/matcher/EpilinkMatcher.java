@@ -115,6 +115,83 @@ public class EpilinkMatcher implements Matcher {
 	
 	/** The logging instance. */
 	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
+
+    @Override
+    public void initialize(Properties props) throws InternalErrorException
+    {
+        // Get error rate (is needed for weight computation below)
+
+        // Initialize internal maps
+        this.comparators = new HashMap<String, FieldComparator<Field<?>>>();
+        this.frequencies = new HashMap<String, Double>();
+        this.errorRates = new HashMap<String, Double>();
+        this.weights = new HashMap<String, Double>();
+
+        // Get names of fields from config vars.*
+        Pattern p = Pattern.compile("^field\\.(\\w+)\\.type");
+        java.util.regex.Matcher m;
+
+        // Build maps of comparators, frequencies, error rates and attribute weights from Properties
+        for (Object key : props.keySet())
+        {
+            m = p.matcher((String) key);
+            if (m.find()){
+                String fieldName = m.group(1);
+                logger.info("Initializing properties for field " + fieldName);
+                String fieldCompStr = props.getProperty("field." + fieldName + ".comparator");
+                if (fieldCompStr != null)
+                {
+                    fieldCompStr = fieldCompStr.trim();
+                    try {
+                        @SuppressWarnings("unchecked")
+                        Class<FieldComparator<Field<?>>> fieldCompClass = (Class<FieldComparator<Field<?>>>) Class.forName("de.pseudonymisierung.mainzelliste.matcher." + fieldCompStr);
+                        Constructor<FieldComparator<Field<?>>> fieldCompConstr = fieldCompClass.getConstructor(String.class, String.class);
+                        FieldComparator<Field<?>> fieldComp = fieldCompConstr.newInstance(fieldName, fieldName);
+                        comparators.put(fieldName, fieldComp);
+                    } catch (Exception e) {
+                        System.err.println(e.getMessage());
+                        throw new InternalErrorException();
+                    }
+                    // set error rate
+                    double error_rate = Double.parseDouble(props.getProperty("matcher.epilink."+ fieldName + ".errorRate"));
+                    errorRates.put(fieldName, error_rate);
+                    // set frequency
+                    double frequency = Double.parseDouble(props.getProperty("matcher.epilink." + fieldName + ".frequency"));
+                    frequencies.put(fieldName, frequency);
+                    // calculate field weights
+                    // log_2 ((1 - e_i) / f_i)
+                    // all e_i have same value in this implementation
+                    double weight = (1 - error_rate) / frequency;
+                    weight = Math.log(weight) / Math.log(2);
+                    logger.debug("Field weight for field " + fieldName + ": " + weight);
+                    weights.put(fieldName, weight);
+                }
+            }
+        }
+        // assert that Maps have the same keys
+        assert(frequencies.keySet().equals(comparators.keySet()));
+        assert(frequencies.keySet().equals(weights.keySet()));
+
+        // load other config vars
+        this.thresholdMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_match"));
+        this.thresholdNonMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_non_match"));
+
+        // initialize exchange groups
+        //TODO Mechanismus generalisieren für andere Matcher
+        this.nonExchangeFields = new HashSet<String>(this.weights.keySet());
+        this.exchangeGroups = new Vector<List<String>>();
+        for (int i = 0; props.containsKey("exchangeGroup." + i); i++)
+        {
+            String exchangeFields[] = props.getProperty("exchangeGroup." + i).split(" *[;,] *");
+            for (String fieldName : exchangeFields) {
+                this.nonExchangeFields.remove(fieldName);
+                fieldName = fieldName.trim();
+            }
+            this.exchangeGroups.add(new Vector<String>(Arrays.asList(exchangeFields)));
+        }
+    }
+
+
 	/**
 	 * Get all permutations of a list of Strings.
 	 * 
@@ -257,83 +334,7 @@ public class EpilinkMatcher implements Matcher {
 		totalWeight /= weightSum;
 		return totalWeight;
 	}
-	
-	@Override
-	public void initialize(Properties props) throws InternalErrorException
-	{
-		// Get error rate (is needed for weight computation below)					
 
-		// Initialize internal maps
-		this.comparators = new HashMap<String, FieldComparator<Field<?>>>();
-		this.frequencies = new HashMap<String, Double>();
-		this.errorRates = new HashMap<String, Double>();
-		this.weights = new HashMap<String, Double>();
-		
-		// Get names of fields from config vars.*
-		Pattern p = Pattern.compile("^field\\.(\\w+)\\.type");
-		java.util.regex.Matcher m;
-
-		// Build maps of comparators, frequencies, error rates and attribute weights from Properties
-		for (Object key : props.keySet())
-		{
-			m = p.matcher((String) key);
-			if (m.find()){
-				String fieldName = m.group(1);
-				logger.info("Initializing properties for field " + fieldName);
-				String fieldCompStr = props.getProperty("field." + fieldName + ".comparator");
-				if (fieldCompStr != null)
-				{
-					fieldCompStr = fieldCompStr.trim();
-					try {
-						@SuppressWarnings("unchecked")
-						Class<FieldComparator<Field<?>>> fieldCompClass = (Class<FieldComparator<Field<?>>>) Class.forName("de.pseudonymisierung.mainzelliste.matcher." + fieldCompStr);
-						Constructor<FieldComparator<Field<?>>> fieldCompConstr = fieldCompClass.getConstructor(String.class, String.class);
-						FieldComparator<Field<?>> fieldComp = fieldCompConstr.newInstance(fieldName, fieldName);
-						comparators.put(fieldName, fieldComp);
-					} catch (Exception e) {
-						System.err.println(e.getMessage());
-						throw new InternalErrorException();
-					}
-					// set error rate
-					double error_rate = Double.parseDouble(props.getProperty("matcher.epilink."+ fieldName + ".errorRate"));
-					errorRates.put(fieldName, error_rate);
-					// set frequency
-					double frequency = Double.parseDouble(props.getProperty("matcher.epilink." + fieldName + ".frequency"));
-					frequencies.put(fieldName, frequency);
-					// calculate field weights
-					// log_2 ((1 - e_i) / f_i)
-					// all e_i have same value in this implementation
-					double weight = (1 - error_rate) / frequency;
-					weight = Math.log(weight) / Math.log(2);
-					logger.debug("Field weight for field " + fieldName + ": " + weight);
-					weights.put(fieldName, weight);
-				}
-			}
-		}
-		// assert that Maps have the same keys
-		assert(frequencies.keySet().equals(comparators.keySet()));
-		assert(frequencies.keySet().equals(weights.keySet()));
-		
-		// load other config vars
-		this.thresholdMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_match"));
-		this.thresholdNonMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_non_match"));
-	
-		// initialize exchange groups
-		//TODO Mechanismus generalisieren für andere Matcher
-		this.nonExchangeFields = new HashSet<String>(this.weights.keySet());
-		this.exchangeGroups = new Vector<List<String>>();
-		for (int i = 0; props.containsKey("exchangeGroup." + i); i++)
-		{
-			String exchangeFields[] = props.getProperty("exchangeGroup." + i).split(" *[;,] *");
-			for (String fieldName : exchangeFields) {
-				this.nonExchangeFields.remove(fieldName);
-				fieldName = fieldName.trim();
-			}
-			this.exchangeGroups.add(new Vector<String>(Arrays.asList(exchangeFields)));
-		}
-	}
-	
-	
 	@Override
 	public MatchResult match(Patient a, Iterable<Patient> patientList) {
 		
