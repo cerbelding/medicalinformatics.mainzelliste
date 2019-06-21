@@ -361,24 +361,26 @@ public class EpilinkMatcher implements Matcher {
         double bestWeight = Double.NEGATIVE_INFINITY;
         TreeMap<Double, List<Patient>> possibleMatches = new TreeMap<Double, List<Patient>>();
 
-        for (Patient b : patientList)
+        for (Patient patientFromList : patientList)
         {
             // assert that the persons have the fields required for matching
-            if (assertPatientHasRequiredMatchingfields(patient, b))
+            if (assertPatientHasRequiredMatchingfields(patient, patientFromList))
                 continue;
 
-            double weight = calculateWeight(patient, b);
+            double weight = calculateWeight(patient, patientFromList);
+
+
+
             if (weight > bestWeight)
             {
                 bestWeight = weight;
-                bestMatch = b;
+                bestMatch = patientFromList;
             }
-            if (weight <= thresholdMatch && weight > thresholdNonMatch) {
-                if (!possibleMatches.containsKey(weight))
-                    possibleMatches.put(weight, new LinkedList<Patient>());
-                possibleMatches.get(weight).add(b);
-            }
-        }
+
+
+			possibleMatches = addIfPossibleMatch(possibleMatches, patientFromList, weight);
+
+		}
 
 		return getMatchResult(bestMatch, bestWeight, possibleMatches);
 
@@ -398,18 +400,18 @@ public class EpilinkMatcher implements Matcher {
         boolean equalClusterId;
 
         patient.setClusterIdByField(fields);
-        for (Patient b : patientList)
+        for (Patient patientFromList : patientList)
         {
             // assert that the persons have the fields required for matching
-            if (assertPatientHasRequiredMatchingfields(patient, b))
+            if (assertPatientHasRequiredMatchingfields(patient, patientFromList))
                 continue;
 
             equalClusterId= false;
-            b.setClusterIdByField(fields);
+            patientFromList.setClusterIdByField(fields);
 
             for(String f :fields)
             {
-                if(patient.getClusterIds().get(f).equals(b.getClusterIds().get(f)))
+                if(patient.getClusterIds().get(f).equals(patientFromList.getClusterIds().get(f)))
                 {
                     equalClusterId= true;
                     continue;
@@ -421,19 +423,15 @@ public class EpilinkMatcher implements Matcher {
                 continue;
             }
 
-            double weight = calculateWeight(patient, b);
+            double weight = calculateWeight(patient, patientFromList);
 
             if (weight > bestWeight)
             {
                 bestWeight = weight;
-                bestMatch = b;
+                bestMatch = patientFromList;
             }
-            if (weight <= thresholdMatch && weight > thresholdNonMatch) {
-                if (!possibleMatches.containsKey(weight))
-                    possibleMatches.put(weight, new LinkedList<Patient>());
-                possibleMatches.get(weight).add(b);
-            }
-        }
+			possibleMatches = addIfPossibleMatch(possibleMatches, patientFromList, weight);
+		}
 		return getMatchResult(bestMatch, bestWeight, possibleMatches);
 	}
 
@@ -452,6 +450,20 @@ public class EpilinkMatcher implements Matcher {
 
 	private boolean assertPatientHasRequiredMatchingfields(Patient patient, Patient b) {
 		return !Stream.of(patient, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields()));
+	}
+
+	private TreeMap<Double, List<Patient>> addIfPossibleMatch(TreeMap<Double, List<Patient>> possibleMatches, Patient patientFromList, double weight) {
+
+		if (weight <= thresholdMatch && weight > thresholdNonMatch) {
+			if (!possibleMatches.containsKey(weight))
+				possibleMatches.put(weight, new LinkedList<Patient>());
+			possibleMatches.get(weight).add(patientFromList);
+
+			return possibleMatches;
+		}
+		else{
+			return possibleMatches;
+		}
 	}
 
 
