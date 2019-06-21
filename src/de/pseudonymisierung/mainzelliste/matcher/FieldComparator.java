@@ -102,6 +102,10 @@ public abstract class FieldComparator<F extends Field<?>> {
 	{
 		Field<?> cLeft = patientLeft.getFields().get(this.fieldLeft);
 		Field<?> cRight = patientRight.getFields().get(this.fieldRight);
+
+		// these two methods should be evaluated, because they return different results
+//		Field<?> cLeft = patientLeft.getInputFields().get(this.fieldLeft);
+//		Field<?> cRight = patientRight.getInputFields().get(this.fieldRight);
 		return this.compare((F) cLeft, (F) cRight);
 	}
 

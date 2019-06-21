@@ -86,6 +86,37 @@ public class Patient {
 			throw new InternalErrorException();
 		}
 	}
+	
+	/**
+	 * map field name to soundex code
+	 */
+	@Transient
+	private Map<String, String> soundex;
+	
+	public Map<String, String> getClusterIds()
+	{
+		return soundex;
+	}
+	
+	/**
+	 * Set soundex codes for some fiels of the patient.
+	 */
+	public void setClusterIdByField(String[] fieldsNames)
+	{
+		soundex= new HashMap<String, String>();
+		for(String field : fieldsNames)
+		{
+			try
+			{
+				soundex.put(field, Soundex.computeSoundex(this.getInputFields().get(field).getValue().toString()));
+			}
+			catch (Exception e) 
+			{
+				Logger.getLogger(Patient.class).error("Exception: ", e);
+				throw new InternalErrorException();
+			}
+		}
+	}
 
 	/**
 	 * Creates a map of fields from its JSON representation. Used to read

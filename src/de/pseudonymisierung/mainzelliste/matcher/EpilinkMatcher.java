@@ -339,13 +339,41 @@ public class EpilinkMatcher implements Matcher {
 		
 		Patient bestMatch = null;
 		double bestWeight = Double.NEGATIVE_INFINITY;
-		
+		TreeMap<Double, List<Patient>> possibleMatches = new TreeMap<Double, List<Patient>>();
+
+
+		////////////////////////////////////////////////////////////////////
+		//check equality of soundex codes
+		// a better solution is to add fields in the configuration file
+		String[] fields= new String[]{"nachname", "vorname"};
+		boolean equalClusterId;
+
+		a.setClusterIdByField(fields);
 		for (Patient b : patientList)
 		{
 			// assert that the persons have the fields required for matching
 			if (!Stream.of(a, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields())))
 				continue;
-			
+
+			equalClusterId= false;
+			b.setClusterIdByField(fields);
+
+			for(String f :fields)
+			{
+				if(a.getClusterIds().get(f).equals(b.getClusterIds().get(f)))
+				{
+					equalClusterId= true;
+					continue;
+				}
+			}
+
+			if(!equalClusterId)
+			{
+				continue;
+			}
+		////////////////////////////////////////////////////////////////////
+			// assert that the persons have the same Fields
+			assert (a.getFields().keySet().equals(b.getFields().keySet()));
 			double weight = calculateWeight(a, b);
 			if (weight > bestWeight)
 			{
@@ -355,7 +383,7 @@ public class EpilinkMatcher implements Matcher {
 		}
 	
 		if (bestWeight >= thresholdMatch){
-			return new MatchResult(MatchResultType.MATCH, bestMatch, bestWeight);			
+			result = new MatchResult(MatchResultType.MATCH, bestMatch, bestWeight);
 		} else if (bestWeight < thresholdMatch && bestWeight > thresholdNonMatch) {
 			return new MatchResult(MatchResultType.POSSIBLE_MATCH, bestMatch, bestWeight);
 		} else {
@@ -366,7 +394,7 @@ public class EpilinkMatcher implements Matcher {
 	private boolean isEmptyOrNull(Field<?> f) {
 	    return (f== null || f.isEmpty());
 	}
-	
+
 	private boolean isEmptyOrNull(Field<?> f) {
 	    return (f== null || f.isEmpty());
 	}
