@@ -354,7 +354,7 @@ public class EpilinkMatcher implements Matcher {
 
     }
 
-	public MatchResult matchAlgorithmClassic(Patient a, Iterable<Patient> patientList) {
+	public MatchResult matchAlgorithmClassic(Patient patient, Iterable<Patient> patientList) {
 
 
         Patient bestMatch = null;
@@ -364,10 +364,10 @@ public class EpilinkMatcher implements Matcher {
         for (Patient b : patientList)
         {
             // assert that the persons have the fields required for matching
-            if (!Stream.of(a, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields())))
+            if (assertPatientHasRequiredMatchingfields(patient, b))
                 continue;
 
-            double weight = calculateWeight(a, b);
+            double weight = calculateWeight(patient, b);
             if (weight > bestWeight)
             {
                 bestWeight = weight;
@@ -379,21 +379,12 @@ public class EpilinkMatcher implements Matcher {
                 possibleMatches.get(weight).add(b);
             }
         }
-        MatchResult result;
-        if (bestWeight >= thresholdMatch){
-            result = new MatchResult(MatchResultType.MATCH, bestMatch, bestWeight);
-        } else if (bestWeight < thresholdMatch && bestWeight > thresholdNonMatch) {
-            result =  new MatchResult(MatchResultType.POSSIBLE_MATCH, bestMatch, bestWeight);
-        } else {
-            result = new MatchResult(MatchResultType.NON_MATCH, null, bestWeight);
-        }
-        result.setPossibleMatches(possibleMatches.descendingMap());
-        return result;
+
+		return getMatchResult(bestMatch, bestWeight, possibleMatches);
 
 	}
 
-
-    private MatchResult matchAlgorithmSoundexBlocked(Patient a, Iterable<Patient> patientList) {
+	private MatchResult matchAlgorithmSoundexBlocked(Patient patient, Iterable<Patient> patientList) {
 
         Patient bestMatch = null;
         double bestWeight = Double.NEGATIVE_INFINITY;
@@ -406,11 +397,11 @@ public class EpilinkMatcher implements Matcher {
         String[] fields= new String[]{"nachname", "vorname"};
         boolean equalClusterId;
 
-        a.setClusterIdByField(fields);
+        patient.setClusterIdByField(fields);
         for (Patient b : patientList)
         {
             // assert that the persons have the fields required for matching
-            if (!Stream.of(a, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields())))
+            if (assertPatientHasRequiredMatchingfields(patient, b))
                 continue;
 
             equalClusterId= false;
@@ -418,7 +409,7 @@ public class EpilinkMatcher implements Matcher {
 
             for(String f :fields)
             {
-                if(a.getClusterIds().get(f).equals(b.getClusterIds().get(f)))
+                if(patient.getClusterIds().get(f).equals(b.getClusterIds().get(f)))
                 {
                     equalClusterId= true;
                     continue;
@@ -429,10 +420,9 @@ public class EpilinkMatcher implements Matcher {
             {
                 continue;
             }
-            ////////////////////////////////////////////////////////////////////
-            // assert that the persons have the same Fields
-            assert (a.getFields().keySet().equals(b.getFields().keySet()));
-            double weight = calculateWeight(a, b);
+
+            double weight = calculateWeight(patient, b);
+
             if (weight > bestWeight)
             {
                 bestWeight = weight;
@@ -444,18 +434,25 @@ public class EpilinkMatcher implements Matcher {
                 possibleMatches.get(weight).add(b);
             }
         }
-        MatchResult result;
-        if (bestWeight >= thresholdMatch){
-            result = new MatchResult(MatchResultType.MATCH, bestMatch, bestWeight);
-        } else if (bestWeight < thresholdMatch && bestWeight > thresholdNonMatch) {
-            result =  new MatchResult(MatchResultType.POSSIBLE_MATCH, bestMatch, bestWeight);
-        } else {
-            result = new MatchResult(MatchResultType.NON_MATCH, null, bestWeight);
-        }
-        result.setPossibleMatches(possibleMatches.descendingMap());
-        return result;
-    }
+		return getMatchResult(bestMatch, bestWeight, possibleMatches);
+	}
 
+	private MatchResult getMatchResult(Patient bestMatch, double bestWeight, TreeMap<Double, List<Patient>> possibleMatches) {
+		MatchResult result;
+		if (bestWeight >= thresholdMatch) {
+			result = new MatchResult(MatchResultType.MATCH, bestMatch, bestWeight);
+		} else if (bestWeight < thresholdMatch && bestWeight > thresholdNonMatch) {
+			result = new MatchResult(MatchResultType.POSSIBLE_MATCH, bestMatch, bestWeight);
+		} else {
+			result = new MatchResult(MatchResultType.NON_MATCH, null, bestWeight);
+		}
+		result.setPossibleMatches(possibleMatches.descendingMap());
+		return result;
+	}
+
+	private boolean assertPatientHasRequiredMatchingfields(Patient patient, Patient b) {
+		return !Stream.of(patient, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields()));
+	}
 
 
 	private boolean isEmptyOrNull(Field<?> f) {
