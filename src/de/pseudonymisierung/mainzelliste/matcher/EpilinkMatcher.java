@@ -116,6 +116,8 @@ public class EpilinkMatcher implements Matcher {
 	/** The logging instance. */
 	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
 
+    private boolean soundexBlockingEnabled;
+
     @Override
     public void initialize(Properties props) throws InternalErrorException
     {
@@ -175,6 +177,12 @@ public class EpilinkMatcher implements Matcher {
         // load other config vars
         this.thresholdMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_match"));
         this.thresholdNonMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_non_match"));
+
+        if (props.getProperty("tuning.soundexblocking") != null) {
+            if (props.getProperty("tuning.soundexblocking").matches("true")) {
+                this.soundexBlockingEnabled = true;
+            }
+        }
 
         // initialize exchange groups
         //TODO Mechanismus generalisieren für andere Matcher
@@ -335,66 +343,120 @@ public class EpilinkMatcher implements Matcher {
 		return totalWeight;
 	}
 
-	@Override
-	public MatchResult match(Patient a, Iterable<Patient> patientList) {
-		
-		Patient bestMatch = null;
-		double bestWeight = Double.NEGATIVE_INFINITY;
-		TreeMap<Double, List<Patient>> possibleMatches = new TreeMap<Double, List<Patient>>();
+    @Override
+    public MatchResult match(Patient patient, Iterable<Patient> patientList) {
+
+        if (soundexBlockingEnabled) {
+            return matchAlgorithmSoundexBlocked(patient, patientList);
+        } else {
+            return matchAlgorithmClassic(patient, patientList);
+        }
+
+    }
+
+	public MatchResult matchAlgorithmClassic(Patient a, Iterable<Patient> patientList) {
 
 
-		////////////////////////////////////////////////////////////////////
-		//check equality of soundex codes
-		// a better solution is to add fields in the configuration file
-		String[] fields= new String[]{"nachname", "vorname"};
-		boolean equalClusterId;
+        Patient bestMatch = null;
+        double bestWeight = Double.NEGATIVE_INFINITY;
+        TreeMap<Double, List<Patient>> possibleMatches = new TreeMap<Double, List<Patient>>();
 
-		a.setClusterIdByField(fields);
-		for (Patient b : patientList)
-		{
-			// assert that the persons have the fields required for matching
-			if (!Stream.of(a, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields())))
-				continue;
+        for (Patient b : patientList)
+        {
+            // assert that the persons have the fields required for matching
+            if (!Stream.of(a, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields())))
+                continue;
 
-			equalClusterId= false;
-			b.setClusterIdByField(fields);
+            double weight = calculateWeight(a, b);
+            if (weight > bestWeight)
+            {
+                bestWeight = weight;
+                bestMatch = b;
+            }
+            if (weight <= thresholdMatch && weight > thresholdNonMatch) {
+                if (!possibleMatches.containsKey(weight))
+                    possibleMatches.put(weight, new LinkedList<Patient>());
+                possibleMatches.get(weight).add(b);
+            }
+        }
+        MatchResult result;
+        if (bestWeight >= thresholdMatch){
+            result = new MatchResult(MatchResultType.MATCH, bestMatch, bestWeight);
+        } else if (bestWeight < thresholdMatch && bestWeight > thresholdNonMatch) {
+            result =  new MatchResult(MatchResultType.POSSIBLE_MATCH, bestMatch, bestWeight);
+        } else {
+            result = new MatchResult(MatchResultType.NON_MATCH, null, bestWeight);
+        }
+        result.setPossibleMatches(possibleMatches.descendingMap());
+        return result;
 
-			for(String f :fields)
-			{
-				if(a.getClusterIds().get(f).equals(b.getClusterIds().get(f)))
-				{
-					equalClusterId= true;
-					continue;
-				}
-			}
-
-			if(!equalClusterId)
-			{
-				continue;
-			}
-		////////////////////////////////////////////////////////////////////
-			// assert that the persons have the same Fields
-			assert (a.getFields().keySet().equals(b.getFields().keySet()));
-			double weight = calculateWeight(a, b);
-			if (weight > bestWeight)
-			{
-				bestWeight = weight;
-				bestMatch = b;
-			}						
-		}
-	
-		if (bestWeight >= thresholdMatch){
-			result = new MatchResult(MatchResultType.MATCH, bestMatch, bestWeight);
-		} else if (bestWeight < thresholdMatch && bestWeight > thresholdNonMatch) {
-			return new MatchResult(MatchResultType.POSSIBLE_MATCH, bestMatch, bestWeight);
-		} else {
-			return new MatchResult(MatchResultType.NON_MATCH, null, bestWeight);
-		}				
 	}
-	
-	private boolean isEmptyOrNull(Field<?> f) {
-	    return (f== null || f.isEmpty());
-	}
+
+
+    private MatchResult matchAlgorithmSoundexBlocked(Patient a, Iterable<Patient> patientList) {
+
+        Patient bestMatch = null;
+        double bestWeight = Double.NEGATIVE_INFINITY;
+        TreeMap<Double, List<Patient>> possibleMatches = new TreeMap<Double, List<Patient>>();
+
+
+        ////////////////////////////////////////////////////////////////////
+        //check equality of soundex codes
+        // a better solution is to add fields in the configuration file
+        String[] fields= new String[]{"nachname", "vorname"};
+        boolean equalClusterId;
+
+        a.setClusterIdByField(fields);
+        for (Patient b : patientList)
+        {
+            // assert that the persons have the fields required for matching
+            if (!Stream.of(a, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields())))
+                continue;
+
+            equalClusterId= false;
+            b.setClusterIdByField(fields);
+
+            for(String f :fields)
+            {
+                if(a.getClusterIds().get(f).equals(b.getClusterIds().get(f)))
+                {
+                    equalClusterId= true;
+                    continue;
+                }
+            }
+
+            if(!equalClusterId)
+            {
+                continue;
+            }
+            ////////////////////////////////////////////////////////////////////
+            // assert that the persons have the same Fields
+            assert (a.getFields().keySet().equals(b.getFields().keySet()));
+            double weight = calculateWeight(a, b);
+            if (weight > bestWeight)
+            {
+                bestWeight = weight;
+                bestMatch = b;
+            }
+            if (weight <= thresholdMatch && weight > thresholdNonMatch) {
+                if (!possibleMatches.containsKey(weight))
+                    possibleMatches.put(weight, new LinkedList<Patient>());
+                possibleMatches.get(weight).add(b);
+            }
+        }
+        MatchResult result;
+        if (bestWeight >= thresholdMatch){
+            result = new MatchResult(MatchResultType.MATCH, bestMatch, bestWeight);
+        } else if (bestWeight < thresholdMatch && bestWeight > thresholdNonMatch) {
+            result =  new MatchResult(MatchResultType.POSSIBLE_MATCH, bestMatch, bestWeight);
+        } else {
+            result = new MatchResult(MatchResultType.NON_MATCH, null, bestWeight);
+        }
+        result.setPossibleMatches(possibleMatches.descendingMap());
+        return result;
+    }
+
+
 
 	private boolean isEmptyOrNull(Field<?> f) {
 	    return (f== null || f.isEmpty());
