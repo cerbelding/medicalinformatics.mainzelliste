@@ -201,149 +201,6 @@ public class EpilinkMatcher implements Matcher {
     }
 
 
-	/**
-	 * Get all permutations of a list of Strings.
-	 * 
-	 * @param elements
-	 *            A list of strings.
-	 * @return The permutations.
-	 */
-	private static List<List<String>> permutations(List<String> elements)
-	{
-		LinkedList<List<String>> result = new LinkedList<List<String>>();
-		if(elements.size() == 0) return result;
-		permutationWorker(result, new LinkedList<String>(), elements);
-		return result;
-	}
-	
-	/**
-	 * Backend function for calculating permutations. Called recursively.
-	 * 
-	 * @param result
-	 *            Result list to which permutations are added.
-	 * @param prefix
-	 *            Prefix to add to the resulting permutations (fixed part) for
-	 *            this run.
-	 * @param elements
-	 *            Elements that are permuted.
-	 */
-	private static void permutationWorker(List<List<String>> result, List<String> prefix, List<String> elements) {
-		LinkedList<String> workingCopy;
-		if (elements.size() == 1)
-		{
-			List<String> thisPerm = new LinkedList<String>(prefix);
-			thisPerm.add(elements.get(0));
-			result.add(thisPerm);
-		} else {
-			for (String elem : elements)
-			{
-				List<String> prefixClone = new LinkedList<String>(prefix);
-				prefixClone.add(elem);
-				workingCopy = new LinkedList<String>();
-				for (String copyElem : elements)
-					if (copyElem!=elem) workingCopy.add(copyElem);
-				permutationWorker(result, prefixClone, workingCopy);
-			}
-		}	
-	}
-	
-	/**
-	 * Calculate the matching weight for two records.
-	 * @param left The left hand side record.
-	 * @param right The right hand side record.
-	 * @return The matching weight, a number in the range [0,1].
-	 */
-	public double calculateWeight(Patient left, Patient right)
-	{
-	
-		double weightSum = 0; // holds sum of field weights 
-		double totalWeight = 0; // holds total weight
-		
-		// process exchange groups
-		for (List<String> exchangeGroup : this.exchangeGroups)
-		{
-			/* 
-			 * Remove empty fields from both sides until one side has
-			 * no more empty fields
-			 */
-			// Make copies of field maps for manipulation
-			Map<String, Field<?>> fieldsToCompareRight = new HashMap<String, Field<?>>();
-			Map<String, Field<?>> fieldsToCompareLeft = new HashMap<String, Field<?>>();
-			for (String fieldName : exchangeGroup) {
-				fieldsToCompareRight.put(fieldName, right.getFields().get(fieldName));
-				fieldsToCompareLeft.put(fieldName, left.getFields().get(fieldName));
-			}
-			Iterator<Map.Entry<String, Field<?>>> itRight = fieldsToCompareRight.entrySet().iterator(); 
-			Iterator<Map.Entry<String, Field<?>>> itLeft = fieldsToCompareLeft.entrySet().iterator();
-
-			// process fields (left and right) until end is reached on one side
-			while (itRight.hasNext() && itLeft.hasNext()) {
-				// Search for next empty field on right side
-				if (isEmptyOrNull(itRight.next().getValue())) {
-					// Now go to next empty field on the left
-					while (itLeft.hasNext()) {
-						if (isEmptyOrNull(itLeft.next().getValue())) {
-							// If empty fields have been found on each side,
-							// remove them and continue with search on right side
-							itRight.remove();
-							itLeft.remove();
-							break;
-						}
-					}
-				}
-			}
-
-			List<List<String>> permutations = permutations(new LinkedList<String>(fieldsToCompareRight.keySet()));
-			
-			double bestPermWeight = Double.NEGATIVE_INFINITY; 
-			double bestPermWeightSum = 0.0;
-			double bestPermWeightRatio = 0.0;
-			for (List<String> permutation : permutations)
-			{
-				double thisPermWeight = 0.0;
-				double thisPermWeightSum = 0;
-				Iterator<String> fieldIterator = fieldsToCompareLeft.keySet().iterator();
-				for (String fieldNamePerm : permutation)
-				{
-					String fieldName = fieldIterator.next();
-					// Do not consider empty fields
-					if (isEmptyOrNull(fieldsToCompareLeft.get(fieldName))
-					        || isEmptyOrNull(fieldsToCompareRight.get(fieldNamePerm)))
-						continue;
-					
-					// account mean value of field weights
-					double meanFieldWeight = 0.5 * (weights.get(fieldName) + weights.get(fieldNamePerm));
-					thisPermWeight += comparators.get(fieldName).compare(fieldsToCompareLeft.get(fieldName),
-							fieldsToCompareRight.get(fieldNamePerm)) * meanFieldWeight;
-					thisPermWeightSum += meanFieldWeight;					
-				}
-				double thisPermWeightRatio = thisPermWeight / thisPermWeightSum;
-				if (thisPermWeightRatio >= bestPermWeightRatio) {
-					bestPermWeight = thisPermWeight;
-					bestPermWeightSum = thisPermWeightSum;
-					bestPermWeightRatio = thisPermWeightRatio;
-				}
-			}
-			totalWeight += bestPermWeight;
-			weightSum += bestPermWeightSum;
-		}
-		
-		for (String fieldName : nonExchangeFields)
-		{
-			// Ignore empty fields
-			if (isEmptyOrNull(left.getFields().get(fieldName)) || isEmptyOrNull(right.getFields().get(fieldName)))
-				continue;
-			
-			double fieldWeight = weights.get(fieldName);
-			weightSum += fieldWeight;
-			double thisCompWeight = comparators.get(fieldName).compare(left, right) * fieldWeight;
-			logger.debug("Weighted comparison for field " + fieldName + ": " + thisCompWeight);
-			totalWeight += thisCompWeight;
-		}
-		totalWeight /= weightSum;
-		return totalWeight;
-	}
-
     @Override
     public MatchResult match(Patient patient, Iterable<Patient> patientList) {
 
@@ -418,6 +275,10 @@ public class EpilinkMatcher implements Matcher {
 		return getMatchResult(tempMatchResult.getBestMatch(), tempMatchResult.getBestWeight(), tempMatchResult.getPossibleMatches());
 	}
 
+	private boolean assertPatientHasRequiredMatchingFields(Patient patient, Patient b) {
+		return !Stream.of(patient, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields()));
+	}
+
 	private MatchTempResult calculateBestMatches(Patient inputPatient, Patient referencePatient, MatchTempResult tempMatchResult) {
 		double weight = calculateWeight(inputPatient, referencePatient);
 
@@ -427,7 +288,7 @@ public class EpilinkMatcher implements Matcher {
 			tempMatchResult.setBestMatch(referencePatient);
 		}
 
-		tempMatchResult.setPossibleMatches(addIfPossibleMatch(tempMatchResult.getPossibleMatches(), referencePatient, weight));
+		tempMatchResult.setPossibleMatches(addPatientIfPossibleMatch(tempMatchResult.getPossibleMatches(), referencePatient, weight));
 		return tempMatchResult;
 	}
 
@@ -444,11 +305,7 @@ public class EpilinkMatcher implements Matcher {
 		return result;
 	}
 
-	private boolean assertPatientHasRequiredMatchingFields(Patient patient, Patient b) {
-		return !Stream.of(patient, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields()));
-	}
-
-	private TreeMap<Double, List<Patient>> addIfPossibleMatch(TreeMap<Double, List<Patient>> possibleMatches, Patient patientFromList, double weight) {
+	private TreeMap<Double, List<Patient>> addPatientIfPossibleMatch(TreeMap<Double, List<Patient>> possibleMatches, Patient patientFromList, double weight) {
 
 		if (weight <= thresholdMatch && weight > thresholdNonMatch) {
 			if (!possibleMatches.containsKey(weight))
@@ -462,6 +319,149 @@ public class EpilinkMatcher implements Matcher {
 		}
 	}
 
+
+	/**
+	 * Calculate the matching weight for two records.
+	 * @param left The left hand side record.
+	 * @param right The right hand side record.
+	 * @return The matching weight, a number in the range [0,1].
+	 */
+	public double calculateWeight(Patient left, Patient right)
+	{
+
+		double weightSum = 0; // holds sum of field weights
+		double totalWeight = 0; // holds total weight
+
+		// process exchange groups
+		for (List<String> exchangeGroup : this.exchangeGroups)
+		{
+			/*
+			 * Remove empty fields from both sides until one side has
+			 * no more empty fields
+			 */
+			// Make copies of field maps for manipulation
+			Map<String, Field<?>> fieldsToCompareRight = new HashMap<String, Field<?>>();
+			Map<String, Field<?>> fieldsToCompareLeft = new HashMap<String, Field<?>>();
+			for (String fieldName : exchangeGroup) {
+				fieldsToCompareRight.put(fieldName, right.getFields().get(fieldName));
+				fieldsToCompareLeft.put(fieldName, left.getFields().get(fieldName));
+			}
+			Iterator<Map.Entry<String, Field<?>>> itRight = fieldsToCompareRight.entrySet().iterator();
+			Iterator<Map.Entry<String, Field<?>>> itLeft = fieldsToCompareLeft.entrySet().iterator();
+
+			// process fields (left and right) until end is reached on one side
+			while (itRight.hasNext() && itLeft.hasNext()) {
+				// Search for next empty field on right side
+				if (isEmptyOrNull(itRight.next().getValue())) {
+					// Now go to next empty field on the left
+					while (itLeft.hasNext()) {
+						if (isEmptyOrNull(itLeft.next().getValue())) {
+							// If empty fields have been found on each side,
+							// remove them and continue with search on right side
+							itRight.remove();
+							itLeft.remove();
+							break;
+						}
+					}
+				}
+			}
+
+			List<List<String>> permutations = permutations(new LinkedList<String>(fieldsToCompareRight.keySet()));
+
+			double bestPermWeight = Double.NEGATIVE_INFINITY;
+			double bestPermWeightSum = 0.0;
+			double bestPermWeightRatio = 0.0;
+			for (List<String> permutation : permutations)
+			{
+				double thisPermWeight = 0.0;
+				double thisPermWeightSum = 0;
+				Iterator<String> fieldIterator = fieldsToCompareLeft.keySet().iterator();
+				for (String fieldNamePerm : permutation)
+				{
+					String fieldName = fieldIterator.next();
+					// Do not consider empty fields
+					if (isEmptyOrNull(fieldsToCompareLeft.get(fieldName))
+							|| isEmptyOrNull(fieldsToCompareRight.get(fieldNamePerm)))
+						continue;
+
+					// account mean value of field weights
+					double meanFieldWeight = 0.5 * (weights.get(fieldName) + weights.get(fieldNamePerm));
+					thisPermWeight += comparators.get(fieldName).compare(fieldsToCompareLeft.get(fieldName),
+							fieldsToCompareRight.get(fieldNamePerm)) * meanFieldWeight;
+					thisPermWeightSum += meanFieldWeight;
+				}
+				double thisPermWeightRatio = thisPermWeight / thisPermWeightSum;
+				if (thisPermWeightRatio >= bestPermWeightRatio) {
+					bestPermWeight = thisPermWeight;
+					bestPermWeightSum = thisPermWeightSum;
+					bestPermWeightRatio = thisPermWeightRatio;
+				}
+			}
+			totalWeight += bestPermWeight;
+			weightSum += bestPermWeightSum;
+		}
+
+		for (String fieldName : nonExchangeFields)
+		{
+			// Ignore empty fields
+			if (isEmptyOrNull(left.getFields().get(fieldName)) || isEmptyOrNull(right.getFields().get(fieldName)))
+				continue;
+
+			double fieldWeight = weights.get(fieldName);
+			weightSum += fieldWeight;
+			double thisCompWeight = comparators.get(fieldName).compare(left, right) * fieldWeight;
+			logger.debug("Weighted comparison for field " + fieldName + ": " + thisCompWeight);
+			totalWeight += thisCompWeight;
+		}
+		totalWeight /= weightSum;
+		return totalWeight;
+	}
+
+	/**
+	 * Backend function for calculating permutations. Called recursively.
+	 *
+	 * @param result
+	 *            Result list to which permutations are added.
+	 * @param prefix
+	 *            Prefix to add to the resulting permutations (fixed part) for
+	 *            this run.
+	 * @param elements
+	 *            Elements that are permuted.
+	 */
+	private static void permutationWorker(List<List<String>> result, List<String> prefix, List<String> elements) {
+		LinkedList<String> workingCopy;
+		if (elements.size() == 1)
+		{
+			List<String> thisPerm = new LinkedList<String>(prefix);
+			thisPerm.add(elements.get(0));
+			result.add(thisPerm);
+		} else {
+			for (String elem : elements)
+			{
+				List<String> prefixClone = new LinkedList<String>(prefix);
+				prefixClone.add(elem);
+				workingCopy = new LinkedList<String>();
+				for (String copyElem : elements)
+					if (copyElem!=elem) workingCopy.add(copyElem);
+				permutationWorker(result, prefixClone, workingCopy);
+			}
+		}
+	}
+
+	/**
+	 * Get all permutations of a list of Strings.
+	 *
+	 * @param elements
+	 *            A list of strings.
+	 * @return The permutations.
+	 */
+	private static List<List<String>> permutations(List<String> elements)
+	{
+		LinkedList<List<String>> result = new LinkedList<List<String>>();
+		if(elements.size() == 0) return result;
+		permutationWorker(result, new LinkedList<String>(), elements);
+		return result;
+	}
 
 	private boolean isEmptyOrNull(Field<?> f) {
 	    return (f== null || f.isEmpty());
