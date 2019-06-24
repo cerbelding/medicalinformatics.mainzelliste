@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -357,40 +358,27 @@ public class EpilinkMatcher implements Matcher {
 	public MatchResult matchAlgorithmClassic(Patient patient, Iterable<Patient> patientList) {
 
 
-        Patient bestMatch = null;
-        double bestWeight = Double.NEGATIVE_INFINITY;
-        TreeMap<Double, List<Patient>> possibleMatches = new TreeMap<Double, List<Patient>>();
+		MatchTempResult tempMatchResult = new MatchTempResult();
+
 
         for (Patient patientFromList : patientList)
         {
             // assert that the persons have the fields required for matching
-            if (assertPatientHasRequiredMatchingfields(patient, patientFromList))
+            if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
                 continue;
 
-            double weight = calculateWeight(patient, patientFromList);
-
-
-
-            if (weight > bestWeight)
-            {
-                bestWeight = weight;
-                bestMatch = patientFromList;
-            }
-
-
-			possibleMatches = addIfPossibleMatch(possibleMatches, patientFromList, weight);
+			tempMatchResult = calculateBestMatches(patient, patientFromList, tempMatchResult);
 
 		}
 
-		return getMatchResult(bestMatch, bestWeight, possibleMatches);
+		return getMatchResult(tempMatchResult.getBestMatch(), tempMatchResult.getBestWeight(), tempMatchResult.getPossibleMatches());
 
 	}
 
 	private MatchResult matchAlgorithmSoundexBlocked(Patient patient, Iterable<Patient> patientList) {
 
-        Patient bestMatch = null;
-        double bestWeight = Double.NEGATIVE_INFINITY;
-        TreeMap<Double, List<Patient>> possibleMatches = new TreeMap<Double, List<Patient>>();
+
+		MatchTempResult tempMatchResult = new MatchTempResult();
 
 
         ////////////////////////////////////////////////////////////////////
@@ -403,7 +391,7 @@ public class EpilinkMatcher implements Matcher {
         for (Patient patientFromList : patientList)
         {
             // assert that the persons have the fields required for matching
-            if (assertPatientHasRequiredMatchingfields(patient, patientFromList))
+            if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
                 continue;
 
             equalClusterId= false;
@@ -423,16 +411,24 @@ public class EpilinkMatcher implements Matcher {
                 continue;
             }
 
-            double weight = calculateWeight(patient, patientFromList);
+			tempMatchResult = calculateBestMatches(patient, patientFromList, tempMatchResult);
 
-            if (weight > bestWeight)
-            {
-                bestWeight = weight;
-                bestMatch = patientFromList;
-            }
-			possibleMatches = addIfPossibleMatch(possibleMatches, patientFromList, weight);
 		}
-		return getMatchResult(bestMatch, bestWeight, possibleMatches);
+
+		return getMatchResult(tempMatchResult.getBestMatch(), tempMatchResult.getBestWeight(), tempMatchResult.getPossibleMatches());
+	}
+
+	private MatchTempResult calculateBestMatches(Patient inputPatient, Patient referencePatient, MatchTempResult tempMatchResult) {
+		double weight = calculateWeight(inputPatient, referencePatient);
+
+		if (weight > tempMatchResult.getBestWeight())
+		{
+			tempMatchResult.setBestWeight(weight);
+			tempMatchResult.setBestMatch(referencePatient);
+		}
+
+		tempMatchResult.setPossibleMatches(addIfPossibleMatch(tempMatchResult.getPossibleMatches(), referencePatient, weight));
+		return tempMatchResult;
 	}
 
 	private MatchResult getMatchResult(Patient bestMatch, double bestWeight, TreeMap<Double, List<Patient>> possibleMatches) {
@@ -448,7 +444,7 @@ public class EpilinkMatcher implements Matcher {
 		return result;
 	}
 
-	private boolean assertPatientHasRequiredMatchingfields(Patient patient, Patient b) {
+	private boolean assertPatientHasRequiredMatchingFields(Patient patient, Patient b) {
 		return !Stream.of(patient, b).allMatch(p -> p.getFields().keySet().containsAll(Validator.instance.getRequiredFields()));
 	}
 
