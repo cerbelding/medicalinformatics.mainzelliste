@@ -493,7 +493,8 @@ public enum PatientBackend {
 			if (newFieldValues.containsKey(idType)) {				
 				// check if this external id is already in use
 				ID extId = IDGeneratorFactory.instance.buildId(idType, newFieldValues.get(idType));
-				if (Persistor.instance.getPatient(extId) != null) {
+				Patient pDuplicate = Persistor.instance.getPatient(extId);
+				if (pDuplicate != null && !pDuplicate.sameAs(pToEdit)) {
 					logger.info("Request to add patient with existing external ID " + extId.toString());
 					throw new WebApplicationException(
 							Response.status(Status.CONFLICT)
@@ -503,22 +504,21 @@ public enum PatientBackend {
 									.build());
 
 				}
-				// check if a patient already has this external ID (not null)
-				ID patientExtId = pToEdit.getId(idType);
-				if (patientExtId != null) {
-					Set<ID> patientIds = pToEdit.getIds();
-					Set<ID> newIds = new HashSet<>();
-					for (ID id : patientIds) {
-						if (!id.getType().equals(idType)) {
-							newIds.add(id);
-						} else {
-
-							Persistor.instance.deleteId(id);
+				if (pDuplicate == null) {
+					// check if a patient already has this external ID (not null)
+					ID patientExtId = pToEdit.getId(idType);
+					if (patientExtId != null) {
+						Set<ID> patientIds = pToEdit.getIds();
+						Set<ID> newIds = new HashSet<>();
+						for (ID id : patientIds) {
+							if (!id.getType().equals(idType)) {
+								newIds.add(id);
+							}
 						}
+						pToEdit.setIds(newIds);
 					}
-					pToEdit.setIds(newIds);
+					pToEdit.addId(extId);
 				}
-				pToEdit.addId(extId);
 			}
 		}
 
