@@ -334,14 +334,14 @@ public class PatientsResource {
         logger.info("Received request to get patient with token " + tid);
         // Check if token exists and has the right type. 
         // Validity of token is checked upon creation
-        Token t = Servers.instance.getTokenByTid(tid);
-        if (t == null) {
+        Token token = Servers.instance.getTokenByTid(tid);
+        if (token == null) {
             logger.info("No token with id " + tid + " found");
             throw new InvalidTokenException("Please supply a valid 'readPatients' token.", Status.UNAUTHORIZED);
         }
 
-        t.checkTokenType("readPatients");
-        List<?> requests = t.getDataItemList("searchIds");
+        token.checkTokenType("readPatients");
+        List<?> requests = token.getDataItemList("searchIds");
 
         JSONArray ret = new JSONArray();
         for (Object item : requests) {
@@ -354,11 +354,11 @@ public class PatientsResource {
             idString = thisSearchId.get("idString");
             ID id = IDGeneratorFactory.instance.buildId(idType, idString);
             Patient patient = Persistor.instance.getPatient(id);
-            if (t.hasDataItem("resultFields")) {
+            if (token.hasDataItem("resultFields")) {
                 // get fields for output
                 Map<String, String> outputFields = new HashMap<String, String>();
                 @SuppressWarnings("unchecked")
-                List<String> fieldNames = (List<String>) t.getDataItemList("resultFields");
+                List<String> fieldNames = (List<String>) token.getDataItemList("resultFields");
                 for (String thisFieldName : fieldNames) {
                     outputFields.put(thisFieldName, patient.getInputFields().get(thisFieldName).toString());
                 }
@@ -370,7 +370,7 @@ public class PatientsResource {
                 }
             }
 
-            if (Boolean.TRUE.equals(t.getData().get("resultAllIds"))) {
+            if (Boolean.TRUE.equals(token.getData().get("resultAllIds"))) {
                 
                 try {
                     thisPatient.put("ids", getAllIDsOfPatient(patient));
@@ -380,10 +380,10 @@ public class PatientsResource {
                     throw new InternalErrorException("Error while transforming patient ids into JSON");
                 }
 
-            } else if (t.hasDataItem("resultIds")) {
+            } else if (token.hasDataItem("resultIds")) {
                 try {
                     @SuppressWarnings("unchecked")
-                    List<String> idTypes = (List<String>) t.getDataItemList("resultIds");
+                    List<String> idTypes = (List<String>) token.getDataItemList("resultIds");
                     List<JSONObject> returnIds = new LinkedList<JSONObject>();
                     for (String thisIdType : idTypes) {
                         ID returnId = patient.getId(thisIdType);
@@ -395,7 +395,7 @@ public class PatientsResource {
                     throw new InternalErrorException("Error while transforming patient ids into JSON");
                 }
             }
-            if (Boolean.TRUE.equals(t.getData().get("resultAllIdTypes"))) {
+            if (Boolean.TRUE.equals(token.getData().get("resultAllIdTypes"))) {
                 try {
                     thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
                 } catch (JSONException e) {
