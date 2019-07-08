@@ -215,7 +215,10 @@ public class SessionsResource {
 		logger.debug("Received data: " + tp);
 		
 		Token t = new TokenParam(tp).getValue();
-		
+		t.setParentSessionId(req.getSession().getId());
+		t.setParentServerName(req.getSession(true).getAttribute("serverName").toString());
+
+
 		if(t.getType() == null) {
 			throw new WebApplicationException(Response
 					.status(Status.BAD_REQUEST)

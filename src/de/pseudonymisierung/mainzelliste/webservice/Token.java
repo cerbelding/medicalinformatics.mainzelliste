@@ -64,8 +64,11 @@ public class Token {
 	 */
 	private Map<String, ?> data;
 
-	/** 
-	 * Create emtpy instance. Used internally only. 
+	private String parentSessionId;
+
+	private String parentServerName;
+	/**
+	 * Create emtpy instance. Used internally only.
 	 */
 	Token() {
 	}
@@ -549,4 +552,19 @@ public class Token {
 		}
 	}
 
+    public String getParentSessionId() {
+        return parentSessionId;
+    }
+
+    public void setParentSessionId(String parentSessionId) {
+        this.parentSessionId = parentSessionId;
+    }
+
+    public String getParentServerName() {
+        return parentServerName;
+    }
+
+    public void setParentServerName(String parentServerName) {
+        this.parentServerName = parentServerName;
+    }
 }
