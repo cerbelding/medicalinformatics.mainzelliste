@@ -280,6 +280,7 @@ public enum Servers {
 	 * @param permission
 	 *            The permission to check, e.g. "addPatient".
 	 */
+	//TODO: This function is not only checking permissions. it's also adding the configured server permission to a session. The function should have another name and function should be separated.
 	public void checkPermission(HttpServletRequest req, String permission) {
 		@SuppressWarnings("unchecked")
 		Set<String> perms = (Set<String>) req.getSession(true).getAttribute("permissions");
