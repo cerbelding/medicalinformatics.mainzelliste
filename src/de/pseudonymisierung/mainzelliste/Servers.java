@@ -49,6 +49,7 @@ import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import org.apache.openjpa.lib.log.Log;
 
 /**
  * Keeps track of servers, i.e. each communication partner that is not a user.
@@ -64,6 +65,8 @@ public enum Servers {
 	 * Represents one registered server.
 	 */
 	class Server {
+
+		String name;
 		/** The apiKey by which this server authenticates itself. */
 		String apiKey;
 		/** The permissions of this server. */
@@ -111,6 +114,7 @@ public enum Servers {
 				break;
 
 			Server s = new Server();
+			s.name = "server" + i;
 			s.apiKey = props.getProperty("servers." + i + ".apiKey");
 			
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
@@ -318,7 +322,11 @@ public enum Servers {
 			}
 
 			perms = server.permissions;
+
 			req.getSession().setAttribute("permissions", perms);
+			req.getSession().setAttribute("serverName", getServerNameForApiKey(apiKey));
+
+
 			logger.info("Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(perms.toArray()) + ".");
 		}
 		
@@ -530,4 +538,11 @@ public enum Servers {
 	public int getRequestMinorApiVersion(HttpServletRequest req) {
 		return this.getRequestApiVersion(req).minorVersion;
 	}
+
+	public String getServerNameForApiKey(String apiKey){
+		Server server = servers.get(apiKey);
+		return server.name;
+
+	}
+
 }
