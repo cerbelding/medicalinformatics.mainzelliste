@@ -522,7 +522,12 @@ public enum PatientBackend {
                         }
                         pToEdit.setIds(newIds);
                     }
-                    pToEdit.addId(extId);
+                    if (!extId.getIdString().trim().isEmpty()) {
+						pToEdit.addId(extId);
+					}
+                    else {
+                    	Persistor.instance.deleteId(extId);
+					}
                 }
             }
 		}
