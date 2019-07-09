@@ -371,13 +371,19 @@ public class PatientsResource {
             }
 
             if (Boolean.TRUE.equals(token.getData().get("resultAllIds"))) {
-                
-                try {
-                    thisPatient.put("ids", getAllIDsOfPatient(patient));
 
-                } catch (JSONException e) {
-                    logger.error("Error while transforming patient ids into JSON", e);
-                    throw new InternalErrorException("Error while transforming patient ids into JSON");
+                if(Servers.instance.hasServerPermission(token.getParentServerName(), "resultAllIds")){
+                    try {
+                        thisPatient.put("ids", getAllIDsOfPatient(patient));
+
+                    } catch (JSONException e) {
+                        logger.error("Error while transforming patient ids into JSON", e);
+                        throw new InternalErrorException("Error while transforming patient ids into JSON");
+                    }
+                }
+                else{
+                    logger.trace("Server has no resultAllIds permission");
+                    throw new UnauthorizedException("Server has no resultAllIds permission");
                 }
 
             } else if (token.hasDataItem("resultIds")) {
@@ -396,13 +402,19 @@ public class PatientsResource {
                 }
             }
             if (Boolean.TRUE.equals(token.getData().get("resultAllIdTypes"))) {
-                try {
-                    thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
-                } catch (JSONException e) {
-                    logger.error("Error while transforming ID types into JSON", e);
-                    throw new InternalErrorException("Error while transforming ID types into JSON");
+                if (Servers.instance.hasServerPermission(token.getParentServerName(), "resultAllIdTypes")) {
+                    try {
+                        thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
+                    } catch (JSONException e) {
+                        logger.error("Error while transforming ID types into JSON", e);
+                        throw new InternalErrorException("Error while transforming ID types into JSON");
+                    }
+                } else {
+                    logger.trace("Server has no resultAllIds permission");
+                    throw new UnauthorizedException("Server has no resultAllIds permission");
                 }
             }
+
 
             ret.put(thisPatient);
         }

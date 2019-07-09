@@ -546,4 +546,24 @@ public enum Servers {
 
 	}
 
+	public boolean hasServerPermission(String serverName, String permission){
+
+		Server server = servers.get(getApiKeyForServerName(serverName));
+		if(server.permissions.contains(permission)) {
+			return true;
+		}
+		return false;
+	}
+
+	public String getApiKeyForServerName(String serverName){
+
+		for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
+			if(serverName.equals(entry.getValue().name)){
+				return entry.getKey();
+			}
+		}
+
+		return "Server not found";
+	}
+
 }
