@@ -370,9 +370,9 @@ public class PatientsResource {
                 }
             }
 
-            if (Boolean.TRUE.equals(token.getData().get("resultAllIds"))) {
+            if (Boolean.TRUE.equals(token.getData().get("readAllPatientIds"))) {
 
-                if(Servers.instance.hasServerPermission(token.getParentServerName(), "resultAllIds")){
+                if(Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds")){
                     try {
                         thisPatient.put("ids", getAllIDsOfPatient(patient));
 
@@ -401,8 +401,8 @@ public class PatientsResource {
                     throw new InternalErrorException("Error while transforming patient ids into JSON");
                 }
             }
-            if (Boolean.TRUE.equals(token.getData().get("resultAllIdTypes"))) {
-                if (Servers.instance.hasServerPermission(token.getParentServerName(), "resultAllIdTypes")) {
+            if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
+                if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIdTypes")) {
                     try {
                         thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
                     } catch (JSONException e) {
