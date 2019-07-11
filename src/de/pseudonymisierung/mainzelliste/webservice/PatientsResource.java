@@ -411,7 +411,7 @@ public class PatientsResource {
                     }
                 } else {
                     logger.trace("Server has no resultAllIds permission");
-                    throw new UnauthorizedException("Server has no resultAllIds permission");
+                    throw new UnauthorizedException("Server has no readAllPatientIdTypes permission");
                 }
             }
 
