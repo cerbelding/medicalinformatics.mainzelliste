@@ -52,7 +52,7 @@ db.password = mainzelliste
 #
 # Every field defined here must either be contained in the input form 
 # WEB-INF/jsp/patientFormElements.jsp (with corresponding "name"-Tag) or
-# be provided in the createPatient Token 
+# be provided in the createPatient Token
 
 # In order to deactivate fields temporarily, it is sufficient to comment out the field definition.
 
@@ -64,6 +64,17 @@ field.geburtsmonat.type = IntegerField
 field.geburtsjahr.type = IntegerField
 field.plz.type = PlainTextField
 field.ort.type = PlainTextField
+
+# To store the data in hashed form (control numbers) use the type ControlNumberField
+
+# field.vorname.type = ControlNumberField
+# field.nachname.type = ControlNumberField
+# field.geburtsname.type = ControlNumberField
+# field.geburtstag.type = ControlNumberField
+# field.geburtsmonat.type = ControlNumberField
+# field.geburtsjahr.type = ControlNumberField
+# field.plz.type = ControlNumberField
+# field.ort.type = ControlNumberField
 
 
 # Server-side validation
@@ -132,6 +143,10 @@ field.geburtsjahr.comparator = BinaryFieldComparator
 
 field.plz.comparator = BinaryFieldComparator
 field.ort.comparator = NGramComparator
+
+# Use DiceField comparator instead of NGramComparator to apply EpilLink algorithm to hashed fields
+
+# field.vorname.comparator = DiceFieldComparator
 
 
 blockingFields.0 geburtstag, geburtsmonat
