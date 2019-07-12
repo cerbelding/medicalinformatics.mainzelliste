@@ -44,6 +44,9 @@ db.password = mainzelliste
 #log.filename = /var/log/tomcat6/mainzelliste.log
 #log.level = DEBUG
 
+#performance tuning soundex-like blocking
+tuning.soundexblocking = false
+
 # Field definitions
 #
 # Every input field must be defined here with field.{fieldname}.type = {fieldtype},
