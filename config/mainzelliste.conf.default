@@ -279,6 +279,11 @@ result.printIdat = true
 #   - tt_addPatient: allows to generate one (1) ID. Token is invalidated afterwards even if an existing ID was returned.
 #	- tt_readPatients: allows to read IDAT or pseudonyms of patients
 #   - tt_editPatient: allows to change identifying data of one (1) patient. Token is invalidated afterwards.
+#
+# readAllPatientIdTypes: allows to read all IdTypes of a patient
+# readAllPatientIds: allows to read all Ids of a patient
+#
+
 
 # A passphrase used for authentication
 servers.0.apiKey = 
