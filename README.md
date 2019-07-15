@@ -12,8 +12,6 @@ The following article describes the underlying concepts of Mainzelliste and the 
 
 Java developers should have a look at [Mainzelliste.Client](https://bitbucket.org/medinfo_mainz/mainzelliste.client), a library that handles the HTTP calls necessary for using Mainzelliste in a client application.
 
-Informations about the official docker image of Mainzelliste you can find [here](./docker.md). 
-
 ## References
 
 Mainzelliste is used in various medical joint research projects, including:
@@ -51,6 +49,26 @@ We would love to include your useful changes to the Mainzelliste code in a futur
 
 
 ## Release notes
+
+### rc 1.8.0
+
+This release introduces a set of new features 
+
+Privacy-preserving record linkage using Bloom filter instead of plain text
+Deployment via Docker (BETA)
+Development via Docker (BETA)
+Matching with external IDs and/or IDATs (identifying data)
+Editing of external generated IDs
+Request all patient Id types (readAllPatientIdTypes)
+Request all patient ids (readAllPatientIds)
+ElasticIDGenerator - Create IDs with given ID length and vocabulary (formerly MasterIDGenerator)
+Delete Patient via REST-API
+AuditTrail - Many thanks to [Matthias Lemmer](https://bitbucket.org/%7B76951367-e64a-4c56-b940-06f802407625%7D/) from the Philipps-University of Marburg
+Soundex-like-blocking - Many thanks to [Ziad Sehili](https://bitbucket.org/%7B087d1ddc-2490-4c54-a353-a5aaf2d0cfed%7D/) from the Leipzig University
+
+I also want to say thank you to the former main developer and community manager Andreas Borg and to the contributions of my colleagues from DKFZ Galina Tremper and Torben Brenner.
+
+Florian Stampe - Mainzelliste Community Manager
 
 ### 1.7.0
 
