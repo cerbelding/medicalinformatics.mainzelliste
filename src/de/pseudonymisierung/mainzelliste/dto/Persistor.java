@@ -42,15 +42,10 @@ import javax.persistence.NoResultException;
 import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
 
+import de.pseudonymisierung.mainzelliste.*;
 import org.apache.log4j.Logger;
 
 
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.Initializer;
-import de.pseudonymisierung.mainzelliste.ID;
-import de.pseudonymisierung.mainzelliste.IDGeneratorMemory;
-import de.pseudonymisierung.mainzelliste.IDRequest;
-import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
@@ -410,6 +405,25 @@ public enum Persistor {
 		duplicates.add(p);
 		return duplicates;
 	}
+
+	/**
+	 * Remove a patient from the database, including duplicates.
+	 * In addition, all patients that are either a duplicate of the given patient
+	 * or those of which the patient is a duplicate are deleted. This includes transitive
+	 * relations (duplicate of duplicate).
+	 *
+	 * @param id An ID of the patient to delete.
+	 */
+	public synchronized void deletePatientWithDuplicates(ID id) {
+		/* The subgraph of duplicates is a tree whose root can be found by following
+		 * the "original" link recursively. From there, determine all connected patients
+		 * by breadth-first search.
+		 */
+		List<Patient> allInstances = getPatientWithDuplicates(id);
+		if (allInstances == null)
+			return;
+		deletePatients(allInstances.toArray(new Patient[allInstances.size()]));
+	}
 	
 	/** Get duplicates of a patient.
 	 * 
@@ -673,5 +687,33 @@ public enum Persistor {
 			}
 		}
 		return identifierQuoteString + identifier + identifierQuoteString;
+	}
+
+	private synchronized void deletePatients(Patient... patients) {
+		em.getTransaction().begin();
+		try {
+			for (Patient thisPatient : patients) {
+				// Anonymize fields of all IDRequests that yielded this patient as result
+				TypedQuery<IDRequest> qIdRequest = em.createQuery("SELECT r FROM IDRequest r WHERE r.assignedPatient = :p", IDRequest.class);
+				qIdRequest.setParameter("p", thisPatient);
+				for (IDRequest idRequest : qIdRequest.getResultList()) {
+					for (Field<?> f : idRequest.getInputFields().values()) {
+						if (f instanceof PlainTextField)
+							f.setValue("ANONYMIZED");
+						else if (f instanceof IntegerField)
+							f.setValue("0");
+						else
+							f.setValue("");
+					}
+				}
+				// Finally, remove the patient record
+				em.remove(thisPatient);
+			}
+			em.getTransaction().commit();
+		} catch (Throwable t) {
+			logger.error("Error while deleting patients", t);
+			em.getTransaction().rollback();
+			throw new InternalErrorException(t);
+		}
 	}
 }

@@ -36,15 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -583,4 +575,41 @@ public class PatientsResource {
 
         return tt;
     }
+
+    /**
+     * Delete a patient
+     *
+     * @param idType
+     *            ID type of an ID of the patient to delete.
+     * @param idString
+     *            ID string of an ID of the patient to delete.
+     * @param withDuplicatesParam
+     *            Whether to delete duplicates of the given patient.
+     * @param request
+     *            The injected HttpServletRequest.
+     * @return A response according to the API documentation.
+     */
+    @Path("/{idType}/{idString}")
+    @DELETE
+    public Response deletePatient(@PathParam("idType") String idType, @PathParam("idString") String idString,
+                                  @QueryParam("withDuplicates") String withDuplicatesParam, @Context HttpServletRequest request) {
+        Servers.instance.checkPermission(request, "deletePatient");
+        boolean withDuplicates = Boolean.parseBoolean(withDuplicatesParam);
+        ID id = IDGeneratorFactory.instance.buildId(idType, idString);
+        List<Patient> possibleDuplicates = Persistor.instance.getPossibleDuplicates(id);
+        if (possibleDuplicates.size() > 0) {
+            StringBuffer message = new StringBuffer(Config.instance.getResourceBundle(request).getString(
+                    "errorDeleteUnsure"));
+            for (Patient thisPatient : possibleDuplicates)
+                message.append(" " + thisPatient.getId(idType));
+            return Response.status(Status.CONFLICT).entity(message.toString()).build();
+        }
+        if (withDuplicates)
+            Persistor.instance.deletePatientWithDuplicates(id);
+
+        else
+            Persistor.instance.deletePatient(id);
+        return Response.status(Status.NO_CONTENT).build();
+    }
+
 }
