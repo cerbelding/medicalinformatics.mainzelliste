@@ -689,6 +689,10 @@ public enum Persistor {
 		return identifierQuoteString + identifier + identifierQuoteString;
 	}
 
+	/**
+	 * Utility function to delete an arbitrary number of patients.
+	 * @param patients The patients to delete.
+	 */
 	private synchronized void deletePatients(Patient... patients) {
 		em.getTransaction().begin();
 		try {
