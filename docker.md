@@ -53,9 +53,44 @@ cat ./config/mainzelliste.conf | docker config create mainzellisteConfig -
 ML_CONFIG_FILE=/mainzellisteConfig
 
 ## For Developers
-
+### Building the Mainzelliste Image
 All Necessary files to build the mainzelliste container are included in mainzelliste repository. You can build your own container from repository.
+For this the only command needed is:
+```shell
+docker-compose build
+```
+If you don't have access to docker-compose the command docker build can also be used. e.g.:
+```shell
+docker build -t mainzelliste .
+```
+You may need to specify a proxy then building the image. We support the build parameter ***$http_proxy***.
+
+Then using docker-compose you will need to overwrite the default docker-compose with following *docker-compose.override.yml*:
+```yml
+version: "3"
+services:
+  mainzelliste:
+    build:
+      context: .
+      args:
+        - http_proxy=<your_proxy_address>
+```
+Then using docker build you will need the *--build-arg* parameter:
+```shell
+docker build --build-arg http_proxy=<your_proxy_address> -t mainzelliste .
+```
+### Use Docker to deploy test data base
 It is also possible to deploy a database for testing mainzelliste by using:
 ```shell
 docker-compose up db
 ```
+To access the database from your host system you will need to add a *docker-compose.override.yml* or modify the existing one:
+```yml
+version: "3"
+services:
+  db:
+    ports:
+      - 5432:5432
+```
+With the default configuration the database should now be available on port 5432 on your docker host system and it should be possible to  
+connect using the Values from the *ML_DB_NAME*, *ML_DB_USER* and *ML_DB_PASSWORD* environment variables.

@@ -1,8 +1,21 @@
 ## The samply maven image needs to be build locally by using following command:
 ## docker-compose -f ./docker/samply-maven/docker-compose.maven.yml build --build-arg PROXY_HOST=<yourProxyHost> --build-arg PROXY_PORT=<yourProxyPort>
-FROM samply-maven AS build
+FROM maven:3.6.1-alpine AS build
+
+ARG http_proxy=""
+
 COPY ./ /workingdir/
 WORKDIR /workingdir
+RUN cp docker/proxy_parser.sh /usr/local/bin/ && \
+    chmod +x /usr/local/bin/proxy_parser.sh
+RUN if [ "$http_proxy" != "" ]; then \
+        apk add --no-cache xmlstarlet && \
+        ## TODO: Split Proxy Parsing from Maven Proxy Setting
+        proxy_parser.sh parse && \
+        apk del xmlstarlet \
+    ;fi
+
+RUN cat /usr/share/maven/conf/settings.xml
 RUN mvn clean && \
     mvn install && \
     mkdir -p extracted && \

@@ -9,7 +9,8 @@ services:
       - POSTGRES_PASSWORD=mainzelliste
   mainzelliste:
     image: mainzelliste
+    build:
+      context: .
     container_name: mainzelliste_container
-    build: .
     depends_on:
       - db
