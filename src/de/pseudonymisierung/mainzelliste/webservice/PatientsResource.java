@@ -604,11 +604,15 @@ public class PatientsResource {
                 message.append(" " + thisPatient.getId(idType));
             return Response.status(Status.CONFLICT).entity(message.toString()).build();
         }
-        if (withDuplicates)
+        if (withDuplicates){
             Persistor.instance.deletePatientWithDuplicates(id);
-
-        else
+            Persistor.instance.deleteId(id);
+        }
+        else{
             Persistor.instance.deletePatient(id);
+            Persistor.instance.deleteId(id);
+        }
+
         return Response.status(Status.NO_CONTENT).build();
     }
 

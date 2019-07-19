@@ -36,11 +36,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.List;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.NoResultException;
-import javax.persistence.Persistence;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 
 import de.pseudonymisierung.mainzelliste.*;
 import org.apache.log4j.Logger;
@@ -386,9 +382,10 @@ public enum Persistor {
 	}
 
 	public synchronized void deleteId (ID id) {
-		em.getTransaction().begin();
-		em.remove(em.merge(id));
-		em.getTransaction().commit();
+	    em.getTransaction().begin();
+	    Query query = em.createQuery("DELETE FROM ID id WHERE id.idString like :id").setParameter("id", id.getIdString());
+	    query.executeUpdate();
+	    em.getTransaction().commit();
 	}
 	/** Get patient with duplicates. Works like
 	 * {@link Persistor#getDuplicates(ID)}, but the requested patient is
