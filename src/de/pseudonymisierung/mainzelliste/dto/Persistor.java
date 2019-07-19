@@ -39,6 +39,7 @@ import java.util.List;
 import javax.persistence.*;
 
 import de.pseudonymisierung.mainzelliste.*;
+import de.pseudonymisierung.mainzelliste.exceptions.IllegalUsedCharacterException;
 import org.apache.log4j.Logger;
 
 
@@ -49,7 +50,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Driver;
 import java.util.Enumeration;
-import javax.servlet.ServletContext;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -371,6 +371,8 @@ public enum Persistor {
 	 * @param id An ID of the patient to persist.
 	 */
 	public synchronized void deletePatient(ID id) {
+        checkForSuspectSQLCharacter(id.getIdString());
+
 		em.getTransaction().begin();
 		TypedQuery<Patient> q = em.createQuery("SELECT p FROM Patient p JOIN p.ids id WHERE id.idString = :idString AND id.type = :idType", Patient.class);
 		q.setParameter("idString", id.getIdString());
@@ -382,6 +384,8 @@ public enum Persistor {
 	}
 
 	public synchronized void deleteId (ID id) {
+        checkForSuspectSQLCharacter(id.getIdString());
+
 	    em.getTransaction().begin();
 	    Query query = em.createQuery("DELETE FROM ID id WHERE id.idString like :id").setParameter("id", id.getIdString());
 	    query.executeUpdate();
@@ -717,4 +721,17 @@ public enum Persistor {
 			throw new InternalErrorException(t);
 		}
 	}
+
+    /**
+     * Utility function to prevent illegal use of SQL features
+     * @param checkValue
+     */
+
+	private void checkForSuspectSQLCharacter(String checkValue){
+	    if (checkValue.contains("%") || checkValue.contains(";")|| checkValue.contains("--")){
+	        logger.error("Found illegal character in " + checkValue);
+	        throw new IllegalUsedCharacterException();
+
+        }
+    }
 }
