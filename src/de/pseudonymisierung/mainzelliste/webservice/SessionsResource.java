@@ -215,7 +215,7 @@ public class SessionsResource {
 		logger.debug("Received data: " + tp);
 		
 		Token t = new TokenParam(tp).getValue();
-		t.setParentSessionId(req.getSession().getId());
+		t.setParentSessionId(s.getId());
 		t.setParentServerName(req.getSession(true).getAttribute("serverName").toString());
 
 
