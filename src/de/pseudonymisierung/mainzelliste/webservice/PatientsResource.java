@@ -126,6 +126,7 @@ public class PatientsResource {
             MultivaluedMap<String, String> form,
             @Context HttpServletRequest request) {
         try {
+            logger.debug("@POST newPatientBrowser");
             Token t = Servers.instance.getTokenByTid(tokenId);
             IDRequest createRet = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request));
             Set<ID> ids = createRet.getRequestedIds();
@@ -234,6 +235,7 @@ public class PatientsResource {
             @Context HttpServletRequest request,
             @Context UriInfo context,
             MultivaluedMap<String, String> form) throws JSONException {
+        logger.debug("@POST newPatientJson");
         IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request));
         if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.getRequestedIds() == null) {
             JSONObject ret = new JSONObject();
@@ -323,6 +325,7 @@ public class PatientsResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientsToken(
             @PathParam("tid") String tid) {
+        logger.debug("@GET getPatientsToken");
         logger.info("Received request to get patient with token " + tid);
         // Check if token exists and has the right type. 
         // Validity of token is checked upon creation
@@ -442,6 +445,7 @@ public class PatientsResource {
     public Response editPatientBrowser(@PathParam("tokenId") String tokenId,
                                        MultivaluedMap<String, String> form,
                                        @Context HttpServletRequest request) {
+        logger.debug("@PUT editPatientBrowser");
 
         try {
             // Collect fields from input form
@@ -482,6 +486,7 @@ public class PatientsResource {
     public Response editPatientJSON(@PathParam("tokenId") String tokenId,
                                     String data,
                                     @Context HttpServletRequest request) {
+        logger.debug("@PUT editPatientJSON");
 
         // Collect fields from input form
         try {
@@ -593,15 +598,15 @@ public class PatientsResource {
     @DELETE
     public Response deletePatient(@PathParam("tokenId") String tokenId, @PathParam("idType") String idType, @PathParam("idString") String idString,
                                   @QueryParam("withDuplicates") String withDuplicatesParam, @Context HttpServletRequest request) {
-
+        logger.debug("@DELETE deletePatient request");
 
         Token token = Servers.instance.getTokenByTid(tokenId);
-        token.checkTokenType("deletePatient");
 
         if (token == null) {
             logger.info("No token with id " + tokenId + " found");
             throw new InvalidTokenException("Please supply a valid 'deletePatient' token.", Status.UNAUTHORIZED);
         }
+        token.checkTokenType("deletePatient");
 
         boolean withDuplicates = Boolean.parseBoolean(withDuplicatesParam);
         ID id = IDGeneratorFactory.instance.buildId(idType, idString);
@@ -615,12 +620,11 @@ public class PatientsResource {
         }
         if (withDuplicates){
             Persistor.instance.deletePatientWithDuplicates(id);
-            Persistor.instance.deleteId(id);
         }
         else{
             Persistor.instance.deletePatient(id);
-            Persistor.instance.deleteId(id);
         }
+        Persistor.instance.deleteId(id);
 
         return Response.status(Status.NO_CONTENT).build();
     }
