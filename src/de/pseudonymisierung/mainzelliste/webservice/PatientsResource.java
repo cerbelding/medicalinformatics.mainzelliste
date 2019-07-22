@@ -589,11 +589,20 @@ public class PatientsResource {
      *            The injected HttpServletRequest.
      * @return A response according to the API documentation.
      */
-    @Path("/{idType}/{idString}")
+    @Path("{tokenId}/{idType}/{idString}")
     @DELETE
-    public Response deletePatient(@PathParam("idType") String idType, @PathParam("idString") String idString,
+    public Response deletePatient(@PathParam("tokenId") String tokenId, @PathParam("idType") String idType, @PathParam("idString") String idString,
                                   @QueryParam("withDuplicates") String withDuplicatesParam, @Context HttpServletRequest request) {
-        Servers.instance.checkPermission(request, "deletePatient");
+
+
+        Token token = Servers.instance.getTokenByTid(tokenId);
+        token.checkTokenType("deletePatient");
+
+        if (token == null) {
+            logger.info("No token with id " + tokenId + " found");
+            throw new InvalidTokenException("Please supply a valid 'deletePatient' token.", Status.UNAUTHORIZED);
+        }
+
         boolean withDuplicates = Boolean.parseBoolean(withDuplicatesParam);
         ID id = IDGeneratorFactory.instance.buildId(idType, idString);
         List<Patient> possibleDuplicates = Persistor.instance.getPossibleDuplicates(id);

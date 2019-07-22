@@ -108,6 +108,7 @@ public class Token {
 			this.checkReadPatients();
 		else if (this.type.equals("editPatient"))
 			this.checkEditPatient(apiVersion);
+		else if (this.type.equals("deletePatient"));
 		else
 			throw new InvalidTokenException("Token type " + this.type
 					+ " unknown!");
