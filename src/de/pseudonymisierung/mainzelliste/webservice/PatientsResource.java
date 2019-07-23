@@ -611,25 +611,12 @@ public class PatientsResource {
 
         ID id = IDGeneratorFactory.instance.buildId(idType, idString);
 
-        /*
-        List<Patient> possibleDuplicates = Persistor.instance.getPossibleDuplicates(id);
-        if (possibleDuplicates.size() > 0) {
-            StringBuffer message = new StringBuffer(Config.instance.getResourceBundle(request).getString(
-                    "errorDeleteUnsure"));
-            for (Patient thisPatient : possibleDuplicates)
-                message.append(" " + thisPatient.getId(idType));
-            return Response.status(Status.CONFLICT).entity(message.toString()).build();
-        }
-        */
-
-
         if (withDuplicates){
             Persistor.instance.deletePatientWithDuplicates(id);
         }
         else{
             Persistor.instance.deletePatient(id);
         }
-
 
         return Response.status(Status.NO_CONTENT).build();
     }
