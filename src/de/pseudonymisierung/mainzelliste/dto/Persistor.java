@@ -372,6 +372,29 @@ public enum Persistor {
         deleteId(id);
     }
 
+    /**
+     * Remove a patient from the database, including duplicates.
+     * In addition, all patients that are either a duplicate of the given patient
+     * or those of which the patient is a duplicate are deleted. This includes transitive
+     * relations (duplicate of duplicate).
+     *
+     * @param id An ID of the patient to delete.
+     */
+    public synchronized void deletePatientWithDuplicates(ID id) {
+        /* The subgraph of duplicates is a tree whose root can be found by following
+         * the "original" link recursively. From there, determine all connected patients
+         * by breadth-first search.
+         */
+        List<Patient> allInstances = getPatientWithDuplicates(id);
+        if (allInstances == null)
+            return;
+
+        for (int i = 0; i < allInstances.size(); i++) {
+            deletePatient(allInstances.get(i).getId(id.getType()));
+
+        }
+
+    }
 
 	/**
 	 * Remove a patient from the database.
@@ -399,6 +422,36 @@ public enum Persistor {
 	    query.executeUpdate();
 	    em.getTransaction().commit();
 	}
+
+    private synchronized void anonymizeIdRequests(ID id){
+        em.getTransaction().begin();
+        try {
+            Patient patient = getPatient(id);
+            // Anonymize fields of all IDRequests that yielded this patient as result
+            TypedQuery<IDRequest> qIdRequest = em.createQuery("SELECT r FROM IDRequest r WHERE r.assignedPatient = :p", IDRequest.class);
+            qIdRequest.setParameter("p", patient);
+            for (IDRequest idRequest : qIdRequest.getResultList()) {
+                for (Field<?> f : idRequest.getInputFields().values()) {
+                    if (f instanceof PlainTextField)
+                        f.setValue("ANONYMIZED");
+                    else if (f instanceof IntegerField)
+                        f.setValue("0");
+                    else
+                        f.setValue("");
+                }
+            }
+            // Finally, remove the patient record
+            //em.remove(patient);
+            em.getTransaction().commit();
+        } catch (Throwable t) {
+            logger.error("Error while deleting patients", t);
+            em.getTransaction().rollback();
+            throw new InternalErrorException(t);
+        }
+
+    }
+
+
 	/** Get patient with duplicates. Works like
 	 * {@link Persistor#getDuplicates(ID)}, but the requested patient is
 	 * included in the result.
@@ -415,31 +468,6 @@ public enum Persistor {
 		return duplicates;
 	}
 
-	/**
-	 * Remove a patient from the database, including duplicates.
-	 * In addition, all patients that are either a duplicate of the given patient
-	 * or those of which the patient is a duplicate are deleted. This includes transitive
-	 * relations (duplicate of duplicate).
-	 *
-	 * @param id An ID of the patient to delete.
-	 */
-	public synchronized void deletePatientWithDuplicates(ID id) {
-		/* The subgraph of duplicates is a tree whose root can be found by following
-		 * the "original" link recursively. From there, determine all connected patients
-		 * by breadth-first search.
-		 */
-		List<Patient> allInstances = getPatientWithDuplicates(id);
-		if (allInstances == null)
-			return;
-
-        for (int i = 0; i < allInstances.size(); i++) {
-            deletePatient(allInstances.get(i).getId(id.getType()));
-
-        }
-
-		//deletePatients(allInstances.toArray(new Patient[allInstances.size()]));
-	}
-	
 	/** Get duplicates of a patient.
 	 * 
 	 * Returns a list of all patients that are marked as duplicates of the given
@@ -703,35 +731,6 @@ public enum Persistor {
 		}
 		return identifierQuoteString + identifier + identifierQuoteString;
 	}
-
-
-	private synchronized void anonymizeIdRequests(ID id){
-        em.getTransaction().begin();
-        try {
-                Patient patient = getPatient(id);
-                // Anonymize fields of all IDRequests that yielded this patient as result
-                TypedQuery<IDRequest> qIdRequest = em.createQuery("SELECT r FROM IDRequest r WHERE r.assignedPatient = :p", IDRequest.class);
-                qIdRequest.setParameter("p", patient);
-                for (IDRequest idRequest : qIdRequest.getResultList()) {
-                    for (Field<?> f : idRequest.getInputFields().values()) {
-                        if (f instanceof PlainTextField)
-                            f.setValue("ANONYMIZED");
-                        else if (f instanceof IntegerField)
-                            f.setValue("0");
-                        else
-                            f.setValue("");
-                    }
-                }
-                // Finally, remove the patient record
-                //em.remove(patient);
-            em.getTransaction().commit();
-        } catch (Throwable t) {
-            logger.error("Error while deleting patients", t);
-            em.getTransaction().rollback();
-            throw new InternalErrorException(t);
-        }
-
-    }
 
     /**
      * Utility function to prevent illegal use of SQL features
