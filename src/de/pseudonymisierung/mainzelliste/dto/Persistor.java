@@ -364,14 +364,22 @@ public enum Persistor {
 		// Refreshes cached entity 
 		em.refresh(edited); 
 	}
-	
+
+
+	public synchronized  void deletePatient(ID id){
+        anonymizeIdRequests(id);
+        deletePatientIDAT(id);
+        deleteId(id);
+    }
+
+
 	/**
 	 * Remove a patient from the database.
 	 * 
 	 * @param id An ID of the patient to persist.
 	 */
-	public synchronized void deletePatient(ID id) {
-        checkForSuspectSQLCharacter(id.getIdString());
+	public synchronized void deletePatientIDAT(ID id) {
+        checkForSuspectSQLCharacters(id.getIdString());
 
 		em.getTransaction().begin();
 		TypedQuery<Patient> q = em.createQuery("SELECT p FROM Patient p JOIN p.ids id WHERE id.idString = :idString AND id.type = :idType", Patient.class);
@@ -384,7 +392,7 @@ public enum Persistor {
 	}
 
 	public synchronized void deleteId (ID id) {
-        checkForSuspectSQLCharacter(id.getIdString());
+        checkForSuspectSQLCharacters(id.getIdString());
 
 	    em.getTransaction().begin();
 	    Query query = em.createQuery("DELETE FROM ID id WHERE id.idString like :id").setParameter("id", id.getIdString());
@@ -423,7 +431,13 @@ public enum Persistor {
 		List<Patient> allInstances = getPatientWithDuplicates(id);
 		if (allInstances == null)
 			return;
-		deletePatients(allInstances.toArray(new Patient[allInstances.size()]));
+
+        for (int i = 0; i < allInstances.size(); i++) {
+            deletePatient(allInstances.get(i).getId(id.getType()));
+
+        }
+
+		//deletePatients(allInstances.toArray(new Patient[allInstances.size()]));
 	}
 	
 	/** Get duplicates of a patient.
@@ -690,44 +704,41 @@ public enum Persistor {
 		return identifierQuoteString + identifier + identifierQuoteString;
 	}
 
-	/**
-	 * Utility function to delete an arbitrary number of patients.
-	 * @param patients The patients to delete.
-	 */
-	private synchronized void deletePatients(Patient... patients) {
-		em.getTransaction().begin();
-		try {
-			for (Patient thisPatient : patients) {
-				// Anonymize fields of all IDRequests that yielded this patient as result
-				TypedQuery<IDRequest> qIdRequest = em.createQuery("SELECT r FROM IDRequest r WHERE r.assignedPatient = :p", IDRequest.class);
-				qIdRequest.setParameter("p", thisPatient);
-				for (IDRequest idRequest : qIdRequest.getResultList()) {
-					for (Field<?> f : idRequest.getInputFields().values()) {
-						if (f instanceof PlainTextField)
-							f.setValue("ANONYMIZED");
-						else if (f instanceof IntegerField)
-							f.setValue("0");
-						else
-							f.setValue("");
-					}
-				}
-				// Finally, remove the patient record
-				em.remove(thisPatient);
-			}
-			em.getTransaction().commit();
-		} catch (Throwable t) {
-			logger.error("Error while deleting patients", t);
-			em.getTransaction().rollback();
-			throw new InternalErrorException(t);
-		}
-	}
+
+	private synchronized void anonymizeIdRequests(ID id){
+        em.getTransaction().begin();
+        try {
+                Patient patient = getPatient(id);
+                // Anonymize fields of all IDRequests that yielded this patient as result
+                TypedQuery<IDRequest> qIdRequest = em.createQuery("SELECT r FROM IDRequest r WHERE r.assignedPatient = :p", IDRequest.class);
+                qIdRequest.setParameter("p", patient);
+                for (IDRequest idRequest : qIdRequest.getResultList()) {
+                    for (Field<?> f : idRequest.getInputFields().values()) {
+                        if (f instanceof PlainTextField)
+                            f.setValue("ANONYMIZED");
+                        else if (f instanceof IntegerField)
+                            f.setValue("0");
+                        else
+                            f.setValue("");
+                    }
+                }
+                // Finally, remove the patient record
+                //em.remove(patient);
+            em.getTransaction().commit();
+        } catch (Throwable t) {
+            logger.error("Error while deleting patients", t);
+            em.getTransaction().rollback();
+            throw new InternalErrorException(t);
+        }
+
+    }
 
     /**
      * Utility function to prevent illegal use of SQL features
      * @param checkValue
      */
 
-	private void checkForSuspectSQLCharacter(String checkValue){
+	private void checkForSuspectSQLCharacters(String checkValue){
 	    if (checkValue.contains("%") || checkValue.contains(";")|| checkValue.contains("--")){
 	        logger.error("Found illegal character in " + checkValue);
 	        throw new IllegalUsedCharacterException();

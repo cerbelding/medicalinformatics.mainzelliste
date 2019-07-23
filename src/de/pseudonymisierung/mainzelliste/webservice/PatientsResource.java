@@ -598,7 +598,7 @@ public class PatientsResource {
     @DELETE
     public Response deletePatient(@PathParam("tokenId") String tokenId, @PathParam("idType") String idType, @PathParam("idString") String idString,
                                   @QueryParam("withDuplicates") String withDuplicatesParam, @Context HttpServletRequest request) {
-        logger.debug("@DELETE deletePatient request");
+        logger.debug("@DELETE deletePatientIDAT request");
 
         Token token = Servers.instance.getTokenByTid(tokenId);
 
@@ -607,9 +607,11 @@ public class PatientsResource {
             throw new InvalidTokenException("Please supply a valid 'deletePatient' token.", Status.UNAUTHORIZED);
         }
         token.checkTokenType("deletePatient");
-
         boolean withDuplicates = Boolean.parseBoolean(withDuplicatesParam);
+
         ID id = IDGeneratorFactory.instance.buildId(idType, idString);
+
+        /*
         List<Patient> possibleDuplicates = Persistor.instance.getPossibleDuplicates(id);
         if (possibleDuplicates.size() > 0) {
             StringBuffer message = new StringBuffer(Config.instance.getResourceBundle(request).getString(
@@ -618,13 +620,16 @@ public class PatientsResource {
                 message.append(" " + thisPatient.getId(idType));
             return Response.status(Status.CONFLICT).entity(message.toString()).build();
         }
+        */
+
+
         if (withDuplicates){
             Persistor.instance.deletePatientWithDuplicates(id);
         }
         else{
             Persistor.instance.deletePatient(id);
         }
-        Persistor.instance.deleteId(id);
+
 
         return Response.status(Status.NO_CONTENT).build();
     }
