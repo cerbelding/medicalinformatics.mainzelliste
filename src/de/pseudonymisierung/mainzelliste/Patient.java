@@ -179,6 +179,17 @@ public class Patient {
 			}
 		}
 
+		Map<String, Field<?>> newInputFields = new HashMap<String, Field<?>>();
+		for (String fieldName : from.getInputFields().keySet()) {
+			// If field is not null or empty, update
+			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
+				newInputFields.put(fieldName, from.getInputFields().get(fieldName));
+				// otherwise leave old value
+			} else {
+				newInputFields.put(fieldName, this.fields.get(fieldName));
+			}
+		}
+
 		Set<String> externalIdTypes = IDGeneratorFactory.instance.getExternalIdTypes();
 		for (ID thisId : from.getIds()) {
 			if (externalIdTypes.contains(thisId.getType())) {
@@ -199,6 +210,7 @@ public class Patient {
 		// direct
 		// because setFields does other stuff
 		this.setFields(newFields);
+		this.setInputFields(newInputFields);
 		return this;
 	}
 
