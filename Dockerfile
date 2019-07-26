@@ -1,6 +1,6 @@
 ## The samply maven image needs to be build locally by using following command:
 ## docker-compose -f ./docker/samply-maven/docker-compose.maven.yml build --build-arg PROXY_HOST=<yourProxyHost> --build-arg PROXY_PORT=<yourProxyPort>
-FROM maven:3.6.1-alpine AS build
+FROM maven:3.6-alpine AS build
 
 ARG http_proxy=""
 
