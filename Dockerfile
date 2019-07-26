@@ -6,12 +6,12 @@ ARG http_proxy=""
 
 COPY ./ /workingdir/
 WORKDIR /workingdir
-RUN cp docker/proxy_parser.sh /usr/local/bin/ && \
-    chmod +x /usr/local/bin/proxy_parser.sh
+RUN cp docker/maven_proxy_parser.sh /usr/local/bin/ && \
+    chmod +x /usr/local/bin/maven_proxy_parser.sh
 RUN if [ "$http_proxy" != "" ]; then \
         apk add --no-cache xmlstarlet && \
         ## TODO: Split Proxy Parsing from Maven Proxy Setting
-        proxy_parser.sh parse && \
+        maven_proxy_parser.sh parse && \
         apk del xmlstarlet \
     ;fi
 
