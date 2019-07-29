@@ -211,6 +211,7 @@ public enum PatientBackend {
 			match = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
 			logger.debug("Best matching weight: " + match.getBestMatchedWeight());
 			Patient assignedPatient; // The "real" patient that is assigned (match result or new patient) 
+                        String atChangeType; // The action taken depending on the match result, for Audit Trail logging
 			
 			// If a list of ID types is given in token, return these types
 			Set<String> idTypes;
@@ -229,9 +230,11 @@ public enum PatientBackend {
 				assignedPatient = match.getBestMatchedPatient();
 				// log token to separate concurrent request in the log file
 				logger.info("Found match with ID " + returnIds.get(0).getIdString() + " for ID request " + t.getId()); 
+                                atChangeType = "match";
 				break;
 				
 			case NON_MATCH :
+                            atChangeType = "create";
 			case POSSIBLE_MATCH :
 				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH 
 				&& (form.getFirst("sureness") == null || !Boolean.parseBoolean(form.getFirst("sureness")))) {
@@ -275,9 +278,11 @@ public enum PatientBackend {
 							match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
 				}
 				assignedPatient = pNormalized;
+                                atChangeType = "tentative";
 				break;
 		
 			default :
+                                atChangeType = "illegal_match";
 				logger.error("Illegal match result: " + match.getResultType());
 				throw new InternalErrorException();
 			}
@@ -295,7 +300,7 @@ public enum PatientBackend {
 					AuditTrail at = buildAuditTrailRecord(tokenId,
 							id.getIdString(),
 							id.getType(),
-							"create",
+							atChangeType,
 							null,
 							request.getAssignedPatient().toString()
 					);
