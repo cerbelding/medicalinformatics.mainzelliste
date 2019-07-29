@@ -1,5 +1,3 @@
-## The samply maven image needs to be build locally by using following command:
-## docker-compose -f ./docker/samply-maven/docker-compose.maven.yml build --build-arg PROXY_HOST=<yourProxyHost> --build-arg PROXY_PORT=<yourProxyPort>
 FROM maven:3.6-alpine AS build
 
 ARG http_proxy=""
@@ -15,7 +13,6 @@ RUN if [ "$http_proxy" != "" ]; then \
         apk del xmlstarlet \
     ;fi
 
-RUN cat /usr/share/maven/conf/settings.xml
 RUN mvn clean && \
     mvn install && \
     mkdir -p extracted && \
@@ -26,15 +23,15 @@ FROM tomcat:8-jre8-alpine
 
 ENV ML_CONFIG_FILE ""
 
-RUN rm -r /usr/local/tomcat/webapps/*
-COPY --from=build /workingdir/extracted/ /usr/local/tomcat/webapps/ROOT/
-COPY ./docker/ml_entrypoint.sh /ml_entrypoint.sh
-COPY ./config/mainzelliste.conf.default /mainzelliste.conf.default
-RUN mkdir /etc/mainzelliste && touch /etc/mainzelliste/mainzelliste.conf
-## Create Mainzelliste User and run tomcat with it
+## Create mainzelliste user with www-data group
 RUN set -x ; \
     addgroup -g 82 -S www-data && \
-    adduser -u 82 -D -S -G www-data mainzelliste && \
-    chown -R mainzelliste /usr/local/tomcat/ /etc/mainzelliste/mainzelliste.conf
-USER mainzelliste
+    adduser -u 82 -D -S -G www-data mainzelliste
+ 
+RUN rm -r /usr/local/tomcat/webapps/*
+COPY --from=build --chown=mainzelliste:www-data /workingdir/extracted/ /usr/local/tomcat/webapps/ROOT/
+COPY --chown=mainzelliste:www-data ./docker/ml_entrypoint.sh ./config/mainzelliste.conf.default /
+RUN mkdir /etc/mainzelliste && touch /etc/mainzelliste/mainzelliste.conf && chown -R mainzelliste /etc/mainzelliste/mainzelliste.conf
+RUN chmod u+x /ml_entrypoint.sh && chmod u+r /mainzelliste.conf.default && chmod u+rw /etc/mainzelliste/mainzelliste.conf
+
 ENTRYPOINT [ "/ml_entrypoint.sh" ]
