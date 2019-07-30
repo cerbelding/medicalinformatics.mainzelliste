@@ -94,3 +94,7 @@ services:
 ```
 With the default configuration the database should now be available on port 5432 on your docker host system and it should be possible to  
 connect using the Values from the *ML_DB_NAME*, *ML_DB_USER* and *ML_DB_PASSWORD* environment variables.
+
+### Execute Mainzelliste tests
+
+```docker-compose -f docker-compose.test.yml up```

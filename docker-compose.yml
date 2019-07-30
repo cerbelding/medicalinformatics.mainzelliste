@@ -21,4 +21,4 @@ services:
 
 secrets:
   mainzellisteConfig:
-    file: ./config/mainzelliste.conf
+    file: ./config/mainzelliste_docker.conf
