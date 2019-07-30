@@ -2,7 +2,7 @@ version: "3.1"
 services:
   db:
     image: postgres:9.5-alpine
-    container_name: mainzelliste_database_container
+    container_name: mainzelliste-databasecontainer
     environment:
       - POSTGRES_DB=mainzelliste
       - POSTGRES_USER=mainzelliste
@@ -18,7 +18,13 @@ services:
       - ML_CONFIG_FILE=/run/secrets/mainzellisteConfig
     depends_on:
       - db
+  newman:
+    image: mainzelliste/newman:latest
+    depends_on:
+      - mainzelliste
 
 secrets:
   mainzellisteConfig:
     file: ./config/mainzelliste.conf
+
+
