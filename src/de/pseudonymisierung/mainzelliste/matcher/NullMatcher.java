@@ -25,34 +25,27 @@
  */
 package de.pseudonymisierung.mainzelliste.matcher;
 
-import java.util.Properties;
-
 import de.pseudonymisierung.mainzelliste.Patient;
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+
+import java.util.*;
 
 /**
- * This interface is reponsible for comparing a given patient to those present
- * in the local database.
+ * Skips the matching. Returns the matching score 0.0 for any input
+ *
  */
-public interface Matcher {
+public class NullMatcher implements Matcher {
 
-	/**
-	 * Initialize with configuration properties.
-	 *
-	 * @param props
-	 *            Properties as read from the configuration file.
-	 */
-	public void initialize(Properties props);
+	@Override
+	public void initialize(Properties props) throws InternalErrorException
+	{
+		//
+	}
 
-	/**
-	 * Compare a patient to a list of existing patiens.
-	 *
-	 * @param a
-	 *            The patient too look up.
-	 * @param patientList
-	 *            The list or patients to match against.
-	 * @return The match result.
-	 *
-	 * @see MatchResult
-	 */
-	public MatchResult match(Patient a, Iterable<Patient> patientList);
+
+	@Override
+	public MatchResult match(Patient a, Iterable<Patient> patientList) {
+		return new MatchResult(MatchResultType.NON_MATCH, null, 0.0);
+	}
 }

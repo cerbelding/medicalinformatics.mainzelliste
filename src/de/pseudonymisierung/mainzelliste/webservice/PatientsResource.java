@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -563,10 +564,10 @@ public class PatientsResource {
                     if (!allowedFormFields.contains(fieldName)) {
                         if (IDGeneratorFactory.instance.getExternalIdTypes().contains(fieldName)) {
                             throw new UnauthorizedException("No authorization to edit external id " + fieldName +
-								" with this token.");
+                                    " with this token.");
                         } else {
                             throw new UnauthorizedException("No authorization to edit field " + fieldName +
-								" with this token.");
+                                    " with this token.");
                         }
                     }
                 }
