@@ -52,6 +52,8 @@ We would love to include your useful changes to the Mainzelliste code in a futur
 
 ### rc 1.8.0
 
+Note: Not finished yet (Audittrail Feature is till yet not integrated)
+
 This release introduces a set of new features 
 
 Privacy-preserving record linkage using Bloom filter instead of plain text
