@@ -9,6 +9,12 @@ services:
       - POSTGRES_PASSWORD=mainzelliste
   mainzelliste:
     image: mainzelliste
+    ### Enable remote debugging on port 1099
+    # environment:
+    #   - DEBUG=TRUE
+    #   - DEBUG_PORT=1099
+    # ports:
+    #   - 1099:1099
     build:
       context: .
     container_name: mainzelliste_container
