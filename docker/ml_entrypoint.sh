@@ -20,10 +20,10 @@ if [ -e "$ML_DB_NAME_FILE" ]; then \
 ;fi
 
 if [ -e "$ML_CONFIG_FILE" ]; then
-	echo "Applying user-provided mainzelliste.conf."
+	echo "mainzelliste docker entrypoint - Applying user-provided mainzelliste.conf."
 	cp $ML_CONFIG_FILE /etc/mainzelliste/mainzelliste.conf
 else
-	echo "Generating new mainzelliste.conf from environment variables"
+	echo "mainzelliste docker entrypoint - Generating new mainzelliste.conf from environment variables"
 	sed -e "s|# db.driver = org.postgresql.Driver|db.driver = $ML_DB_DRIVER|g ; \
 		s|# db.url = jdbc:postgresql://localhost:5432/mainzelliste|db.url = jdbc:$ML_DB_TYPE://$ML_DB_HOST:$ML_DB_PORT/$ML_DB_NAME|g ;\
 		s|db.username = mainzelliste|db.username = $ML_DB_USER|g ;\
@@ -33,4 +33,14 @@ else
 		> /etc/mainzelliste/mainzelliste.conf
 fi
 
-exec catalina.sh run
+if [ "$DEBUG" = 'TRUE' ]; then
+    echo "mainzelliste docker entrypoint - Tomcat starting with debug true"
+    export JPDA_ADDRESS=$DEBUG_PORT
+    echo "mainzelliste docker entrypoint - Set JPDA_ADRESS to: " $JPDA_ADDRESS
+    export JPDA_TRANSPORT=dt_socket
+    echo "mainzelliste docker entrypoint - Set JPDA_TRANSPORT to: " $JPDA_TRANSPORT
+    exec catalina.sh jpda run
+else
+    echo "mainzelliste docker entrypoint - Tomcat starting with debug false"
+    exec catalina.sh run
+fi
