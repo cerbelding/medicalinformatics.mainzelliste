@@ -55,21 +55,18 @@ We would love to include your useful changes to the Mainzelliste code in a futur
 
 ### rc 1.8.0
 
-Note: Not finished yet (Audittrail Feature is till yet not integrated)
-
 This release introduces a set of new features 
 
-Privacy-preserving record linkage using Bloom filter instead of plain text
-Deployment via Docker (BETA)
-Development via Docker (BETA)
-Matching with external IDs and/or IDATs (identifying data)
-Editing of external generated IDs
-Request all patient Id types (readAllPatientIdTypes)
-Request all patient ids (readAllPatientIds)
-ElasticIDGenerator - Create IDs with given ID length and vocabulary (formerly MasterIDGenerator)
-Delete Patient via REST-API
-AuditTrail - Many thanks to [Matthias Lemmer](https://bitbucket.org/%7B76951367-e64a-4c56-b940-06f802407625%7D/) from the Philipps-University of Marburg
-Soundex-like-blocking - Many thanks to [Ziad Sehili](https://bitbucket.org/%7B087d1ddc-2490-4c54-a353-a5aaf2d0cfed%7D/) from the Leipzig University
+- Privacy-preserving record linkage using Bloom filter instead of plain text
+- Deployment via Docker (BETA)
+- Development via Docker (BETA)
+- Matching with external IDs and/or IDATs (identifying data)
+- Editing of external generated IDs
+- Request all patient Id types (readAllPatientIdTypes)
+- Request all patient ids (readAllPatientIds)
+- ElasticIDGenerator - Create IDs with given ID length and vocabulary (formerly MasterIDGenerator)
+- Delete Patient via REST-API
+- Soundex-like-blocking - Many thanks to [Ziad Sehili](https://bitbucket.org/%7B087d1ddc-2490-4c54-a353-a5aaf2d0cfed%7D/) from the Leipzig University
 
 I also want to say thank you to the former main developer and community manager Andreas Borg and to the contributions of my colleagues from DKFZ Galina Tremper and Torben Brenner.
 
