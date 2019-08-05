@@ -23,6 +23,9 @@ Mainzelliste is used in various medical joint research projects, including:
 - Studies conducted by the [LASER group](http://www.la-ser.com/)
 - The [MIRACUM consortium](http://www.miracum.org/miracolix-tools)
 
+- The [NEW ESID online database network](https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btz525/5526873)
+- The [VHL-Register](https://vhl-register.org/files/VHL-Vorgehensweise.pdf)
+
 Another important use case is pseudonymization in central biobanks, for example:
 
 - [Comprehensive Biomaterial Bank Marburg](http://www.cbbmr.de/informationen-allgemein/allgemeines.html)
