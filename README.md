@@ -12,6 +12,8 @@ The following article describes the underlying concepts of Mainzelliste and the 
 
 Java developers should have a look at [Mainzelliste.Client](https://bitbucket.org/medinfo_mainz/mainzelliste.client), a library that handles the HTTP calls necessary for using Mainzelliste in a client application.
 
+Information about the official docker image of Mainzelliste you can find [here](./docker.md). 
+
 ## References
 
 Mainzelliste is used in various medical joint research projects, including:
