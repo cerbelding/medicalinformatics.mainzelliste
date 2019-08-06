@@ -13,6 +13,10 @@ New features:
 - Delete Patient via REST-API
 - Soundex-like-blocking - Many thanks to [Ziad Sehili](https://bitbucket.org/%7B087d1ddc-2490-4c54-a353-a5aaf2d0cfed%7D/) from the Leipzig University
 
+Bug fixes:
+
+- Correction in token handling
+- Use correct NULL representation of JSONObject
 
 ### 1.7.0
 
