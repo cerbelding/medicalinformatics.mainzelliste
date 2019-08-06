@@ -1,12 +1,6 @@
-### rc 1.8.0
+### rc 1.8.0 - 2019-08-06
 
-
-
-This release introduces a set of new features 
-
-
-
-
+New features:
 
 - Privacy-preserving record linkage using Bloom filter instead of plain text
 - Deployment via Docker (BETA)
@@ -19,9 +13,6 @@ This release introduces a set of new features
 - Delete Patient via REST-API
 - Soundex-like-blocking - Many thanks to [Ziad Sehili](https://bitbucket.org/%7B087d1ddc-2490-4c54-a353-a5aaf2d0cfed%7D/) from the Leipzig University
 
-I also want to say thank you to the former main developer and community manager Andreas Borg and to the contributions of my colleagues from DKFZ Galina Tremper and Torben Brenner.
-
-Florian Stampe - Mainzelliste Community Manager
 
 ### 1.7.0
 
