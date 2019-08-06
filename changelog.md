@@ -6,6 +6,7 @@ New features:
 - Deployment via Docker (BETA)
 - Development via Docker (BETA)
 - Matching with external IDs and/or IDATs (identifying data)
+- Optional fields can now added or edited later
 - Editing of external generated IDs
 - Request all patient Id types (readAllPatientIdTypes)
 - Request all patient ids (readAllPatientIds)
