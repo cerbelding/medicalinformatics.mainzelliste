@@ -44,7 +44,7 @@ Here is a list of all currently supported environment variables:
 |`ML_API_KEY`|(none, please define)|The API Key for Mainzelliste API (MDAT server 0). Also also be defined as Docker Secret `ML_API_KEY_FILE`|
 |`ML_PUBLICURL_FQDN`|(none, please define)|Fully-qualified domain name to be used for access to this Mainzelliste, e.g. `patientlist.example.org`|
 |`ML_PUBLICURL_PORT`|`443`|The corresponding port number. Please note that only SSL connections are supported|
-|`ML_ALLOWEDREMOTEADDRESSES`|?|Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only) for MDAT server 0|
+|`ML_ALLOWEDREMOTEADDRESSES`|(none)|Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only) for MDAT server 0|
 
 Please note that Mainzelliste 1.9 will receive a generic Docker configuration interface. Variable names will change.
 
