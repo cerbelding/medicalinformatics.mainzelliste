@@ -2,14 +2,15 @@ version: "3.1"
 services:
   db:
     image: postgres:9.5-alpine
-    container_name: mainzelliste_database_container
     environment:
       - POSTGRES_DB=mainzelliste
       - POSTGRES_USER=mainzelliste
-      - POSTGRES_PASSWORD=mainzelliste
+#      - POSTGRES_PASSWORD=PleasePutASafePasswordHere
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
   mainzelliste:
     image: mainzelliste
-    ### Enable remote debugging on port 1099
+    ### For developers: Enable remote debugging on port 1099
     # environment:
     #   - DEBUG=TRUE
     #   - DEBUG_PORT=1099
@@ -17,11 +18,13 @@ services:
     #   - 1099:1099
     build:
       context: .
-    container_name: mainzelliste-container
-    secrets:
-      - mainzellisteConfig
-    environment:
-      - ML_CONFIG_FILE=/run/secrets/mainzellisteConfig
+#    environment:
+#       - ML_PUBLICURL_FQDN=somehost.domain.org
+#       - ML_DB_PASS=PleasePutTheSamePasswordHere
+#       - ML_API_KEY=PleasePutAnApiKeyHere
+#       - ML_CONFIG_FILE=/run/secrets/mainzellisteConfig
+#    secrets:
+#      - mainzellisteConfig
     depends_on:
       - db
 

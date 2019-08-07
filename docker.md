@@ -30,20 +30,25 @@ docker stack deploy --compose-file /path/to/docker-compose.yml mainzelliste
 
 ## Configuration
 
-Here a list of all Environment Variables:
+Here is a list of all currently supported environment variables:
 
 |Variable Name|Default Value|Description|
 |-------------|-------------|-----------|
-|ML_DB_DRIVER|org.postgresql.Driver|The driver used for db connection. Can be changed if you want to use mysql|
-|ML_DB_TYPE|postgresql|Can be changed to mysql|
-|ML_DB_HOST|db|Host address there the database is deployed, e.g. localhost|
-|ML_DB_PORT|5432|Port of the database|
-|ML_DB_NAME|mainzelliste|Name of the database|
-|ML_DB_USER|mainzelliste|Username for a user which has login rights on mainzelliste db|
-|ML_DB_PASS|mainzelliste|Password for a user which has login rights on mainzelliste db. Also avaiable as Secret: ML_DB_PASS_FILE|
-|ML_API_KEY|1234Test|The Api Key for Mainzelliste Api.|
+|`ML_DB_DRIVER`|`org.postgresql.Driver`|The driver used for db connection. Can be changed if you want to use mysql|
+|`ML_DB_TYPE`|`postgresql`|Can be changed to mysql|
+|`ML_DB_HOST`|`db`|Host address where the database is deployed, e.g. localhost|
+|`ML_DB_PORT`|`5432`|Port of the database|
+|`ML_DB_NAME`|`mainzelliste`|Name of the database|
+|`ML_DB_USER`|`mainzelliste`|Username for a user with permissions on the database|
+|`ML_DB_PASS`|(none, please define)|Password for a user who has permissions on the database. Can also be defined as Docker Secret `ML_DB_PASS_FILE`|
+|`ML_API_KEY`|(none, please define)|The API Key for Mainzelliste API (MDAT server 0). Also also be defined as Docker Secret `ML_API_KEY_FILE`|
+|`ML_PUBLICURL_FQDN`|(none, please define)|Fully-qualified domain name to be used for access to this Mainzelliste, e.g. `patientlist.example.org`|
+|`ML_PUBLICURL_PORT`|`443`|The corresponding port number. Please note that only SSL connections are supported|
+|`ML_ALLOWEDREMOTEADDRESSES`|?|Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only) for MDAT server 0|
 
-It is also possible to pass own mainzelliste configuration to the container. In this case the environment variables are not useable.  
+Please note that Mainzelliste 1.9 will receive a generic Docker configuration interface. Variable names will change.
+
+It is also possible to pass an own mainzelliste configuration file to the container. In this case most environment variables are ignored.
 In this case you need to initialize a [docker config](https://docs.docker.com/engine/reference/commandline/config/). The path to the config file needs to be passed to mainzelliste with the Environment Variable ML_CONFIG_FILE. Config Files are available in the container at root. The files have the name of the docker config on host.  
 
 **e.g.**

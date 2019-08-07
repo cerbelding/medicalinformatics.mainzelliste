@@ -17,3 +17,6 @@
 
 # Ignore docker-compose.override.yml
 docker-compose.override.yml
+
+# Ignore Docker services' data directory
+/data/
