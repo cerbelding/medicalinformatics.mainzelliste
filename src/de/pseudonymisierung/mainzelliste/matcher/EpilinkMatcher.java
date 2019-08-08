@@ -117,7 +117,7 @@ public class EpilinkMatcher implements Matcher {
 	/** The logging instance. */
 	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
 
-    private boolean soundexBlockingEnabled;
+    private String blockingSpeedOptimization;
 
     @Override
     public void initialize(Properties props) throws InternalErrorException
@@ -179,10 +179,8 @@ public class EpilinkMatcher implements Matcher {
         this.thresholdMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_match"));
         this.thresholdNonMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_non_match"));
 
-        if (props.getProperty("tuning.soundexblocking") != null) {
-            if (props.getProperty("tuning.soundexblocking").matches("true")) {
-                this.soundexBlockingEnabled = true;
-            }
+        if (props.getProperty("blocking.soundex.type") != null) {
+        	this.blockingSpeedOptimization = props.getProperty("blocking.soundex.type");
         }
 
         // initialize exchange groups
@@ -204,7 +202,7 @@ public class EpilinkMatcher implements Matcher {
     @Override
     public MatchResult match(Patient patient, Iterable<Patient> patientList) {
 
-        if (soundexBlockingEnabled) {
+        if (blockingSpeedOptimization.equals("soundex") || blockingSpeedOptimization.equals("Soundex")) {
             return matchAlgorithmSoundexBlocked(patient, patientList);
         } else {
             return matchAlgorithmClassic(patient, patientList);

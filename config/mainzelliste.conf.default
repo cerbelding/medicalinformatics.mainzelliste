@@ -45,7 +45,9 @@ db.password = mainzelliste
 #log.level = DEBUG
 
 #performance tuning soundex-like blocking
-tuning.soundexblocking = false
+
+blocking.soundex.type = Soundex
+
 
 # Field definitions
 #
