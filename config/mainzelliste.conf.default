@@ -46,8 +46,7 @@ db.password = mainzelliste
 
 #performance tuning soundex-like blocking
 
-blocking.soundex.type = Soundex
-
+#blocking.soundex.type = Soundex
 
 # Field definitions
 #

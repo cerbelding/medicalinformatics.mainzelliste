@@ -202,7 +202,7 @@ public class EpilinkMatcher implements Matcher {
     @Override
     public MatchResult match(Patient patient, Iterable<Patient> patientList) {
 
-        if (blockingSpeedOptimization.equals("soundex") || blockingSpeedOptimization.equals("Soundex")) {
+        if (blockingSpeedOptimization.equalsIgnoreCase("Soundex")) {
             return matchAlgorithmSoundexBlocked(patient, patientList);
         } else {
             return matchAlgorithmClassic(patient, patientList);
