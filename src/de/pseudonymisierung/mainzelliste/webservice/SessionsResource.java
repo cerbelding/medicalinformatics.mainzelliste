@@ -224,8 +224,15 @@ public class SessionsResource {
 
 		Token t = new TokenParam(tp).getValue();
 		t.setParentSessionId(s.getId());
-		t.setParentServerName(req.getSession(true).getAttribute("serverName").toString());
-
+		Object parentServerName = req.getSession(true).getAttribute("serverName");
+		if(parentServerName == null) {
+			logger.error("Unable to derive this token's parent server name from HTTP session. This may be because the Tomcat servlet context is badly configured (e.g. SSL enabled/disabled), see server.xml.");
+			throw new WebApplicationException(Response
+					.status(Status.INTERNAL_SERVER_ERROR)
+					.entity("This server is misconfigured - please see logfile.")
+					.build());
+		}
+		t.setParentServerName(parentServerName.toString());
 
 		if(t.getType() == null) {
 			throw new WebApplicationException(Response
