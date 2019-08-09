@@ -115,7 +115,7 @@ public enum Servers {
 
 			Server s = new Server();
 			s.name = "server" + i;
-			s.apiKey = props.getProperty("servers." + i + ".apiKey");
+			s.apiKey = props.getProperty("servers." + i + ".apiKey").trim();
 			
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
 			s.permissions = new HashSet<String>(Arrays.asList(permissions));
