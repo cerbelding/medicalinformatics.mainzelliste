@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-MAND_VARS="ML_PUBLICURL_FQDN ML_DB_PASS ML_API_KEY"
+MAND_VARS="ML_REVERSEPROXY_FQDN ML_DB_PASS ML_API_KEY"
 MAND_FILES=""
 
 MISSING_VARS=""
@@ -22,7 +22,22 @@ if [ -e "$ML_DB_NAME_FILE" ]; then \
 : "${ML_DB_PORT:=5432}"
 : "${ML_DB_NAME:=mainzelliste}"
 : "${ML_DB_USER:=mainzelliste}"
-: "${ML_PUBLICURL_PORT:=443}"
+: "${ML_ALLOWEDREMOTEADDRESSES:=0.0.0.0/0}"
+: "${ML_REVERSEPROXY_SSL:=false}"
+
+if [ -z "$ML_REVERSEPROXY_PORT" ]; then
+	case "$ML_REVERSEPROXY_SSL" in
+		true)
+			ML_REVERSEPROXY_PORT=443
+			;;
+		false)
+			ML_REVERSEPROXY_PORT=80
+			;;
+		*)
+			echo "Please set ML_REVERSEPROXY_SSL to either true or false."
+			exit 1
+	esac
+fi
 
 for VAR in $MAND_VARS; do
 	if [ -z "${!VAR}" ]; then
@@ -54,22 +69,21 @@ if [ -e "$ML_CONFIG_FILE" ]; then
 else
 	echo "mainzelliste docker entrypoint - Generating new mainzelliste.conf from environment variables"
 	sed -e "s|# db.driver = org.postgresql.Driver|db.driver = $ML_DB_DRIVER|g ; \
-		s|# db.url = jdbc:postgresql://localhost:5432/mainzelliste|db.url = jdbc:$ML_DB_TYPE://$ML_DB_HOST:$ML_DB_PORT/$ML_DB_NAME|g ;\
-		s|db.username = mainzelliste|db.username = $ML_DB_USER|g ;\
-		s|db.password = mainzelliste|db.password = $ML_DB_PASS|g ;
-		s|servers.0.apiKey =|servers.0.apiKey = $ML_API_KEY|g ; \
+		s|# db.url = jdbc:postgresql://localhost:5432/mainzelliste|db.url = jdbc:$ML_DB_TYPE://$ML_DB_HOST:$ML_DB_PORT/$ML_DB_NAME|g ; \
+		s|db.username = mainzelliste|db.username = $ML_DB_USER|g ; \
+		s|db.password = mainzelliste|db.password = $ML_DB_PASS|g ; \
+		s|^\(servers.0.apiKey =\).*$|\1 $ML_API_KEY|g ; \
 		s|\(# Accepted origin addresses.*\)|\1\nservers.0.allowedRemoteAdresses = $ML_ALLOWEDREMOTEADDRESSES|g" \
 		/mainzelliste.conf.default \
 		> /etc/mainzelliste/mainzelliste.conf
 fi
 
-echo "Configuring Tomcat for public address https://$ML_PUBLICURL_FQDN on port $ML_PUBLICURL_PORT"
-
-sed -e "s|ML_PUBLICURL_FQDN|$ML_PUBLICURL_FQDN|g ; \
-	s|ML_PUBLICURL_PORT|$ML_PUBLICURL_PORT|g" \
+sed -e "s|ML_REVERSEPROXY_FQDN|$ML_REVERSEPROXY_FQDN|g ; \
+	s|ML_REVERSEPROXY_PORT|$ML_REVERSEPROXY_PORT|g ; \
+	s|ML_REVERSEPROXY_SSL|$ML_REVERSEPROXY_SSL|g" \
 	/usr/local/tomcat/conf/server.xml.ori > /usr/local/tomcat/conf/server.xml
 
-if [ "$DEBUG" = 'TRUE' ]; then
+if [ "$DEBUG" = 'true' ]; then
 	echo "mainzelliste docker entrypoint - Tomcat starting with debug true"
 	export JPDA_ADDRESS=$DEBUG_PORT
 	echo "mainzelliste docker entrypoint - Set JPDA_ADRESS to: " $JPDA_ADDRESS

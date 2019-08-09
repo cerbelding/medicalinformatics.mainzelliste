@@ -6,9 +6,9 @@
                 connectionTimeout="20000"
 -               redirectPort="8443" />
 +               redirectPort="8443" 
-+               proxyHost="ML_PUBLICURL_FQDN" 
-+               proxyPort="ML_PUBLICURL_PORT" 
-+               secure="true" />
++               proxyName="ML_REVERSEPROXY_FQDN" 
++               proxyPort="ML_REVERSEPROXY_PORT" 
++               secure="ML_REVERSEPROXY_SSL" />
      <!-- A "Connector" using the shared thread pool-->
      <!--
      <Connector executor="tomcatThreadPool"

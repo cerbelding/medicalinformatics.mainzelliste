@@ -12,22 +12,24 @@ services:
     image: mainzelliste
     ### For developers: Enable remote debugging on port 1099
     # environment:
-    #   - DEBUG=TRUE
+    #   - DEBUG=true
     #   - DEBUG_PORT=1099
     # ports:
     #   - 1099:1099
     build:
       context: .
-#    environment:
-#       - ML_PUBLICURL_FQDN=somehost.domain.org
+    environment:
+#       - ML_REVERSEPROXY_FQDN=somehost.domain.org
+#       - ML_REVERSEPROXY_SSL=false
 #       - ML_DB_PASS=PleasePutTheSamePasswordHere
 #       - ML_API_KEY=PleasePutAnApiKeyHere
+#       - ML_ALLOWEDREMOTEADDRESSES=0.0.0.0/0
 #       - ML_CONFIG_FILE=/run/secrets/mainzellisteConfig
 #    secrets:
 #      - mainzellisteConfig
     depends_on:
       - db
 
-secrets:
-  mainzellisteConfig:
-    file: ./config/mainzelliste_docker.conf
+#secrets:
+#  mainzellisteConfig:
+#    file: ./config/mainzelliste_docker.conf

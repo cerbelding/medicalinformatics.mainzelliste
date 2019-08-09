@@ -42,9 +42,10 @@ Here is a list of all currently supported environment variables:
 |`ML_DB_USER`|`mainzelliste`|Username for a user with permissions on the database|
 |`ML_DB_PASS`|(none, please define)|Password for a user who has permissions on the database. Can also be defined as Docker Secret `ML_DB_PASS_FILE`|
 |`ML_API_KEY`|(none, please define)|The API Key for Mainzelliste API (MDAT server 0). Also also be defined as Docker Secret `ML_API_KEY_FILE`|
-|`ML_PUBLICURL_FQDN`|(none, please define)|Fully-qualified domain name to be used for access to this Mainzelliste, e.g. `patientlist.example.org`|
-|`ML_PUBLICURL_PORT`|`443`|The corresponding port number. Please note that only SSL connections are supported|
-|`ML_ALLOWEDREMOTEADDRESSES`|(none)|Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only) for MDAT server 0|
+|`ML_ALLOWEDREMOTEADDRESSES`|`0.0.0.0/0`|Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only) for MDAT server 0|
+|`ML_REVERSEPROXY_FQDN`|(none, please define)|Fully-qualified domain name to be used for access to this Mainzelliste, e.g. `patientlist.example.org`|
+|`ML_REVERSEPROXY_PORT`|80 or 443 according to `ML_REVERSEPROXY_SSL`|The corresponding port number|
+|`ML_REVERSEPROXY_SSL`|`false`|Set to `true` if Mainzelliste is accessed via SSL/TLS; `false` otherwise|
 
 Please note that Mainzelliste 1.9 will receive a generic Docker configuration interface. Variable names will change.
 
