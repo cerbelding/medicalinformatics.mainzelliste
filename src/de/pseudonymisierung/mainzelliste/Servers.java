@@ -136,6 +136,10 @@ public enum Servers {
 			servers.put(s.apiKey, s);
 		}
 			
+		if(servers.size() == 0) {
+			logger.error("No servers added. Is your config complete?");
+		}
+
 		if (Config.instance.getProperty("debug") == "true")
 		{
 			Token t = new Token("4223", "addPatient");
@@ -292,7 +296,7 @@ public enum Servers {
 			Server server = servers.get(apiKey);
 			
 			if(server == null){
-				logger.info("No server found with provided API key " + apiKey);
+				logger.info("No server found with provided API key \"" + apiKey + "\"");
 				throw new WebApplicationException(Response
 						.status(Status.UNAUTHORIZED)
 						.entity("Please supply your API key in HTTP header field 'mainzellisteApiKey'.")
