@@ -1,5 +1,6 @@
 ## This is a basic configuration of mainzelliste inside docker
 ## Futher information about the image is available inside the docker.md file of this repository
+## Configuration examples are provided with docker-compose.dev.yml and docker-compose.user.yml
 version: "3.1"
 services:
   db:

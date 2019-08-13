@@ -1,0 +1,24 @@
+## This compose file provides a basic configuration for running mainzelliste as a developer.
+## To use this configuration copy its contents to docker-compose.override.yml.
+## You can refer to docker.md and docker-compose.dev.yml for futher configuration options
+version: "3.1"
+services:
+  db:
+    environment:
+      - POSTGRES_DB=yourDatabaseName
+      - POSTGRES_USER=yourDatabaseUser
+      - POSTGRES_PASSWORD=PleasePutASafePasswordHere
+    ## Persist the database mainzelliste uses you need to uncomment the following two lines
+    # volumes:
+      # - ./data/db:/var/lib/postgresql/data
+  mainzelliste:
+    ports:
+      - 8080:8080
+    environment:
+      - ML_REVERSEPROXY_FQDN=somehost.domain.org
+      - ML_REVERSEPROXY_SSL=false
+      - ML_DB_NAME=yourDatabaseName
+      - ML_DB_USER=yourDatabaseUser
+      - ML_DB_PASS=PleasePutASafePasswordHere
+      - ML_API_KEY=changeThisApiKey
+      - ML_ALLOWEDREMOTEADDRESSES=0.0.0.0/0
