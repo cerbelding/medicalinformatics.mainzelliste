@@ -1,0 +1,26 @@
+--- server.xml.ori	2019-05-04 11:22:07.000000000 +0200
++++ server.xml		2019-08-07 12:21:56.000000000 +0200
+@@ -68,7 +68,10 @@
+     -->
+     <Connector port="8080" protocol="HTTP/1.1"
+                connectionTimeout="20000"
+-               redirectPort="8443" />
++               redirectPort="8443" 
++               proxyName="ML_REVERSEPROXY_FQDN" 
++               proxyPort="ML_REVERSEPROXY_PORT" 
++               secure="ML_REVERSEPROXY_SSL" />
+     <!-- A "Connector" using the shared thread pool-->
+     <!--
+     <Connector executor="tomcatThreadPool"
+@@ -160,7 +163,10 @@
+         <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+                prefix="localhost_access_log" suffix=".txt"
+                pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+-
++        <Valve className="org.apache.catalina.valves.RemoteIpValve"
++               remoteIpHeader="x-forwarded-for"
++               proxiesHeader="x-forwarded-by"
++               protocolHeader="x-forwarded-proto" />
+       </Host>
+     </Engine>
+   </Service>

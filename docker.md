@@ -30,38 +30,69 @@ docker stack deploy --compose-file /path/to/docker-compose.yml mainzelliste
 
 ## Configuration
 
-Here a list of all Environment Variables:
+### Using user preconfiguration
+
+```shell
+docker-compose -f docker-compose.yml -f docker-compose.user.yml up
+```
+
+### Environment Variables
+
+Here is a list of all currently supported environment variables:
 
 |Variable Name|Default Value|Description|
 |-------------|-------------|-----------|
-|ML_DB_DRIVER|org.postgresql.Driver|The driver used for db connection. Can be changed if you want to use mysql|
-|ML_DB_TYPE|postgresql|Can be changed to mysql|
-|ML_DB_HOST|db|Host address there the database is deployed, e.g. localhost|
-|ML_DB_PORT|5432|Port of the database|
-|ML_DB_NAME|mainzelliste|Name of the database|
-|ML_DB_USER|mainzelliste|Username for a user which has login rights on mainzelliste db|
-|ML_DB_PASS|mainzelliste|Password for a user which has login rights on mainzelliste db. Also avaiable as Secret: ML_DB_PASS_FILE|
-|ML_API_KEY|1234Test|The Api Key for Mainzelliste Api.|
+|`ML_DB_DRIVER`|`org.postgresql.Driver`|The driver used for db connection. Can be changed if you want to use mysql|
+|`ML_DB_TYPE`|`postgresql`|Can be changed to mysql|
+|`ML_DB_HOST`|`db`|Host address where the database is deployed, e.g. localhost|
+|`ML_DB_PORT`|`5432`|Port of the database|
+|`ML_DB_NAME`|`mainzelliste`|Name of the database|
+|`ML_DB_USER`|`mainzelliste`|Username for a user with permissions on the database|
+|`ML_DB_PASS`|(none, please define)|Password for a user who has permissions on the database. Can also be defined as Docker Secret `ML_DB_PASS_FILE`|
+|`ML_API_KEY`|(none, please define)|The API Key for Mainzelliste API (MDAT server 0). Also also be defined as Docker Secret `ML_API_KEY_FILE`|
+|`ML_ALLOWEDREMOTEADDRESSES`|`0.0.0.0/0`|Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only) for MDAT server 0|
+|`ML_REVERSEPROXY_FQDN`|(none, please define)|Fully-qualified domain name to be used for access to this Mainzelliste, e.g. `patientlist.example.org`|
+|`ML_REVERSEPROXY_PORT`|80 or 443 according to `ML_REVERSEPROXY_SSL`|The corresponding port number|
+|`ML_REVERSEPROXY_SSL`|`false`|Set to `true` if Mainzelliste is accessed via SSL/TLS; `false` otherwise|
+|`DEBUG`|`false`|Set to `true` if you want to open a port for remote debugging. You will need to forward the port 1099 with dockers port configuration.|
 
-It is also possible to pass own mainzelliste configuration to the container. In this case the environment variables are not useable.  
-In this case you need to initialize a [docker config](https://docs.docker.com/engine/reference/commandline/config/). The path to the config file needs to be passed to mainzelliste with the Environment Variable ML_CONFIG_FILE. Config Files are available in the container at root. The files have the name of the docker config on host.  
+Please note that Mainzelliste 1.9 will receive a generic Docker configuration interface. Variable names will change.
 
-**e.g.**
+### Supported Secrets
+
+|Secret Name|Environment Variable|
+|-----------|--------------------|
+|mainzellisteDbName|ML_DB_NAME|
+|mainzellisteDbUser|ML_DB_USER|
+|mainzellisteDbPassword|ML_DB_PASS|
+|mainzellisteApiKey|ML_API_KEY|
+
+Then using docker-compose you will need to pass the secrets from a file on the filesystem using the syntax from [*docker-compose.user.yml*](./docker-compose.user.yml).  
+Using docker in swarm mode will allow you to pass secrets with ```external: true``` and then creating the corresponding secret with following command:
 ```shell
-cat ./config/mainzelliste.conf | docker config create mainzellisteConfig - 
+echo "<your_secret>" | docker secret create <secret_name> -
 ```
-ML_CONFIG_FILE=/mainzellisteConfig
+
+### Passing a mainzellist config file
+
+It is also possible to pass an own mainzelliste configuration file to the container. In this case  *ML_DB_NAME*, *ML_DB_USER*, *ML_DB_PASS*, *ML_DB_TYPE*, *ML_DB_DRIVER*, *ML_DB_HOST*, *ML_DB_PORT*, *ML_API_KEY* and *ML_ALLOWEDREMOTEADDRESSES* are ignored.  
+The config needs to be passed with a docker secret named ***mainzellisteConfig***. An example for this is available in [*docker-compose.user.yml*](./docker-compose.user.yml).  
+Then using docker swarm, it is also possible to pass this without actually relying on a local file on your system. You can pass the entire file to a docker secret with:
+```shell
+cat "</path/to/your/mainzelliste.conf>" | docker secret create <secret_name> -
+```
+After creating the secret, you can remove the file from filesystem.
 
 ## For Developers
 ### Building the Mainzelliste Image
 All Necessary files to build the mainzelliste container are included in mainzelliste repository. You can build your own container from repository.
 For this the only command needed is:
 ```shell
-docker-compose build
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml build
 ```
 If you don't have access to docker-compose the command docker build can also be used. e.g.:
 ```shell
-docker build -t mainzelliste .
+docker build -t medicalinformatics/mainzelliste:rc-1.8 .
 ```
 You may need to specify a proxy then building the image. We support the build parameter ***$http_proxy***.
 
@@ -77,7 +108,7 @@ services:
 ```
 Then using docker build you will need the *--build-arg* parameter:
 ```shell
-docker build --build-arg http_proxy=<your_proxy_address> -t mainzelliste .
+docker build --build-arg http_proxy=<your_proxy_address> -t medicalinformatics/mainzelliste:rc-1.8 .
 ```
 ### Use Docker to deploy test data base
 It is also possible to deploy a database for testing mainzelliste by using:

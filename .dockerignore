@@ -1,0 +1,31 @@
+### Files that are not needed in the docker container and should not be copied to the container while building
+## output directories
+target
+
+## configuration directories
+config
+!config/META-INF/*
+!config/log4j.properties
+!config/mainzelliste.conf.default
+
+## docker specific files
+docker-compose.yml
+docker-compose.user.yml
+docker-compose.dev.yml
+docker.md
+
+## IDE specific files
+# visual studio code
+.vscode
+.factorypath
+# intellij
+.idea
+*.iml
+# eclipse
+.classpath
+.project
+.settings
+
+## other files
+README.md
+changelog.md

@@ -1,30 +1,21 @@
+## This is a basic configuration of mainzelliste inside docker
+## Futher information about the image is available inside the docker.md file of this repository
+## Configuration examples are provided with docker-compose.dev.yml and docker-compose.user.yml
 version: "3.1"
 services:
   db:
     image: postgres:9.5-alpine
-    container_name: mainzelliste_database_container
     environment:
       - POSTGRES_DB=mainzelliste
       - POSTGRES_USER=mainzelliste
-      - POSTGRES_PASSWORD=mainzelliste
+      - POSTGRES_PASSWORD=PleasePutASafePasswordHere
   mainzelliste:
-    image: mainzelliste
-    ### Enable remote debugging on port 1099
-    # environment:
-    #   - DEBUG=TRUE
-    #   - DEBUG_PORT=1099
-    # ports:
-    #   - 1099:1099
-    build:
-      context: .
-    container_name: mainzelliste-container
-    secrets:
-      - mainzellisteConfig
+    image: medicalinformatics/mainzelliste:rc-1.8
+    ports:
+      - 8080:8080
     environment:
-      - ML_CONFIG_FILE=/run/secrets/mainzellisteConfig
+      - ML_REVERSEPROXY_FQDN=mainzelliste
+      - ML_DB_PASS=PleasePutASafePasswordHere
+      - ML_API_KEY=changeThisApiKey
     depends_on:
       - db
-
-secrets:
-  mainzellisteConfig:
-    file: ./config/mainzelliste_docker.conf
