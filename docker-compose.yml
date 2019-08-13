@@ -1,3 +1,5 @@
+## This is a basic configuration of mainzelliste inside docker
+## Futher information about the image is available inside the docker.md file of this repository
 version: "3.1"
 services:
   db:
@@ -5,31 +7,16 @@ services:
     environment:
       - POSTGRES_DB=mainzelliste
       - POSTGRES_USER=mainzelliste
-#      - POSTGRES_PASSWORD=PleasePutASafePasswordHere
-    volumes:
-      - ./data/db:/var/lib/postgresql/data
+      - POSTGRES_PASSWORD=PleasePutASafePasswordHere
   mainzelliste:
     image: mainzelliste
-    ### For developers: Enable remote debugging on port 1099
-    # environment:
-    #   - DEBUG=true
-    #   - DEBUG_PORT=1099
-    # ports:
-    #   - 1099:1099
+    ports:
+      - 8080:8080
     build:
       context: .
     environment:
-#       - ML_REVERSEPROXY_FQDN=somehost.domain.org
-#       - ML_REVERSEPROXY_SSL=false
-#       - ML_DB_PASS=PleasePutTheSamePasswordHere
-#       - ML_API_KEY=PleasePutAnApiKeyHere
-#       - ML_ALLOWEDREMOTEADDRESSES=0.0.0.0/0
-#       - ML_CONFIG_FILE=/run/secrets/mainzellisteConfig
-#    secrets:
-#      - mainzellisteConfig
+      - ML_REVERSEPROXY_FQDN=mainzelliste
+      - ML_DB_PASS=PleasePutASafePasswordHere
+      - ML_API_KEY=changeThisApiKey
     depends_on:
       - db
-
-#secrets:
-#  mainzellisteConfig:
-#    file: ./config/mainzelliste_docker.conf
