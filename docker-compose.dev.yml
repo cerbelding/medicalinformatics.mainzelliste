@@ -19,5 +19,5 @@ services:
   ## With this, it is possible to debug mainzelliste while running it inside a container:
       - 1099:1098
     environment:
-      - DEBUG=TRUE
+      - DEBUG=true
       - DEBUG_PORT=1098

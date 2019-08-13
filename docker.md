@@ -54,7 +54,7 @@ Here is a list of all currently supported environment variables:
 |`ML_REVERSEPROXY_FQDN`|(none, please define)|Fully-qualified domain name to be used for access to this Mainzelliste, e.g. `patientlist.example.org`|
 |`ML_REVERSEPROXY_PORT`|80 or 443 according to `ML_REVERSEPROXY_SSL`|The corresponding port number|
 |`ML_REVERSEPROXY_SSL`|`false`|Set to `true` if Mainzelliste is accessed via SSL/TLS; `false` otherwise|
-|`DEBUG`|`false`|Set to `TRUE` if you want to open a port for remote debugging. You will need to forward the port with dockers port configuration.|
+|`DEBUG`|`false`|Set to `true` if you want to open a port for remote debugging. You will need to forward the port with dockers port configuration.|
 |`DEBUG_PORT`|`1099`|Change this to open a port other than `1099`.|
 
 Please note that Mainzelliste 1.9 will receive a generic Docker configuration interface. Variable names will change.
