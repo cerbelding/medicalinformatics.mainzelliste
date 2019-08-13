@@ -7,8 +7,9 @@ services:
     ports:
       - 5432:5432
   mainzelliste:
+    build:
+      context: .
   ## If you want to build the image behind a proxy, it is necessary to provide a proxy as build argument
-    # build:
       # args:
         # - http_proxy=http://<your-proxy-host>:<your-proxy-port>
   ## To reach the mainzelliste outside of docker you will need to expose a port to your localhost

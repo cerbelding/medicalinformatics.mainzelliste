@@ -63,11 +63,11 @@ ML_CONFIG_FILE=/mainzellisteConfig
 All Necessary files to build the mainzelliste container are included in mainzelliste repository. You can build your own container from repository.
 For this the only command needed is:
 ```shell
-docker-compose build
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml build
 ```
 If you don't have access to docker-compose the command docker build can also be used. e.g.:
 ```shell
-docker build -t mainzelliste .
+docker build -t medicalinformatics/mainzelliste:rc-1.8 .
 ```
 You may need to specify a proxy then building the image. We support the build parameter ***$http_proxy***.
 
@@ -83,7 +83,7 @@ services:
 ```
 Then using docker build you will need the *--build-arg* parameter:
 ```shell
-docker build --build-arg http_proxy=<your_proxy_address> -t mainzelliste .
+docker build --build-arg http_proxy=<your_proxy_address> -t medicalinformatics/mainzelliste:rc-1.8 .
 ```
 ### Use Docker to deploy test data base
 It is also possible to deploy a database for testing mainzelliste by using:

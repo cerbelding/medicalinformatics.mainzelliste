@@ -10,11 +10,9 @@ services:
       - POSTGRES_USER=mainzelliste
       - POSTGRES_PASSWORD=PleasePutASafePasswordHere
   mainzelliste:
-    image: mainzelliste
+    image: medicalinformatics/mainzelliste:rc-1.8
     ports:
       - 8080:8080
-    build:
-      context: .
     environment:
       - ML_REVERSEPROXY_FQDN=mainzelliste
       - ML_DB_PASS=PleasePutASafePasswordHere
