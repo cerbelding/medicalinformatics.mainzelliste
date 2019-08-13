@@ -85,8 +85,8 @@ sed -e "s|ML_REVERSEPROXY_FQDN|$ML_REVERSEPROXY_FQDN|g ; \
 
 if [ "$DEBUG" = 'true' ]; then
 	echo "mainzelliste docker entrypoint - Tomcat starting with debug true"
-	export JPDA_ADDRESS=$DEBUG_PORT
-	echo "mainzelliste docker entrypoint - Set JPDA_ADRESS to: " $JPDA_ADDRESS
+	export JPDA_ADDRESS=1099
+	echo "mainzelliste docker entrypoint - Set JPDA_ADRESS to: 1099"
 	export JPDA_TRANSPORT=dt_socket
 	echo "mainzelliste docker entrypoint - Set JPDA_TRANSPORT to: " $JPDA_TRANSPORT
 	exec catalina.sh jpda run
