@@ -30,6 +30,14 @@ docker stack deploy --compose-file /path/to/docker-compose.yml mainzelliste
 
 ## Configuration
 
+### Using user preconfiguration
+
+```shell
+docker-compose -f docker-compose.yml -f docker-compose.user.yml up
+```
+
+### Environment Variables
+
 Here is a list of all currently supported environment variables:
 
 |Variable Name|Default Value|Description|
@@ -46,17 +54,35 @@ Here is a list of all currently supported environment variables:
 |`ML_REVERSEPROXY_FQDN`|(none, please define)|Fully-qualified domain name to be used for access to this Mainzelliste, e.g. `patientlist.example.org`|
 |`ML_REVERSEPROXY_PORT`|80 or 443 according to `ML_REVERSEPROXY_SSL`|The corresponding port number|
 |`ML_REVERSEPROXY_SSL`|`false`|Set to `true` if Mainzelliste is accessed via SSL/TLS; `false` otherwise|
+|`DEBUG`|`false`|Set to `TRUE` if you want to open a port for remote debugging. You will need to forward the port with dockers port configuration.|
+|`DEBUG_PORT`|`1099`|Change this to open a port other than `1099`.|
 
 Please note that Mainzelliste 1.9 will receive a generic Docker configuration interface. Variable names will change.
 
-It is also possible to pass an own mainzelliste configuration file to the container. In this case most environment variables are ignored.
-In this case you need to initialize a [docker config](https://docs.docker.com/engine/reference/commandline/config/). The path to the config file needs to be passed to mainzelliste with the Environment Variable ML_CONFIG_FILE. Config Files are available in the container at root. The files have the name of the docker config on host.  
+### Supported Secrets
 
-**e.g.**
+|Secret Name|Environment Variable|
+|-----------|--------------------|
+|mainzellisteDbName|ML_DB_NAME|
+|mainzellisteDbUser|ML_DB_USER|
+|mainzellisteDbPassword|ML_DB_PASS|
+|mainzellisteApiKey|ML_API_KEY|
+
+Then using docker-compose you will need to pass the secrets from a file on the filesystem using the syntax from [*docker-compose.user.yml*](./docker-compose.user.yml).  
+Using docker in swarm mode will allow you to pass secrets with ```external: true``` and then creating the corresponding secret with following command:
 ```shell
-cat ./config/mainzelliste.conf | docker config create mainzellisteConfig - 
+echo "<your_secret>" | docker secret create <secret_name> -
 ```
-ML_CONFIG_FILE=/mainzellisteConfig
+
+### Passing a mainzellist config file
+
+It is also possible to pass an own mainzelliste configuration file to the container. In this case  *ML_DB_NAME*, *ML_DB_USER*, *ML_DB_PASS*, *ML_DB_TYPE*, *ML_DB_DRIVER*, *ML_DB_HOST*, *ML_DB_PORT*, *ML_API_KEY* and *ML_ALLOWEDREMOTEADDRESSES* are ignored.  
+The config needs to be passed with a docker secret named ***mainzellisteConfig***. An example for this is available in [*docker-compose.user.yml*](./docker-compose.user.yml).  
+Then using docker swarm, it is also possible to pass this without actually relying on a local file on your system. You can pass the entire file to a docker secret with:
+```shell
+cat "</path/to/your/mainzelliste.conf>" | docker secret create <secret_name> -
+```
+After creating the secret, you can remove the file from filesystem.
 
 ## For Developers
 ### Building the Mainzelliste Image

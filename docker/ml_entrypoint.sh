@@ -6,14 +6,14 @@ MAND_FILES=""
 MISSING_VARS=""
 
 ## process docker secrets
-if [ -e "$ML_DB_NAME_FILE" ]; then \
-	ML_DB_NAME=$(cat $ML_DB_NAME_FILE) \
-;fi && if [ -e "$ML_DB_USER_FILE" ]; then \
-	ML_DB_USER=$(cat $ML_DB_USER_FILE) \
-;fi && if [ -e "$ML_DB_PASS_FILE" ]; then \
-	ML_DB_PASS=$(cat $ML_DB_PASS_FILE) \
-;fi && if [ -e "$ML_API_KEY_FILE" ]; then \
-	ML_API_KEY=$(cat $ML_API_KEY_FILE) \
+if [ -e "/run/secrets/mainzellisteDbName" ]; then \
+	ML_DB_NAME=$(cat /run/secrets/mainzellisteDbName) \
+;fi && if [ -e "/run/secrets/mainzellisteDbUser" ]; then \
+	ML_DB_USER=$(cat /run/secrets/mainzellisteDbUser) \
+;fi && if [ -e "/run/secrets/mainzellisteDbPassword" ]; then \
+	ML_DB_PASS=$(cat /run/secrets/mainzellisteDbPassword) \
+;fi && if [ -e "/run/secrets/mainzellisteApiKey" ]; then \
+	ML_API_KEY=$(cat /run/secrets/mainzellisteApiKey) \
 ;fi
 
 : "${ML_DB_DRIVER:=org.postgresql.Driver}"
@@ -63,9 +63,9 @@ if [ -n "$MISSING_FILES" ]; then
 	exit 1
 fi
 
-if [ -e "$ML_CONFIG_FILE" ]; then
+if [ -e "/run/secrets/mainzellisteConfig" ]; then
 	echo "mainzelliste docker entrypoint - Applying user-provided mainzelliste.conf."
-	cp $ML_CONFIG_FILE /etc/mainzelliste/mainzelliste.conf
+	cp /run/secrets/mainzellisteConfig /etc/mainzelliste/mainzelliste.conf
 else
 	echo "mainzelliste docker entrypoint - Generating new mainzelliste.conf from environment variables"
 	sed -e "s|# db.driver = org.postgresql.Driver|db.driver = $ML_DB_DRIVER|g ; \
