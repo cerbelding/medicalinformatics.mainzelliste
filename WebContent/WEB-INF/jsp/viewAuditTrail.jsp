@@ -47,7 +47,7 @@
         </tr>
         <c:forEach items="${it}" var="item">
             <tr>
-                <td><fmt:formatDate value="${item.timestmp}" type="both" dateStyle = "long" timeStyle = "long" /></td>
+                <td><fmt:formatDate value="${item.timestamp}" type="both" dateStyle = "long" timeStyle = "long" /></td>
                 <td><c:out value="${item.idValue}" /></td>
                 <td><c:out value="${item.idType}" /></td>
                 <td><c:out value="${item.username}" /></td>

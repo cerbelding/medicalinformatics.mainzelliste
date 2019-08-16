@@ -41,8 +41,8 @@ public class AuditTrail implements Serializable {
     private String oldValue;
     private String newValue;
 
-    public AuditTrail(Date timestmp, String idValue, String idType, String username, String remoteSystem, String remoteIp, String typeOfChange, String reasonForChange, String oldValue, String newValue) {
-        this.timestamp = timestmp;
+    public AuditTrail(Date timestamp, String idValue, String idType, String username, String remoteSystem, String remoteIp, String typeOfChange, String reasonForChange, String oldValue, String newValue) {
+        this.timestamp = timestamp;
         this.idValue = idValue;
         this.idType = idType;
         this.username = username;
