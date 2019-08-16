@@ -138,7 +138,7 @@ public class Patient {
 				String fieldName = (String) it.next();
 				JSONObject thisFieldJson = fieldsJson.getJSONObject(fieldName);
 				String fieldClass = thisFieldJson.getString("class");
-				String fieldValue = thisFieldJson.getString("value");
+				String fieldValue = thisFieldJson.has("value") ? thisFieldJson.getString("value") : null;
 				Field<?> thisField = (Field<?>) Class.forName(fieldClass)
 						.newInstance();
 				thisField.setValue(fieldValue);
