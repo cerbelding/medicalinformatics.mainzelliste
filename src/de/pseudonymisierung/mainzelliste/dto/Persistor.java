@@ -44,6 +44,7 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Driver;
+import java.util.stream.Stream;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -583,7 +584,46 @@ public enum Persistor {
 			
 			em.getTransaction().commit();
 		} // End of update 1.1 -> 1.3.1
-		
+
+		if (isSchemaVersionUpdate(fromVersion, "1.9.0")) { // < 1.9
+			logger.info("Updating database schema for version 1.9...");
+			em.getTransaction().begin();
+			// Change HashedField value type from Bitstring to base64 encoding
+			List<HashedField> hashedFields = em.createQuery("SELECT f from HashedField f", HashedField.class)
+							.getResultList();
+			for (HashedField hashedField : hashedFields) {
+				hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString()));
+				em.persist(hashedField);
+			}
+			// Update Patient (input)fields / (input)fieldsString
+			List<Patient> patients = getPatients();
+			for (Patient patient : patients) {
+				Collection<Field<?>> fields = new ArrayList<>(patient.getFields().values());
+				fields.addAll(patient.getInputFields().values());
+				fields.stream()
+								.flatMap(f -> {
+									if (f instanceof CompoundField<?>) {
+										@SuppressWarnings("unchecked")
+										final List<Field<?>> subFields = ((CompoundField) f).getValue();
+										return subFields.stream();
+									} else {
+										return Stream.of(f);
+									}
+								})
+								.filter(f -> f instanceof HashedField)
+								.map(f -> (HashedField)f)
+								.forEach(hashedField -> hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString())));
+				patient.setFields(patient.getFields());
+				patient.setInputFields(patient.getInputFields());
+				em.merge(patient);
+			}
+			// Update schema version
+			this.setSchemaVersion("1.9.0", em);
+			fromVersion = "1.9.0";
+			em.getTransaction().commit();
+		} // End of update < 1.9
+
+
 		// Update schema version to release version, even if no changes are necessary
 		em.getTransaction().begin();
 		this.setSchemaVersion(Config.instance.getVersion(), em);
@@ -635,7 +675,21 @@ public enum Persistor {
 		em.createNativeQuery("UPDATE mainzelliste_properties SET " + quoteIdentifier("value") + "='" + toVersion + 
 				"' WHERE property='version'").executeUpdate(); 
 	}
-	
+	private boolean isSchemaVersionUpdate(String fromVersion, String toVersion) {
+		if (fromVersion.equals(toVersion)) return false;
+
+		String[] from = fromVersion.split("\\.");
+		String[] to = toVersion.split("\\.");
+		int length = Math.max(from.length, to.length);
+		for (int i = 0; i < length; i++) {
+			int fromPart = i < from.length ? Integer.parseInt(from[i]) : 0;
+			int toPart = i < to.length ? Integer.parseInt(to[i]) : 0;
+			if (fromPart < toPart) return true;
+			if (fromPart > toPart) return false;
+		}
+		return false;
+	}
+
 	/**
 	 * Create mainzelliste_properties if not exists. Check if JPA schema was
 	 * initialized. If no, set version to current, otherwise, it is assumed that
