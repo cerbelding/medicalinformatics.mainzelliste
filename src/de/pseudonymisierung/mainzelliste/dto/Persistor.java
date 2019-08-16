@@ -285,7 +285,8 @@ public enum Persistor {
 	 */
 	public synchronized void addIdRequest(IDRequest req) {
 		em.getTransaction().begin();
-		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.		
+		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.
+		IDGeneratorFactory.instance.getGeneratorMemories().forEach(em::merge);
 		em.getTransaction().commit();
 	}
 	

@@ -347,6 +347,7 @@ public class Patient {
 		
 		if(!factory.isExternal()) {
 			ID newID = factory.getNext();
+			factory.getMemory().ifPresent(IDGeneratorMemory::commit);
 			this.addId(newID);
 			return newID;
 		}
