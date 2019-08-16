@@ -75,11 +75,7 @@ public class Patient {
 		try {
 			JSONObject fieldsJson = new JSONObject();
 			for (String fieldName : fields.keySet()) {
-				JSONObject thisField = new JSONObject();
-				thisField.put("class", fields.get(fieldName).getClass()
-						.getName());
-				thisField.put("value", fields.get(fieldName).getValueJSON());
-				fieldsJson.put(fieldName, thisField);
+				fieldsJson.put(fieldName, fields.get(fieldName).toJSON());
 			}
 			return fieldsJson.toString();
 		} catch (JSONException e) {
