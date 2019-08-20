@@ -207,7 +207,7 @@ public class EpilinkMatcher implements Matcher {
 	public MatchResult match(Patient patient, Iterable<Patient> patientList) {
 
 		if (blockingSpeedOptimization != null && blockingSpeedOptimization.equalsIgnoreCase("Soundex")) {
-			return matchAlgorithmSoundexBlocked(patient, patientList);
+			return matchAlgorithmSoundexBlocked(patient, patientList, blockingFields);
 		} else {
 			return matchAlgorithmClassic(patient, patientList);
 		}
@@ -234,7 +234,7 @@ public class EpilinkMatcher implements Matcher {
 
 	}
 
-	private MatchResult matchAlgorithmSoundexBlocked(Patient patient, Iterable<Patient> patientList) {
+	private MatchResult matchAlgorithmSoundexBlocked(Patient patient, Iterable<Patient> patientList, String[] blockingFields) {
 
 
 		MatchTempResult tempMatchResult = new MatchTempResult();
