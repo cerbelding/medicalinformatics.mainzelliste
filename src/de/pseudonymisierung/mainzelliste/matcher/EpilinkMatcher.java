@@ -3,24 +3,24 @@
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Affero General Public License as published by the Free 
+ * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License 
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Additional permission under GNU GPL version 3 section 7:
  *
- * If you modify this Program, or any covered work, by linking or combining it 
- * with Jersey (https://jersey.java.net) (or a modified version of that 
- * library), containing parts covered by the terms of the General Public 
- * License, version 2.0, the licensors of this Program grant you additional 
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Jersey (https://jersey.java.net) (or a modified version of that
+ * library), containing parts covered by the terms of the General Public
+ * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
 package de.pseudonymisierung.mainzelliste.matcher;
@@ -53,30 +53,30 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
  * Performs record linkage by using the algorithm of Epilink et al. This is a
  * simple weight based algorithm (similar to the method of Fellegi and Sunter)
  * with support for string metrics.
- * 
+ *
  * The weight for a record pair (x1,x2) is computed by the formula
- * 
+ *
  * sum_i (w_1 * s(x1_i, x2_i)) / sum_i w_i where s(x1_i, x2_i) is the value of a
  * string comparison of records x1 and x2 in the i-th field and w_i is a
  * weighting factor computed by
- * 
+ *
  * w_i = log_2 (1-e_i) / f_i
- * 
+ *
  * where f_i denotes the average frequency of values and e_i the estimated error
  * rate for field i.
- * 
+ *
  * @see "P. Contiero et al., The EpiLink record linkage software, in: Methods of Information in Medicine 2005, 44 (1), 66–71."
- * 
+ *
  *
  */
 public class EpilinkMatcher implements Matcher {
 
 	/** Minimum weight for definitive matches. */
 	private double thresholdMatch;
-	
+
 	/**
 	 * Get the minimum weight for definitive matches.
-	 * 
+	 *
 	 * @return The minimum weight for matches, a number in the range [0,1].
 	 */
 	public double getThresholdMatch() {
@@ -85,7 +85,7 @@ public class EpilinkMatcher implements Matcher {
 
 	/**
 	 * Get the minimum weight for possible matches.
-	 * 
+	 *
 	 * @return The minimum weight for possible matches, a number in the range
 	 *         [0,1].
 	 */
@@ -95,7 +95,7 @@ public class EpilinkMatcher implements Matcher {
 
 	/** The minimum weight for possible matches. */
 	private double thresholdNonMatch;
-	
+
 	/** The FieldComparators, by field name. */
 	private Map<String, FieldComparator<Field<?>>> comparators;
 	/** Mean frequencies of values by field name. */
@@ -108,107 +108,111 @@ public class EpilinkMatcher implements Matcher {
 	 * {@link #errorRates}
 	 */
 	private Map<String, Double> weights;
-	
+
 	/** Sets of fields that are exchangeable for matching. */
 	private List<List<String>> exchangeGroups;
 	/** Buffer for fields not included in any exchange group. */
 	private Set<String> nonExchangeFields;
-	
+
 	/** The logging instance. */
 	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
 
-    private String blockingSpeedOptimization;
+	private String blockingSpeedOptimization;
+	private String[] blockingFields;
 
-    @Override
-    public void initialize(Properties props) throws InternalErrorException
-    {
-        // Get error rate (is needed for weight computation below)
+	@Override
+	public void initialize(Properties props) throws InternalErrorException
+	{
+		// Get error rate (is needed for weight computation below)
 
-        // Initialize internal maps
-        this.comparators = new HashMap<String, FieldComparator<Field<?>>>();
-        this.frequencies = new HashMap<String, Double>();
-        this.errorRates = new HashMap<String, Double>();
-        this.weights = new HashMap<String, Double>();
+		// Initialize internal maps
+		this.comparators = new HashMap<String, FieldComparator<Field<?>>>();
+		this.frequencies = new HashMap<String, Double>();
+		this.errorRates = new HashMap<String, Double>();
+		this.weights = new HashMap<String, Double>();
 
-        // Get names of fields from config vars.*
-        Pattern p = Pattern.compile("^field\\.(\\w+)\\.type");
-        java.util.regex.Matcher m;
+		// Get names of fields from config vars.*
+		Pattern p = Pattern.compile("^field\\.(\\w+)\\.type");
+		java.util.regex.Matcher m;
 
-        // Build maps of comparators, frequencies, error rates and attribute weights from Properties
-        for (Object key : props.keySet())
-        {
-            m = p.matcher((String) key);
-            if (m.find()){
-                String fieldName = m.group(1);
-                logger.info("Initializing properties for field " + fieldName);
-                String fieldCompStr = props.getProperty("field." + fieldName + ".comparator");
-                if (fieldCompStr != null)
-                {
-                    fieldCompStr = fieldCompStr.trim();
-                    try {
-                        @SuppressWarnings("unchecked")
-                        Class<FieldComparator<Field<?>>> fieldCompClass = (Class<FieldComparator<Field<?>>>) Class.forName("de.pseudonymisierung.mainzelliste.matcher." + fieldCompStr);
-                        Constructor<FieldComparator<Field<?>>> fieldCompConstr = fieldCompClass.getConstructor(String.class, String.class);
-                        FieldComparator<Field<?>> fieldComp = fieldCompConstr.newInstance(fieldName, fieldName);
-                        comparators.put(fieldName, fieldComp);
-                    } catch (Exception e) {
-                        System.err.println(e.getMessage());
-                        throw new InternalErrorException();
-                    }
-                    // set error rate
-                    double error_rate = Double.parseDouble(props.getProperty("matcher.epilink."+ fieldName + ".errorRate"));
-                    errorRates.put(fieldName, error_rate);
-                    // set frequency
-                    double frequency = Double.parseDouble(props.getProperty("matcher.epilink." + fieldName + ".frequency"));
-                    frequencies.put(fieldName, frequency);
-                    // calculate field weights
-                    // log_2 ((1 - e_i) / f_i)
-                    // all e_i have same value in this implementation
-                    double weight = (1 - error_rate) / frequency;
-                    weight = Math.log(weight) / Math.log(2);
-                    logger.debug("Field weight for field " + fieldName + ": " + weight);
-                    weights.put(fieldName, weight);
-                }
-            }
-        }
-        // assert that Maps have the same keys
-        assert(frequencies.keySet().equals(comparators.keySet()));
-        assert(frequencies.keySet().equals(weights.keySet()));
+		// Build maps of comparators, frequencies, error rates and attribute weights from Properties
+		for (Object key : props.keySet())
+		{
+			m = p.matcher((String) key);
+			if (m.find()){
+				String fieldName = m.group(1);
+				logger.info("Initializing properties for field " + fieldName);
+				String fieldCompStr = props.getProperty("field." + fieldName + ".comparator");
+				if (fieldCompStr != null)
+				{
+					fieldCompStr = fieldCompStr.trim();
+					try {
+						@SuppressWarnings("unchecked")
+						Class<FieldComparator<Field<?>>> fieldCompClass = (Class<FieldComparator<Field<?>>>) Class.forName("de.pseudonymisierung.mainzelliste.matcher." + fieldCompStr);
+						Constructor<FieldComparator<Field<?>>> fieldCompConstr = fieldCompClass.getConstructor(String.class, String.class);
+						FieldComparator<Field<?>> fieldComp = fieldCompConstr.newInstance(fieldName, fieldName);
+						comparators.put(fieldName, fieldComp);
+					} catch (Exception e) {
+						System.err.println(e.getMessage());
+						throw new InternalErrorException();
+					}
+					// set error rate
+					double error_rate = Double.parseDouble(props.getProperty("matcher.epilink."+ fieldName + ".errorRate"));
+					errorRates.put(fieldName, error_rate);
+					// set frequency
+					double frequency = Double.parseDouble(props.getProperty("matcher.epilink." + fieldName + ".frequency"));
+					frequencies.put(fieldName, frequency);
+					// calculate field weights
+					// log_2 ((1 - e_i) / f_i)
+					// all e_i have same value in this implementation
+					double weight = (1 - error_rate) / frequency;
+					weight = Math.log(weight) / Math.log(2);
+					logger.debug("Field weight for field " + fieldName + ": " + weight);
+					weights.put(fieldName, weight);
+				}
+			}
+		}
+		// assert that Maps have the same keys
+		assert(frequencies.keySet().equals(comparators.keySet()));
+		assert(frequencies.keySet().equals(weights.keySet()));
 
-        // load other config vars
-        this.thresholdMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_match"));
-        this.thresholdNonMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_non_match"));
+		// load other config vars
+		this.thresholdMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_match"));
+		this.thresholdNonMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_non_match"));
 
-        if (props.getProperty("blocking.soundex.type") != null) {
-        	this.blockingSpeedOptimization = props.getProperty("blocking.soundex.type");
-        }
+		if (props.getProperty("blocking.soundex.type") != null) {
+			this.blockingSpeedOptimization = props.getProperty("blocking.soundex.type");
+			this.blockingFields = Arrays.stream(props.getProperty("blocking.soundex.fields").split(","))
+					.map(String::trim)
+					.toArray(String[]::new);
+		}
 
-        // initialize exchange groups
-        //TODO Mechanismus generalisieren für andere Matcher
-        this.nonExchangeFields = new HashSet<String>(this.weights.keySet());
-        this.exchangeGroups = new Vector<List<String>>();
-        for (int i = 0; props.containsKey("exchangeGroup." + i); i++)
-        {
-            String exchangeFields[] = props.getProperty("exchangeGroup." + i).split(" *[;,] *");
-            for (String fieldName : exchangeFields) {
-                this.nonExchangeFields.remove(fieldName);
-                fieldName = fieldName.trim();
-            }
-            this.exchangeGroups.add(new Vector<String>(Arrays.asList(exchangeFields)));
-        }
-    }
+		// initialize exchange groups
+		//TODO Mechanismus generalisieren für andere Matcher
+		this.nonExchangeFields = new HashSet<String>(this.weights.keySet());
+		this.exchangeGroups = new Vector<List<String>>();
+		for (int i = 0; props.containsKey("exchangeGroup." + i); i++)
+		{
+			String exchangeFields[] = props.getProperty("exchangeGroup." + i).split(" *[;,] *");
+			for (String fieldName : exchangeFields) {
+				this.nonExchangeFields.remove(fieldName);
+				fieldName = fieldName.trim();
+			}
+			this.exchangeGroups.add(new Vector<String>(Arrays.asList(exchangeFields)));
+		}
+	}
 
 
-    @Override
-    public MatchResult match(Patient patient, Iterable<Patient> patientList) {
+	@Override
+	public MatchResult match(Patient patient, Iterable<Patient> patientList) {
 
-        if (blockingSpeedOptimization != null && blockingSpeedOptimization.equalsIgnoreCase("Soundex")) {
-            return matchAlgorithmSoundexBlocked(patient, patientList);
-        } else {
-            return matchAlgorithmClassic(patient, patientList);
-        }
+		if (blockingSpeedOptimization != null && blockingSpeedOptimization.equalsIgnoreCase("Soundex")) {
+			return matchAlgorithmSoundexBlocked(patient, patientList, blockingFields);
+		} else {
+			return matchAlgorithmClassic(patient, patientList);
+		}
 
-    }
+	}
 
 	public MatchResult matchAlgorithmClassic(Patient patient, Iterable<Patient> patientList) {
 
@@ -216,11 +220,11 @@ public class EpilinkMatcher implements Matcher {
 		MatchTempResult tempMatchResult = new MatchTempResult();
 
 
-        for (Patient patientFromList : patientList)
-        {
-            // assert that the persons have the fields required for matching
-            if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
-                continue;
+		for (Patient patientFromList : patientList)
+		{
+			// assert that the persons have the fields required for matching
+			if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
+				continue;
 
 			tempMatchResult = calculateBestMatches(patient, patientFromList, tempMatchResult);
 
@@ -230,41 +234,39 @@ public class EpilinkMatcher implements Matcher {
 
 	}
 
-	private MatchResult matchAlgorithmSoundexBlocked(Patient patient, Iterable<Patient> patientList) {
+	private MatchResult matchAlgorithmSoundexBlocked(Patient patient, Iterable<Patient> patientList, String[] blockingFields) {
 
 
 		MatchTempResult tempMatchResult = new MatchTempResult();
 
 
-        ////////////////////////////////////////////////////////////////////
-        //check equality of soundex codes
-        // a better solution is to add fields in the configuration file
-        String[] fields= new String[]{"nachname", "vorname"};
-        boolean equalClusterId;
+		////////////////////////////////////////////////////////////////////
+		//check equality of soundex codes
+		boolean equalClusterId;
 
-        patient.setClusterIdByField(fields);
-        for (Patient patientFromList : patientList)
-        {
-            // assert that the persons have the fields required for matching
-            if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
-                continue;
+		patient.setClusterIdByField(blockingFields);
+		for (Patient patientFromList : patientList)
+		{
+			// assert that the persons have the fields required for matching
+			if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
+				continue;
 
-            equalClusterId= false;
-            patientFromList.setClusterIdByField(fields);
+			equalClusterId= false;
+			patientFromList.setClusterIdByField(blockingFields);
 
-            for(String f :fields)
-            {
-                if(patient.getClusterIds().get(f).equals(patientFromList.getClusterIds().get(f)))
-                {
-                    equalClusterId= true;
-                    continue;
-                }
-            }
+			for(String f :blockingFields)
+			{
+				if(patient.getClusterIds().get(f).equals(patientFromList.getClusterIds().get(f)))
+				{
+					equalClusterId= true;
+					continue;
+				}
+			}
 
-            if(!equalClusterId)
-            {
-                continue;
-            }
+			if(!equalClusterId)
+			{
+				continue;
+			}
 
 			tempMatchResult = calculateBestMatches(patient, patientFromList, tempMatchResult);
 
@@ -462,6 +464,6 @@ public class EpilinkMatcher implements Matcher {
 	}
 
 	private boolean isEmptyOrNull(Field<?> f) {
-	    return (f== null || f.isEmpty());
+		return (f== null || f.isEmpty());
 	}
 }
