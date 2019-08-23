@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import javax.net.ssl.SSLContext;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +25,9 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import de.pseudonymisierung.mainzelliste.blocker.BlockingKey;
+import de.pseudonymisierung.mainzelliste.matcher.Matcher;
+import de.pseudonymisierung.mainzelliste.matcher.NullMatcher;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
@@ -212,7 +216,8 @@ public enum PatientBackend {
 			
 			final Patient idMatch;
 			MatchResult idatMatch = null;
-			
+			final Set<BlockingKey> bks = new HashSet<>();
+
 			if (hasIdat) {
 				Validator.instance.validateForm(form, true);
 
@@ -233,7 +238,18 @@ public enum PatientBackend {
 				pNormalized = Config.instance.getRecordTransformer().transform(p);
 				pNormalized.setInputFields(chars);
 
-				idatMatch = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
+				// Blocking
+				bks.addAll(Config.instance.getBlockingKeyExtractors().extract(pNormalized));
+
+				// Matching
+				final Matcher matcher = Config.instance.getMatcher();
+				List<Patient> candidatePatients;
+				if (matcher instanceof NullMatcher) {
+					candidatePatients = new ArrayList<>();
+				} else {
+					candidatePatients = Persistor.instance.getPatients(bks);
+				}
+				idatMatch = matcher.match(pNormalized, candidatePatients);
 				logger.debug("Best matching weight for IDAT matching: " + idatMatch.getBestMatchedWeight());
 			}
 			if (hasExternalId) {
@@ -397,7 +413,11 @@ public enum PatientBackend {
 
 			ret.put("request", request);
 
-			Persistor.instance.addIdRequest(request);
+			if (match.getResultType().equals(MatchResultType.MATCH)) {
+				Persistor.instance.addIdRequest(request);
+			} else {
+				Persistor.instance.addIdRequest(request, bks);
+			}
 
 			if(t != null && ! Config.instance.debugIsOn())
 				Servers.instance.deleteToken(t.getId());
