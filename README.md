@@ -59,14 +59,21 @@ All notable changes to the mainzelliste project you can see in the [changelog](.
 
 
 ### Contributions
-As an open source project, Mainzelliste profits from contributions from the research community. We would like to thank the following colleagues for their code contributions:
+As an open source project, Mainzelliste profits from contributions from the research community. We would like to thank the following colleagues for their code contributions (sorted by name in ascending order):
 
-- Maximilian Ataian, Universitätsmedizin Mainz
+- Andreas Borg, Universitätsmedizin Mainz
 - Benjamin Gathmann, Universitätsklinikum Freiburg
-- Stephan Rusch, Universitätsklinikum Freiburg
-- Jens Schwanke, Universitätsmedizin Göttingen
+- Christian Koch, DKFZ-Heidelberg
 - Daniel Volk, Universitätsmedizin Mainz
 - Dirk Langner, Universitätsmedizin Greifswald
+- Florens Rohde, Universität Leipzig
+- Florian Stampe, DKFZ-Heidelberg
+- Galina Tremper, DKFZ-Heidelberg
+- Jens Schwanke, Universitätsmedizin Göttingen
+- Martin Lablans, DKFZ-Heidelberg
 - Matthias Lemmer, Universität Marburg
+- Maximilian Ataian, Universitätsmedizin Mainz
 - Project FP7-305653-chILD-EU
+- Stephan Rusch, Universitätsklinikum Freiburg
+- Torben Brenner, DKFZ-Heidelberg
 - Ziad Sehili, Universität Leipzig
