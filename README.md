@@ -27,6 +27,9 @@ Mainzelliste is used in various medical joint research projects, including:
 
 - The [NEW ESID online database network](https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btz525/5526873)
 - The [VHL-Register](https://vhl-register.org/files/VHL-Vorgehensweise.pdf)
+- [CURENet](https://cure-net.de/index.php/de/aktuelles) Network researching congenital urorectal malformations
+- [asthesis longlife - das BQS Register](https://www.bqs.de/leistungen/wissenschaftliche-register/18-leistungen/47-register-basis-modul-asthesis)
+- The [ParaReg](https://www.dmgp-kongress.de/fileadmin/congress/media/dmgp2019/druckelemente/DMGP2019_Abstractband.pdf) Registry for lifelong monitoring of paraplegic patients
 
 Another important use case is pseudonymization in central biobanks, for example:
 
@@ -59,14 +62,21 @@ All notable changes to the mainzelliste project you can see in the [changelog](.
 
 
 ### Contributions
-As an open source project, Mainzelliste profits from contributions from the research community. We would like to thank the following colleagues for their code contributions:
+As an open source project, Mainzelliste profits from contributions from the research community. We would like to thank the following colleagues for their code contributions (sorted by name in ascending order):
 
-- Maximilian Ataian, Universitätsmedizin Mainz
+- Andreas Borg, Universitätsmedizin Mainz
 - Benjamin Gathmann, Universitätsklinikum Freiburg
-- Stephan Rusch, Universitätsklinikum Freiburg
-- Jens Schwanke, Universitätsmedizin Göttingen
+- Christian Koch, DKFZ-Heidelberg
 - Daniel Volk, Universitätsmedizin Mainz
 - Dirk Langner, Universitätsmedizin Greifswald
+- Florens Rohde, Universität Leipzig
+- Florian Stampe, DKFZ-Heidelberg
+- Galina Tremper, DKFZ-Heidelberg
+- Jens Schwanke, Universitätsmedizin Göttingen
+- Martin Lablans, DKFZ-Heidelberg
 - Matthias Lemmer, Universität Marburg
+- Maximilian Ataian, Universitätsmedizin Mainz
 - Project FP7-305653-chILD-EU
+- Stephan Rusch, Universitätsklinikum Freiburg
+- Torben Brenner, DKFZ-Heidelberg
 - Ziad Sehili, Universität Leipzig
