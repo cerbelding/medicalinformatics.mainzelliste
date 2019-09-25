@@ -1,7 +1,7 @@
 ## Disclaimer
 
-The Mainzelliste software developments which were developed within the scope of the "Mainzelliste SecureEpiLinker (MainSEL): Privacy-Preserving
-Record Linkage using Secure Multi-Party Computation" paper are stored in this repository. In the future, these features will flow back into the official repository and the official version of the Mainzelliste software: https://bitbucket.org/medicalinformatics/mainzelliste/src
+This repository is a fork of the official Mainzelliste project, embodying the features described in the paper “Mainzelliste SecureEpiLinker (MainSEL): Privacy-Preserving Record Linkage using Secure Multi-Party Computation”. 
+It is intended that these new features will eventually be integrated back into the official Mainzelliste software.: https://bitbucket.org/medicalinformatics/mainzelliste/src
 
 # Mainzelliste
 
