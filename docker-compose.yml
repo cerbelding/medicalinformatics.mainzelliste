@@ -10,7 +10,7 @@ services:
       - POSTGRES_USER=mainzelliste
       - POSTGRES_PASSWORD=PleasePutASafePasswordHere
   mainzelliste:
-    image: medicalinformatics/mainzelliste:rc-1.8
+    image: medicalinformatics/mainzelliste:1.8-latest
     ports:
       - 8080:8080
     environment:
