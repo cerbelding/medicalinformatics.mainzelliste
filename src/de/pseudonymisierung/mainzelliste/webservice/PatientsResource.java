@@ -45,6 +45,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import de.pseudonymisierung.mainzelliste.exceptions.*;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -64,10 +65,6 @@ import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
-import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import de.pseudonymisierung.mainzelliste.exceptions.InvalidJSONException;
-import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
-import de.pseudonymisierung.mainzelliste.exceptions.UnauthorizedException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 
@@ -368,7 +365,11 @@ public class PatientsResource {
 
             if (Boolean.TRUE.equals(token.getData().get("readAllPatientIds"))) {
 
-                if(Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds")){
+                if(token.getParentServerName() == null){
+                    throw new NoParentServerNameException();
+                }
+                else if(Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds"))
+                {
                     try {
                         thisPatient.put("ids", getAllIDsOfPatient(patient));
 
@@ -378,8 +379,8 @@ public class PatientsResource {
                     }
                 }
                 else{
-                    logger.trace("Server has no resultAllIds permission");
-                    throw new UnauthorizedException("Server has no resultAllIds permission");
+                    logger.info("Server has no readAllPatientIds permission");
+                    throw new UnauthorizedException("Server has no readAllPatientIds permission");
                 }
 
             } else if (token.hasDataItem("resultIds")) {
@@ -398,7 +399,11 @@ public class PatientsResource {
                 }
             }
             if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
-                if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIdTypes")) {
+
+                if(token.getParentServerName() == null){
+                    throw new NoParentServerNameException();
+                }
+                else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIdTypes")) {
                     try {
                         thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
                     } catch (JSONException e) {
@@ -406,7 +411,7 @@ public class PatientsResource {
                         throw new InternalErrorException("Error while transforming ID types into JSON");
                     }
                 } else {
-                    logger.trace("Server has no resultAllIds permission");
+                    logger.info("Server has no resultAllIds permission");
                     throw new UnauthorizedException("Server has no readAllPatientIdTypes permission");
                 }
             }
