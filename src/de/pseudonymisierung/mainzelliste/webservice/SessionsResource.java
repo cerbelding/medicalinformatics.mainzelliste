@@ -226,14 +226,12 @@ public class SessionsResource {
 		t.setParentSessionId(s.getId());
 		Object parentServerName = req.getSession(true).getAttribute("serverName");
 		if(parentServerName == null) {
-			logger.error("Unable to derive this token's parent server name from HTTP session. This may be because the Tomcat servlet context is badly configured (e.g. SSL enabled/disabled), see server.xml.");
-			throw new WebApplicationException(Response
-					.status(Status.INTERNAL_SERVER_ERROR)
-					.entity("This server is misconfigured - please see logfile.")
-					.build());
+			logger.info("parentServerName can't be derived from this request. Reason could be that JSESSIONID is not being sent, or the Tomcat servlet context is badly configured (e.g. SSL enabled/disabled), see server.xml  ");
 		}
-		t.setParentServerName(parentServerName.toString());
-
+		else{
+			t.setParentServerName(parentServerName.toString());
+		}
+		
 		if(t.getType() == null) {
 			throw new WebApplicationException(Response
 					.status(Status.BAD_REQUEST)
