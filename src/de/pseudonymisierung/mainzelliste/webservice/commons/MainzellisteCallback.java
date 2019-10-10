@@ -4,12 +4,9 @@ import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.pseudonymisierung.mainzelliste.Servers;
-import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -35,17 +32,25 @@ import java.util.List;
 
 public class MainzellisteCallback {
 
-    /** The logging instance */
+    /**
+     * The logging instance
+     */
     private Logger logger = Logger.getLogger(this.getClass());
 
-    /** The TLS context depending on the configuration parameters */
+    /**
+     * The TLS context depending on the configuration parameters
+     */
     private SSLConnectionSocketFactory sslsf;
 
-    /** Api Version which should be used */
+    /**
+     * Api Version which should be used
+     */
     private Servers.ApiVersion apiVersion;
 
     // TODO: this could be checked to be a real url
-    /** The url to which the callback should be send */
+    /**
+     * The url to which the callback should be send
+     */
     private String url;
     private HttpPost callbackRequest;
 
@@ -54,7 +59,7 @@ public class MainzellisteCallback {
 
     /**
      * represents a callback executed by the Mainzelliste
-     *   TODO: describe behaviour of MainzellisteCallback here
+     * TODO: describe behaviour of MainzellisteCallback here
      */
     public MainzellisteCallback() {
         try {
@@ -73,31 +78,27 @@ public class MainzellisteCallback {
             sslsf = new SSLConnectionSocketFactory(sslCtx, new String[]{"TLSv1", "TLSv1.1", "TLSv1.2"}, null,
                     SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
-        } catch (KeyStoreException ex) {
-            Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
-        } catch (KeyManagementException ex) {
+        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
             Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
         }
     }
 
-    public MainzellisteCallback apiVersion(Servers.ApiVersion apiVersion){
+    public MainzellisteCallback apiVersion(Servers.ApiVersion apiVersion) {
         this.apiVersion = apiVersion;
         return this;
     }
 
-    public MainzellisteCallback url (String url){
+    public MainzellisteCallback url(String url) {
         this.url = url;
         return this;
     }
 
-    public MainzellisteCallback tokenId (String tokenId){
+    public MainzellisteCallback tokenId(String tokenId) {
         this.tokenId = tokenId;
         return this;
     }
 
-    public MainzellisteCallback returnIds (List<ID> returnIds){
+    public MainzellisteCallback returnIds(List<ID> returnIds) {
         this.returnIds = returnIds;
         return this;
     }
@@ -111,41 +112,53 @@ public class MainzellisteCallback {
         HttpPost callbackReq = new HttpPost(this.url);
         callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
         callbackReq.setHeader("User-Agent", Config.instance.getUserAgentString());
-        JSONObject reqBody = buildJson(this.tokenId, this.returnIds);
-        StringEntity reqEntity = new StringEntity(reqBody.toString());
-        reqEntity.setContentType("application/json");
+        HttpEntity reqEntity = buildRequestEntity();
         callbackReq.setEntity(reqEntity);
         this.callbackRequest = callbackReq;
         return this;
     }
 
-    private JSONObject buildJson(String tokenId, List<ID> returnIds) throws JSONException {
-        // Building the JSON
-        JSONObject reqBody = new JSONObject();
+    /**
+     * Builds the callback body
+     * currently only supports JSON as return type
+     * @return
+     * @throws JSONException
+     * @throws UnsupportedEncodingException
+     */
+    private StringEntity buildRequestEntity() throws JSONException, UnsupportedEncodingException{
 
-        if (apiVersion.majorVersion >= 2) {
-            // Collect ids for Callback object
-            JSONArray idsJson = new JSONArray();
-
-            for (ID thisID : returnIds) {
-                idsJson.put(thisID.toJSON());
-            }
-
-            reqBody.put("tokenId", tokenId)
-                    .put("ids", idsJson);
-
-        } else {  // API version 1.0
-            if (returnIds.size() > 1) {
+        // Check if request is valid
+        if (apiVersion.majorVersion == 1) {
+            if (this.returnIds.size() > 1)
                 throw new WebApplicationException(
                         Response.status(Response.Status.BAD_REQUEST)
                                 .entity("Selected API version 1.0 permits only one ID in callback, " +
                                         "but several were requested. Set mainzellisteApiVersion to a " +
                                         "value >= 2.0 or request only one ID type in token.")
                                 .build());
-            }
-            reqBody.put("tokenId", tokenId)
-                    .put("id", returnIds.get(0).getIdString());
         }
-        return reqBody;
+
+        // Building the JSON
+        JSONObject reqBody = new JSONObject();
+
+        if (tokenId != null)
+            reqBody.put("tokenId", this.tokenId);
+
+        if (returnIds != null && returnIds.size() != 0) {
+            JSONArray idsJson = new JSONArray();
+            for (ID id : this.returnIds) {
+                idsJson.put(id.toJSON());
+            }
+            if(apiVersion.majorVersion == 1)
+                reqBody.put("id", this.returnIds.get(0).getIdString());
+            else
+                reqBody.put("ids", idsJson);
+        }
+
+        // Parse JSON to Request Entity
+        StringEntity reqEntity = new StringEntity(reqBody.toString());
+        reqEntity.setContentType("application/json");
+
+        return reqEntity;
     }
 }
