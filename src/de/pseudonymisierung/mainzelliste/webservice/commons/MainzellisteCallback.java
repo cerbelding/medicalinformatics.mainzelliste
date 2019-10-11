@@ -47,7 +47,6 @@ public class MainzellisteCallback {
      */
     private Servers.ApiVersion apiVersion;
 
-    // TODO: this could be checked to be a real url
     /**
      * The url to which the callback should be send
      */
@@ -58,8 +57,18 @@ public class MainzellisteCallback {
     private List<ID> returnIds;
 
     /**
-     * represents a callback executed by the Mainzelliste
-     * TODO: describe behaviour of MainzellisteCallback here
+     * represents a callback executed by the Mainzelliste.
+     * Use like this:
+     * <ol>
+     *    <li>Create with {@code MainzellisteCallback mainzellisteCallback = new MainzellisteCallback()}</li>
+     *    <li>Set url and apiVersion:<p>{@code mainzellisteCallback = mainzellisteCallback.url("http://example.callback.url").apiVersion(aSpecificMainzellisteApiVersion)}</p></li>
+     *    <li>Set content of the Callback:<p>{@code mainzellisteCallback = mainzellisteCallback.tokenId(token.getIdString()).returnIds(someIdsToReturn)}</p></li>
+     *    <li>Build the Callback: {@code mainzellisteCallback = mainzellisteCallback.build()}</li>
+     *    <li>Execute: {@Code HttpResponse httpResponse = mainzelliste.execute()}</li>
+     *    <li>Process the Response received</li>
+     * </ol>
+     * Too enable Callbacks on http Resources, callback.allowedFormat in Mainzelliste config file must be adjusted.
+     * It is also possible to use selfsigned certificates with: callback.allowSelfsigned = true
      */
     public MainzellisteCallback() {
         try {
@@ -83,31 +92,63 @@ public class MainzellisteCallback {
         }
     }
 
+    /**
+     * Sets the apiVersion of this MainzellisteCallback.
+     * @param apiVersion {@link de.pseudonymisierung.mainzelliste.Servers.ApiVersion} a valid Mainzelliste Version.
+     * @return {@link MainzellisteCallback} the updated instance of this object
+     */
     public MainzellisteCallback apiVersion(Servers.ApiVersion apiVersion) {
         this.apiVersion = apiVersion;
         return this;
     }
 
+    /**
+     * Sets the url for this MainzellisteCallback. A Post Request will be executed to this Url.
+     * @param url
+     * @return {@link MainzellisteCallback} the updated instance of this object
+     */
     public MainzellisteCallback url(String url) {
         this.url = url;
         return this;
     }
 
+    /**
+     * Sets the tokenId for this MainzellisteCallback. Then executed the MainzellisteCallback will send a PostRequest which contains this tokenId.
+     * @param tokenId
+     * @return {@link MainzellisteCallback} the updated instance of this object
+     */
     public MainzellisteCallback tokenId(String tokenId) {
         this.tokenId = tokenId;
         return this;
     }
 
+    /**
+     * Sets the returnIds for this MainzellisteCallback. Then executed the MainzellisteCallback will send a PostRequest which contains this List of Ids.
+     * @param returnIds A {@link List} of type {@link ID} which contains the IDs that should be send with this callback
+     * @return {@link MainzellisteCallback} the updated instance of this object
+     */
     public MainzellisteCallback returnIds(List<ID> returnIds) {
         this.returnIds = returnIds;
         return this;
     }
 
+    /**
+     * execute this Callback. The build method must be called before.
+     * @return {@link HttpResponse} then the callback was successful
+     * @throws IOException then the callback fails
+     */
     public HttpResponse execute() throws IOException {
+        logger.info("Executing Mainzelliste Callback on url " + this.url + " and apiVersion " + this.apiVersion.majorVersion + "." + this.apiVersion.minorVersion + ". Tokenid is " + this.tokenId);
         HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
         return httpClient.execute(this.callbackRequest);
     }
 
+    /**
+     * build this callback. This method will generate the JSON and build the {@link HttpPost} Request
+     * @return {@link MainzellisteCallback} - With the prepared {@link HttpPost}
+     * @throws JSONException then the json could not be serialized
+     * @throws UnsupportedEncodingException
+     */
     public MainzellisteCallback build() throws JSONException, UnsupportedEncodingException {
         HttpPost callbackReq = new HttpPost(this.url);
         callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
@@ -156,6 +197,7 @@ public class MainzellisteCallback {
         }
 
         // Parse JSON to Request Entity
+        logger.debug("Building StringEntity for Callback on url " + this.url + " with json " + reqBody.toString());
         StringEntity reqEntity = new StringEntity(reqBody.toString());
         reqEntity.setContentType("application/json");
 
