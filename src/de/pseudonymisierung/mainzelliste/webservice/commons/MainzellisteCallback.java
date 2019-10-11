@@ -1,9 +1,6 @@
 package de.pseudonymisierung.mainzelliste.webservice.commons;
 
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.ID;
-import de.pseudonymisierung.mainzelliste.PatientBackend;
-import de.pseudonymisierung.mainzelliste.Servers;
+import de.pseudonymisierung.mainzelliste.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -55,6 +52,7 @@ public class MainzellisteCallback {
 
     private String tokenId;
     private List<ID> returnIds;
+    private JSONObject returnFields;
 
     /**
      * represents a callback executed by the Mainzelliste.
@@ -170,7 +168,7 @@ public class MainzellisteCallback {
 
         // Check if request is valid
         if (apiVersion.majorVersion == 1) {
-            if (this.returnIds.size() > 1)
+            if (this.returnIds != null && this.returnIds.size() > 1)
                 throw new WebApplicationException(
                         Response.status(Response.Status.BAD_REQUEST)
                                 .entity("Selected API version 1.0 permits only one ID in callback, " +
@@ -196,11 +194,20 @@ public class MainzellisteCallback {
                 json.put("ids", idsJson);
         }
 
+        if (returnFields != null){
+            json.put("fields", this.returnFields);
+        }
+
         // Parse JSON to Request Entity
         logger.debug("Building StringEntity for Callback on url " + this.url + " with json " + json.toString());
         StringEntity reqEntity = new StringEntity(json.toString());
         reqEntity.setContentType("application/json");
 
         return reqEntity;
+    }
+
+    public MainzellisteCallback returnFields(JSONObject returnFields) {
+        this.returnFields = returnFields;
+        return this;
     }
 }

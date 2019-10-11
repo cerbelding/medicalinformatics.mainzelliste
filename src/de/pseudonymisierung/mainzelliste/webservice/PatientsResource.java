@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -46,6 +47,8 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import de.pseudonymisierung.mainzelliste.exceptions.*;
+import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallback;
+import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -83,14 +86,14 @@ public class PatientsResource {
     /**
      * Get a list of patients.
      *
-     * @param req     The injected HttpServletRequest.
+     * @param request     The injected HttpServletRequest.
      * @param tokenId Id of a valid "readPatients" token.
      * @return A JSON result as specified in the API documentation.
      * @throws UnauthorizedException If no token is provided.
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllPatients(@Context HttpServletRequest req,
+    public Response getAllPatients(@Context HttpServletRequest request,
                                    @QueryParam("tokenId") String tokenId) throws UnauthorizedException {
 
         logger.info("Received GET /patients");
@@ -99,7 +102,7 @@ public class PatientsResource {
          * If a token (type "readPatients") is provided, use this
          */
         if (tokenId != null)
-            return this.getPatientsToken(tokenId);
+            return this.getPatientsToken(tokenId,request);
 
         else
             throw new UnauthorizedException();
@@ -322,7 +325,8 @@ public class PatientsResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientsToken(
-            @PathParam("tid") String tid) {
+            @PathParam("tid") String tid,
+            @Context HttpServletRequest request) {
         logger.debug("@GET getPatientsToken");
         logger.info("Received request to get patient with token " + tid);
         // Check if token exists and has the right type. 
@@ -416,10 +420,29 @@ public class PatientsResource {
                 }
             }
 
-
             ret.put(thisPatient);
         }
 
+        // Callback
+        String callback = token.getDataItemString("callback");
+        if (callback != null && callback.length() > 0) {
+            MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
+            try {
+                mainzellisteCallback
+                        .url(callback)
+                        .apiVersion(Servers.instance.getRequestApiVersion(request))
+                        .tokenId(token.getId())
+                        .returnFields(ret.getJSONObject(0).getJSONObject("fields"))
+                        .build()
+                        .execute();
+            } catch (IOException ioe) {
+                logger.error("Error while sending callback to url " + callback, ioe);
+                ioe.printStackTrace();
+            } catch (JSONException jsone) {
+                logger.error("Couldn't serialize content for callback on url " + callback, jsone);
+                jsone.printStackTrace();
+            }
+        }
         return Response.ok().entity(ret).build();
     }
 

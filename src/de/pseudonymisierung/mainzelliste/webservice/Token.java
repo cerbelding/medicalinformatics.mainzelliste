@@ -395,6 +395,11 @@ public class Token {
 			}
 		}
 
+		// Check callback URL
+		String callback = this.getDataItemString("callback");
+		if (callback != null && !callback.equals(""))
+			MainzellisteCallbackUtil.checkCallbackUrl(callback);
+
 		// Check fields
 		checkResultFields();
 		checkResultIds();
