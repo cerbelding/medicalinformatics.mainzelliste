@@ -40,7 +40,7 @@ public class MainzellisteCallback {
     /**
      * The TLS context depending on the configuration parameters
      */
-    private SSLConnectionSocketFactory sslsf;
+    private SSLConnectionSocketFactory sslSocketFactory;
 
     /**
      * Api Version which should be used
@@ -74,17 +74,17 @@ public class MainzellisteCallback {
         try {
 
             SSLContextBuilder builder = new SSLContextBuilder();
-            SSLContext sslCtx;
+            SSLContext sslContext;
 
             if ("true".equals(Config.instance.getProperty("callback.allowSelfsigned"))) {
                 builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-                sslCtx = builder.build();
+                sslContext = builder.build();
 
             } else {
-                sslCtx = SSLContexts.createSystemDefault();
+                sslContext = SSLContexts.createSystemDefault();
             }
 
-            sslsf = new SSLConnectionSocketFactory(sslCtx, new String[]{"TLSv1", "TLSv1.1", "TLSv1.2"}, null,
+            sslSocketFactory = new SSLConnectionSocketFactory(sslContext, new String[]{"TLSv1", "TLSv1.1", "TLSv1.2"}, null,
                     SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
@@ -139,7 +139,7 @@ public class MainzellisteCallback {
      */
     public HttpResponse execute() throws IOException {
         logger.info("Executing Mainzelliste Callback on url " + this.url + " and apiVersion " + this.apiVersion.majorVersion + "." + this.apiVersion.minorVersion + ". Tokenid is " + this.tokenId);
-        HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+        HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslSocketFactory).build();
         return httpClient.execute(this.callbackRequest);
     }
 
@@ -150,12 +150,12 @@ public class MainzellisteCallback {
      * @throws UnsupportedEncodingException
      */
     public MainzellisteCallback build() throws JSONException, UnsupportedEncodingException {
-        HttpPost callbackReq = new HttpPost(this.url);
-        callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
-        callbackReq.setHeader("User-Agent", Config.instance.getUserAgentString());
+        HttpPost callbackRequest = new HttpPost(this.url);
+        callbackRequest.setHeader("Content-Type", MediaType.APPLICATION_JSON);
+        callbackRequest.setHeader("User-Agent", Config.instance.getUserAgentString());
         HttpEntity reqEntity = buildRequestEntity();
-        callbackReq.setEntity(reqEntity);
-        this.callbackRequest = callbackReq;
+        callbackRequest.setEntity(reqEntity);
+        this.callbackRequest = callbackRequest;
         return this;
     }
 
@@ -180,10 +180,10 @@ public class MainzellisteCallback {
         }
 
         // Building the JSON
-        JSONObject reqBody = new JSONObject();
+        JSONObject json = new JSONObject();
 
         if (tokenId != null)
-            reqBody.put("tokenId", this.tokenId);
+            json.put("tokenId", this.tokenId);
 
         if (returnIds != null && returnIds.size() != 0) {
             JSONArray idsJson = new JSONArray();
@@ -191,14 +191,14 @@ public class MainzellisteCallback {
                 idsJson.put(id.toJSON());
             }
             if(apiVersion.majorVersion == 1)
-                reqBody.put("id", this.returnIds.get(0).getIdString());
+                json.put("id", this.returnIds.get(0).getIdString());
             else
-                reqBody.put("ids", idsJson);
+                json.put("ids", idsJson);
         }
 
         // Parse JSON to Request Entity
-        logger.debug("Building StringEntity for Callback on url " + this.url + " with json " + reqBody.toString());
-        StringEntity reqEntity = new StringEntity(reqBody.toString());
+        logger.debug("Building StringEntity for Callback on url " + this.url + " with json " + json.toString());
+        StringEntity reqEntity = new StringEntity(json.toString());
         reqEntity.setContentType("application/json");
 
         return reqEntity;
