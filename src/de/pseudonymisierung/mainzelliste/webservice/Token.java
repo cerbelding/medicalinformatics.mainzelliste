@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Response.Status;
 
+import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -309,21 +310,8 @@ public class Token {
 
 		// Check callback URL
 		String callback = this.getDataItemString("callback");
-		if (callback != null && !callback.equals("")) {
-			if (!Pattern.matches(
-					Config.instance.getProperty("callback.allowedFormat"),
-					callback)) {
-				throw new InvalidTokenException("Callback address " + callback
-						+ " does not conform to allowed format!");
-			}
-			try {
-				@SuppressWarnings("unused")
-				URI callbackURI = new URI(callback);
-			} catch (URISyntaxException e) {
-				throw new InvalidTokenException("Callback address " + callback
-						+ " is not a valid URI!");
-			}
-		}
+		if (callback != null && !callback.equals(""))
+			MainzellisteCallbackUtil.checkCallbackUrl(callback);
 
 		// Check redirect URL
 		if (this.hasDataItem("redirect")) {
