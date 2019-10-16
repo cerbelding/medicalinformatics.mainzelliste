@@ -48,7 +48,6 @@ import javax.ws.rs.core.UriInfo;
 
 import de.pseudonymisierung.mainzelliste.exceptions.*;
 import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallback;
-import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -432,7 +431,7 @@ public class PatientsResource {
                         .url(callback)
                         .apiVersion(Servers.instance.getRequestApiVersion(request))
                         .tokenId(token.getId())
-                        .returnFields(ret.getJSONObject(0).getJSONObject("fields"))
+                        .addPatient(ret.getJSONObject(0))
                         .build()
                         .execute();
             } catch (IOException ioe) {
