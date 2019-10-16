@@ -275,6 +275,7 @@ result.printIdat = true
 # - showSessionIds: see own sessions via GET /sessions
 # - createSession: create session via POST /sessions
 # - manageSessionPatients: manage the set of patients related to a session 
+# - callback: the permission to allow callbacks
 #	(operations on /sessions/{sessionid}/patients)
 # 
 # - createToken: create tokens -- in addition, permission "tt_x" is req'd, where x is one of these TOKEN TYPES:

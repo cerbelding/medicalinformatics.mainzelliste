@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Response.Status;
 
+import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
@@ -310,8 +311,12 @@ public class Token {
 
 		// Check callback URL
 		String callback = this.getDataItemString("callback");
-		if (callback != null && !callback.equals(""))
+		if (callback != null && !callback.equals("") && Servers.instance.hasServerPermission(getParentServerName(), "callback"))
 			MainzellisteCallbackUtil.checkCallbackUrl(callback);
+		String redirect = this.getDataItemString("redirect");
+		if (redirect != null && !redirect.equals("") && Servers.instance.hasServerPermission(getParentServerName(), "redirect")){
+			// @Florian paste code here
+		}
 
 		// Check redirect URL
 		if (this.hasDataItem("redirect")) {
