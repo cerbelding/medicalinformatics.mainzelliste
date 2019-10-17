@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.webservice.common;
+package de.pseudonymisierung.mainzelliste.webservice.commons;
 
 import com.sun.jersey.api.uri.UriTemplate;
 import org.apache.log4j.Logger;

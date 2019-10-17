@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.webservice.common;
+package de.pseudonymisierung.mainzelliste.webservice.commons;
 
 import de.pseudonymisierung.mainzelliste.webservice.Token;
 import org.apache.log4j.Logger;
