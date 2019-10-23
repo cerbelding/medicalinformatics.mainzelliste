@@ -45,6 +45,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.exceptions.*;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
@@ -56,14 +57,6 @@ import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.spi.resource.Singleton;
 
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.Field;
-import de.pseudonymisierung.mainzelliste.ID;
-import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
-import de.pseudonymisierung.mainzelliste.IDRequest;
-import de.pseudonymisierung.mainzelliste.Patient;
-import de.pseudonymisierung.mainzelliste.PatientBackend;
-import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
@@ -625,6 +618,64 @@ public class PatientsResource {
         }
 
         return Response.status(Status.NO_CONTENT).build();
+    }
+
+    /**
+     *
+     * @param tokenId
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Path("bestMatch/{tokenId}")
+    public Response getBestMatch(@PathParam("tokenId") String tokenId, MultivaluedMap<String, String> form) throws JSONException {
+        logger.debug("getBestMatch");
+
+        Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
+
+        //TODO: Change to bestmatch token
+        AddPatientToken addPatientToken = (AddPatientToken) Servers.instance.getTokenByTid(tokenId);
+
+        for (String key : addPatientToken.getFields().keySet())
+        {
+            form.add(key, addPatientToken.getFields().get(key));
+        }
+
+        Validator.instance.validateForm(form, true);
+
+
+        //Compare Fields from Config with requested Fields a
+        for(String s: Config.instance.getFieldKeys()){
+            if (form.containsKey(s)) {
+                try {
+                    chars.put(s, Field.build(s, form.getFirst(s)));
+                } catch (WebApplicationException we) {
+                    logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
+                    throw we;
+                }
+            }
+        }
+
+        Patient patient = new Patient();
+
+        patient.setFields(chars);
+
+        // Normalization, Transformation
+        patient = Config.instance.getRecordTransformer().transform(patient);
+
+        patient.setInputFields(chars);
+
+
+        MatchResult matchResult = Config.instance.getMatcher().match(patient, Persistor.instance.getPatients());
+        logger.info("Bestmatch weight: " + matchResult.getBestMatchedWeight());
+
+
+        JSONObject jsonReturn = new JSONObject().put("bestmatch weight", matchResult.getBestMatchedWeight());
+
+        return Response
+                .status(Status.OK)
+                .entity(jsonReturn)
+                .build();
+
     }
 
 }
