@@ -630,33 +630,14 @@ public class PatientsResource {
     public Response getBestMatch(@PathParam("tokenId") String tokenId, MultivaluedMap<String, String> form) throws JSONException {
         logger.debug("getBestMatch");
 
-        Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
-
-        //TODO: Change to bestmatch token
-        AddPatientToken addPatientToken = (AddPatientToken) Servers.instance.getTokenByTid(tokenId);
-
-        for (String key : addPatientToken.getFields().keySet())
-        {
-            form.add(key, addPatientToken.getFields().get(key));
-        }
+        //add permission checks
+        Servers.instance.getTokenByTid(tokenId).checkTokenType("bestMatch");
 
         Validator.instance.validateForm(form, true);
 
-
-        //Compare Fields from Config with requested Fields a
-        for(String s: Config.instance.getFieldKeys()){
-            if (form.containsKey(s)) {
-                try {
-                    chars.put(s, Field.build(s, form.getFirst(s)));
-                } catch (WebApplicationException we) {
-                    logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
-                    throw we;
-                }
-            }
-        }
+        Map<String, Field<?>> chars = PatientBackend.instance.mapMapWithConfigFields(form);
 
         Patient patient = new Patient();
-
         patient.setFields(chars);
 
         // Normalization, Transformation
@@ -677,5 +658,8 @@ public class PatientsResource {
                 .build();
 
     }
+
+
+
 
 }
