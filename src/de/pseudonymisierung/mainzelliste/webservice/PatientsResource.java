@@ -308,21 +308,21 @@ public class PatientsResource {
     /**
      * Get patients via "readPatient" token.
      *
-     * @param tid Id of a valid "readPatient" token.
+     * @param tokenId Id of a valid "readPatient" token.
      * @return A JSON result as specified in the API documentation.
      */
-    @Path("/tokenId/{tid}")
+    @Path("/tokenId/{tokenId}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientsToken(
-            @PathParam("tid") String tid) {
+            @PathParam("tokenId") String tokenId) {
         logger.debug("@GET getPatientsToken");
-        logger.info("Received request to get patient with token " + tid);
+        logger.info("Received request to get patient with token " + tokenId);
         // Check if token exists and has the right type. 
         // Validity of token is checked upon creation
-        Token token = Servers.instance.getTokenByTid(tid);
+        Token token = Servers.instance.getTokenByTid(tokenId);
         if (token == null) {
-            logger.info("No token with id " + tid + " found");
+            logger.info("No token with id " + tokenId + " found");
             throw new InvalidTokenException("Please supply a valid 'readPatients' token.", Status.UNAUTHORIZED);
         }
 
@@ -626,12 +626,12 @@ public class PatientsResource {
      */
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Path("bestMatch/{tokenId}")
+    @Path("checkMatch/{tokenId}")
     public Response getBestMatch(@PathParam("tokenId") String tokenId, MultivaluedMap<String, String> form) throws JSONException {
-        logger.debug("getBestMatch");
+        logger.debug("checkMatch" + "tokenId: " +  tokenId);
 
         //add permission checks
-        Servers.instance.getTokenByTid(tokenId).checkTokenType("bestMatch");
+        Servers.instance.getTokenByTid(tokenId).checkTokenType("checkMatch");
 
         Validator.instance.validateForm(form, true);
 
@@ -639,22 +639,20 @@ public class PatientsResource {
 
         Patient patient = new Patient();
         patient.setFields(chars);
-
         // Normalization, Transformation
         patient = Config.instance.getRecordTransformer().transform(patient);
-
         patient.setInputFields(chars);
-
 
         MatchResult matchResult = Config.instance.getMatcher().match(patient, Persistor.instance.getPatients());
         logger.info("Bestmatch weight: " + matchResult.getBestMatchedWeight());
 
+        JSONArray jsonArray = new JSONArray();
+        JSONObject jsonWeightObject = new JSONObject().put("weight", matchResult.getBestMatchedWeight());
 
-        JSONObject jsonReturn = new JSONObject().put("bestmatch weight", matchResult.getBestMatchedWeight());
-
+        jsonArray.put(jsonWeightObject);
         return Response
                 .status(Status.OK)
-                .entity(jsonReturn)
+                .entity(jsonArray)
                 .build();
 
     }
