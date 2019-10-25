@@ -71,6 +71,7 @@ public class Token {
 	 * Create emtpy instance. Used internally only.
 	 */
 	Token() {
+	    this.id = UUID.randomUUID().toString();
 	}
 
 	/**
@@ -83,8 +84,8 @@ public class Token {
 	 * @param type
 	 *            The token type.
 	 */
-	public Token(String tid, String type) {
-		this.id = tid;
+	public Token(String type) {
+		this.id = UUID.randomUUID().toString();
 		this.type = type;
 		this.data = new HashMap<String, Object>();
 	}

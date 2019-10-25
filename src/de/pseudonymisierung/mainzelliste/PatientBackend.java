@@ -138,7 +138,7 @@ public enum PatientBackend {
 					throw new Error();
 				}
 
-				t = new AddPatientToken(null);
+				t = new AddPatientToken();
 				Servers.instance.registerToken(s.getId(), t);
 				tokenId = t.getId();
 			} else {

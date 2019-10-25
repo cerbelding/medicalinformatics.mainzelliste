@@ -44,6 +44,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 
@@ -142,7 +144,7 @@ public enum Servers {
 
 		if (Config.instance.getProperty("debug") == "true")
 		{
-			Token t = new Token("4223", "addPatient");
+			Token t = new AddPatientToken();
 			tokensByTid.put(t.getId(), t);
 		}
 
@@ -354,14 +356,11 @@ public enum Servers {
 	 *            The token to register.
 	 */
 	public void registerToken(String sessionId, Token t) {
-		Session s = getSession(sessionId);
-		String tid = UUID.randomUUID().toString();
-		t.setId(tid);
-		t.setURI(s.getURI().resolve("tokens/" + tid));
-
+	    // register token in session
 		getSession(sessionId).addToken(t);
 
 		synchronized (tokensByTid) {
+			// register token in server
 			tokensByTid.put(t.getId(), t);
 		}
 	}

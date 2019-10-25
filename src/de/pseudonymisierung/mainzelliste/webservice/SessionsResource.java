@@ -224,6 +224,7 @@ public class SessionsResource {
 
 		Token t = new TokenParam(tp).getValue();
 		t.setParentSessionId(s.getId());
+		t.setURI(s.getURI().resolve("tokens/" + t.getId()));
 		Object parentServerName = req.getSession(true).getAttribute("serverName");
 		if(parentServerName == null) {
 			logger.info("parentServerName can't be derived from this request. Reason could be that JSESSIONID is not being sent, or the Tomcat servlet context is badly configured (e.g. SSL enabled/disabled), see server.xml  ");
