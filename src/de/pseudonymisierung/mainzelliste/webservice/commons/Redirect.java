@@ -2,7 +2,10 @@ package de.pseudonymisierung.mainzelliste.webservice.commons;
 
 import com.sun.jersey.api.uri.UriTemplate;
 import org.apache.log4j.Logger;
+import com.sun.jersey.api.uri.UriComponent;
 
+
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Map;
@@ -32,6 +35,22 @@ public class Redirect {
         return Response.status(javax.ws.rs.core.Response.Status.SEE_OTHER)
                 .location(this.redirectURI)
                 .build();
+    }
+
+    /**
+     * Returns the redirect {@link URI}
+     * @return {@link URI} - the redirect URI
+     */
+    public URI getRedirectURI(){
+        return this.redirectURI;
+    }
+    
+    /**
+     * Returns all redirect parameters
+     */
+    public MultivaluedMap<String, String> getRedirectParams(){
+        MultivaluedMap<String, String> redirectParams = UriComponent.decodeQuery(this.redirectURI, true);
+        return redirectParams;
     }
 
 

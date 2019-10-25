@@ -26,7 +26,6 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
-import com.sun.jersey.api.uri.UriComponent;
 import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.spi.resource.Singleton;
@@ -35,9 +34,10 @@ import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.*;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
-import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallback;
-import de.pseudonymisierung.mainzelliste.webservice.commons.PermissionUtil;
+import de.pseudonymisierung.mainzelliste.webservice.commons.*;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -49,7 +49,6 @@ import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -76,8 +75,8 @@ public class PatientsResource {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllPatients(@Context HttpServletRequest request,
-                                   @QueryParam("tokenId") String tokenId) throws UnauthorizedException {
+    public Response getAllPatients(@Context HttpServletRequest request, @QueryParam("tokenId") String tokenId)
+            throws UnauthorizedException {
 
         logger.info("Received GET /patients");
 
@@ -91,7 +90,6 @@ public class PatientsResource {
             throw new UnauthorizedException();
     }
 
-
     /**
      * Create a new patient. Interface for web browser.
      *
@@ -104,16 +102,15 @@ public class PatientsResource {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces({MediaType.TEXT_HTML, MediaType.WILDCARD})
-    public synchronized Response newPatientBrowser(
-            @QueryParam("tokenId") String tokenId,
-            @QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion,
-            MultivaluedMap<String, String> form,
-            @Context HttpServletRequest request) {
+    public synchronized Response newPatientBrowser(@QueryParam("tokenId") String tokenId,
+                                                   @QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion, MultivaluedMap<String, String> form,
+                                                   @Context HttpServletRequest request) {
         if (PermissionUtil.checkTokenPermission(tokenId)) {
             try {
                 logger.debug("@POST newPatientBrowser");
                 Token token = Servers.instance.getTokenByTid(tokenId);
-                IDRequest createRet = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request));
+                IDRequest createRet = PatientBackend.instance.createNewPatient(tokenId, form,
+                        Servers.instance.getRequestApiVersion(request));
                 Set<ID> ids = createRet.getRequestedIds();
                 MatchResult result = createRet.getMatchResult();
                 Map<String, Object> map = new HashMap<String, Object>();
@@ -125,45 +122,11 @@ public class PatientsResource {
                     map.put("readonly", "true");
                     map.put("tokenId", tokenId);
                     map.put("mainzellisteApiVersion", mainzellisteApiVersion);
-                    return Response.status(Status.CONFLICT)
-                            .entity(new Viewable("/unsureMatch.jsp", map)).build();
+                    return Response.status(Status.CONFLICT).entity(new Viewable("/unsureMatch.jsp", map)).build();
                 } else {
-                    if (token != null && token.getData() != null && token.getData().containsKey("redirect")) {
-                        UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
-                        HashMap<String, String> templateVarMap = new HashMap<String, String>();
-                        for (String templateVar : redirectURITempl.getTemplateVariables()) {
-                            if (templateVar.equals("tokenId")) {
-                                templateVarMap.put(templateVar, tokenId);
-                            } else {
-                                ID thisID = createRet.getAssignedPatient().getId(templateVar);
-                                String idString = thisID.getIdString();
-                                templateVarMap.put(templateVar, idString);
-                            }
-                        }
-                        try {
-                            URI redirectURI = new URI(redirectURITempl.createURI(templateVarMap));
-                            String showResult = Config.instance.getProperty("result.show");
-                            if (showResult != null && !Boolean.parseBoolean(showResult)) {
-                                return Response.status(Status.SEE_OTHER)
-                                        .location(redirectURI)
-                                        .build();
-                            }
-                            // Remove query parameters and pass them to JSP. The redirect is put
-                            // into the "action" tag of a form and the parameters are passed as
-                            // hidden fields
-                            MultivaluedMap<String, String> queryParams = UriComponent.decodeQuery(redirectURI, true);
-                            map.put("redirect", redirectURI);
-                            map.put("redirectParams", queryParams);
-                            //return Response.status(Status.SEE_OTHER).location(redirectURI).build();
-                        } catch (URISyntaxException e) {
-                            // Wird auch beim Anlegen des Tokens geprüft.
-                            throw new InternalErrorException("Die übergebene Redirect-URL " + redirectURITempl.getTemplate() + "ist ungültig!");
-                        }
-                    }
-
                     // If Idat are to be redisplayed in the result form...
                     if (Boolean.parseBoolean(Config.instance.getProperty("result.printIdat"))) {
-                        //...copy input to JSP
+                        // ...copy input to JSP
                         for (String key : form.keySet()) {
                             map.put(key, form.getFirst(key));
                         }
@@ -192,17 +155,77 @@ public class PatientsResource {
                         }
                         map.put("bestMatch", bestMatch);
                     }
+                    // Callback request
+                    String callback = token.getDataItemString("callback");
+                    if (callback != null && callback.length() > 0) {
+                        MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
+                        try {
+                            logger.debug("Sending request to callback " + callback);
+                            HttpResponse response = mainzellisteCallback
+                                    .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
+                                    .tokenId(token.getId()).returnIds(ids).build().execute();
+                            StatusLine sline = response.getStatusLine();
+                            // Accept callback if OK, CREATED or ACCEPTED is returned
+                            if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
+                                logger.error("Received invalid status form mdat callback: " + response.getStatusLine());
+                                throw new InternalErrorException("Request to callback failed!");
+                            }
+                        } catch (JSONException jsone) {
+                            logger.error("Couldn't serialize JSON in Callback for url " + callback, jsone);
+                            jsone.printStackTrace();
+                        } catch (IOException ioe) {
+                            logger.error("Couldn't execute Callback for url " + callback, ioe);
+                            ioe.printStackTrace();
+                        }
+                    }
+                    String redirectRequest = token.getDataItemString("redirect");
+                    if (redirectRequest != null && redirectRequest.length() > 0) {
+                        UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
+                        List<String> templateVariables = redirectURITempl.getTemplateVariables();
+                        List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
+
+                        Redirect redirect = new RedirectBuilder().setTokenId(token.getId())
+                                .setMappedIdTypesdAndIds(requestedIds, createRet).setTemplateURI(redirectURITempl)
+                                .build();
+
+                        if (templateVariables.contains("tokenId")
+                                && !Boolean.parseBoolean(Config.instance.getProperty("result.show"))) {
+                            return redirect.execute();
+                        } else {
+                            // Remove query parameters and pass them to JSP. The redirect is put
+                            // into the "action" tag of a form and the parameters are passed as
+                            // hidden fields
+                            // TODO: generate for frontend
+                            map.put("redirect", redirect.getRedirectURI());
+                            map.put("redirectParams", redirect.getRedirectParams());
+                            return Response.ok(new Viewable("/patientCreated.jsp", map)).build();
+                        }
+                        // Remove query parameters and pass them to JSP. The redirect is put
+                        // into the "action" tag of a form and the parameters are passed as
+                        // hidden fields
+                        // TODO: generate for frontend
+                        // URI redirectURI = new URI(redirectURITempl.createURI(templateVarMap));
+                        // String showResult = Config.instance.getProperty("result.show");
+                        // if (showResult != null && !Boolean.parseBoolean(showResult)) {
+                        //     return Response.status(Status.SEE_OTHER).location(redirectURI).build();
+                        // }
+                        // MultivaluedMap<String, String> queryParams = UriComponent.decodeQuery(redirectURI, true);
+                        // map.put("redirect", redirectURI);
+                        // map.put("redirectParams", queryParams);
+                    }
+
                     return Response.ok(new Viewable("/patientCreated.jsp", map)).build();
                 }
 
             } catch (WebApplicationException e) {
                 Map<String, Object> map = new HashMap<String, Object>();
                 map.put("message", e.getResponse().getEntity());
-                return Response.status(e.getResponse().getStatus())
-                        .entity(new Viewable("/errorPage.jsp", map)).build();
+                return Response.status(e.getResponse().getStatus()).entity(new Viewable("/errorPage.jsp", map)).build();
             }
         } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN).entity("Your request is not permitted. You don't have permission to execute this request.").build();
+            return Response.status(HttpStatus.SC_FORBIDDEN)
+                    .entity("Your request is not permitted. You don't have permission to execute this request.")
+                    .build();
         }
     }
 
@@ -219,19 +242,20 @@ public class PatientsResource {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    public synchronized Response newPatientJson(
-            @QueryParam("tokenId") String tokenId,
-            @Context HttpServletRequest request,
-            @Context UriInfo context,
-            MultivaluedMap<String, String> form) throws JSONException {
+    public synchronized Response newPatientJson(@QueryParam("tokenId") String tokenId,
+                                                @Context HttpServletRequest request, @Context UriInfo context, MultivaluedMap<String, String> form)
+            throws JSONException {
         logger.debug("@POST newPatientJson");
         if (PermissionUtil.checkTokenPermission(tokenId)) {
-            IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request));
-            if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.getRequestedIds() == null) {
+            IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form,
+                    Servers.instance.getRequestApiVersion(request));
+            if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH
+                    && response.getRequestedIds() == null) {
                 JSONObject ret = new JSONObject();
                 if (response.getToken().showPossibleMatches()) {
                     JSONArray possibleMatches = new JSONArray();
-                    for (Entry<Double, List<Patient>> possibleMatch : response.getMatchResult().getPossibleMatches().entrySet()) {
+                    for (Entry<Double, List<Patient>> possibleMatch : response.getMatchResult().getPossibleMatches()
+                            .entrySet()) {
                         for (Patient p : possibleMatch.getValue())
                             possibleMatches.put(p.getId(IDGeneratorFactory.instance.getDefaultIDType()).toJSON());
                     }
@@ -240,10 +264,7 @@ public class PatientsResource {
                 ret.put("message", "Unable to definitely determined whether the data refers to an existing or to a new "
                         + "patient. Please check data or resubmit with sureness=true to get a tentative result. Please check"
                         + " documentation for details.");
-                return Response
-                        .status(Status.CONFLICT)
-                        .entity(ret)
-                        .build();
+                return Response.status(Status.CONFLICT).entity(ret).build();
             }
             logger.debug("Accept: " + request.getHeader("Accept"));
             logger.debug("Content-Type: " + request.getHeader("Content-Type"));
@@ -254,56 +275,80 @@ public class PatientsResource {
             if (apiMajorVersion >= 2) {
                 JSONArray ret = new JSONArray();
                 for (ID thisID : newIds) {
-                    URI newUri = context.getBaseUriBuilder()
-                            .path(PatientsResource.class)
-                            .path("/{idtype}/{idvalue}")
+                    URI newUri = context.getBaseUriBuilder().path(PatientsResource.class).path("/{idtype}/{idvalue}")
                             .build(thisID.getType(), thisID.getIdString());
 
-                    ret.put(new JSONObject()
-                            .put("idType", thisID.getType())
-                            .put("idString", thisID.getIdString())
-                            .put("tentative", thisID.isTentative())
-                            .put("uri", newUri));
+                    ret.put(new JSONObject().put("idType", thisID.getType()).put("idString", thisID.getIdString())
+                            .put("tentative", thisID.isTentative()).put("uri", newUri));
                 }
 
-                return Response
-                        .status(Status.CREATED)
-                        .entity(ret)
-                        .build();
+                return Response.status(Status.CREATED).entity(ret).build();
             } else {
                 /*
-                 *  Old api permits only one ID in response. If several
-                 *  have been requested, which one to choose?
+                 * Old api permits only one ID in response. If several have been requested,
+                 * which one to choose?
                  */
                 if (newIds.size() > 1) {
-                    throw new WebApplicationException(
-                            Response.status(Status.BAD_REQUEST)
-                                    .entity("Selected API version 1.0 permits only one ID in response, " +
-                                            "but several were requested. Set mainzellisteApiVersion to a " +
-                                            "value >= 2.0 or request only one ID type in token.")
-                                    .build());
+                    throw new WebApplicationException(Response.status(Status.BAD_REQUEST)
+                            .entity("Selected API version 1.0 permits only one ID in response, "
+                                    + "but several were requested. Set mainzellisteApiVersion to a "
+                                    + "value >= 2.0 or request only one ID type in token.")
+                            .build());
                 }
 
                 ID newId = newIds.get(0);
 
-                URI newUri = context.getBaseUriBuilder()
-                        .path(PatientsResource.class)
-                        .path("/{idtype}/{idvalue}")
+                URI newUri = context.getBaseUriBuilder().path(PatientsResource.class).path("/{idtype}/{idvalue}")
                         .build(newId.getType(), newId.getIdString());
 
-                JSONObject ret = new JSONObject()
-                        .put("newId", newId.getIdString())
-                        .put("tentative", newId.isTentative())
-                        .put("uri", newUri);
+                JSONObject ret = new JSONObject().put("newId", newId.getIdString())
+                        .put("tentative", newId.isTentative()).put("uri", newUri);
 
-                return Response
-                        .status(Status.CREATED)
-                        .entity(ret)
-                        .location(newUri)
-                        .build();
+                Token token = Servers.instance.getTokenByTid(tokenId);
+                String callback = token.getDataItemString("callback");
+                if (callback != null && callback.length() > 0) {
+                    MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
+                    try {
+                        logger.debug("Sending request to callback " + callback);
+                        HttpResponse httpResponse = mainzellisteCallback
+                                .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
+                                .tokenId(token.getId())
+                                // TODO: Check if newIds is really okay
+                                .returnIds(newIds).build().execute();
+                        StatusLine sline = httpResponse.getStatusLine();
+                        // Accept callback if OK, CREATED or ACCEPTED is returned
+                        if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
+                            logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
+                            throw new InternalErrorException("Request to callback failed!");
+                        }
+                    } catch (JSONException jsone) {
+                        logger.error("Couldn't serialize JSON in Callback for url " + callback, jsone);
+                        jsone.printStackTrace();
+                    } catch (IOException ioe) {
+                        logger.error("Couldn't execute Callback for url " + callback, ioe);
+                        ioe.printStackTrace();
+                    }
+                }
+                String redirect = token.getDataItemString("redirect");
+                if (redirect != null && redirect.length() > 0) {
+                    UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
+                    List<String> templateVariables = redirectURITempl.getTemplateVariables();
+                    List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
+
+                    if (templateVariables.contains("tokenId")) {
+                        return new RedirectBuilder().setTokenId(token.getId())
+                                .setMappedIdTypesdAndIds(requestedIds, response).setTemplateURI(redirectURITempl)
+                                .build().execute();
+                    }
+                    ;
+                }
+
+                return Response.status(Status.CREATED).entity(ret).location(newUri).build();
             }
         } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN).entity("Your request is not permitted. You don't have permission to execute this request.").build();
+            return Response.status(HttpStatus.SC_FORBIDDEN)
+                    .entity("Your request is not permitted. You don't have permission to execute this request.")
+                    .build();
         }
     }
 
@@ -316,12 +361,10 @@ public class PatientsResource {
     @Path("/tokenId/{tid}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getPatientsToken(
-            @PathParam("tid") String tid,
-            @Context HttpServletRequest request) {
+    public Response getPatientsToken(@PathParam("tid") String tid, @Context HttpServletRequest request) {
         logger.debug("@GET getPatientsToken");
         logger.info("Received request to get patient with token " + tid);
-        // Check if token exists and has the right type. 
+        // Check if token exists and has the right type.
         // Validity of token is checked upon creation
         Token token = Servers.instance.getTokenByTid(tid);
         if (token == null) {
@@ -385,7 +428,8 @@ public class PatientsResource {
                         List<JSONObject> returnIds = new LinkedList<JSONObject>();
                         for (String thisIdType : idTypes) {
                             ID returnId = patient.getId(thisIdType);
-                            if (returnId != null) returnIds.add(returnId.toJSON());
+                            if (returnId != null)
+                                returnIds.add(returnId.toJSON());
                         }
                         thisPatient.put("ids", returnIds);
                     } catch (JSONException e) {
@@ -397,7 +441,8 @@ public class PatientsResource {
 
                     if (token.getParentServerName() == null) {
                         throw new NoParentServerNameException();
-                    } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIdTypes")) {
+                    } else if (Servers.instance.hasServerPermission(token.getParentServerName(),
+                            "readAllPatientIdTypes")) {
                         try {
                             thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
                         } catch (JSONException e) {
@@ -415,16 +460,12 @@ public class PatientsResource {
 
             // Callback
             String callback = token.getDataItemString("callback");
-            if (callback != null && callback.length() > 0 && Servers.instance.hasServerPermission(token.getParentServerName(), "callback")) {
+            if (callback != null && callback.length() > 0
+                    && Servers.instance.hasServerPermission(token.getParentServerName(), "callback")) {
                 MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
                 try {
-                    mainzellisteCallback
-                            .url(callback)
-                            .apiVersion(Servers.instance.getRequestApiVersion(request))
-                            .tokenId(token.getId())
-                            .addPatients(ret)
-                            .build()
-                            .execute();
+                    mainzellisteCallback.url(callback).apiVersion(Servers.instance.getRequestApiVersion(request))
+                            .tokenId(token.getId()).addPatients(ret).build().execute();
                 } catch (IOException ioe) {
                     logger.error("Error while sending callback to url " + callback, ioe);
                     ioe.printStackTrace();
@@ -434,31 +475,44 @@ public class PatientsResource {
                 }
             }
             String redirect = token.getDataItemString("redirect");
-            if (redirect != null && redirect.length() > 0 && Servers.instance.hasServerPermission(token.getParentServerName(), "redirect")) {
-                // @Florian paste code here
+            if (redirect != null && redirect.length() > 0
+                    && Servers.instance.hasServerPermission(token.getParentServerName(), "redirect")) {
+                UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
+                List<String> templateVariables = redirectURITempl.getTemplateVariables();
+                List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
+                if (templateVariables.contains("tokenId")) {
+                    // TODO: send mapped list of requests?
+//                    if (requests.get(0) instanceof IDRequest) {
+//                        IDRequest idRequest = (IDRequest) requests.get(0);
+//                    return new RedirectBuilder().setTokenId(token.getId())
+//                            .setMappedIdTypesdAndIds(requestedIds, ).setTemplateURI(redirectURITempl)
+//                            .build().execute();
+                } else {
+                    return Response.status(HttpStatus.SC_BAD_REQUEST)
+                            .entity("Couldn't generate redirect because request is not valid").build();
+                }
             }
             return Response.ok().entity(ret).build();
         } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN).entity("Your request is not permitted. You don't have permission to execute this request.").build();
+            return Response.status(HttpStatus.SC_FORBIDDEN)
+                    .entity("Your request is not permitted. You don't have permission to execute this request.")
+                    .build();
         }
     }
 
     private JSONArray getAllIdTypesOfPatient(Patient patient) {
-        return new JSONArray(
-                patient.getIds().stream().map(i -> i.getType()).collect(Collectors.toList()));
+        return new JSONArray(patient.getIds().stream().map(i -> i.getType()).collect(Collectors.toList()));
     }
-
 
     private List<JSONObject> getAllIDsOfPatient(Patient patient) {
 
-        List<JSONObject> returnIds = patient.getIds().stream().map(i -> i.toJSON())
-                .collect(Collectors.toList());
+        List<JSONObject> returnIds = patient.getIds().stream().map(i -> i.toJSON()).collect(Collectors.toList());
         return returnIds;
     }
 
     /**
-     * Edit a patient. Interface for web browsers. The patient to edit is
-     * determined from the given "editPatient" token.
+     * Edit a patient. Interface for web browsers. The patient to edit is determined
+     * from the given "editPatient" token.
      *
      * @param tokenId A valid "editPatient" token.
      * @param form    Input as provided by the HTML form.
@@ -468,8 +522,7 @@ public class PatientsResource {
     @Path("/tokenId/{tokenId}")
     @PUT
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public Response editPatientBrowser(@PathParam("tokenId") String tokenId,
-                                       MultivaluedMap<String, String> form,
+    public Response editPatientBrowser(@PathParam("tokenId") String tokenId, MultivaluedMap<String, String> form,
                                        @Context HttpServletRequest request) {
         logger.debug("@PUT editPatientBrowser");
 
@@ -484,25 +537,24 @@ public class PatientsResource {
                 EditPatientToken t = this.editPatient(tokenId, newFieldValues, request);
 
                 if (t.getRedirect() != null) {
-                    return Response.status(Status.SEE_OTHER)
-                            .header("Location", t.getRedirect().toString())
-                            .build();
+                    return Response.status(Status.SEE_OTHER).header("Location", t.getRedirect().toString()).build();
                 }
                 return Response.ok(new Viewable("/patientEdited.jsp")).build();
             } catch (WebApplicationException e) {
                 Map<String, Object> map = new HashMap<String, Object>();
                 map.put("message", e.getResponse().getEntity());
-                return Response.status(e.getResponse().getStatus())
-                        .entity(new Viewable("/errorPage.jsp", map)).build();
+                return Response.status(e.getResponse().getStatus()).entity(new Viewable("/errorPage.jsp", map)).build();
             }
         } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN).entity("Your request is not permitted. You don't have permission to execute this request.").build();
+            return Response.status(HttpStatus.SC_FORBIDDEN)
+                    .entity("Your request is not permitted. You don't have permission to execute this request.")
+                    .build();
         }
     }
 
     /**
-     * Edit a patient. Interface for software applications. The patient to edit
-     * is determined from the given "editPatient" token.
+     * Edit a patient. Interface for software applications. The patient to edit is
+     * determined from the given "editPatient" token.
      *
      * @param tokenId A valid "editPatient" token.
      * @param data    Input data as JSON object, keys are field names and values the
@@ -513,13 +565,12 @@ public class PatientsResource {
     @Path("/tokenId/{tokenId}")
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response editPatientJSON(@PathParam("tokenId") String tokenId,
-                                    String data,
+    public Response editPatientJSON(@PathParam("tokenId") String tokenId, String data,
                                     @Context HttpServletRequest request) {
         logger.debug("@PUT editPatientJSON");
 
         // Collect fields from input form
-        if(PermissionUtil.checkTokenPermission(tokenId)){
+        if (PermissionUtil.checkTokenPermission(tokenId)) {
             try {
                 JSONObject newFieldValuesJSON = new JSONObject(data);
                 Map<String, String> newFieldValues = new HashMap<String, String>();
@@ -532,54 +583,91 @@ public class PatientsResource {
                         newFieldValues.put(fieldName, newFieldValuesJSON.get(fieldName).toString());
                 }
                 this.editPatient(tokenId, newFieldValues, request);
+                Token token = Servers.instance.getTokenByTid(tokenId);
+                String callback = token.getDataItemString("callback");
+                if (callback != null && callback.length() > 0) {
+                    MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
+                    logger.debug("Sending request to callback " + callback);
+                    HttpResponse httpResponse = mainzellisteCallback
+                            .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
+                            .tokenId(token.getId())
+                            // TODO: Check if newIds is really okay
+                            .build().execute();
+                    StatusLine sline = httpResponse.getStatusLine();
+                    // Accept callback if OK, CREATED or ACCEPTED is returned
+                    if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
+                        logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
+                        throw new InternalErrorException("Request to callback failed!");
+                    }
+                }
+                String redirect = token.getDataItemString("redirect");
+                if (redirect != null && redirect.length() > 0) {
+                    UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
+                    List<String> templateVariables = redirectURITempl.getTemplateVariables();
+                    List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
+                    if (templateVariables.contains("tokenId")) {
+                        return new RedirectBuilder().setTokenId(token.getId()).setTemplateURI(redirectURITempl).build()
+                                .execute();
+                    }
+                }
                 return Response.status(Status.NO_CONTENT).build();
             } catch (JSONException e) {
-                throw new InvalidJSONException(e);
+                logger.error("Couldn't parse json in PatientResource.editPatientJSON", e);
+                e.printStackTrace();
+                throw new InvalidJSONException("Couldn't parse editPatient JSON");
+            } catch (IOException ioe) {
+                logger.error("", ioe);
+                ioe.printStackTrace();
+                throw new InternalErrorException("Executing post request on callback url failed!");
             }
         } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN).entity("Your request is not permitted. You don't have permission to execute this request.").build();
+            return Response.status(HttpStatus.SC_FORBIDDEN)
+                    .entity("Your request is not permitted. You don't have permission to execute this request.")
+                    .build();
         }
 
     }
 
     /**
      * Handles requests to edit a patient (i.e. change IDAT fields). Methods for
-     * specific media types should delegate all processing apart from converting
-     * the input (e.g. form fields) to this function, including error handling
-     * for invalid tokens etc.
+     * specific media types should delegate all processing apart from converting the
+     * input (e.g. form fields) to this function, including error handling for
+     * invalid tokens etc.
      *
      * @param tokenId        Id of a valid editPatient token.
-     * @param newFieldValues Field values to set. Fields that do not appear as map keys are
-     *                       left as they are. In order to delete a field value, provide an
-     *                       empty string.
+     * @param newFieldValues Field values to set. Fields that do not appear as map
+     *                       keys are left as they are. In order to delete a field
+     *                       value, provide an empty string.
      * @param request        The injected HttpServletRequest.
-     * @return The token that is as authorization the patient. Used for retreiving the redirect URL afterwards.
+     * @return The token that is as authorization the patient. Used for retreiving
+     * the redirect URL afterwards.
      */
-    private synchronized EditPatientToken editPatient(String tokenId, Map<String, String> newFieldValues, HttpServletRequest request) {
+    private synchronized EditPatientToken editPatient(String tokenId, Map<String, String> newFieldValues,
+                                                      HttpServletRequest request) {
 
         Token t = Servers.instance.getTokenByTid(tokenId);
         EditPatientToken tt;
         if (t == null || !"editPatient".equals(t.getType())) {
-            logger.info("Token with id " + tokenId + " " + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
+            logger.info("Token with id " + tokenId + " "
+                    + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
             throw new InvalidTokenException("Please supply a valid 'editPatient' token.", Status.UNAUTHORIZED);
         }
-        // synchronize on token 
+        // synchronize on token
         synchronized (t) {
-            /* Get token again and check if it still exist.
-             * This prevents the following race condition:
-             *  1. Thread A gets token t and enters synchronized block
-             *  2. Thread B also gets token t, now waits for A to exit the synchronized block
-             *  3. Thread A deletes t and exits synchronized block
-             *  4. Thread B enters synchronized block with invalid token
+            /*
+             * Get token again and check if it still exist. This prevents the following race
+             * condition: 1. Thread A gets token t and enters synchronized block 2. Thread B
+             * also gets token t, now waits for A to exit the synchronized block 3. Thread A
+             * deletes t and exits synchronized block 4. Thread B enters synchronized block
+             * with invalid token
              */
             tt = (EditPatientToken) Servers.instance.getTokenByTid(tokenId);
             if (tt == null) {
-                String infoLog = "Token with ID " + tokenId + " is invalid. It was invalidated by a concurrent request or the session timed out during this request.";
+                String infoLog = "Token with ID " + tokenId
+                        + " is invalid. It was invalidated by a concurrent request or the session timed out during this request.";
                 logger.info(infoLog);
-                throw new WebApplicationException(Response
-                        .status(Status.UNAUTHORIZED)
-                        .entity("Please supply a valid 'editPatient' token.")
-                        .build());
+                throw new WebApplicationException(Response.status(Status.UNAUTHORIZED)
+                        .entity("Please supply a valid 'editPatient' token.").build());
             }
 
             // Form fields (union of fields and ids)
@@ -597,11 +685,11 @@ public class PatientsResource {
                 for (String fieldName : newFieldValues.keySet()) {
                     if (!allowedFormFields.contains(fieldName)) {
                         if (IDGeneratorFactory.instance.getExternalIdTypes().contains(fieldName)) {
-                            throw new UnauthorizedException("No authorization to edit external id " + fieldName +
-                                    " with this token.");
+                            throw new UnauthorizedException(
+                                    "No authorization to edit external id " + fieldName + " with this token.");
                         } else {
-                            throw new UnauthorizedException("No authorization to edit field " + fieldName +
-                                    " with this token.");
+                            throw new UnauthorizedException(
+                                    "No authorization to edit field " + fieldName + " with this token.");
                         }
                     }
                 }
@@ -627,13 +715,14 @@ public class PatientsResource {
      */
     @Path("{tokenId}/{idType}/{idString}")
     @DELETE
-    public Response deletePatient(@PathParam("tokenId") String tokenId, @PathParam("idType") String idType, @PathParam("idString") String idString,
-                                  @QueryParam("withDuplicates") String withDuplicatesParam, @Context HttpServletRequest request) {
+    public Response deletePatient(@PathParam("tokenId") String tokenId, @PathParam("idType") String idType,
+                                  @PathParam("idString") String idString, @QueryParam("withDuplicates") String withDuplicatesParam,
+                                  @Context HttpServletRequest request) {
         logger.debug("@DELETE deletePatientIDAT request");
 
         Token token = Servers.instance.getTokenByTid(tokenId);
 
-        if(PermissionUtil.checkTokenPermission(token)){
+        if (PermissionUtil.checkTokenPermission(token)) {
             if (token == null) {
                 logger.info("No token with id " + tokenId + " found");
                 throw new InvalidTokenException("Please supply a valid 'deletePatient' token.", Status.UNAUTHORIZED);
@@ -648,10 +737,41 @@ public class PatientsResource {
             } else {
                 Persistor.instance.deletePatient(id);
             }
-
+            String callback = token.getDataItemString("callback");
+            if (callback != null && callback.length() > 0) {
+                MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
+                logger.debug("Sending request to callback " + callback);
+                try {
+                    HttpResponse httpResponse = mainzellisteCallback
+                            .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback).tokenId(token.getId())
+                            .build().execute();
+                    StatusLine sline = httpResponse.getStatusLine();
+                    // Accept callback if OK, CREATED or ACCEPTED is returned
+                    if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
+                        logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
+                        throw new InternalErrorException("Request to callback failed!");
+                    }
+                } catch (Exception e) {
+                    //TODO: handle exception
+                    logger.error("Couldn't execute HTTP callback", e);
+                    e.printStackTrace();
+                    throw new InvalidJSONException("Couldn't execute HTTP callback");
+                }
+            }
+            String redirect = token.getDataItemString("redirect");
+            if (redirect != null && redirect.length() > 0) {
+                UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
+                List<String> templateVariables = redirectURITempl.getTemplateVariables();
+                if (templateVariables.contains("tokenId")) {
+                    return new RedirectBuilder().setTokenId(token.getId()).setTemplateURI(redirectURITempl).build()
+                            .execute();
+                }
+            }
             return Response.status(Status.NO_CONTENT).build();
         } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN).entity("Your request is not permitted. You don't have permission to execute this request.").build();
+            return Response.status(HttpStatus.SC_FORBIDDEN)
+                    .entity("Your request is not permitted. You don't have permission to execute this request.")
+                    .build();
         }
     }
 

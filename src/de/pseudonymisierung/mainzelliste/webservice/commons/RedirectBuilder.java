@@ -2,6 +2,7 @@ package de.pseudonymisierung.mainzelliste.webservice.commons;
 
 import com.sun.jersey.api.uri.UriTemplate;
 import de.pseudonymisierung.mainzelliste.IDRequest;
+import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import org.apache.log4j.Logger;
 
@@ -10,6 +11,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 
 public class RedirectBuilder {
@@ -37,6 +39,15 @@ public class RedirectBuilder {
         Map<String, String> mappedIdTypesAndIds = new HashMap<>();
         for (String idType :IdTypes){
             mappedIdTypesAndIds.put(idType, idRequest.getAssignedPatient().getId(idType).getIdString());
+        }
+        this.mappedIdTypesdAndIds = mappedIdTypesAndIds;
+        return this;
+    }
+
+    public RedirectBuilder setMappedIdTypeAndIds(List<String> IdTypes, Patient patient){
+        Map<String, String> mappedIdTypesAndIds = new HashMap<>();
+        for (String idType :IdTypes){
+            mappedIdTypesAndIds.put(idType, patient.getId(idType).getIdString());
         }
         this.mappedIdTypesdAndIds = mappedIdTypesAndIds;
         return this;

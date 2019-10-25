@@ -28,7 +28,10 @@ import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MainzellisteCallback {
 
@@ -54,7 +57,7 @@ public class MainzellisteCallback {
     private HttpPost callbackRequest;
 
     private String tokenId;
-    private List<ID> returnIds;
+    private Collection<ID> returnIds;
     private JSONObject returnFields;
     private JSONArray returnPatients;
 
@@ -133,7 +136,7 @@ public class MainzellisteCallback {
      * @param returnIds A {@link List} of type {@link ID} which contains the IDs that should be send with this callback
      * @return {@link MainzellisteCallback} the updated instance of this object
      */
-    public MainzellisteCallback returnIds(List<ID> returnIds) {
+    public MainzellisteCallback returnIds(Collection<ID> returnIds) {
         this.returnIds = returnIds;
         return this;
     }
@@ -203,7 +206,7 @@ public class MainzellisteCallback {
                 idsJson.put(id.toJSON());
             }
             if (apiVersion.majorVersion == 1)
-                json.put("id", this.returnIds.get(0).getIdString());
+                json.put("id", new ArrayList<>(this.returnIds).get(0).getIdString());
             else
                 json.put("ids", idsJson);
         }

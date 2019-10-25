@@ -9,17 +9,12 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
-import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallback;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
 import org.apache.log4j.Logger;
-import org.codehaus.jettison.json.JSONException;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -350,33 +345,6 @@ public enum PatientBackend {
                 Servers.instance.deleteToken(t.getId());
         }
 
-        // Callback request
-        MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
-        String callback = t.getDataItemString("callback");
-        if (callback != null && callback.length() > 0) {
-            try {
-                logger.debug("Sending request to callback " + callback);
-                HttpResponse response = mainzellisteCallback
-                        .apiVersion(apiVersion)
-                        .url(callback)
-                        .tokenId(t.getId())
-                        .returnIds(returnIds)
-                        .build()
-                        .execute();
-                StatusLine sline = response.getStatusLine();
-                // Accept callback if OK, CREATED or ACCEPTED is returned
-                if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
-                    logger.error("Received invalid status form mdat callback: " + response.getStatusLine());
-                    throw new InternalErrorException("Request to callback failed!");
-                }
-            } catch (JSONException jsone) {
-                logger.error("Couldn't serialize JSON in Callback for url " + callback, jsone);
-                jsone.printStackTrace();
-            } catch (IOException ioe) {
-                logger.error("Couldn't execute Callback for url " + callback, ioe );
-                ioe.printStackTrace();
-            }
-        }
         return request;
     }
 
