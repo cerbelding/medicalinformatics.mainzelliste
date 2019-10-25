@@ -273,6 +273,22 @@ public class PatientsResource {
             int apiMajorVersion = Servers.instance.getRequestMajorApiVersion(request);
 
             if (apiMajorVersion >= 2) {
+
+                AddPatientToken token = response.getToken();
+                String redirect = token.getDataItemString("redirect");
+                if (redirect != null && redirect.length() > 0) {
+                    UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
+                    List<String> templateVariables = redirectURITempl.getTemplateVariables();
+                    List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
+
+                    if (templateVariables.contains("tokenId")) {
+                        return new RedirectBuilder().setTokenId(token.getId())
+                                .setMappedIdTypesdAndIds(requestedIds, response).setTemplateURI(redirectURITempl)
+                                .build().execute();
+                    }
+                }
+
+
                 JSONArray ret = new JSONArray();
                 for (ID thisID : newIds) {
                     URI newUri = context.getBaseUriBuilder().path(PatientsResource.class).path("/{idtype}/{idvalue}")
@@ -329,19 +345,7 @@ public class PatientsResource {
                         ioe.printStackTrace();
                     }
                 }
-                String redirect = token.getDataItemString("redirect");
-                if (redirect != null && redirect.length() > 0) {
-                    UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
-                    List<String> templateVariables = redirectURITempl.getTemplateVariables();
-                    List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
 
-                    if (templateVariables.contains("tokenId")) {
-                        return new RedirectBuilder().setTokenId(token.getId())
-                                .setMappedIdTypesdAndIds(requestedIds, response).setTemplateURI(redirectURITempl)
-                                .build().execute();
-                    }
-                    ;
-                }
 
                 return Response.status(Status.CREATED).entity(ret).location(newUri).build();
             }
