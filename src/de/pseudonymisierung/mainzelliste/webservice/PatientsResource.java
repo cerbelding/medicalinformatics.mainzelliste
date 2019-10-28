@@ -285,6 +285,9 @@ public class PatientsResource {
                         return new RedirectBuilder().setTokenId(token.getId())
                                 .setMappedIdTypesdAndIds(requestedIds, response).setTemplateURI(redirectURITempl)
                                 .build().execute();
+                    } else {
+                        return new RedirectBuilder().setMappedIdTypesdAndIds(requestedIds, response).setTemplateURI(redirectURITempl)
+                                .build().execute();
                     }
                 }
 
@@ -382,6 +385,7 @@ public class PatientsResource {
             List<?> requests = token.getDataItemList("searchIds");
 
             JSONArray ret = new JSONArray();
+            ArrayList<Patient> patientList = new ArrayList<>();
             for (Object item : requests) {
                 JSONObject thisPatient = new JSONObject();
                 String idType;
@@ -460,6 +464,8 @@ public class PatientsResource {
                 }
 
                 ret.put(thisPatient);
+                patientList.add(patient);
+
             }
 
             // Callback
@@ -483,14 +489,16 @@ public class PatientsResource {
                     && Servers.instance.hasServerPermission(token.getParentServerName(), "redirect")) {
                 UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
                 List<String> templateVariables = redirectURITempl.getTemplateVariables();
-                List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
+
                 if (templateVariables.contains("tokenId")) {
                     // TODO: send mapped list of requests?
-//                    if (requests.get(0) instanceof IDRequest) {
-//                        IDRequest idRequest = (IDRequest) requests.get(0);
-//                    return new RedirectBuilder().setTokenId(token.getId())
-//                            .setMappedIdTypesdAndIds(requestedIds, ).setTemplateURI(redirectURITempl)
-//                            .build().execute();
+                    if (token.getDataItemList("searchIds").size() > 0 && patientList.size() > 0) {
+                        List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
+                        return new RedirectBuilder().setTokenId(token.getId())
+                                .setMappedIdTypesdAndIds(requestedIds, patientList.get(0)).setTemplateURI(redirectURITempl)
+                                .build().execute();
+                    }
+
                 } else {
                     return Response.status(HttpStatus.SC_BAD_REQUEST)
                             .entity("Couldn't generate redirect because request is not valid").build();

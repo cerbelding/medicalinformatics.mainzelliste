@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +45,7 @@ public class RedirectBuilder {
         return this;
     }
 
-    public RedirectBuilder setMappedIdTypeAndIds(List<String> IdTypes, Patient patient){
+    public RedirectBuilder setMappedIdTypesdAndIds(List<String> IdTypes, Patient patient){
         Map<String, String> mappedIdTypesAndIds = new HashMap<>();
         for (String idType :IdTypes){
             mappedIdTypesAndIds.put(idType, patient.getId(idType).getIdString());
