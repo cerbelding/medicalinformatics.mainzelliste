@@ -362,20 +362,20 @@ public class PatientsResource {
     /**
      * Get patients via "readPatient" token.
      *
-     * @param tid Id of a valid "readPatient" token.
+     * @param tokenId Id of a valid "readPatient" token.
      * @return A JSON result as specified in the API documentation.
      */
-    @Path("/tokenId/{tid}")
+    @Path("/tokenId/{tokenId}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getPatientsToken(@PathParam("tid") String tid, @Context HttpServletRequest request) {
+    public Response getPatientsToken(@PathParam("tokenId") String tokenId, @Context HttpServletRequest request) {
         logger.debug("@GET getPatientsToken");
-        logger.info("Received request to get patient with token " + tid);
+        logger.info("Received request to get patient with token " + tokenId);
         // Check if token exists and has the right type.
         // Validity of token is checked upon creation
-        Token token = Servers.instance.getTokenByTid(tid);
+        Token token = Servers.instance.getTokenByTid(tokenId);
         if (token == null) {
-            logger.info("No token with id " + tid + " found");
+            logger.info("No token with id " + tokenId + " found");
             throw new InvalidTokenException("Please supply a valid 'readPatients' token.", Status.UNAUTHORIZED);
         }
 
