@@ -158,25 +158,7 @@ public class PatientsResource {
                     // Callback request
                     String callback = token.getDataItemString("callback");
                     if (callback != null && callback.length() > 0) {
-                        MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
-                        try {
-                            logger.debug("Sending request to callback " + callback);
-                            HttpResponse response = mainzellisteCallback
-                                    .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
-                                    .tokenId(token.getId()).returnIds(ids).build().execute();
-                            StatusLine sline = response.getStatusLine();
-                            // Accept callback if OK, CREATED or ACCEPTED is returned
-                            if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
-                                logger.error("Received invalid status form mdat callback: " + response.getStatusLine());
-                                throw new InternalErrorException("Request to callback failed!");
-                            }
-                        } catch (JSONException jsone) {
-                            logger.error("Couldn't serialize JSON in Callback for url " + callback, jsone);
-                            jsone.printStackTrace();
-                        } catch (IOException ioe) {
-                            logger.error("Couldn't execute Callback for url " + callback, ioe);
-                            ioe.printStackTrace();
-                        }
+                        sendCallback(request, token, ids, callback);
                     }
                     String redirectRequest = token.getDataItemString("redirect");
                     if (redirectRequest != null && redirectRequest.length() > 0) {
@@ -229,6 +211,28 @@ public class PatientsResource {
         }
     }
 
+    private void sendCallback(@Context HttpServletRequest request, Token token, Collection ids, String callback) {
+        MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
+        try {
+            logger.debug("Sending request to callback " + callback);
+            HttpResponse httpResponse = mainzellisteCallback
+                    .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
+                    .tokenId(token.getId()).returnIds(ids).build().execute();
+            StatusLine sline = httpResponse.getStatusLine();
+            // Accept callback if OK, CREATED or ACCEPTED is returned
+            if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
+                logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
+                throw new InternalErrorException("Request to callback failed!");
+            }
+        } catch (JSONException jsone) {
+            logger.error("Couldn't serialize JSON in Callback for url " + callback, jsone);
+            jsone.printStackTrace();
+        } catch (IOException ioe) {
+            logger.error("Couldn't execute Callback for url " + callback, ioe);
+            ioe.printStackTrace();
+        }
+    }
+
     /**
      * Create a new patient. Interface for software applications.
      *
@@ -272,6 +276,12 @@ public class PatientsResource {
 
             int apiMajorVersion = Servers.instance.getRequestMajorApiVersion(request);
 
+            Token callbackToken = response.getToken();
+            String callback = callbackToken.getDataItemString("callback");
+            if (callback != null && callback.length() > 0) {
+                sendCallback(request, callbackToken, newIds, callback);
+            }
+
             if (apiMajorVersion >= 2) {
 
                 AddPatientToken token = response.getToken();
@@ -301,6 +311,7 @@ public class PatientsResource {
                             .put("tentative", thisID.isTentative()).put("uri", newUri));
                 }
 
+
                 return Response.status(Status.CREATED).entity(ret).build();
             } else {
                 /*
@@ -322,32 +333,6 @@ public class PatientsResource {
 
                 JSONObject ret = new JSONObject().put("newId", newId.getIdString())
                         .put("tentative", newId.isTentative()).put("uri", newUri);
-
-                Token token = Servers.instance.getTokenByTid(tokenId);
-                String callback = token.getDataItemString("callback");
-                if (callback != null && callback.length() > 0) {
-                    MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
-                    try {
-                        logger.debug("Sending request to callback " + callback);
-                        HttpResponse httpResponse = mainzellisteCallback
-                                .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
-                                .tokenId(token.getId())
-                                // TODO: Check if newIds is really okay
-                                .returnIds(newIds).build().execute();
-                        StatusLine sline = httpResponse.getStatusLine();
-                        // Accept callback if OK, CREATED or ACCEPTED is returned
-                        if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
-                            logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
-                            throw new InternalErrorException("Request to callback failed!");
-                        }
-                    } catch (JSONException jsone) {
-                        logger.error("Couldn't serialize JSON in Callback for url " + callback, jsone);
-                        jsone.printStackTrace();
-                    } catch (IOException ioe) {
-                        logger.error("Couldn't execute Callback for url " + callback, ioe);
-                        ioe.printStackTrace();
-                    }
-                }
 
 
                 return Response.status(Status.CREATED).entity(ret).location(newUri).build();
