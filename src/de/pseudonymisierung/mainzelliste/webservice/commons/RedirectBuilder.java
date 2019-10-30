@@ -78,8 +78,12 @@ public class RedirectBuilder {
     private void mapAllMaps(){
         allMappedValues = new HashMap<>();
 
-        allMappedValues.putAll(this.tokenId);
-        allMappedValues.putAll(this.mappedIdTypesdAndIds);
+        if(this.tokenId!=null){
+            allMappedValues.putAll(this.tokenId);
+        }
+        if(this.mappedIdTypesdAndIds!=null){
+            allMappedValues.putAll(this.mappedIdTypesdAndIds);
+        }
     }
 
 
