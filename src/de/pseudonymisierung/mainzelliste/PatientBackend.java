@@ -127,7 +127,6 @@ public enum PatientBackend {
             logger.info("Handling ID Request with token " + t.getId());
             Patient p = new Patient();
             Patient pNormalized = new Patient();
-            Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
 
             // get fields transmitted from MDAT server
             for (String key : t.getFields().keySet()) {

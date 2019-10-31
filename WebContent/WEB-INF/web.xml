@@ -20,6 +20,14 @@
 		<filter-name>Mainzelliste - CorsResponseFilter</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
+	<filter-mapping>
+		<filter-name>Mainzelliste - DeleteTokenFilter</filter-name>
+		<url-pattern>/patients</url-pattern>
+	</filter-mapping>
+	<filter>
+		<filter-name>Mainzelliste - DeleteTokenFilter</filter-name>
+		<filter-class>de.pseudonymisierung.mainzelliste.webservice.filters.DeleteTokenFilter</filter-class>
+	</filter>
 	<filter>
 		<filter-name>Mainzelliste</filter-name>
 		<filter-class>com.sun.jersey.spi.container.servlet.ServletContainer</filter-class>

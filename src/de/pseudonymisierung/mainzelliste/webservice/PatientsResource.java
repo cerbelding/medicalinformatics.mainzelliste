@@ -509,11 +509,7 @@ public class PatientsResource {
                     .entity("Your request is not permitted. You don't have permission to execute this request.")
                     .build();
         }
-        // Delete Token when it's not needed anymore
-        if(! Config.instance.debugIsOn())
-            Servers.instance.deleteToken(token.getId());
 
-        return Response.ok().entity(ret).build();
     }
 
     private JSONArray getAllIdTypesOfPatient(Patient patient) {
@@ -604,8 +600,7 @@ public class PatientsResource {
                     else
                         newFieldValues.put(fieldName, newFieldValuesJSON.get(fieldName).toString());
                 }
-                Token token = Servers.instance.getTokenByTid(tokenId);
-                this.editPatient(tokenId, newFieldValues, request);
+                EditPatientToken token = this.editPatient(tokenId, newFieldValues, request);
                 String callback = token.getDataItemString("callback");
                 if (callback != null && callback.length() > 0) {
                     MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
