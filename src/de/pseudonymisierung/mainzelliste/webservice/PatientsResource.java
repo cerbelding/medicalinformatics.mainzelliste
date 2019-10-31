@@ -45,6 +45,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.exceptions.*;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
@@ -56,14 +57,6 @@ import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.spi.resource.Singleton;
 
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.Field;
-import de.pseudonymisierung.mainzelliste.ID;
-import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
-import de.pseudonymisierung.mainzelliste.IDRequest;
-import de.pseudonymisierung.mainzelliste.Patient;
-import de.pseudonymisierung.mainzelliste.PatientBackend;
-import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
@@ -315,21 +308,21 @@ public class PatientsResource {
     /**
      * Get patients via "readPatient" token.
      *
-     * @param tid Id of a valid "readPatient" token.
+     * @param tokenId Id of a valid "readPatient" token.
      * @return A JSON result as specified in the API documentation.
      */
-    @Path("/tokenId/{tid}")
+    @Path("/tokenId/{tokenId}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientsToken(
-            @PathParam("tid") String tid) {
+            @PathParam("tokenId") String tokenId) {
         logger.debug("@GET getPatientsToken");
-        logger.info("Received request to get patient with token " + tid);
+        logger.info("Received request to get patient with token " + tokenId);
         // Check if token exists and has the right type. 
         // Validity of token is checked upon creation
-        Token token = Servers.instance.getTokenByTid(tid);
+        Token token = Servers.instance.getTokenByTid(tokenId);
         if (token == null) {
-            logger.info("No token with id " + tid + " found");
+            logger.info("No token with id " + tokenId + " found");
             throw new InvalidTokenException("Please supply a valid 'readPatients' token.", Status.UNAUTHORIZED);
         }
 
@@ -626,5 +619,45 @@ public class PatientsResource {
 
         return Response.status(Status.NO_CONTENT).build();
     }
+
+    /**
+     *
+     * @param tokenId
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Path("checkMatch/{tokenId}")
+    public Response getBestMatch(@PathParam("tokenId") String tokenId, MultivaluedMap<String, String> form) throws JSONException {
+        logger.debug("checkMatch" + "tokenId: " +  tokenId);
+
+        //add permission checks
+        Servers.instance.getTokenByTid(tokenId).checkTokenType("checkMatch");
+
+        Validator.instance.validateForm(form, true);
+
+        Map<String, Field<?>> chars = PatientBackend.instance.mapMapWithConfigFields(form);
+
+        Patient patient = new Patient();
+        patient.setFields(chars);
+        // Normalization, Transformation
+        patient = Config.instance.getRecordTransformer().transform(patient);
+        patient.setInputFields(chars);
+
+        MatchResult matchResult = Config.instance.getMatcher().match(patient, Persistor.instance.getPatients());
+        logger.info("Bestmatch weight: " + matchResult.getBestMatchedWeight());
+
+        JSONArray jsonArray = new JSONArray();
+        JSONObject jsonWeightObject = new JSONObject().put("weight", matchResult.getBestMatchedWeight());
+
+        jsonArray.put(jsonWeightObject);
+        return Response
+                .status(Status.OK)
+                .entity(jsonArray)
+                .build();
+
+    }
+
+
+
 
 }

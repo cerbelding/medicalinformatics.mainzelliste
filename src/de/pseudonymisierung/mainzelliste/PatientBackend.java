@@ -181,7 +181,6 @@ public enum PatientBackend {
 			logger.info("Handling ID Request with token " + t.getId());
 			Patient p = new Patient();
 			Patient pNormalized = new Patient();
-			Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
 
 			// get fields transmitted from MDAT server
 			for (String key : t.getFields().keySet())
@@ -216,16 +215,7 @@ public enum PatientBackend {
 			if (hasIdat) {
 				Validator.instance.validateForm(form, true);
 
-				for(String s: Config.instance.getFieldKeys()){
-					if (form.containsKey(s)) {
-						try {
-							chars.put(s, Field.build(s, form.getFirst(s)));
-						} catch (WebApplicationException we) {
-							logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
-							throw we;
-						}
-					}
-				}
+				Map<String, Field<?>> chars = mapMapWithConfigFields(form);
 
 				p.setFields(chars);
 
@@ -567,5 +557,21 @@ public enum PatientBackend {
 			debugSession = Servers.instance.newSession();
 		}
 		return debugSession;
+	}
+
+	public Map<String, Field<?>> mapMapWithConfigFields(MultivaluedMap<String, String> form) {
+		Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
+		//Compare Fields from Config with requested Fields a
+		for(String s: Config.instance.getFieldKeys()){
+			if (form.containsKey(s)) {
+				try {
+					chars.put(s, Field.build(s, form.getFirst(s)));
+				} catch (WebApplicationException we) {
+					logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
+					throw we;
+				}
+			}
+		}
+		return chars;
 	}
 }
