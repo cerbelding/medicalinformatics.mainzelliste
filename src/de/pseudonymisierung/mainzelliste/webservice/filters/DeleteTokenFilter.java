@@ -15,6 +15,7 @@ public class DeleteTokenFilter implements ContainerResponseFilter {
 
     @Override
     public ContainerResponse filter(ContainerRequest request, ContainerResponse response) {
+        logger.info("DeleteTokenFilter");
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         // TODO: Check if it is allways tokenId
         String tokenId = httpRequest.getParameter("tokenId");
