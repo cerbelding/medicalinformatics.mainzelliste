@@ -413,6 +413,10 @@ public class PatientsResource {
             ret.put(thisPatient);
         }
 
+        // Delete Token when it's not needed anymore
+        if(! Config.instance.debugIsOn())
+            Servers.instance.deleteToken(token.getId());
+
         return Response.ok().entity(ret).build();
     }
 
@@ -459,6 +463,10 @@ public class PatientsResource {
                 return Response.status(Status.SEE_OTHER)
                         .header("Location", t.getRedirect().toString())
                         .build();
+            }
+            // The token needs to be deleted after usage
+            if(Config.instance.debugIsOn()){
+                Servers.instance.deleteToken(t.getId());
             }
             return Response.ok(new Viewable("/patientEdited.jsp")).build();
         } catch (WebApplicationException e) {
@@ -617,6 +625,10 @@ public class PatientsResource {
             Persistor.instance.deletePatient(id);
         }
 
+        // Delete the token after removing patient
+        if(!Config.instance.debugIsOn()){
+            Servers.instance.deleteToken(tokenId);
+        }
         return Response.status(Status.NO_CONTENT).build();
     }
 
