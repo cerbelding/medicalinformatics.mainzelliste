@@ -214,10 +214,21 @@ public class PatientsResource {
         MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
         try {
             logger.debug("Sending request to callback " + callback);
-            HttpResponse httpResponse = mainzellisteCallback
-                    .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
-                    .tokenId(token.getId()).returnIds(ids).build().execute();
+
+            HttpResponse httpResponse = null;
+
+            if(ids!=null){
+                httpResponse = mainzellisteCallback
+                        .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
+                        .tokenId(token.getId()).returnIds(ids).build().execute();
+            }
+            else{
+                httpResponse = mainzellisteCallback
+                        .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback).tokenId(token.getId())
+                        .build().execute();
+            }
             StatusLine sline = httpResponse.getStatusLine();
+
             // Accept callback if OK, CREATED or ACCEPTED is returned
             if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
                 logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
@@ -593,8 +604,8 @@ public class PatientsResource {
                     else
                         newFieldValues.put(fieldName, newFieldValuesJSON.get(fieldName).toString());
                 }
-                this.editPatient(tokenId, newFieldValues, request);
                 Token token = Servers.instance.getTokenByTid(tokenId);
+                this.editPatient(tokenId, newFieldValues, request);
                 String callback = token.getDataItemString("callback");
                 if (callback != null && callback.length() > 0) {
                     MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
@@ -750,24 +761,7 @@ public class PatientsResource {
             }
             String callback = token.getDataItemString("callback");
             if (callback != null && callback.length() > 0) {
-                MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
-                logger.debug("Sending request to callback " + callback);
-                try {
-                    HttpResponse httpResponse = mainzellisteCallback
-                            .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback).tokenId(token.getId())
-                            .build().execute();
-                    StatusLine sline = httpResponse.getStatusLine();
-                    // Accept callback if OK, CREATED or ACCEPTED is returned
-                    if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
-                        logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
-                        throw new InternalErrorException("Request to callback failed!");
-                    }
-                } catch (Exception e) {
-                    //TODO: handle exception
-                    logger.error("Couldn't execute HTTP callback", e);
-                    e.printStackTrace();
-                    throw new InvalidJSONException("Couldn't execute HTTP callback");
-                }
+                sendCallback(request, token, null, callback);
             }
             String redirect = token.getDataItemString("redirect");
             if (redirect != null && redirect.length() > 0) {
