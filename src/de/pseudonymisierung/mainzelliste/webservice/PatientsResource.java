@@ -499,12 +499,8 @@ public class PatientsResource {
                             .entity("Couldn't generate redirect because request is not valid").build();
                 }
             }
-            if(! Config.instance.debugIsOn())
-                Servers.instance.deleteToken(token.getId());
             return Response.ok().entity(ret).build();
         } else {
-            if(! Config.instance.debugIsOn())
-                Servers.instance.deleteToken(token.getId());
             return Response.status(HttpStatus.SC_FORBIDDEN)
                     .entity("Your request is not permitted. You don't have permission to execute this request.")
                     .build();
@@ -549,13 +545,7 @@ public class PatientsResource {
                 EditPatientToken t = this.editPatient(tokenId, newFieldValues, request);
 
                 if (t.getRedirect() != null) {
-                    if(Config.instance.debugIsOn()){
-                        Servers.instance.deleteToken(t.getId());
-                    }
                     return Response.status(Status.SEE_OTHER).header("Location", t.getRedirect().toString()).build();
-                }
-                if(Config.instance.debugIsOn()){
-                    Servers.instance.deleteToken(t.getId());
                 }
                 return Response.ok(new Viewable("/patientEdited.jsp")).build();
             } catch (WebApplicationException e) {
@@ -714,9 +704,6 @@ public class PatientsResource {
 
             PatientBackend.instance.editPatient(tt.getPatientId(), newFieldValues);
         } // end of synchronized block
-
-        if (!Config.instance.debugIsOn())
-            Servers.instance.deleteToken(t.getId());
 
         return tt;
     }

@@ -331,8 +331,6 @@ public enum PatientBackend {
 
             Persistor.instance.addIdRequest(request);
 
-            if (t != null && !Config.instance.debugIsOn())
-                Servers.instance.deleteToken(t.getId());
         }
 
         return request;

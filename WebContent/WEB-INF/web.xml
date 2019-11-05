@@ -1,20 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app metadata-complete="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" version="3.0">
 
-	<servlet>
-		<servlet-name>Mainzelliste - DeleteTokenFilter</servlet-name>
-		<servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
-		<init-param>
-			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
-			<param-value>de.pseudonymisierung.mainzelliste.webservice.filters.DeleteTokenFilter</param-value>
-		</init-param>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>Mainzelliste - DeleteTokenFilter</servlet-name>
-		<url-pattern>/*</url-pattern>
-	</servlet-mapping>
-
-
 
 	<display-name>de.pseudonymisierung.mainzelliste</display-name>
 	<!-- Filter to add Server header -->
@@ -65,6 +51,10 @@
 	         <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
 	         <param-value>com.sun.jersey.api.container.filter.PostReplaceFilter</param-value>
 	     </init-param>
+		<init-param>
+			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
+			<param-value>de.pseudonymisierung.mainzelliste.webservice.filters.DeleteTokenFilter</param-value>
+		</init-param>
 	</filter>
 	<listener>
 		<listener-class>de.pseudonymisierung.mainzelliste.Initializer</listener-class>
