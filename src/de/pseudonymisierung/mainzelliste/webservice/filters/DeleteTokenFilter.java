@@ -6,10 +6,6 @@ import com.sun.jersey.spi.container.ContainerResponseFilter;
 import de.pseudonymisierung.mainzelliste.Servers;
 import org.apache.log4j.Logger;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.MultivaluedMap;
-import java.util.List;
-
 public class DeleteTokenFilter implements ContainerResponseFilter {
 
     private Logger logger = Logger.getLogger(this.getClass());
@@ -35,7 +31,10 @@ public class DeleteTokenFilter implements ContainerResponseFilter {
             case "PUT":
                 return requestPath.split("/tokenId/")[1];
             case "POST":
-                return request.getQueryParameters().getFirst("tokenId");
+                if(requestPath.contains("checkMatch"))
+                    return requestPath.split("checkMatch/")[1];
+                else
+                    return request.getQueryParameters().getFirst("tokenId");
             case "DELETE":
                 String[] splitedRequestPath = requestPath.split("/");
                 return splitedRequestPath[splitedRequestPath.length - 3];
