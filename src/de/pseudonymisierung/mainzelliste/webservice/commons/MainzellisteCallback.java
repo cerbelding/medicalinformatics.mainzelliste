@@ -31,7 +31,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MainzellisteCallback {
 
@@ -60,6 +59,7 @@ public class MainzellisteCallback {
     private Collection<ID> returnIds;
     private JSONObject returnFields;
     private JSONArray returnPatients;
+    private Collection<Double> similarityScores;
 
     /**
      * represents a callback executed by the Mainzelliste.
@@ -215,6 +215,10 @@ public class MainzellisteCallback {
             json.put("fields", this.returnFields);
         }
 
+        if (similarityScores != null) {
+            json.put("similarityScores", this.similarityScores);
+        }
+
         if (this.returnPatients != null) {
             json.put("patients", this.returnPatients);
         }
@@ -268,6 +272,16 @@ public class MainzellisteCallback {
         else {
             throw new IllegalArgumentException("The JSONObject passed to addPatient does not contain ids and fields");
         }
+        return this;
+    }
+
+    /**
+     *
+     * @param similarityScores
+     * @return
+     */
+    public MainzellisteCallback similarityScores(Collection<Double> similarityScores) {
+        this.similarityScores = similarityScores;
         return this;
     }
 }

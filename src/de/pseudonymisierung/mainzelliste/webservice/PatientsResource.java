@@ -157,7 +157,7 @@ public class PatientsResource {
                     // Callback request
                     String callback = token.getDataItemString("callback");
                     if (callback != null && callback.length() > 0) {
-                        sendCallback(request, token, ids, callback);
+                        sendCallback(request, token, ids, null, callback);
                     }
                     String redirectRequest = token.getDataItemString("redirect");
                     if (redirectRequest != null && redirectRequest.length() > 0) {
@@ -210,38 +210,6 @@ public class PatientsResource {
         }
     }
 
-    private void sendCallback(@Context HttpServletRequest request, Token token, Collection ids, String callback) {
-        MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
-        try {
-            logger.debug("Sending request to callback " + callback);
-
-            HttpResponse httpResponse = null;
-
-            if(ids!=null){
-                httpResponse = mainzellisteCallback
-                        .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
-                        .tokenId(token.getId()).returnIds(ids).build().execute();
-            }
-            else{
-                httpResponse = mainzellisteCallback
-                        .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback).tokenId(token.getId())
-                        .build().execute();
-            }
-            StatusLine sline = httpResponse.getStatusLine();
-
-            // Accept callback if OK, CREATED or ACCEPTED is returned
-            if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
-                logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
-                throw new InternalErrorException("Request to callback failed!");
-            }
-        } catch (JSONException jsone) {
-            logger.error("Couldn't serialize JSON in Callback for url " + callback, jsone);
-            jsone.printStackTrace();
-        } catch (IOException ioe) {
-            logger.error("Couldn't execute Callback for url " + callback, ioe);
-            ioe.printStackTrace();
-        }
-    }
 
     /**
      * Create a new patient. Interface for software applications.
@@ -289,7 +257,7 @@ public class PatientsResource {
             Token callbackToken = response.getToken();
             String callback = callbackToken.getDataItemString("callback");
             if (callback != null && callback.length() > 0) {
-                sendCallback(request, callbackToken, newIds, callback);
+                sendCallback(request, callbackToken, newIds, null, callback);
             }
 
             if (apiMajorVersion >= 2) {
@@ -743,7 +711,7 @@ public class PatientsResource {
             }
             String callback = token.getDataItemString("callback");
             if (callback != null && callback.length() > 0) {
-                sendCallback(request, token, null, callback);
+                sendCallback(request, token, null, null, callback);
             }
             String redirect = token.getDataItemString("redirect");
             if (redirect != null && redirect.length() > 0) {
@@ -763,17 +731,17 @@ public class PatientsResource {
     }
 
     /**
-     *
      * @param tokenId
      */
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Path("checkMatch/{tokenId}")
-    public Response getBestMatch(@PathParam("tokenId") String tokenId, MultivaluedMap<String, String> form) throws JSONException {
-        logger.debug("checkMatch" + "tokenId: " +  tokenId);
+    public Response getBestMatch(@Context HttpServletRequest request, @PathParam("tokenId") String tokenId, MultivaluedMap<String, String> form) throws JSONException {
+        logger.debug("checkMatch" + "tokenId: " + tokenId);
 
         //add permission checks
-        Servers.instance.getTokenByTid(tokenId).checkTokenType("checkMatch");
+        Token token = Servers.instance.getTokenByTid(tokenId);
+        token.checkTokenType("checkMatch");
 
         Validator.instance.validateForm(form, true);
 
@@ -786,12 +754,29 @@ public class PatientsResource {
         patient.setInputFields(chars);
 
         MatchResult matchResult = Config.instance.getMatcher().match(patient, Persistor.instance.getPatients());
-        logger.info("Bestmatch weight: " + matchResult.getBestMatchedWeight());
-
+        logger.info("Bestmatch score: " + matchResult.getBestMatchedWeight());
+        List<Double> similarityScores = Arrays.asList(matchResult.getBestMatchedWeight());
         JSONArray jsonArray = new JSONArray();
-        JSONObject jsonWeightObject = new JSONObject().put("weight", matchResult.getBestMatchedWeight());
+        JSONObject jsonWeightObject = new JSONObject().put("similarityScore", similarityScores.get(0));
 
         jsonArray.put(jsonWeightObject);
+
+        // needs to send weight and token
+        String callback = token.getDataItemString("callback");
+        if (callback != null && callback.length() > 0) {
+            sendCallback(request, token, null, similarityScores, callback);
+        }
+        // needs to send weight and token
+        String redirect = token.getDataItemString("redirect");
+        if (redirect != null && redirect.length() > 0) {
+            UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
+            List<String> templateVariables = redirectURITempl.getTemplateVariables();
+            if (templateVariables.contains("tokenId")) {
+                return new RedirectBuilder().setTokenId(token.getId()).setSimilarityScores(similarityScores).setTemplateURI(redirectURITempl).build()
+                        .execute();
+            }
+        }
+
         return Response
                 .status(Status.OK)
                 .entity(jsonArray)
@@ -799,7 +784,39 @@ public class PatientsResource {
 
     }
 
+    private void sendCallback(@Context HttpServletRequest request, Token token, Collection<ID> ids, Collection<Double> similarityScores, String callback) {
+        try {
+            logger.debug("Sending request to callback " + callback);
 
+            HttpResponse httpResponse = null;
 
+            MainzellisteCallback mainzellisteCallback = new MainzellisteCallback()
+                    .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback);
+            if (token.getId() != null) {
+                mainzellisteCallback = mainzellisteCallback.tokenId(token.getId());
+            }
+            if (ids != null) {
+                mainzellisteCallback = mainzellisteCallback.returnIds(ids);
+            }
+            if (similarityScores != null) {
+                mainzellisteCallback = mainzellisteCallback.similarityScores(similarityScores);
+            }
+            httpResponse = mainzellisteCallback.build().execute();
+            StatusLine sline = httpResponse.getStatusLine();
+
+            // Accept callback if OK, CREATED or ACCEPTED is returned
+            if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
+                logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
+                throw new InternalErrorException("Request to callback failed!");
+            }
+        } catch (JSONException jsone) {
+            logger.error("Couldn't serialize JSON in Callback for url " + callback, jsone);
+            jsone.printStackTrace();
+        } catch (IOException ioe) {
+            logger.error("Couldn't execute Callback for url " + callback, ioe);
+            ioe.printStackTrace();
+            throw new WebApplicationException(504);
+        }
+    }
 
 }

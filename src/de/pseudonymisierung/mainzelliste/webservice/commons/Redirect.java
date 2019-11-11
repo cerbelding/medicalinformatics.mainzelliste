@@ -17,14 +17,16 @@ public class Redirect {
 
     private Map<String, String> tokenId;
     private Map<String, String> mappedIdTypesdAndIds;
+    private Map<String, String> similarityScores;
     private UriTemplate uriTemplate;
     private URI redirectURI;
 
     private Map<String, String> allMappedValues;
 
-    public Redirect(Map<String, String> tokenId, Map<String, String> mappedIdTypesdAndIds, UriTemplate uriTemplate, URI redirectURI, Map<String, String> allMappedValues) {
+    public Redirect(Map<String, String> tokenId, Map<String, String> mappedIdTypesdAndIds, Map<String, String> similarityScores, UriTemplate uriTemplate, URI redirectURI, Map<String, String> allMappedValues) {
         this.tokenId = tokenId;
         this.mappedIdTypesdAndIds = mappedIdTypesdAndIds;
+        this.similarityScores = similarityScores;
         this.uriTemplate = uriTemplate;
         this.redirectURI = redirectURI;
         this.allMappedValues = allMappedValues;
@@ -49,8 +51,7 @@ public class Redirect {
      * Returns all redirect parameters
      */
     public MultivaluedMap<String, String> getRedirectParams(){
-        MultivaluedMap<String, String> redirectParams = UriComponent.decodeQuery(this.redirectURI, true);
-        return redirectParams;
+        return UriComponent.decodeQuery(this.redirectURI, true);
     }
 
 
