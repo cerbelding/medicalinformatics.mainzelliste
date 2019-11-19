@@ -5,6 +5,7 @@ import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.pseudonymisierung.mainzelliste.Servers;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -12,6 +13,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
@@ -149,8 +151,17 @@ public class MainzellisteCallback {
      */
     public HttpResponse execute() throws IOException {
         logger.info("Executing Mainzelliste Callback on url " + this.url + " and apiVersion " + this.apiVersion.majorVersion + "." + this.apiVersion.minorVersion + ". Tokenid is " + this.tokenId);
-        HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslSocketFactory).build();
-        return httpClient.execute(this.callbackRequest);
+
+        if(Config.instance.getProperty("proxy.callback.url")==null){
+            HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslSocketFactory).build();
+            return httpClient.execute(this.callbackRequest);
+
+        }else{
+            HttpHost proxy = new HttpHost(Config.instance.getProperty("proxy.callback.url"), Integer.valueOf(Config.instance.getProperty("proxy.callback.port")));
+            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
+            HttpClient httpClient = HttpClients.custom().setRoutePlanner(routePlanner).setSSLSocketFactory(sslSocketFactory).build();
+            return httpClient.execute(this.callbackRequest);
+        }
     }
 
     /**
