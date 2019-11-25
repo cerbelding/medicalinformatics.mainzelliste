@@ -739,7 +739,7 @@ public class PatientsResource {
     public Response getBestMatch(@Context HttpServletRequest request, @PathParam("tokenId") String tokenId, MultivaluedMap<String, String> form) throws JSONException {
         logger.debug("checkMatch" + "tokenId: " + tokenId);
 
-        //add permission checks
+        //TODO: add permission checks
         Token token = Servers.instance.getTokenByTid(tokenId);
         token.checkTokenType("checkMatch");
 
@@ -754,12 +754,19 @@ public class PatientsResource {
         patient.setInputFields(chars);
 
         MatchResult matchResult = Config.instance.getMatcher().match(patient, Persistor.instance.getPatients());
-        logger.info("Bestmatch score: " + matchResult.getBestMatchedWeight());
+        logger.info("CheckMatch/Bestmatch score: " + matchResult.getBestMatchedWeight());
         List<Double> similarityScores = Arrays.asList(matchResult.getBestMatchedWeight());
         JSONArray jsonArray = new JSONArray();
-        JSONObject jsonWeightObject = new JSONObject().put("similarityScore", similarityScores.get(0));
+        JSONObject jsonPatientObject = new JSONObject().put("similarityScore", similarityScores.get(0));
 
-        jsonArray.put(jsonWeightObject);
+        //TODO: IMPORTANT ADD PERMISSION CONCEPT. send only "permitted" IDs
+        if(matchResult.getBestMatchedPatient()!=null){
+            for (ID id: matchResult.getBestMatchedPatient().getIds()) {
+                jsonPatientObject.put(id.getType(), id.getIdString());
+            }
+        }
+
+        jsonArray.put(jsonPatientObject);
 
         // needs to send weight and token
         String callback = token.getDataItemString("callback");

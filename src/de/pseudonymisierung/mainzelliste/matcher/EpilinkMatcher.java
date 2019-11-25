@@ -286,6 +286,7 @@ public class EpilinkMatcher implements Matcher {
 		{
 			tempMatchResult.setBestWeight(weight);
 			tempMatchResult.setBestMatch(referencePatient);
+			referencePatient.getIds();
 		}
 
 		tempMatchResult.setPossibleMatches(addPatientIfPossibleMatch(tempMatchResult.getPossibleMatches(), referencePatient, weight));
