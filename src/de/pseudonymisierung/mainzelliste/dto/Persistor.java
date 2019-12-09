@@ -588,20 +588,22 @@ public enum Persistor {
 		if (isSchemaVersionUpdate(fromVersion, "1.9.0")) { // < 1.9
 			logger.info("Updating database schema for version 1.9...");
 			em.getTransaction().begin();
-			// Change HashedField value type from Bitstring to base64 encoding
+			// Read HashedFields from the database and change the value type from Bitstring to base64 encoding
+			// This improves the parsing performance and reduces the space requirements.
 			List<HashedField> hashedFields = em.createQuery("SELECT f from HashedField f", HashedField.class)
 							.getResultList();
 			for (HashedField hashedField : hashedFields) {
 				hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString()));
 				em.persist(hashedField);
 			}
-			// Update Patient (input)fields / (input)fieldsString
+			// Read all Patients and change the HashedField type in the fieldsStrings from BitString to base64
 			List<Patient> patients = getPatients();
 			for (Patient patient : patients) {
 				Collection<Field<?>> fields = new ArrayList<>(patient.getFields().values());
 				fields.addAll(patient.getInputFields().values());
 				fields.stream()
 								.flatMap(f -> {
+									// Unwrap Fields that are subfields of a CompoundField
 									if (f instanceof CompoundField<?>) {
 										@SuppressWarnings("unchecked")
 										final List<Field<?>> subFields = ((CompoundField) f).getValue();
@@ -613,6 +615,7 @@ public enum Persistor {
 								.filter(f -> f instanceof HashedField)
 								.map(f -> (HashedField)f)
 								.forEach(hashedField -> hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString())));
+				// Replace fields and thereby update the fieldsString
 				patient.setFields(patient.getFields());
 				patient.setInputFields(patient.getInputFields());
 				em.merge(patient);
