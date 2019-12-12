@@ -30,6 +30,8 @@ Mainzelliste is used in various medical joint research projects, including:
 - [CURENet](https://cure-net.de/index.php/de/aktuelles) Network researching congenital urorectal malformations
 - [asthesis longlife - das BQS Register](https://www.bqs.de/leistungen/wissenschaftliche-register/18-leistungen/47-register-basis-modul-asthesis)
 - The [ParaReg](https://www.dmgp-kongress.de/fileadmin/congress/media/dmgp2019/druckelemente/DMGP2019_Abstractband.pdf) Registry for lifelong monitoring of paraplegic patients
+- The [NEW ESID online database network] (https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btz525/5526873)
+- Biobank network of the Ruhr University Bochum (BioNetRUB)
 
 Another important use case is pseudonymization in central biobanks, for example:
 
