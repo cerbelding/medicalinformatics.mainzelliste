@@ -136,11 +136,7 @@ public class BlockingKey {
 			return false;
 		}
 		BlockingKey other = (BlockingKey) obj;
-		if (key == null) {
-			if (other.key != null) {
-				return false;
-			}
-		} else if (!key.equals(other.key)) {
+		if (!key.equals(other.key)) {
 			return false;
 		}
 		return true;
