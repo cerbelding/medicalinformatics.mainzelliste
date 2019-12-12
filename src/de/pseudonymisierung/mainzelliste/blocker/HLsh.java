@@ -58,7 +58,10 @@ public class HLsh extends BlockingKeyExtractor {
 	public static final double DEFAULT_LSH_PRUNE_RATIO = 0.25;
 
 	/** Minimum number of patients in the database to allow an optimization */
-	public static final int MIN_PATIENTS_FOR_OPTIMISATION = 500;
+	public static final int MIN_PATIENTS_FOR_OPTIMIZATION = 500;
+
+	/** Maximum number of patients to analyse for the optimization */
+	public static final int MAX_PATIENTS_FOR_OPTIMIZATION = 5000;
 
 	/** Property key for the persistence of the determined frequent bit positions in the {@link BlockingMemory} */
 	public static final String FREQUENT_BIT_POSITION_PROPERTY = "frequentBitPositions";
@@ -419,10 +422,10 @@ public class HLsh extends BlockingKeyExtractor {
 	@Override
 	public void updateBlockingKeys(List<Patient> patients) {
 		if (isOptimizationEnabled()) {
-			if (patients.size() >= MIN_PATIENTS_FOR_OPTIMISATION) {
+			if (patients.size() >= MIN_PATIENTS_FOR_OPTIMIZATION) {
 				optimizeParameters(patients);
 			} else {
-				logger.info("Skipping optimisation due to low number of patients.");
+				logger.info("Skipping optimization due to low number of patients.");
 			}
 		}
 		super.updateBlockingKeys(patients);
@@ -441,7 +444,7 @@ public class HLsh extends BlockingKeyExtractor {
 		final List<Map<Integer, Long>> bitCounter = new ArrayList<>(blockingFieldNames.size());
 		for (int i = 0; i < blockingFieldNames.size(); i++) bitCounter.add(new HashMap<>(bfSizes.get(i)));
 
-		int numberOfPatientsToAnalyze = Math.min(patients.size(), 5000);
+		int numberOfPatientsToAnalyze = Math.min(patients.size(), MAX_PATIENTS_FOR_OPTIMIZATION);
 		List<Patient> patientsForAnalysis = new ArrayList<>(patients);
 		Collections.shuffle(patientsForAnalysis);
 		for (final Patient patient : patientsForAnalysis.subList(0, numberOfPatientsToAnalyze)) {
@@ -480,6 +483,7 @@ public class HLsh extends BlockingKeyExtractor {
 
 	/**
 	 * Extract a bitset from a field
+	 * 
 	 * @param field The field object
 	 * @return The BitSet object
 	 */
