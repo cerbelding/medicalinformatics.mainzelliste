@@ -99,7 +99,7 @@ public class HLsh extends BlockingKeyExtractor {
 		this.lshKeys = getValuesAsInt(parameters.get(LSH_KEYS));
 		this.lshHashes = getValuesAsInt(parameters.get(LSH_HASHES));
 		this.bfSizes = getValuesAsInt(parameters.get(BF_SIZE));
-		this.seed = Integer.parseInt(parameters.get(SEED));
+		this.seed = Long.parseLong(parameters.get(SEED));
 		if (parameters.containsKey(LSH_PRUNE_RATIO)) {
 			this.pruneRatio = Double.parseDouble(parameters.get(LSH_PRUNE_RATIO));
 		}
