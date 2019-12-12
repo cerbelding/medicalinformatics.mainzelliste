@@ -261,9 +261,6 @@ public class HLsh extends BlockingKeyExtractor {
 	private void initMasks() {
 		bitSetMasks = new ArrayList<>();
 		switch (this.hLshMethod) {
-			case CONCAT:
-				initMasksConcat();
-				break;
 			case FIELD:
 				initMasksField();
 				break;
@@ -272,45 +269,6 @@ public class HLsh extends BlockingKeyExtractor {
 				break;
 			default:
 				throw new InternalErrorException();
-		}
-	}
-
-	/**
-	 * Determine the bit positions for the blocking keys based on the virtual concatenation of the bitsets.
-	 * Bit positions of longer bitsets therefore have a higher chance of being included.
-	 */
-	private void initMasksConcat() {
-		final int totalVirtualLength = this.bfSizes.stream().mapToInt(Integer::intValue).sum();
-
-		for (int keyIdx = 0; keyIdx < this.lshKeys.get(0); keyIdx++) {
-			final BitSet bs = new BitSet(totalVirtualLength);
-			for (int hashIdx = 0; hashIdx < this.lshHashes.get(0); hashIdx++) {
-				int mappedBitIndex;
-				Integer bitSetIdx;
-				final Random rnd = new Random(this.seed * keyIdx + hashIdx);
-				int count = 0;
-				int bitIdx;
-				do {
-					bitIdx = rnd.nextInt(totalVirtualLength);
-					bitSetIdx = null;
-					for (int i = 0; i < bitSetRanges.length; i++) {
-						if (bitIdx < bitSetRanges[i]) {
-							bitSetIdx = i;
-							break;
-						}
-					}
-					if (bitSetIdx == null) {
-						throw new InternalErrorException();
-					}
-					final int bitSetRangeStart = bitSetIdx == 0 ? 0 : bitSetRanges[bitSetIdx - 1];
-					mappedBitIndex = bitIdx - bitSetRangeStart;
-					if (count > 100) break;
-					count++;
-				} while (this.isFrequentBitPosition(mappedBitIndex, bitSetIdx));
-
-				bs.set(bitIdx);
-			}
-			bitSetMasks.add(bs);
 		}
 	}
 

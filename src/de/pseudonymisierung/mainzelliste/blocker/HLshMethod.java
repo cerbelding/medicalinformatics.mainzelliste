@@ -5,7 +5,6 @@ package de.pseudonymisierung.mainzelliste.blocker;
  */
 public enum HLshMethod {
 
-	CONCAT("concat"),
 	RECORD("record"),
 	FIELD("field");
 
