@@ -55,7 +55,7 @@ public class HLsh extends BlockingKeyExtractor {
 	public static final String LSH_PRUNE_RATIO = "pruneRatio";
 
 	/** Default value for the share of most common bits to ignore by blocking */
-	public static final double DEFAULT_LSH_PRUNE_RATIO = 0.25;
+	public static final double DEFAULT_LSH_PRUNE_RATIO = 0.5;
 
 	/** Minimum number of patients in the database to allow an optimization */
 	public static final int MIN_PATIENTS_FOR_OPTIMIZATION = 500;
@@ -479,9 +479,9 @@ public class HLsh extends BlockingKeyExtractor {
 			final int num = sortedBitPositions.size();
 			final BitSet curFrequentBitPositions = new BitSet(num);
 			if (num > 0) {
-				sortedBitPositions.subList(0, (int) (num * pruneRatio))
+				sortedBitPositions.subList(0, (int) (num * pruneRatio / 2))
 								.forEach(curFrequentBitPositions::set);
-				sortedBitPositions.subList((int) (num * (1 - pruneRatio)), num - 1)
+				sortedBitPositions.subList((int) (num * (1 - (pruneRatio / 2))), num)
 								.forEach(curFrequentBitPositions::set);
 			}
 			frequentBitPositions.put(fieldIdx, curFrequentBitPositions);
