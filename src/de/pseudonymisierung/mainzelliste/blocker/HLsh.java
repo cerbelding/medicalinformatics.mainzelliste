@@ -143,7 +143,8 @@ public class HLsh extends BlockingKeyExtractor {
 	 *
 	 * Example:
 	 * blocking.lsh.fields = vorname, nachname
-	 * blocking.lsh.method = record
+	 * blocking.lsh.bfSize = 512
+	 * blocking.lsh.method = field
 	 * blocking.lsh.lshKeys = 3
 	 * blocking.lsh.lshHashes = 10
 	 * ...
@@ -151,19 +152,25 @@ public class HLsh extends BlockingKeyExtractor {
 	 * This config is valid, although the given number of keys and hashes does not correspond to
 	 * the number of fields. This is the short notation for
 	 *
+	 * blocking.lsh.bfSize = 512, 512
 	 * blocking.lsh.lshKeys = 3, 3
 	 * blocking.lsh.lshHashes = 10, 10
 	 */
 	private void checkAndAlterConfig() {
 		String errorMessage = "";
+		if (bfSizes.size() > 1 && bfSizes.size() != blockingFieldNames.size()) {
+			errorMessage = "Invalid config for blocking method " + name + ": " +
+							"If multiple bfSize values are given, " +
+							"the number must correspond to the number of blocking fields.";
+		}
 		if (lshHashes.size() == 0 || lshKeys.size() == 0) {
 			errorMessage = "Invalid config for blocking method " + name + ": " +
 							"lshHashes and lshKeys must not be empty";
 		}
 		if (lshHashes.size() > 1 && lshHashes.size() != blockingFieldNames.size()) {
 			errorMessage = "Invalid config for blocking method " + name + ": " +
-											"If multiple lshHashes values are given, " +
-											"the number must correspond to the number of blocking fields.";
+							"If multiple lshHashes values are given, " +
+							"the number must correspond to the number of blocking fields.";
 		}
 		if (lshKeys.size() > 1 && lshKeys.size() != blockingFieldNames.size()) {
 			errorMessage = "Invalid config for blocking method " + name + ": " +
@@ -175,11 +182,15 @@ public class HLsh extends BlockingKeyExtractor {
 			throw new InternalErrorException(errorMessage);
 		}
 
+		// Expand short notations
+		if (bfSizes.size() == 1) {
+			bfSizes.addAll(Collections.nCopies(blockingFieldNames.size() - 1, bfSizes.get(0)));
+		}
 		switch (this.hLshMethod) {
 			case FIELD:
-				if (lshKeys.size() == 1) lshKeys.addAll(
-								Collections.nCopies(blockingFieldNames.size() - 1, lshKeys.get(0))
-				);
+				if (lshKeys.size() == 1) {
+					lshKeys.addAll(Collections.nCopies(blockingFieldNames.size() - 1, lshKeys.get(0)));
+				}
 				// No break!
 			case RECORD:
 				if (lshHashes.size() == 1) {
