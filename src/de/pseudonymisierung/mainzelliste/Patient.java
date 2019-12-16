@@ -25,14 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.util.*;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
