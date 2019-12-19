@@ -25,37 +25,20 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Locale;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.Properties;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.matcher.Matcher;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import de.pseudonymisierung.mainzelliste.matcher.*;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
@@ -129,6 +112,43 @@ public enum Config {
 				if (props == null) {
 					throw new Error("Configuration file could not be found at any default location");
 				}
+			}
+
+			//
+			// add custom configuration values
+
+			// get custom config attributes
+			List<String> customConfigurations = props.stringPropertyNames().stream()
+					.filter(k -> Pattern.matches("customConfiguration\\.\\d+\\.uri", k.trim()))
+					.sorted()
+					.collect(Collectors.toList());
+
+			for (String attribute : customConfigurations) {
+				// read custom configuration properties from url
+				Properties customConfigProperties;
+				try {
+					customConfigProperties = readConfigFromUrl(new URL(props.getProperty(attribute).trim()));
+				}  catch (MalformedURLException e) {
+					logger.fatal("Custom configuration file '" + attribute +
+							"' could not be read from provided URL " + attribute, e);
+					throw new Error(e);
+				} catch (IOException e) {
+					logger.fatal("Error reading custom configuration file '" + attribute +
+							"'. Please configure according to installation manual.", e);
+					throw new Error(e);
+				}
+
+				// merge configuration files
+				for (String currentKey : customConfigProperties.stringPropertyNames()) {
+					if(props.containsKey(currentKey) && !customConfigProperties.getProperty(currentKey).trim()
+							.equals(props.getProperty(currentKey).trim())) {
+						String msg = "Override of main config properties is not allowed. Property key: " + currentKey +
+								", custom configuration file: " + attribute;
+						logger.fatal(msg);
+						throw new Error(msg);
+					}
+				}
+				props.putAll(customConfigProperties);
 			}
 
 			logger.info("Config read successfully");
@@ -352,8 +372,35 @@ public enum Config {
 				configInputStream = new FileInputStream(configPath);
 			else return null;
 		}
+		return readConfigFromInputStream(configInputStream);
+	}
 
-		Reader reader = new InputStreamReader(configInputStream, "UTF-8");
+	/**
+	 * Read configuration from the given URL.
+	 *
+	 * @param url
+	 *            url of the configuration file.
+	 * @return The configuration as a Properties object
+	 * @throws IOException
+	 *             If an I/O error occurs while reading the configuration file.
+	 */
+	private Properties readConfigFromUrl(URL url) throws IOException {
+		try (BufferedInputStream in = new BufferedInputStream(url.openStream()) ) {
+			return readConfigFromInputStream(in);
+		}
+	}
+
+	/**
+	 * Read configuration from the given input stream.
+	 *
+	 * @param configInputStream
+	 *            input stream of the configuration file.
+	 * @return The configuration as a Properties object
+	 * @throws IOException
+	 *             If an I/O error occurs while reading the configuration file.
+	 */
+	private Properties readConfigFromInputStream(InputStream configInputStream) throws IOException {
+		Reader reader = new InputStreamReader(configInputStream, StandardCharsets.UTF_8);
 		Properties props = new Properties();
 		props.load(reader);
 		// trim property values

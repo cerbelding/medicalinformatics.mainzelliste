@@ -333,3 +333,6 @@ callback.allowSelfsigned = false
 
 # Logo file: example for file in META-INF/resources within a .jar file on the classpath 
 # operator.logo = /logo.png
+
+# custom configuration
+# customConfiguration.{n}.uri = https://www.example.org/mainzelliste.sub.conf
