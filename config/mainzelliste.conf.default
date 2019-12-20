@@ -335,4 +335,5 @@ callback.allowSelfsigned = false
 # operator.logo = /logo.png
 
 # custom configuration
-# customConfiguration.{n}.uri = https://www.example.org/mainzelliste.sub.conf
+# subConfiguration.{n}.uri = https://www.example.org/mainzelliste.sub.conf
+# subConfiguration.{n}.uri = file:///etc/mainzelliste/mainzelliste.sub.conf

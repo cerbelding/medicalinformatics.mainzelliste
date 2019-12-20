@@ -118,18 +118,18 @@ public enum Config {
 			// add custom configuration values
 
 			// get custom config attributes
-			List<String> customConfigurations = props.stringPropertyNames().stream()
-					.filter(k -> Pattern.matches("customConfiguration\\.\\d+\\.uri", k.trim()))
+			List<String> subConfigurations = props.stringPropertyNames().stream()
+					.filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
 					.sorted()
 					.collect(Collectors.toList());
 
-			for (String attribute : customConfigurations) {
+			for (String attribute : subConfigurations) {
 				// read custom configuration properties from url
-				Properties customConfigProperties;
+				Properties subConfigProperties;
 				try {
-					URL customConfigURL = new URL(props.getProperty(attribute).trim());
-					customConfigProperties = readConfigFromUrl(customConfigURL);
-					logger.info("Custom configuration file " + customConfigURL + " has been read in.");
+					URL subConfigurationURL = new URL(props.getProperty(attribute).trim());
+					subConfigProperties = readConfigFromUrl(subConfigurationURL);
+					logger.info("Sub configuration file " + subConfigurationURL + " has been read in.");
 				}  catch (MalformedURLException e) {
 					logger.fatal("Custom configuration file '" + attribute +
 							"' could not be read from provided URL " + attribute, e);
@@ -141,8 +141,8 @@ public enum Config {
 				}
 
 				// merge configuration files
-				for (String currentKey : customConfigProperties.stringPropertyNames()) {
-					if(props.containsKey(currentKey) && !customConfigProperties.getProperty(currentKey).trim()
+				for (String currentKey : subConfigProperties.stringPropertyNames()) {
+					if(props.containsKey(currentKey) && !subConfigProperties.getProperty(currentKey).trim()
 							.equals(props.getProperty(currentKey).trim())) {
 						String msg = "Sub config tries to override main config. Override of main config properties is not allowed. Property key: " + currentKey +
 								", custom configuration file: " + attribute;
@@ -150,7 +150,7 @@ public enum Config {
 						throw new Error(msg);
 					}
 				}
-				props.putAll(customConfigProperties);
+				props.putAll(subConfigProperties);
 			}
 
 			logger.info("Config read successfully");
