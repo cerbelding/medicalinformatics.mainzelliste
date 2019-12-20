@@ -182,11 +182,12 @@ public enum Config {
         //
         // add custom configuration values
 
-        // get custom config attributes
-        List<String> subConfigurations = props.stringPropertyNames().stream()
-                .filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
-                .sorted()
-                .collect(Collectors.toList());
+		// get custom config attributes
+		List<String> subConfigurations = props.stringPropertyNames().stream().filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
+				.map(k -> Integer.parseInt(k.split("\\.")[1])).sorted()
+				.map(d -> "subConfiguration." + d + ".uri")
+				.collect(Collectors.toList());
+
 
         for (String attribute : subConfigurations) {
             // read custom configuration properties from url
@@ -194,7 +195,7 @@ public enum Config {
             try {
                 URL subConfigurationURL = new URL(props.getProperty(attribute).trim());
                 subConfigurationProperties = readConfigFromUrl(subConfigurationURL);
-                logger.info("Sub configuration file " + subConfigurationURL + " has been read in.");
+                logger.info("Sub configuration file " + attribute + " = " + subConfigurationURL + " has been read in.");
             }  catch (MalformedURLException e) {
                 logger.fatal("Custom configuration file '" + attribute +
                         "' could not be read from provided URL " + attribute, e);
