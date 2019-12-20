@@ -142,7 +142,7 @@ public enum Config {
 				for (String currentKey : customConfigProperties.stringPropertyNames()) {
 					if(props.containsKey(currentKey) && !customConfigProperties.getProperty(currentKey).trim()
 							.equals(props.getProperty(currentKey).trim())) {
-						String msg = "Override of main config properties is not allowed. Property key: " + currentKey +
+						String msg = "Sub config tries to override main config. Override of main config properties is not allowed. Property key: " + currentKey +
 								", custom configuration file: " + attribute;
 						logger.fatal(msg);
 						throw new Error(msg);
