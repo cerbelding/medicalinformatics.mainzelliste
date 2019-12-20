@@ -127,7 +127,9 @@ public enum Config {
 				// read custom configuration properties from url
 				Properties customConfigProperties;
 				try {
-					customConfigProperties = readConfigFromUrl(new URL(props.getProperty(attribute).trim()));
+					URL customConfigURL = new URL(props.getProperty(attribute).trim());
+					customConfigProperties = readConfigFromUrl(customConfigURL);
+					logger.info("Custom configuration file " + customConfigURL + " has been read in.");
 				}  catch (MalformedURLException e) {
 					logger.fatal("Custom configuration file '" + attribute +
 							"' could not be read from provided URL " + attribute, e);
