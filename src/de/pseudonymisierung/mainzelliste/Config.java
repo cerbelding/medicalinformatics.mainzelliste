@@ -114,46 +114,10 @@ public enum Config {
 				}
 			}
 
-			//
-			// add custom configuration values
 
-			// get custom config attributes
-			List<String> subConfigurations = props.stringPropertyNames().stream()
-					.filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
-					.sorted()
-					.collect(Collectors.toList());
+            addSubConfigurationPropertiesToProps();
 
-			for (String attribute : subConfigurations) {
-				// read custom configuration properties from url
-				Properties subConfigProperties;
-				try {
-					URL subConfigurationURL = new URL(props.getProperty(attribute).trim());
-					subConfigProperties = readConfigFromUrl(subConfigurationURL);
-					logger.info("Sub configuration file " + subConfigurationURL + " has been read in.");
-				}  catch (MalformedURLException e) {
-					logger.fatal("Custom configuration file '" + attribute +
-							"' could not be read from provided URL " + attribute, e);
-					throw new Error(e);
-				} catch (IOException e) {
-					logger.fatal("Error reading custom configuration file '" + attribute +
-							"'. Please configure according to installation manual.", e);
-					throw new Error(e);
-				}
-
-				// merge configuration files
-				for (String currentKey : subConfigProperties.stringPropertyNames()) {
-					if(props.containsKey(currentKey) && !subConfigProperties.getProperty(currentKey).trim()
-							.equals(props.getProperty(currentKey).trim())) {
-						String msg = "Sub config tries to override main config. Override of main config properties is not allowed. Property key: " + currentKey +
-								", custom configuration file: " + attribute;
-						logger.fatal(msg);
-						throw new Error(msg);
-					}
-				}
-				props.putAll(subConfigProperties);
-			}
-
-			logger.info("Config read successfully");
+            logger.info("Config read successfully");
 			logger.debug(props);
 
 		} catch (IOException e)	{
@@ -210,7 +174,52 @@ public enum Config {
 		version = readVersion();
 	}
 
-	/**
+    /**
+     * Reads subConfiguration.{n}.uri(s) and adds the values to Config.props
+     *
+     */
+    private void addSubConfigurationPropertiesToProps() {
+        //
+        // add custom configuration values
+
+        // get custom config attributes
+        List<String> subConfigurations = props.stringPropertyNames().stream()
+                .filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
+                .sorted()
+                .collect(Collectors.toList());
+
+        for (String attribute : subConfigurations) {
+            // read custom configuration properties from url
+            Properties subConfigurationProperties;
+            try {
+                URL subConfigurationURL = new URL(props.getProperty(attribute).trim());
+                subConfigurationProperties = readConfigFromUrl(subConfigurationURL);
+                logger.info("Sub configuration file " + subConfigurationURL + " has been read in.");
+            }  catch (MalformedURLException e) {
+                logger.fatal("Custom configuration file '" + attribute +
+                        "' could not be read from provided URL " + attribute, e);
+                throw new Error(e);
+            } catch (IOException e) {
+                logger.fatal("Error reading custom configuration file '" + attribute +
+                        "'. Please configure according to installation manual.", e);
+                throw new Error(e);
+            }
+
+            // merge configuration files
+            for (String currentKey : subConfigurationProperties.stringPropertyNames()) {
+                if(props.containsKey(currentKey) && !subConfigurationProperties.getProperty(currentKey).trim()
+                        .equals(props.getProperty(currentKey).trim())) {
+                    String msg = "Sub configuration tries to override main config or former sub config values. This is not allowed. Property key: " + currentKey +
+                            ", custom configuration file: " + attribute;
+                    logger.fatal(msg);
+                    throw new Error(msg);
+                }
+            }
+            props.putAll(subConfigurationProperties);
+        }
+    }
+
+    /**
 	 * Get the {@link RecordTransformer} instance configured for this instance.
 	 * @return The {@link RecordTransformer} instance configured for this instance.
 	 */
