@@ -75,6 +75,7 @@ As an open source project, Mainzelliste profits from contributions from the rese
 - Florian Stampe, DKFZ-Heidelberg
 - Galina Tremper, DKFZ-Heidelberg
 - Jens Schwanke, Universitätsmedizin Göttingen
+- Cornelius Knopp, Universitätsmedizin Göttingen 
 - Martin Lablans, DKFZ-Heidelberg
 - Matthias Lemmer, Universität Marburg
 - Maximilian Ataian, Universitätsmedizin Mainz
