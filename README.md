@@ -57,11 +57,36 @@ We have compiled this list from the results of public search engines. If you use
 
 We would love to include your useful changes to the Mainzelliste code in a future official release. See the related [Wiki page](https://bitbucket.org/medicalinformatics/mainzelliste/wiki/Contributing) for further information on contributing code.
 
-
 ## Release notes
 
-All notable changes to the mainzelliste project you can see in the [changelog](./changelog.md)
+alpha 1.9.0 - status 2019-02-01
 
+New features:
+
+- BestMatch/CheckMatch REST-API /patients/checkMatch/{tokenId} (not merged yet) 
+- Callback and redirect functionality for all CRUD functions (not merged yet) 
+- HTTP proxy feature for callbacks (not merged yet) 
+- New ID-Generator (EGKIDGenerator) (merged) 
+- Multi Configs - Allow Sub configuration files (not merged yet) 
+- Blocking for Bloomfilter → Feature Leipzig (reviewing) 
+- Audittrail → Feature Marburg (reviewing)
+- Status endpoint (not implemented yet) 
+- Request all Ids for one Id types/projects (not implemented yet) 
+
+
+Bug fixes:
+
+- Cookie unship (merged) (grüner Stern)
+- Make /run/secrets/manzellisteConfig usable without unused mandatory fields (merged)
+- HashCode Method for Patient class - Fixes issues with patient counted multiple times because of multiple external ids (not merged yet)
+
+
+Other:
+
+- Bitbucket pipelines
+
+
+All historically notable changes to the mainzelliste project you can see in the [changelog](./changelog.md)
 
 ### Contributions
 As an open source project, Mainzelliste profits from contributions from the research community. We would like to thank the following colleagues for their code contributions (sorted by name in ascending order):
