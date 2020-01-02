@@ -66,12 +66,13 @@ New features:
 - BestMatch/CheckMatch REST-API /patients/checkMatch/{tokenId} (not merged yet) 
 - Callback and redirect functionality for all CRUD functions (not merged yet) 
 - HTTP proxy feature for callbacks (not merged yet) 
-- New ID-Generator (EGKIDGenerator) (merged) 
-- Multi Configs - Allow Sub configuration files (not merged yet) 
-- Blocking for Bloomfilter → Feature Leipzig (reviewing) 
+- New id generator (EGKIDGenerator) (merged) 
+- Multi configs - Allow sub configuration files (not merged yet) 
+- Blocking for bloomfilter → Feature Leipzig (reviewing) 
 - Audittrail → Feature Marburg (reviewing)
 - Status endpoint (not implemented yet) 
 - Request all Ids for one Id types/projects (not implemented yet) 
+- Multiple token reuse 
 
 
 Bug fixes:
