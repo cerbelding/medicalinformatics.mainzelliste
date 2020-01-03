@@ -568,4 +568,15 @@ public enum PatientBackend {
 		}
 		return debugSession;
 	}
+
+	public List<ID> getAllIdsOfaIDType(String IdType){
+
+		try {
+			return Persistor.instance.getAllIdsOfAIdType(IdType);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
 }

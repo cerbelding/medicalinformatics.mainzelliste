@@ -276,6 +276,22 @@ public enum Persistor {
 		return ret;
 	}
 
+
+	/**
+	 * Returns a list of the IDs of a specific idType of all patients.
+	 *
+	 * @return A list where every item represents the IDs of one patient.
+	 */
+	public synchronized List<ID> getAllIdsOfAIdType(String IdType) {
+		List<ID> idList = new LinkedList<ID>();
+		EntityManager em = emf.createEntityManager();
+		TypedQuery<ID> q = em.createQuery("SELECT i from ID i where i.type='" + IdType + "'", ID.class);
+		idList = q.getResultList();
+		return idList;
+	}
+
+
+
 	/**
 	 * Add an ID request to the database. In cases where a new ID is created, a
 	 * new Patient object is persisted.
