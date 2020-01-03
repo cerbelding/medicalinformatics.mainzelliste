@@ -332,121 +332,125 @@ public class PatientsResource {
         List<?> requests = token.getDataItemList("searchIds");
 
         //TODO: Validate permissions
-        if(requests.size()>0 && ((LinkedHashMap) requests.get(0)).containsValue("*")){
-            logger.info("Request all Ids for a idtype");
-            String idType;
-
-            if(token.getDataItemList("resultFields") != null){
-                throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
-            }
-
-            if(token.getDataItemList("resultIds").size()>1){
-                throw new NotImplementedException("It's only possible to request one IdType as wildcard select.");
-            }
-
-
-            Map<String, String> thisSearchId = (Map<String, String>) requests.get(0);
-            idType = thisSearchId.get("idType");
-            logger.info("idType:" + idType);
-
-            //search id and resultId is the same
-            if(token.getDataItemList("resultIds").contains(idType) && token.getDataItemList("resultIds").size()==1){
-                List<ID> selectedIDs = PatientBackend.instance.getAllIdsOfaIDType(idType);
-                return Response.ok().entity(selectedIDs).build();
-            }
-
-            if(!token.getDataItemList("resultIds").contains(idType)){
-                throw new NotImplementedException("It's only possible to request identical searchIdTypes and resultIdTypes as wildcard select.");
-            }
-
-            return null;
-
-
+        if (requests.size() > 0 && ((LinkedHashMap) requests.get(0)).containsValue("*")) {
+            return readPatientWildCardSelect(token, requests);
+        } else {
+            return readPatientIndividualSelect(token, requests);
         }
-        else {
+    }
 
-            JSONArray ret = new JSONArray();
-            for (Object item : requests) {
-                JSONObject thisPatient = new JSONObject();
-                String idType;
-                String idString;
+    private Response readPatientIndividualSelect(Token token, List<?> requests) {
+        JSONArray ret = new JSONArray();
+        for (Object item : requests) {
+            JSONObject thisPatient = new JSONObject();
+            String idType;
+            String idString;
+            @SuppressWarnings("unchecked")
+            Map<String, String> thisSearchId = (Map<String, String>) item;
+            idType = thisSearchId.get("idType");
+            idString = thisSearchId.get("idString");
+            ID id = IDGeneratorFactory.instance.buildId(idType, idString);
+            Patient patient = Persistor.instance.getPatient(id);
+            if (token.hasDataItem("resultFields")) {
+                // get fields for output
+                Map<String, String> outputFields = new HashMap<String, String>();
                 @SuppressWarnings("unchecked")
-                Map<String, String> thisSearchId = (Map<String, String>) item;
-                idType = thisSearchId.get("idType");
-                idString = thisSearchId.get("idString");
-                ID id = IDGeneratorFactory.instance.buildId(idType, idString);
-                Patient patient = Persistor.instance.getPatient(id);
-                if (token.hasDataItem("resultFields")) {
-                    // get fields for output
-                    Map<String, String> outputFields = new HashMap<String, String>();
-                    @SuppressWarnings("unchecked")
-                    List<String> fieldNames = (List<String>) token.getDataItemList("resultFields");
-                    for (String thisFieldName : fieldNames) {
-                        outputFields.put(thisFieldName, patient.getInputFields().get(thisFieldName).toString());
-                    }
-                    try {
-                        thisPatient.put("fields", outputFields);
-                    } catch (JSONException e) {
-                        logger.error("Error while transforming patient fields into JSON", e);
-                        throw new InternalErrorException("Error while transforming patient fields into JSON");
-                    }
+                List<String> fieldNames = (List<String>) token.getDataItemList("resultFields");
+                for (String thisFieldName : fieldNames) {
+                    outputFields.put(thisFieldName, patient.getInputFields().get(thisFieldName).toString());
                 }
+                try {
+                    thisPatient.put("fields", outputFields);
+                } catch (JSONException e) {
+                    logger.error("Error while transforming patient fields into JSON", e);
+                    throw new InternalErrorException("Error while transforming patient fields into JSON");
+                }
+            }
 
-                if (Boolean.TRUE.equals(token.getData().get("readAllPatientIds"))) {
+            if (Boolean.TRUE.equals(token.getData().get("readAllPatientIds"))) {
 
-                    if (token.getParentServerName() == null) {
-                        throw new NoParentServerNameException();
-                    } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds")) {
-                        try {
-                            thisPatient.put("ids", getAllIDsOfPatient(patient));
-
-                        } catch (JSONException e) {
-                            logger.error("Error while transforming patient ids into JSON", e);
-                            throw new InternalErrorException("Error while transforming patient ids into JSON");
-                        }
-                    } else {
-                        logger.info("Server has no readAllPatientIds permission");
-                        throw new UnauthorizedException("Server has no readAllPatientIds permission");
-                    }
-
-                } else if (token.hasDataItem("resultIds")) {
+                if (token.getParentServerName() == null) {
+                    throw new NoParentServerNameException();
+                } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds")) {
                     try {
-                        @SuppressWarnings("unchecked")
-                        List<String> idTypes = (List<String>) token.getDataItemList("resultIds");
-                        List<JSONObject> returnIds = new LinkedList<JSONObject>();
-                        for (String thisIdType : idTypes) {
-                            ID returnId = patient.getId(thisIdType);
-                            if (returnId != null) returnIds.add(returnId.toJSON());
-                        }
-                        thisPatient.put("ids", returnIds);
+                        thisPatient.put("ids", getAllIDsOfPatient(patient));
+
                     } catch (JSONException e) {
                         logger.error("Error while transforming patient ids into JSON", e);
                         throw new InternalErrorException("Error while transforming patient ids into JSON");
                     }
+                } else {
+                    logger.info("Server has no readAllPatientIds permission");
+                    throw new UnauthorizedException("Server has no readAllPatientIds permission");
                 }
-                if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
 
-                    if (token.getParentServerName() == null) {
-                        throw new NoParentServerNameException();
-                    } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIdTypes")) {
-                        try {
-                            thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
-                        } catch (JSONException e) {
-                            logger.error("Error while transforming ID types into JSON", e);
-                            throw new InternalErrorException("Error while transforming ID types into JSON");
-                        }
-                    } else {
-                        logger.info("Server has no resultAllIds permission");
-                        throw new UnauthorizedException("Server has no readAllPatientIdTypes permission");
+            } else if (token.hasDataItem("resultIds")) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    List<String> idTypes = (List<String>) token.getDataItemList("resultIds");
+                    List<JSONObject> returnIds = new LinkedList<JSONObject>();
+                    for (String thisIdType : idTypes) {
+                        ID returnId = patient.getId(thisIdType);
+                        if (returnId != null) returnIds.add(returnId.toJSON());
                     }
+                    thisPatient.put("ids", returnIds);
+                } catch (JSONException e) {
+                    logger.error("Error while transforming patient ids into JSON", e);
+                    throw new InternalErrorException("Error while transforming patient ids into JSON");
                 }
+            }
+            if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
 
-
-                ret.put(thisPatient);
+                if (token.getParentServerName() == null) {
+                    throw new NoParentServerNameException();
+                } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIdTypes")) {
+                    try {
+                        thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
+                    } catch (JSONException e) {
+                        logger.error("Error while transforming ID types into JSON", e);
+                        throw new InternalErrorException("Error while transforming ID types into JSON");
+                    }
+                } else {
+                    logger.info("Server has no resultAllIds permission");
+                    throw new UnauthorizedException("Server has no readAllPatientIdTypes permission");
+                }
             }
 
-            return Response.ok().entity(ret).build();
+
+            ret.put(thisPatient);
         }
+
+        return Response.ok().entity(ret).build();
+    }
+
+    private Response readPatientWildCardSelect(Token token, List<?> requests) {
+        logger.info("Request all Ids for a idtype");
+        String idType;
+
+        if (token.getDataItemList("resultFields") != null) {
+            throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
+        }
+
+        if (token.getDataItemList("resultIds").size() > 1) {
+            throw new NotImplementedException("It's only possible to request one IdType as wildcard select.");
+        }
+
+
+        Map<String, String> thisSearchId = (Map<String, String>) requests.get(0);
+        idType = thisSearchId.get("idType");
+        logger.info("idType:" + idType);
+
+        //search id and resultId is the same
+        if (token.getDataItemList("resultIds").contains(idType) && token.getDataItemList("resultIds").size() == 1) {
+            List<ID> selectedIDs = PatientBackend.instance.getAllIdsOfaIDType(idType);
+            return Response.ok().entity(selectedIDs).build();
+        }
+
+        if (!token.getDataItemList("resultIds").contains(idType)) {
+            throw new NotImplementedException("It's only possible to request identical searchIdTypes and resultIdTypes as wildcard select.");
+        }
+
+        return null;
     }
 
     private JSONArray getAllIdTypesOfPatient(Patient patient) {
@@ -616,14 +620,10 @@ public class PatientsResource {
     /**
      * Delete a patient
      *
-     * @param idType
-     *            ID type of an ID of the patient to delete.
-     * @param idString
-     *            ID string of an ID of the patient to delete.
-     * @param withDuplicatesParam
-     *            Whether to delete duplicates of the given patient.
-     * @param request
-     *            The injected HttpServletRequest.
+     * @param idType              ID type of an ID of the patient to delete.
+     * @param idString            ID string of an ID of the patient to delete.
+     * @param withDuplicatesParam Whether to delete duplicates of the given patient.
+     * @param request             The injected HttpServletRequest.
      * @return A response according to the API documentation.
      */
     @Path("{tokenId}/{idType}/{idString}")
@@ -643,10 +643,9 @@ public class PatientsResource {
 
         ID id = IDGeneratorFactory.instance.buildId(idType, idString);
 
-        if (withDuplicates){
+        if (withDuplicates) {
             Persistor.instance.deletePatientWithDuplicates(id);
-        }
-        else{
+        } else {
             Persistor.instance.deletePatient(id);
         }
 
