@@ -335,11 +335,32 @@ public class PatientsResource {
         if(requests.size()>0 && ((LinkedHashMap) requests.get(0)).containsValue("*")){
             logger.info("Request all Ids for a idtype");
             String idType;
+
+            if(token.getDataItemList("resultFields") != null){
+                throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
+            }
+
+            if(token.getDataItemList("resultIds").size()>1){
+                throw new NotImplementedException("It's only possible to request one IdType as wildcard select.");
+            }
+
+
             Map<String, String> thisSearchId = (Map<String, String>) requests.get(0);
             idType = thisSearchId.get("idType");
             logger.info("idType:" + idType);
-            List<ID> selectedIDs = PatientBackend.instance.getAllIdsOfaIDType(idType);
-            return Response.ok().entity(selectedIDs).build();
+
+            //search id and resultId is the same
+            if(token.getDataItemList("resultIds").contains(idType) && token.getDataItemList("resultIds").size()==1){
+                List<ID> selectedIDs = PatientBackend.instance.getAllIdsOfaIDType(idType);
+                return Response.ok().entity(selectedIDs).build();
+            }
+
+            if(!token.getDataItemList("resultIds").contains(idType)){
+                throw new NotImplementedException("It's only possible to request identical searchIdTypes and resultIdTypes as wildcard select.");
+            }
+
+            return null;
+
 
         }
         else {
