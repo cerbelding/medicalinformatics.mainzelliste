@@ -400,7 +400,7 @@ public class Token {
 			}
 			checkIdType(idType);
 
-			if (!Persistor.instance.patientExists(idType, idString)) {
+			if (!Persistor.instance.patientExists(idType, idString) && !idString.equals("*")) {
 				throw new InvalidTokenException(
 						"No patient found with provided " + idType + " '"
 								+ idString + "'!");
