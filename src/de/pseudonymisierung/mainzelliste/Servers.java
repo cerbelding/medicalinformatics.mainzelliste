@@ -559,6 +559,11 @@ public enum Servers {
 		return false;
 	}
 
+	public Set<String> getServerPermissionsForServerName(String serverName){
+		Server server = servers.get(getApiKeyForServerName(serverName));
+		return server.permissions;
+	}
+
 	public String getApiKeyForServerName(String serverName){
 
 		for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
