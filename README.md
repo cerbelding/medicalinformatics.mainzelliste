@@ -77,7 +77,7 @@ New features:
 
 Bug fixes:
 
-- Cookie unship (merged) (grüner Stern)
+- Cookie unship (merged)
 - Make /run/secrets/manzellisteConfig usable without unused mandatory fields (merged)
 - HashCode Method for Patient class - Fixes issues with patient counted multiple times because of multiple external ids (not merged yet)
 

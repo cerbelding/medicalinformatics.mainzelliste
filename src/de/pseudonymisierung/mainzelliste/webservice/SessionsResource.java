@@ -90,7 +90,20 @@ public class SessionsResource {
 
 		Servers.instance.checkPermission(req, "createSession");
 
-		Session s = Servers.instance.newSession();
+
+		Session s = null;
+		try {
+			String apiKey = req.getHeader("mainzellisteApiKey");
+			if (apiKey == null) // Compatibility to pre 1.0 (needed by secuTrial interface)
+				apiKey = req.getHeader("mzidApiKey");
+
+			String parentServerName = Servers.instance.getServerNameForApiKey(apiKey);
+
+			s = Servers.instance.newSession(parentServerName);
+		} catch (Exception e) {
+			s = Servers.instance.newSession("");
+		}
+
 		String sid = s.getId();
 		URI newUri = UriBuilder
 				.fromUri(req.getRequestURL().toString())
