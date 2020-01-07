@@ -72,7 +72,8 @@ New features:
 - Audittrail → Feature Marburg (reviewing)
 - Status endpoint (not implemented yet) 
 - Request all Ids for one Id types/projects (not merged yet) 
-- Multiple token reuse (party implemented)
+- Multiple token reuse (partly implemented)
+- Refined permission concept (not implemented yet)
 
 Bug fixes:
 
