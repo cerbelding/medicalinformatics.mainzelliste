@@ -90,7 +90,20 @@ public class SessionsResource {
 
 		Servers.instance.checkPermission(req, "createSession");
 
-		Session s = Servers.instance.newSession();
+
+		Session s = null;
+		try {
+			String apiKey = req.getHeader("mainzellisteApiKey");
+			if (apiKey == null) // Compatibility to pre 1.0 (needed by secuTrial interface)
+				apiKey = req.getHeader("mzidApiKey");
+
+			String parentServerName = Servers.instance.getServerNameForApiKey(apiKey);
+
+			s = Servers.instance.newSession(parentServerName);
+		} catch (Exception e) {
+			s = Servers.instance.newSession("");
+		}
+
 		String sid = s.getId();
 		URI newUri = UriBuilder
 				.fromUri(req.getRequestURL().toString())
@@ -224,10 +237,9 @@ public class SessionsResource {
 
 		Token t = new TokenParam(tp).getValue();
 		t.setParentSessionId(s.getId());
-		t.setURI(s.getURI().resolve("tokens/" + t.getId()));
-		Object parentServerName = req.getSession(true).getAttribute("serverName");
+		Object parentServerName = s.getParentServerName();
 		if(parentServerName == null) {
-			logger.info("parentServerName can't be derived from this request. Reason could be that JSESSIONID is not being sent, or the Tomcat servlet context is badly configured (e.g. SSL enabled/disabled), see server.xml  ");
+			logger.info("parentServerName can't be derived from session");
 		}
 		else{
 			t.setParentServerName(parentServerName.toString());

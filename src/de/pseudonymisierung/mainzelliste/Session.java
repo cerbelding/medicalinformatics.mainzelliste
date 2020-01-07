@@ -54,6 +54,9 @@ public class Session extends ConcurrentHashMap<String, String>{
 	/** The set of patients belonging to this Session */
 	private HashMap<ID, Patient> patients = new HashMap<ID, Patient>();
 
+
+	private String parentServerName;
+
 	/**
 	 * The time of the last access to this Session. Updateable via
 	 * refresh();
@@ -224,4 +227,14 @@ public class Session extends ConcurrentHashMap<String, String>{
 	public Set<Patient> getPatients() {
 		return new HashSet<Patient>(patients.values());
 	}
+
+
+	public String getParentServerName() {
+		return parentServerName;
+	}
+
+	public void setParentServerName(String parentServerName) {
+		this.parentServerName = parentServerName;
+	}
+
 }

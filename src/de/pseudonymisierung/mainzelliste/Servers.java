@@ -192,9 +192,10 @@ public enum Servers {
 	 * 
 	 * @return The new session object.
 	 */
-	public Session newSession() {
+	public Session newSession(String serverName) {
 		String sid = UUID.randomUUID().toString();
 		Session s = new Session(sid);
+		s.setParentServerName(serverName);
 		synchronized (sessions) {
 			sessions.put(sid, s);
 		}

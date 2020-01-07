@@ -434,7 +434,7 @@ public enum PatientBackend {
 	private Session getDebugSession() {
 		if (debugSession == null
 				|| Servers.instance.getSession(debugSession.getId()) == null) {
-			debugSession = Servers.instance.newSession();
+			debugSession = Servers.instance.newSession("");
 		}
 		return debugSession;
 	}
