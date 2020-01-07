@@ -71,10 +71,8 @@ New features:
 - Blocking for bloomfilter → Feature Leipzig (reviewing) 
 - Audittrail → Feature Marburg (reviewing)
 - Status endpoint (not implemented yet) 
-- Request all Ids for one Id types/projects (not implemented yet) 
+- Request all Ids for one Id types/projects (not merged yet) 
 - Multiple token reuse (party implemented)
-- Read all ID's of a specific ID type (not merged yet) 
-
 
 Bug fixes:
 
@@ -86,6 +84,17 @@ Bug fixes:
 Other:
 
 - Bitbucket pipelines
+
+  - The Bitbucket pipeline ensures high quality software through automated testing. The automated tests are implemented with Docker and Newman (REST API). This allows any commit to the bitbucket repository to be automatically checked for possible errors. For each test case all required Docker Containers are booted, the functionality is checked via the REST interfaces provided by the "Mainzelliste" and after the test case all Docker Containers are shut down again. This ensures that all test cases are executed independently.
+
+    - bitbucket-pipelines.yml: The bitbucket-pipelines.yml file defines your pipelines builds configuration. It is iterated over each test case. For each test case a docker environment is started using the docker-compose.test.yml file.
+    - docker-compose.test.yml: The Docker environment is defined here.
+    - ci/  The relevant test data is stored in this directory. Each test case is defined in a separate Postman Collection. A Mainzelliste configuration file is provided for each test case. The configuration file has the same file name as the Postman Collection (including the file extension of the collection).
+      - newman_environment_variables/:  The Newman Environment variables are stored here. Currently there is one file for all test cases.
+      - newman_mainzelliste_configs/:  This folder contains the Mainzelliste configuration files associated with the test cases. If there is no configuration file for a test case, a default configuration is chosen.
+      - newman_tests/: The test cases are saved here. A collection contains exactly one test case.
+      - test_data/: Here are some mockup test data. There is also a collection file that contains some relevant API requests. To ensure that the test cases are standardized, you should copy the required requests from this collection. If a request does not yet exist, you should add it to the collection.
+      - test_results/: Here the Newman results are stored in HTML and XML format. This allows a pretty presentation of the tests.
 
 
 All historically notable changes to the mainzelliste project you can see in the [changelog](./changelog.md)
