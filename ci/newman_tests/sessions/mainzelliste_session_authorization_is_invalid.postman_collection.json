@@ -1,0 +1,65 @@
+{
+	"info": {
+		"_postman_id": "57484281-0f89-4110-88ee-3168df913571",
+		"name": "mainzelliste_session_authorization_is_invalid",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NEW_SESSION - Sitzung anlegen -> failed authorization invalid",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "bc0fd897-1662-4d59-823e-eb08c2740b50",
+						"exec": [
+							"console.log(\"New Session\");",
+							"",
+							"",
+							" pm.response.to.have.body(\"Your permissions do not allow the requested access.\");",
+							"pm.test(\"Check ResponseCode\", function(){",
+							"     pm.response.to.have.status(\"Unauthorized\");",
+							"    ",
+							"});",
+							"",
+							"pm.test(\"Check ResponseBody\", function(){",
+							"    ",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

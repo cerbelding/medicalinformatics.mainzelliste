@@ -1,0 +1,403 @@
+{
+	"info": {
+		"_postman_id": "2db2ba7d-3283-48a4-a85d-a880c1e2690f",
+		"name": "mainzelliste_authorization_is_invalid",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NEW_SESSION - Sitzung anlegen -> failing (wrongAPIKey)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "d8a12e31-b905-40ca-8772-1c92a02966e7",
+						"exec": [
+							"console.log(\"New Session -> failing (wrongAPIKey)\")",
+							"tests[\"Session creating not allowed\"] = responseCode.code === 401;",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "THISISNOVALIDAPIKEY"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW_SESSION - Sitzung anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"console.log(\"New Session\")",
+							"",
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Session created\"] = responseCode.code === 201;",
+							"tests[\"Body has sessionId\"] = responseBody.has(\"sessionId\");",
+							"tests[\"Body has uri\"] = responseBody.has(\"uri\");",
+							"",
+							"var sessionId = jsonBody.sessionId;",
+							"postman.clearGlobalVariable(\"sessionId\");",
+							"postman.setGlobalVariable(\"sessionId\", sessionId);",
+							"",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW_TOKEN (addPatient) - Token anlegen -> failing (not allowed)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"console.log(\"New TOKEN (addPatient) - failing (not allowed)\")",
+							"console.log(responseBody);",
+							"",
+							"tests[\"Creating Token not allowed 401\"] = responseCode.code === 401;",
+							"tests[\"Your permissions do not allow the requested access.\"] = responseBody == \"Your permissions do not allow the requested access.\""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ADD_PATIENT (JSON) - Patienten anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"console.log(\"ADD_PATIENT (JSON) not allowed\")",
+							"console.log(responseBody);",
+							"",
+							"tests[\"Adding Patient not allowed 401\"] = responseCode.code === 401;",
+							"tests[\"Please supply a valid 'addPatient' token\"] = responseBody == \"Please supply a valid 'addPatient' token.\""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "vorname",
+							"value": "{{vorname}}",
+							"type": "text"
+						},
+						{
+							"key": "nachname",
+							"value": "{{nachname}}",
+							"type": "text"
+						},
+						{
+							"key": "geburtsname",
+							"value": "{{geburtsname}}",
+							"type": "text"
+						},
+						{
+							"key": "geburtstag",
+							"value": "{{geburtstag}}",
+							"type": "text"
+						},
+						{
+							"key": "geburtsmonat",
+							"value": "{{geburtsmonat}}",
+							"type": "text"
+						},
+						{
+							"key": "geburtsjahr",
+							"value": "{{geburtsjahr}}",
+							"type": "text"
+						},
+						{
+							"key": "plz",
+							"value": "{{plz}}",
+							"type": "text"
+						},
+						{
+							"key": "ort",
+							"value": "{{ort}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/patients?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"patients"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW_TOKEN (readPatient) - Token anlegen -> failing (not allowed)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "f102a12e-d73f-45e1-a09d-bcec5e90b3ae",
+						"exec": [
+							"console.log(\"New TOKEN (addPatient) - failing (not allowed)\")",
+							"console.log(responseBody);",
+							"",
+							"tests[\"Creating Token not allowed 401\"] = responseCode.code === 401;",
+							"tests[\"Your permissions do not allow the requested access.\"] = responseBody == \"Your permissions do not allow the requested access.\""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"pid\",\r\n\t \t\t\t\"idString\":\"myPID\"\r\n\t \t\t}\r\n\t\t]\r\n \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW TOKEN (editPatient) - Token anlegen -> failing (not allowed)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "81810d9a-f046-4db0-8193-15a999e3afb8",
+						"exec": [
+							"console.log(\"New TOKEN (addPatient) - failing (not allowed)\")",
+							"console.log(responseBody);",
+							"",
+							"tests[\"Creating Token not allowed 401\"] = responseCode.code === 401;",
+							"tests[\"Your permissions do not allow the requested access.\"] = responseBody == \"Your permissions do not allow the requested access.\""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"editPatient\",\r\n     \t\"data\": {\r\n     \t\t\"patientId\": {\r\n\t\t\t\t\"idType\":\"pid\", \r\n\t\t\t\t\"idString\":\"0007W0W9\"\r\n\t\t\t}\r\n     \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW_TOKEN (deletePatient) - Token anlegen -> failing (not allowed)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1be3af8d-c275-4476-bb0c-3ee183f2b1b7",
+						"exec": [
+							"console.log(\"New TOKEN (addPatient) - failing (not allowed)\")",
+							"console.log(responseBody);",
+							"",
+							"tests[\"Creating Token not allowed 401\"] = responseCode.code === 401;",
+							"tests[\"Your permissions do not allow the requested access.\"] = responseBody == \"Your permissions do not allow the requested access.\""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"deletePatient\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"pid\",\r\n\t \t\t\t\"idString\":\"0007W0W9\"\r\n\t \t\t}\r\n\t\t]\r\n \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
