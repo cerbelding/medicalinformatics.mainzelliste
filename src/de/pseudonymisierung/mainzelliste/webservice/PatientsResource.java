@@ -344,7 +344,7 @@ public class PatientsResource {
 
         token.checkTokenType("readPatients");
         // Check if token is valid against server permissions
-        if (PermissionUtil.checkTokenPermission(token)) {
+        if (PermissionUtil.checkPermission(token)) {
             List<?> requests = token.getDataItemList("searchIds");
 
             JSONArray ret = new JSONArray();
@@ -694,7 +694,7 @@ public class PatientsResource {
 
         Token token = Servers.instance.getTokenByTid(tokenId);
 
-        if (PermissionUtil.checkTokenPermission(token)) {
+        if (PermissionUtil.checkPermission(token)) {
             if (token == null) {
                 logger.info("No token with id " + tokenId + " found");
                 throw new InvalidTokenException("Please supply a valid 'deletePatient' token.", Status.UNAUTHORIZED);

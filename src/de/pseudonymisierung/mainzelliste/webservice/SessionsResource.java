@@ -47,6 +47,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
+import de.pseudonymisierung.mainzelliste.webservice.commons.PermissionUtil;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -229,53 +230,63 @@ public class SessionsResource {
 			@PathParam("session") SessionIdParam sid,
 			String tp) throws JSONException {
 
-		Session s = sid.getValue();
+		Session session = sid.getValue();
 
-		logger.info("Received request to create token for session " + s.getId() + " by host " +
+		logger.info("Received request to create token for session " + session.getId() + " by host " +
 				req.getRemoteHost());
 		logger.debug("Received data: " + tp);
 
-		Token t = new TokenParam(tp).getValue();
-		t.setParentSessionId(s.getId());
-		Object parentServerName = s.getParentServerName();
-		if(parentServerName == null) {
-			logger.info("parentServerName can't be derived from session");
+
+		PermissionUtil permissionUtil = new PermissionUtil();
+		if(permissionUtil.checkPermission(tp, session)){
+			Token t = new TokenParam(tp).getValue();
+			t.setParentSessionId(session.getId());
+			Object parentServerName = session.getParentServerName();
+			if(parentServerName == null) {
+				logger.info("parentServerName can't be derived from session");
+			}
+			else{
+				t.setParentServerName(parentServerName.toString());
+			}
+
+			if(t.getType() == null) {
+				throw new WebApplicationException(Response
+						.status(Status.BAD_REQUEST)
+						.entity("Token type must not be empty.")
+						.build());
+			} else {
+				Servers.instance.checkPermission(req, "createToken");
+				Servers.instance.checkPermission(req, "tt_" + t.getType());
+			}
+
+			// Check validity of token (i.e. data items have correct format etc.)
+			t.checkValidity(Servers.instance.getRequestApiVersion(req));
+
+			//Token erstellen, speichern und URL zurückgeben
+			Servers.instance.registerToken(session.getId(), t);
+
+			URI newUri = UriBuilder
+					.fromUri(req.getRequestURL().toString())
+					.path("/{tid}")
+					.build(t.getId());
+
+			logger.info("Created token of type " + t.getType() + " with id " + t.getId() +
+					" in session " + session.getId());
+			logger.debug("Returned data for token " + t.getId() + ": "
+					+ t.toJSON(Servers.instance.getRequestApiVersion(req)));
+
+			return Response
+					.status(Status.CREATED)
+					.location(newUri)
+					.entity(t.toJSON(Servers.instance.getRequestApiVersion(req)))
+					.build();
+		}else{
+			return Response
+					.status(Status.UNAUTHORIZED).build();
 		}
-		else{
-			t.setParentServerName(parentServerName.toString());
-		}
-		
-		if(t.getType() == null) {
-			throw new WebApplicationException(Response
-					.status(Status.BAD_REQUEST)
-					.entity("Token type must not be empty.")
-					.build());
-		} else {
-			Servers.instance.checkPermission(req, "createToken");
-			Servers.instance.checkPermission(req, "tt_" + t.getType());
-		}
 
-		// Check validity of token (i.e. data items have correct format etc.)
-		t.checkValidity(Servers.instance.getRequestApiVersion(req));
 
-		//Token erstellen, speichern und URL zurückgeben
-		  Servers.instance.registerToken(s.getId(), t);
 
-		URI newUri = UriBuilder
-				.fromUri(req.getRequestURL().toString())
-				.path("/{tid}")
-				.build(t.getId());
-
-		logger.info("Created token of type " + t.getType() + " with id " + t.getId() +
-				" in session " + s.getId());
-		logger.debug("Returned data for token " + t.getId() + ": "
-				+ t.toJSON(Servers.instance.getRequestApiVersion(req)));
-
-		return Response
-			.status(Status.CREATED)
-			.location(newUri)
-			.entity(t.toJSON(Servers.instance.getRequestApiVersion(req)))
-			.build();
 	}
 
 	/**
