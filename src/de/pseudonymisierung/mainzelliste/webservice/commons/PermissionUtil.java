@@ -20,7 +20,8 @@ public class PermissionUtil {
 
     private static Logger logger = Logger.getLogger(PermissionUtil.class);
     //TODO: Class should not be static, multiple access!
-    private static List<PermissionUtilTokenDTO> tokenValues = new ArrayList<>();
+    private List<PermissionUtilTokenDTO> tokenValues = new ArrayList<>();
+
 
     //TODO: will be obsolete!
     public static boolean checkTokenPermission(String tokenid) {
@@ -44,10 +45,16 @@ public class PermissionUtil {
         //Token token = new TokenParam(tokenParameter).getValue();
         logger.debug("checkPermission");
         extractJSONObjectTokenValues(tokenParameter);
+        getPermissions(session.getParentServerName());
 
         tokenValues.clear();
         return true;
     }
+
+    private void getPermissions(String servername){
+        Servers.instance.getServerPermissionsForServerName(servername);
+    }
+
 
     private void extractJSONObjectTokenValues(String tokenParameter) {
         try {
@@ -87,7 +94,7 @@ public class PermissionUtil {
                     logger.debug(parameterArray.get(i));
                     logger.debug(parameterArray.get(i).getClass());
                     if (parameterArray.get(i).getClass().toString().contains("JSONObject") || parameterArray.get(i).getClass().toString().contains("JSONArray")) {
-                        extractSubJSONTokenValues(parameterDescriber, parameterArray.get(i));
+                        extractSubJSONTokenValues(parameterDescriber + "[" + i + "]", parameterArray.get(i));
                     }else if(parameterArray.get(i).getClass().getTypeName().equals("java.lang.String")) {
                         tokenValues.add(new PermissionUtilTokenDTO((String) parameterDescriber, (String)parameterArray.get(i)));
                     }
