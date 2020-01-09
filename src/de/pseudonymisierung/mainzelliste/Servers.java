@@ -357,7 +357,11 @@ public enum Servers {
 	 *            The token to register.
 	 */
 	public void registerToken(String sessionId, Token t) {
-	    // register token in session
+		Session s = getSession(sessionId);
+		String tid = UUID.randomUUID().toString();
+		t.setId(tid);
+		t.setURI(s.getURI().resolve("tokens/" + tid));
+
 		getSession(sessionId).addToken(t);
 
 		synchronized (tokensByTid) {
