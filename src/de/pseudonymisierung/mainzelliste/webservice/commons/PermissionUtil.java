@@ -10,6 +10,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -69,11 +70,12 @@ public class PermissionUtil {
         if (requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(PermissionUtilTokenDTO::getRequestedValue).count() == 1) {
             String requestedTokenType = requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(PermissionUtilTokenDTO::getRequestedValue).findFirst().orElse("noElementFound");
             if (!validateTokeType(serverPermissions, requestedTokenType)) {
+                logger.debug("token type " + requestedTokenType + " not allowed");
                 return false;
             } else if (!validateFurtherTokenPermissions(requestedTokenType, requestedPermissions, serverPermissions)) {
+                logger.debug("not enough permissions");
                 return false;
-            }
-            else {
+            } else {
                 return true;
             }
         }
@@ -93,23 +95,24 @@ public class PermissionUtil {
     }
 
     private boolean validateFurtherTokenPermissions(String requestedTokenType, List<PermissionUtilTokenDTO> requestedPermissions, Set<String> serverPermissions) {
-        logger.debug("validateFurtherTokenPermissions");
 
-        if(serverPermissions.stream().filter(o -> o.startsWith("tt_" + requestedTokenType)).collect(Collectors.toList()).contains("tt_" + requestedTokenType)) {
+        if (serverPermissions.stream().filter(o -> o.startsWith("tt_" + requestedTokenType)).collect(Collectors.toList()).contains("tt_" + requestedTokenType)) {
             //TODO: check on Mainzelliste boot up
             logger.warn(requestedTokenType + " is configured with (too) extensive rights, maybe you can limit them.");
             return true;
-        }
-        else if(serverPermissions.stream().filter(o -> o.startsWith("tt_" + requestedTokenType)).count()==1){
+        } else if (serverPermissions.stream().filter(o -> o.startsWith("tt_" + requestedTokenType)).count() == 1) {
             logger.debug("validateFurtherTokenPermissions: " + requestedTokenType);
 
-            if(!validateTokenParameterAgainstServerParameter(requestedTokenType, requestedPermissions, serverPermissions)){
+            if (!validateTokenParameterAgainstServerParameter(requestedTokenType, requestedPermissions, serverPermissions)) {
                 return false;
             }
-            if(!validateTokenValuesAgainstServerValues(requestedTokenType, requestedPermissions, serverPermissions)){
+            if (!validateTokenValuesAgainstServerValues(requestedTokenType, requestedPermissions, serverPermissions)) {
                 return false;
+            } else {
+                return true;
             }
         }
+        logger.debug("missing permission: " + requestedTokenType);
         return false;
     }
 
@@ -130,38 +133,78 @@ public class PermissionUtil {
         return returnValue.get();
     }
 
-    private boolean validateTokenValuesAgainstServerValues(String requestedTokenType, List<PermissionUtilTokenDTO> requestedPermissions, Set<String> serverPermissions){
+    private boolean validateTokenValuesAgainstServerValues(String requestedTokenType, List<PermissionUtilTokenDTO> requestedPermissions, Set<String> serverPermissions) {
         logger.debug("validateTokenValuesAgainstServerValues");
 
         //TODO: replace "{" and "}" with first and last replace - didn't work yet
         String detailedServerPermissionsForRequestedTokenType = serverPermissions.stream().filter(o -> o.startsWith("tt_" + requestedTokenType)).collect(Collectors.toList()).get(0).replace("tt_" + requestedTokenType, "").replace("{", "").replace("}", "");
 
-        AtomicBoolean returnValue = new AtomicBoolean(true);
 
-        requestedPermissions.forEach(r -> {if(multipleExistingValues){
-            logger.info("multiple existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("\\]", "")));
-        }else{
-            logger.info("single existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter()));
-            isParameterValueCombinationAllowed(r.getRequestedParameter(), r.getRequestedValue(), serverPermissions);
-
+        for (PermissionUtilTokenDTO r : requestedPermissions) {
+            if (r.getRequestedParameter().matches(".*\\[[\\][0-9]*\\[]\\].*")) {
+                //TODO: Check multiple values
+                logger.info("multiple existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("\\]", "")));
+            } else {
+                logger.info("single existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter()));
+                if (!isParameterValueCombinationAllowed(r.getRequestedParameter(), r.getRequestedValue(), requestedTokenType, detailedServerPermissionsForRequestedTokenType)) {
+                    return false;
+                }
+            }
         }
-            multipleExistingValues = r.getRequestedParameter().matches(".*\\[[\\][0-9]*\\[]\\].*");
-        });
-
-        return returnValue.get();
-    }
-
-    private boolean isParameterValueCombinationAllowed(String requestedParameter, String requestedValue, Set<String> serverPermissions){
-        logger.info("isParameterValueCombinationAllowed");
 
         return true;
     }
+
+    private boolean isParameterValueCombinationAllowed(String requestedParameter, String requestedValue, String requestedTokenType, String tokenTypeServerPermissions) {
+        String requestedParameterAndValue = requestedParameter + ":" + requestedValue;
+        logger.info("isParameterValueCombinationAllowed request " + requestedParameterAndValue);
+        //TODO: hier gehts weiter. checken der param=Value abfragen
+        List<String> tokenTypeServerPermissionsList = Arrays.asList(tokenTypeServerPermissions.split("\\|"));
+        List<String> tokenTypeServerPermissionsListWildCard = tokenTypeServerPermissionsList.stream().filter(o -> o.contains("*")).collect(Collectors.toList());
+
+        if (requestedParameter.equals("type")) {
+            return true;
+        } else if (tokenTypeServerPermissionsList.contains(requestedParameterAndValue)) {
+            logger.debug("isParameterValueCombinationAllowed() " + requestedParameterAndValue + " is exactly like in config");
+            return true;
+        } else if (isValueInAmpersandConfigPart(tokenTypeServerPermissionsList, requestedParameter, requestedValue)) {
+            return true;
+        } else if (tokenTypeServerPermissionsListWildCard.stream().anyMatch(o -> o.contains(requestedParameter + ":"))) {
+            logger.debug("isParameterValueCombinationAllowed() " + requestedParameterAndValue + " matches wildcard in config");
+            return true;
+        }
+        logger.info("isParameterValueCombinationAllowed() " + requestedParameterAndValue + " is not in config!");
+
+        return false;
+    }
+
+    private boolean isValueInAmpersandConfigPart(List<String> tokenTypeServerPermissionsList, String requestedParameter, String requestedValue) {
+
+        //containing in configuration
+        if (!tokenTypeServerPermissionsList.stream().filter(o -> o.contains(requestedParameter)).collect(Collectors.toList()).stream().filter(o -> o.contains(requestedValue)).collect(Collectors.toList()).isEmpty()) {
+
+            //check if exact value is in the config
+            List<String> matchingConfigs = tokenTypeServerPermissionsList.stream().filter(o -> o.contains(requestedParameter)).collect(Collectors.toList()).stream().filter(o -> o.contains(requestedValue)).collect(Collectors.toList());
+            boolean allowedValue = true;
+            for (String configMatches : matchingConfigs) {
+                String configMatchesValues = configMatches.replace(requestedParameter + ":", "");
+
+                List<String> ampersandSplits = Arrays.asList(configMatchesValues.split("&"));
+                if (!ampersandSplits.contains(requestedValue)) {
+                    allowedValue = false;
+                }
+            }
+
+            return allowedValue;
+        }
+        return false;
+    }
+
     private Set<String> getServerPermissions(String servername) {
         return Servers.instance.getServerPermissionsForServerName(servername);
     }
 
     private void extractJSONObjectTokenValues(String tokenParameter) {
-
 
         try {
             JSONObject tokenParameterJson = new JSONObject(tokenParameter);
@@ -169,8 +212,7 @@ public class PermissionUtil {
 
                 try {
                     Object parameterValue = tokenParameterJson.get((String) parameterKey);
-
-                    logger.debug(parameterKey + "=" + parameterValue);
+                    //logger.debug(parameterKey + "=" + parameterValue);
                     if (parameterValue.getClass().getTypeName().equals(JAVA_LANG_STRING)) {
                         tokenValues.add(new PermissionUtilTokenDTO((String) parameterKey, (String) parameterValue));
                     } else {
@@ -197,8 +239,6 @@ public class PermissionUtil {
 
             for (int i = 0; i < parameterArray.length(); i++) {
                 try {
-                    logger.debug(parameterArray.get(i));
-                    logger.debug(parameterArray.get(i).getClass());
                     if (parameterArray.get(i).getClass().toString().contains(JSON_OBJECT) || parameterArray.get(i).getClass().toString().contains(JSON_ARRAY)) {
                         extractSubJSONTokenValues(parameterDescriber + "[" + i + "]", parameterArray.get(i));
                     } else if (parameterArray.get(i).getClass().getTypeName().equals(JAVA_LANG_STRING)) {
@@ -218,7 +258,6 @@ public class PermissionUtil {
             parameterValueJson.keys().forEachRemaining(parameterSubKey -> {
                 try {
                     Object parameterSubValue = parameterValueJson.get((String) parameterSubKey);
-                    logger.debug(parameterSubKey + "=" + parameterSubValue);
                     if (parameterSubValue.getClass().getName().contains(JSON_OBJECT) || parameterSubValue.getClass().getName().contains(JSON_ARRAY)) {
                         extractSubJSONTokenValues(parameterDescriber + "." + parameterSubKey, parameterSubValue);
                     } else if (parameterSubValue.getClass().getTypeName().equals(JAVA_LANG_STRING)) {
