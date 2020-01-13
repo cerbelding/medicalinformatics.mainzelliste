@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PermissionUtil {
@@ -122,9 +124,36 @@ public class PermissionUtil {
         String detailedServerPermissionsForRequestedTokenType = serverPermissions.stream().filter(o -> o.startsWith("tt_" + requestedTokenType)).collect(Collectors.toList()).get(0).replace("tt_" + requestedTokenType, "").replace("{", "").replace("}", "");
 
 
+        String matchingGroup = null;
+
         for (PermissionUtilTokenDTO r : requestedPermissions) {
             if (r.getRequestedParameter().matches(".*\\[[][0-9]*\\[]].*")) {
-                //TODO: Check multiple values
+
+                Pattern pattern = Pattern.compile("(.*[0-9]*\\]).*");
+
+                Matcher matcher = pattern.matcher(r.getRequestedParameter());
+                matcher.matches();
+
+                if (matchingGroup == null || !matchingGroup.equals(matcher.group(1))) {
+                    logger.info("Call check " + requestedPermissions.stream().filter(e -> e.getRequestedParameter().contains(matcher.group(1))).collect(Collectors.toList()));
+
+                    Pattern patternCut = Pattern.compile(".*(\\[[][0-9]*\\[]]).*");
+                    Matcher cut = patternCut.matcher(r.getRequestedParameter());
+                    cut.matches();
+
+                    for (PermissionUtilTokenDTO isAllowed : requestedPermissions.stream().filter(e -> e.getRequestedParameter().contains(matcher.group(1))).collect(Collectors.toList())) {
+                        if (!isParameterValueCombinationAllowed(isAllowed.getRequestedParameter().replace(cut.group(1), ""), isAllowed.getRequestedValue(), detailedServerPermissionsForRequestedTokenType)) {
+                            return false;
+                        }
+                    }
+
+                } else {
+                    logger.debug(matchingGroup);
+                }
+
+                //Call check
+                matchingGroup = matcher.group(1);
+
                 logger.info("multiple existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("]", "")));
             } else {
                 logger.info("single existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter()));
@@ -149,12 +178,12 @@ public class PermissionUtil {
         if (requestedParameter.equals("type")) {
             return true;
         } else if (tokenTypeServerPermissionsList.contains(requestedParameterAndValue)) {
-            logger.debug(functionName +  requestedParameterAndValue + " is exactly like in config");
+            logger.debug(functionName + requestedParameterAndValue + " is exactly like in config");
             return true;
         } else if (isValueInAmpersandConfigPart(tokenTypeServerPermissionsList, requestedParameter, requestedValue)) {
             return true;
         } else if (tokenTypeServerPermissionsListWildCard.stream().anyMatch(o -> o.contains(requestedParameter + ":"))) {
-            logger.debug(functionName +  requestedParameterAndValue + " matches wildcard in config");
+            logger.debug(functionName + requestedParameterAndValue + " matches wildcard in config");
             return true;
         }
         logger.info(functionName + requestedParameterAndValue + " is not in config!");
