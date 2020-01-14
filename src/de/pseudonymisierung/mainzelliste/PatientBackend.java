@@ -557,6 +557,15 @@ public enum PatientBackend {
 		Persistor.instance.updatePatient(pToEdit);
 	}
 
+	public List<ID> getIdsWithType(String idType) {
+		try {
+			return Persistor.instance.getIdsWithType(idType);
+		} catch (RuntimeException e) {
+			logger.fatal( "Persistence provider error. Can't get ids. Cause: " +  e.getMessage());
+			throw new InternalErrorException("An internal error occured: Please contact the administrator.");
+		}
+	}
+
 	/**
 	 * Get a session for use in debug mode.
 	 * @return The debug session.
@@ -567,16 +576,5 @@ public enum PatientBackend {
 			debugSession = Servers.instance.newSession();
 		}
 		return debugSession;
-	}
-
-	public List<ID> getAllIdsOfaIDType(String IdType){
-
-		try {
-			return Persistor.instance.getAllIdsOfAIdType(IdType);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return null;
 	}
 }

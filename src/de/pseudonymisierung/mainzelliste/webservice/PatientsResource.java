@@ -100,7 +100,6 @@ public class PatientsResource {
             throw new UnauthorizedException();
     }
 
-
     /**
      * Create a new patient. Interface for web browser.
      *
@@ -435,14 +434,13 @@ public class PatientsResource {
             throw new NotImplementedException("It's only possible to request one IdType as wildcard select.");
         }
 
-
         Map<String, String> thisSearchId = (Map<String, String>) requests.get(0);
         idType = thisSearchId.get("idType");
         logger.info("idType:" + idType);
 
         //search id and resultId is the same
         if (token.getDataItemList("resultIds").contains(idType) && token.getDataItemList("resultIds").size() == 1) {
-            List<ID> selectedIDs = PatientBackend.instance.getAllIdsOfaIDType(idType);
+            List<ID> selectedIDs = PatientBackend.instance.getIdsWithType(idType);
             return Response.ok().entity(selectedIDs).build();
         }
 
@@ -457,7 +455,6 @@ public class PatientsResource {
         return new JSONArray(
                 patient.getIds().stream().map(i -> i.getType()).collect(Collectors.toList()));
     }
-
 
     private List<JSONObject> getAllIDsOfPatient(Patient patient) {
 
@@ -651,5 +648,4 @@ public class PatientsResource {
 
         return Response.status(Status.NO_CONTENT).build();
     }
-
 }
