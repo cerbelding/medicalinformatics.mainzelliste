@@ -424,13 +424,14 @@ public class PatientsResource {
 
     private Response readPatientWildCardSelect(Token token, List<?> requests) {
         logger.info("Request all Ids for a idtype");
+        List<String> resultIds = (List<String>)token.getDataItemList("resultIds");
         String idType;
 
         if (token.getDataItemList("resultFields") != null) {
             throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
         }
 
-        if (token.getDataItemList("resultIds").size() > 1) {
+        if (resultIds.size() > 1) {
             throw new NotImplementedException("It's only possible to request one IdType as wildcard select.");
         }
 
@@ -439,13 +440,15 @@ public class PatientsResource {
         logger.info("idType:" + idType);
 
         //search id and resultId is the same
-        if (token.getDataItemList("resultIds").contains(idType) && token.getDataItemList("resultIds").size() == 1) {
+        if (resultIds.contains(idType) && resultIds.size() == 1) {
             List<ID> selectedIDs = PatientBackend.instance.getIdsWithType(idType);
             return Response.ok().entity(selectedIDs).build();
         }
 
-        if (!token.getDataItemList("resultIds").contains(idType)) {
-            throw new NotImplementedException("It's only possible to request identical searchIdTypes and resultIdTypes as wildcard select.");
+        if (!resultIds.contains(idType)) {
+            List<ID> returnIds = PatientBackend.instance.getIdsOfPatientWithIdType(idType,
+                    resultIds.toArray(new String[0]));
+            return Response.ok().entity(returnIds).build();
         }
 
         return null;
