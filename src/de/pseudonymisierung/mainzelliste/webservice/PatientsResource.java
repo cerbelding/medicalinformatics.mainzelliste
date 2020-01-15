@@ -104,7 +104,7 @@ public class PatientsResource {
     public synchronized Response newPatientBrowser(@QueryParam("tokenId") String tokenId,
                                                    @QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion, MultivaluedMap<String, String> form,
                                                    @Context HttpServletRequest request) {
-        if (PermissionUtil.checkTokenPermission(tokenId)) {
+        if (RefinedPermission.checkTokenPermission(tokenId)) {
             try {
                 logger.debug("@POST newPatientBrowser");
                 Token token = Servers.instance.getTokenByTid(tokenId);
@@ -228,7 +228,7 @@ public class PatientsResource {
                                                 @Context HttpServletRequest request, @Context UriInfo context, MultivaluedMap<String, String> form)
             throws JSONException {
         logger.debug("@POST newPatientJson");
-        if (PermissionUtil.checkTokenPermission(tokenId)) {
+        if (RefinedPermission.checkTokenPermission(tokenId)) {
             IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form,
                     Servers.instance.getRequestApiVersion(request));
             if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH
@@ -344,7 +344,7 @@ public class PatientsResource {
 
         token.checkTokenType("readPatients");
         // Check if token is valid against server permissions
-        if (PermissionUtil.checkPermission(token)) {
+        if (RefinedPermission.checkPermission(token)) {
             List<?> requests = token.getDataItemList("searchIds");
 
             JSONArray ret = new JSONArray();
@@ -502,7 +502,7 @@ public class PatientsResource {
                                        @Context HttpServletRequest request) {
         logger.debug("@PUT editPatientBrowser");
 
-        if (PermissionUtil.checkTokenPermission(tokenId)) {
+        if (RefinedPermission.checkTokenPermission(tokenId)) {
             try {
                 // Collect fields from input form
                 Map<String, String> newFieldValues = new HashMap<String, String>();
@@ -546,7 +546,7 @@ public class PatientsResource {
         logger.debug("@PUT editPatientJSON");
 
         // Collect fields from input form
-        if (PermissionUtil.checkTokenPermission(tokenId)) {
+        if (RefinedPermission.checkTokenPermission(tokenId)) {
             try {
                 JSONObject newFieldValuesJSON = new JSONObject(data);
                 Map<String, String> newFieldValues = new HashMap<String, String>();
@@ -694,7 +694,7 @@ public class PatientsResource {
 
         Token token = Servers.instance.getTokenByTid(tokenId);
 
-        if (PermissionUtil.checkPermission(token)) {
+        if (RefinedPermission.checkPermission(token)) {
             if (token == null) {
                 logger.info("No token with id " + tokenId + " found");
                 throw new InvalidTokenException("Please supply a valid 'deletePatient' token.", Status.UNAUTHORIZED);

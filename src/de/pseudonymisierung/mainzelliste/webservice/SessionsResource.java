@@ -47,7 +47,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
-import de.pseudonymisierung.mainzelliste.webservice.commons.PermissionUtil;
+import de.pseudonymisierung.mainzelliste.webservice.commons.RefinedPermission;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -237,8 +237,8 @@ public class SessionsResource {
 		logger.debug("Received data: " + tp);
 
 
-		PermissionUtil permissionUtil = new PermissionUtil();
-		if(permissionUtil.checkPermission(tp, session)){
+		RefinedPermission refinedPermission = new RefinedPermission();
+		if(refinedPermission.checkPermission(tp, session)){
 			Token t = new TokenParam(tp).getValue();
 			t.setParentSessionId(session.getId());
 			Object parentServerName = session.getParentServerName();

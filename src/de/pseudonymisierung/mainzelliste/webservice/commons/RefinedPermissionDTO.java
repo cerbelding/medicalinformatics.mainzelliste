@@ -1,8 +1,8 @@
 package de.pseudonymisierung.mainzelliste.webservice.commons;
 
-public class PermissionUtilTokenDTO {
+public class RefinedPermissionDTO {
 
-    public PermissionUtilTokenDTO(String requestedParameter, String requestedValue){
+    public RefinedPermissionDTO(String requestedParameter, String requestedValue){
         this.requestedParameter = requestedParameter;
         this.requestedValue = requestedValue;
     }

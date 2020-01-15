@@ -18,16 +18,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class PermissionUtil {
+public class RefinedPermission {
 
     final static private String JAVA_LANG_STRING = "java.lang.String";
     final static private String JSON_OBJECT = "JSONObject";
     final static private String JSON_ARRAY = "JSONArray";
 
 
-    final private static Logger logger = Logger.getLogger(PermissionUtil.class);
+    final private static Logger logger = Logger.getLogger(RefinedPermission.class);
 
-    private List<PermissionUtilTokenDTO> tokenValues = new ArrayList<>();
+    private List<RefinedPermissionDTO> tokenValues = new ArrayList<>();
 
 
     public static boolean checkTokenPermission(String tokenId) {
@@ -55,12 +55,12 @@ public class PermissionUtil {
 
     }
 
-    private boolean compareRequestAndPermissions(List<PermissionUtilTokenDTO> requestedPermissions, Set<String> serverPermissions) {
+    private boolean compareRequestAndPermissions(List<RefinedPermissionDTO> requestedPermissions, Set<String> serverPermissions) {
         logger.debug("compareRequestAndPermissions" + "requestedPermissions: " + requestedPermissions + " serverPermissions" + serverPermissions);
 
         //Token request has exactly one time "type" : "xxx"
-        if (requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(PermissionUtilTokenDTO::getRequestedValue).count() == 1) {
-            String requestedTokenType = requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(PermissionUtilTokenDTO::getRequestedValue).findFirst().orElse("noElementFound");
+        if (requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(RefinedPermissionDTO::getRequestedValue).count() == 1) {
+            String requestedTokenType = requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(RefinedPermissionDTO::getRequestedValue).findFirst().orElse("noElementFound");
             if (!validateTokeType(serverPermissions, requestedTokenType)) {
                 logger.debug("token type " + requestedTokenType + " not allowed");
                 return false;
@@ -82,7 +82,7 @@ public class PermissionUtil {
         return allowedTokenTypes.stream().anyMatch(str -> str.contains(requestedTokenType));
     }
 
-    private boolean validateFurtherTokenPermissions(String requestedTokenType, List<PermissionUtilTokenDTO> requestedPermissions, Set<String> serverPermissions) {
+    private boolean validateFurtherTokenPermissions(String requestedTokenType, List<RefinedPermissionDTO> requestedPermissions, Set<String> serverPermissions) {
 
         if (serverPermissions.stream().filter(o -> o.startsWith("tt_" + requestedTokenType)).collect(Collectors.toList()).contains("tt_" + requestedTokenType)) {
             //TODO: check on Mainzelliste boot up
@@ -100,7 +100,7 @@ public class PermissionUtil {
         return false;
     }
 
-    private boolean validateTokenParameterAgainstServerParameter(String requestedTokenType, List<PermissionUtilTokenDTO> requestedPermissions, Set<String> serverPermissions) {
+    private boolean validateTokenParameterAgainstServerParameter(String requestedTokenType, List<RefinedPermissionDTO> requestedPermissions, Set<String> serverPermissions) {
         logger.debug("validateTokenParameterAgainstServerParameter");
 
         //TODO: replace "{" and "}" with first and last replace - didn't work yet
@@ -117,16 +117,15 @@ public class PermissionUtil {
         return returnValue.get();
     }
 
-    private boolean validateTokenValuesAgainstServerValues(String requestedTokenType, List<PermissionUtilTokenDTO> requestedPermissions, Set<String> serverPermissions) {
+    private boolean validateTokenValuesAgainstServerValues(String requestedTokenType, List<RefinedPermissionDTO> requestedPermissions, Set<String> serverPermissions) {
         logger.debug("validateTokenValuesAgainstServerValues");
 
         //TODO: replace "{" and "}" with first and last replace - didn't work yet
         String detailedServerPermissionsForRequestedTokenType = serverPermissions.stream().filter(o -> o.startsWith("tt_" + requestedTokenType)).collect(Collectors.toList()).get(0).replace("tt_" + requestedTokenType, "").replace("{", "").replace("}", "");
 
-
         String matchingGroup = null;
 
-        for (PermissionUtilTokenDTO r : requestedPermissions) {
+        for (RefinedPermissionDTO r : requestedPermissions) {
             if (r.getRequestedParameter().matches(".*\\[[][0-9]*\\[]].*")) {
 
                 Pattern pattern = Pattern.compile("(.*[0-9]*\\]).*");
@@ -141,7 +140,7 @@ public class PermissionUtil {
                     Matcher cut = patternCut.matcher(r.getRequestedParameter());
                     cut.matches();
 
-                    for (PermissionUtilTokenDTO isAllowed : requestedPermissions.stream().filter(e -> e.getRequestedParameter().contains(matcher.group(1))).collect(Collectors.toList())) {
+                    for (RefinedPermissionDTO isAllowed : requestedPermissions.stream().filter(e -> e.getRequestedParameter().contains(matcher.group(1))).collect(Collectors.toList())) {
                         if (!isParameterValueCombinationAllowed(isAllowed.getRequestedParameter().replace(cut.group(1), ""), isAllowed.getRequestedValue(), detailedServerPermissionsForRequestedTokenType)) {
                             return false;
                         }
@@ -226,7 +225,7 @@ public class PermissionUtil {
                 try {
                     Object parameterValue = tokenParameterJson.get((String) parameterKey);
                     if (parameterValue.getClass().getTypeName().equals(JAVA_LANG_STRING)) {
-                        tokenValues.add(new PermissionUtilTokenDTO((String) parameterKey, (String) parameterValue));
+                        tokenValues.add(new RefinedPermissionDTO((String) parameterKey, (String) parameterValue));
                     } else {
                         extractSubJSONTokenValues((String) parameterKey, parameterValue);
                     }
@@ -254,7 +253,7 @@ public class PermissionUtil {
                     if (parameterArray.get(i).getClass().toString().contains(JSON_OBJECT) || parameterArray.get(i).getClass().toString().contains(JSON_ARRAY)) {
                         extractSubJSONTokenValues(parameterDescriber + "[" + i + "]", parameterArray.get(i));
                     } else if (parameterArray.get(i).getClass().getTypeName().equals(JAVA_LANG_STRING)) {
-                        tokenValues.add(new PermissionUtilTokenDTO(parameterDescriber, (String) parameterArray.get(i)));
+                        tokenValues.add(new RefinedPermissionDTO(parameterDescriber, (String) parameterArray.get(i)));
                     }
 
                 } catch (JSONException e) {
@@ -273,7 +272,7 @@ public class PermissionUtil {
                     if (parameterSubValue.getClass().getName().contains(JSON_OBJECT) || parameterSubValue.getClass().getName().contains(JSON_ARRAY)) {
                         extractSubJSONTokenValues(parameterDescriber + "." + parameterSubKey, parameterSubValue);
                     } else if (parameterSubValue.getClass().getTypeName().equals(JAVA_LANG_STRING)) {
-                        tokenValues.add(new PermissionUtilTokenDTO(parameterDescriber + "." + parameterSubKey, (String) parameterSubValue));
+                        tokenValues.add(new RefinedPermissionDTO(parameterDescriber + "." + parameterSubKey, (String) parameterSubValue));
                     }
 
                 } catch (JSONException e) {
