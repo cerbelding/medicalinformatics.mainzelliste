@@ -58,7 +58,6 @@ public class RefinedPermission {
     private boolean compareRequestAndPermissions(List<RefinedPermissionDTO> requestedPermissions, Set<String> serverPermissions) {
         logger.debug("compareRequestAndPermissions" + "requestedPermissions: " + requestedPermissions + " serverPermissions" + serverPermissions);
 
-        //Token request has exactly one time "type" : "xxx"
         if (requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(RefinedPermissionDTO::getRequestedValue).count() == 1) {
             String requestedTokenType = requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(RefinedPermissionDTO::getRequestedValue).findFirst().orElse("noElementFound");
             if (!validateTokeType(serverPermissions, requestedTokenType)) {

@@ -47,17 +47,13 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
+import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.webservice.commons.RefinedPermission;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import de.pseudonymisierung.mainzelliste.ID;
-import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
-import de.pseudonymisierung.mainzelliste.Patient;
-import de.pseudonymisierung.mainzelliste.Servers;
-import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
@@ -236,9 +232,18 @@ public class SessionsResource {
 				req.getRemoteHost());
 		logger.debug("Received data: " + tp);
 
+        boolean allowRequest= true;
 
-		RefinedPermission refinedPermission = new RefinedPermission();
-		if(refinedPermission.checkPermission(tp, session)){
+		if(Config.instance.getProperty("extendedPermissionCheck") != null && Config.instance.getProperty("extendedPermissionCheck").equals("true")){
+            RefinedPermission refinedPermission = new RefinedPermission();
+            allowRequest = refinedPermission.checkPermission(tp, session);
+        }
+		else{
+		    logger.warn("ExtendedPermissionCheck is deactivated. This is considered an unsafe configuration.");
+        }
+
+
+		if(allowRequest){
 			Token t = new TokenParam(tp).getValue();
 			t.setParentSessionId(session.getId());
 			Object parentServerName = session.getParentServerName();

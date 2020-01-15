@@ -287,6 +287,9 @@ result.printIdat = true
 # readAllPatientIds: allows to read all Ids of a patient
 #
 
+# Allows refined permissions
+# example if activated: ;tt_readPatients{|data.searchIds.idType:pid|data.searchIds.idString:*|data.resultFields:geburtsname&vorname|data.resultIds:pid|data.resultIds:intid|data.callback:*};tt_addPatient{data.idtypes:pid}
+extendedPermissionCheck = true
 
 # A passphrase used for authentication
 servers.0.apiKey = 
