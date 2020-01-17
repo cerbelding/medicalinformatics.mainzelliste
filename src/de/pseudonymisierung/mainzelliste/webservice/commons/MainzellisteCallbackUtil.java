@@ -2,6 +2,7 @@ package de.pseudonymisierung.mainzelliste.webservice.commons;
 
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
+import de.pseudonymisierung.mainzelliste.exceptions.ValidatorException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,18 +18,24 @@ public class MainzellisteCallbackUtil {
      * @param callback The CallbackUrl which should be checked
      */
     public static void checkCallbackUrl(String callback) {
-        if (!Pattern.matches(
-                Config.instance.getProperty("callback.allowedFormat"),
-                callback)) {
-            throw new InvalidTokenException("Callback address " + callback
-                    + " does not conform to allowed format!");
-        }
-        try {
-            @SuppressWarnings("unused")
-            URI callbackURI = new URI(callback);
-        } catch (URISyntaxException e) {
-            throw new InvalidTokenException("Callback address " + callback
-                    + " is not a valid URI!");
+        if (Config.instance.getProperty("callback.allowedFormat") != null) {
+
+            if (!Pattern.matches(
+                    Config.instance.getProperty("callback.allowedFormat"),
+                    callback)) {
+                throw new InvalidTokenException("Callback address " + callback
+                        + " does not conform to allowed format!");
+            }
+            try {
+                @SuppressWarnings("unused")
+                URI callbackURI = new URI(callback);
+            } catch (URISyntaxException e) {
+                throw new InvalidTokenException("Callback address " + callback
+                        + " is not a valid URI!");
+            }
+        } else {
+            throw new ValidatorException("callback.allowedFormat not configured");
+
         }
     }
 }
