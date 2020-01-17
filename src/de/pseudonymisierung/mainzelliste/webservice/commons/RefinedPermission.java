@@ -29,6 +29,8 @@ public class RefinedPermission {
 
     private List<RefinedPermissionDTO> tokenValues = new ArrayList<>();
 
+    private String returnMessage = "";
+
 
     public static boolean checkTokenPermission(String tokenId) {
         logger.warn("//TODO: will be obsolete!");
@@ -61,7 +63,8 @@ public class RefinedPermission {
         if (requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(RefinedPermissionDTO::getRequestedValue).count() == 1) {
             String requestedTokenType = requestedPermissions.stream().filter(tokenRequest -> tokenRequest.getRequestedParameter().equals("type")).map(RefinedPermissionDTO::getRequestedValue).findFirst().orElse("noElementFound");
             if (!validateTokeType(serverPermissions, requestedTokenType)) {
-                logger.debug("token type " + requestedTokenType + " not allowed");
+                this.setReturnMessage("token type " + requestedTokenType + " not allowed");
+                logger.debug(this.getReturnMessage());
                 return false;
             } else if (!validateFurtherTokenPermissions(requestedTokenType, requestedPermissions, serverPermissions)) {
                 logger.debug("not enough permissions");
@@ -108,7 +111,8 @@ public class RefinedPermission {
         AtomicBoolean returnValue = new AtomicBoolean(true);
         requestedPermissions.forEach(r -> {
             if (!detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("]", "")) && !r.getRequestedParameter().equals("type")) {
-                logger.info(r.getRequestedParameter() + " is not in server permissions " + detailedServerPermissionsForRequestedTokenType);
+                this.setReturnMessage(r.getRequestedParameter() + " is not in server permissions ");
+                logger.info(this.getReturnMessage() + detailedServerPermissionsForRequestedTokenType);
                 returnValue.set(false);
             }
         });
@@ -184,7 +188,8 @@ public class RefinedPermission {
             logger.debug(functionName + requestedParameterAndValue + " matches wildcard in config");
             return true;
         }
-        logger.info(functionName + requestedParameterAndValue + " is not in config!");
+        this.setReturnMessage(requestedParameterAndValue + " is not in config!");
+        logger.info(functionName + " " + this.getReturnMessage());
 
         return false;
     }
@@ -281,6 +286,14 @@ public class RefinedPermission {
 
             });
         }
+    }
+
+    public String getReturnMessage() {
+        return returnMessage;
+    }
+
+    private void setReturnMessage(String returnMessage) {
+        this.returnMessage = returnMessage;
     }
 
 }

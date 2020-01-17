@@ -233,10 +233,12 @@ public class SessionsResource {
 		logger.debug("Received data: " + tp);
 
         boolean allowRequest= true;
+        String notAuthorizedMessage="";
 
 		if(Config.instance.getProperty("extendedPermissionCheck") != null && Config.instance.getProperty("extendedPermissionCheck").equals("true")){
             RefinedPermission refinedPermission = new RefinedPermission();
             allowRequest = refinedPermission.checkPermission(tp, session);
+            notAuthorizedMessage = refinedPermission.getReturnMessage();
         }
 		else{
 		    logger.warn("ExtendedPermissionCheck is deactivated. This is considered an unsafe configuration.");
@@ -286,8 +288,13 @@ public class SessionsResource {
 					.entity(t.toJSON(Servers.instance.getRequestApiVersion(req)))
 					.build();
 		}else{
+		    if(Config.instance.getProperty("extendedPermissionCheck.failedAuthMessage") !=null && Config.instance.getProperty("extendedPermissionCheck.failedAuthMessage").equals("deactivated")){
+                return Response
+                        .status(Status.UNAUTHORIZED).build();
+            }
+
 			return Response
-					.status(Status.UNAUTHORIZED).build();
+					.status(Status.UNAUTHORIZED).entity(notAuthorizedMessage).build();
 		}
 
 
