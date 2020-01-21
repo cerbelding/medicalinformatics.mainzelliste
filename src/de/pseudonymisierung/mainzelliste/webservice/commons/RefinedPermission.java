@@ -9,10 +9,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -129,6 +126,7 @@ public class RefinedPermission {
         String matchingGroup = null;
 
         for (RefinedPermissionDTO r : requestedPermissions) {
+            //check through json elements in json array
             if (r.getRequestedParameter().matches(".*\\[[][0-9]*\\[]].*")) {
 
                 Pattern pattern = Pattern.compile("(.*[0-9]*\\]).*");
@@ -144,13 +142,16 @@ public class RefinedPermission {
                     cut.matches();
 
                     for (RefinedPermissionDTO isAllowed : requestedPermissions.stream().filter(e -> e.getRequestedParameter().contains(matcher.group(1))).collect(Collectors.toList())) {
-                        if (!isParameterValueCombinationAllowed(isAllowed.getRequestedParameter().replace(cut.group(1), ""), isAllowed.getRequestedValue(), detailedServerPermissionsForRequestedTokenType)) {
+                        logger.debug("for loop: " + isAllowed.getRequestedParameter() + " " + isAllowed.getRequestedValue());
+
+                        //TODO: Why is called to often
+                        if (!isParameterValueCombinationAllowed(requestedPermissions.stream().filter(e -> e.getRequestedParameter().contains(matcher.group(1))).collect(Collectors.toList()), detailedServerPermissionsForRequestedTokenType)) {
                             return false;
                         }
                     }
 
                 } else {
-                    logger.debug(matchingGroup);
+                    logger.debug("matchingroup: " + matchingGroup);
                 }
 
                 //Call check
@@ -166,6 +167,56 @@ public class RefinedPermission {
         }
 
         return true;
+    }
+
+    private boolean isParameterValueCombinationAllowed(List<RefinedPermissionDTO> refinedPermissionDTOS, String tokenTypeServerPermissions){
+
+        Pattern patternCut = Pattern.compile(".*(\\[[][0-9]*\\[]]).*");
+        Matcher cut = patternCut.matcher(refinedPermissionDTOS.get(0).getRequestedParameter());
+        cut.matches();
+        
+        List<String> tokenTypeServerPermissionsList = Arrays.asList(tokenTypeServerPermissions.split("\\|"));
+
+        List<String> requestValues = new ArrayList<>();
+
+        String reqValue = "";
+        String log = "";
+        for(RefinedPermissionDTO refinedPermissionDTO: refinedPermissionDTOS){
+
+            reqValue = refinedPermissionDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + refinedPermissionDTO.getRequestedValue();
+
+            logger.info(reqValue);
+            requestValues.add(reqValue);
+            requestValues.add(refinedPermissionDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + "*");
+            log = log + " " + reqValue;
+        }
+
+        List<String> requestedValuesWhichAreAlsoInConfig = requestValues.stream().filter(f -> tokenTypeServerPermissionsList.stream().anyMatch(s -> s.contains(f))).collect(Collectors.toList());
+
+        boolean validRequest;
+        if (requestedValuesWhichAreAlsoInConfig.isEmpty()){
+
+            this.setReturnMessage(log +  " is not allowed to request");
+            logger.info(this.getReturnMessage());
+            validRequest = false;
+        }else{
+            validRequest = true;
+        }
+
+        for(String findings : requestedValuesWhichAreAlsoInConfig){
+            List<String> matchedConfig = tokenTypeServerPermissionsList.stream().filter(t -> t.contains(findings)).collect(Collectors.toList());
+
+            for(RefinedPermissionDTO refDTO: refinedPermissionDTOS){
+
+                if((matchedConfig.stream().noneMatch(i -> i.contains(refDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + refDTO.getRequestedValue())) && matchedConfig.stream().noneMatch(i -> i.contains(refDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + "*")))){
+                        this.setReturnMessage(log + " is not allowed to request");
+                        logger.info(this.getReturnMessage());
+                        validRequest = false;
+                    }
+            }
+        }
+
+        return validRequest;
     }
 
     private boolean isParameterValueCombinationAllowed(String requestedParameter, String requestedValue, String tokenTypeServerPermissions) {
@@ -185,7 +236,7 @@ public class RefinedPermission {
         } else if (isValueInAmpersandConfigPart(tokenTypeServerPermissionsList, requestedParameter, requestedValue)) {
             return true;
         } else if (tokenTypeServerPermissionsListWildCard.stream().anyMatch(o -> o.contains(requestedParameter + ":"))) {
-            logger.debug(functionName + requestedParameterAndValue + " matches wildcard in config");
+            logger.debug(functionName + requestedParameterAndValue + " matches (single) wildcard in config");
             return true;
         }
         this.setReturnMessage(requestedParameterAndValue + " is not in config!");
