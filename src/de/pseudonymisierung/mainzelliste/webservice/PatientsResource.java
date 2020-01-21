@@ -104,7 +104,6 @@ public class PatientsResource {
     public synchronized Response newPatientBrowser(@QueryParam("tokenId") String tokenId,
                                                    @QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion, MultivaluedMap<String, String> form,
                                                    @Context HttpServletRequest request) {
-        if (RefinedPermission.checkTokenPermission(tokenId)) {
             try {
                 logger.debug("@POST newPatientBrowser");
                 Token token = Servers.instance.getTokenByTid(tokenId);
@@ -203,11 +202,6 @@ public class PatientsResource {
                 map.put("message", e.getResponse().getEntity());
                 return Response.status(e.getResponse().getStatus()).entity(new Viewable("/errorPage.jsp", map)).build();
             }
-        } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN)
-                    .entity("Your request is not permitted. You don't have permission to execute this request.")
-                    .build();
-        }
     }
 
 
@@ -228,7 +222,6 @@ public class PatientsResource {
                                                 @Context HttpServletRequest request, @Context UriInfo context, MultivaluedMap<String, String> form)
             throws JSONException {
         logger.debug("@POST newPatientJson");
-        if (RefinedPermission.checkTokenPermission(tokenId)) {
             IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form,
                     Servers.instance.getRequestApiVersion(request));
             if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH
@@ -315,11 +308,6 @@ public class PatientsResource {
 
                 return Response.status(Status.CREATED).entity(ret).location(newUri).build();
             }
-        } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN)
-                    .entity("Your request is not permitted. You don't have permission to execute this request.")
-                    .build();
-        }
     }
 
     /**
@@ -344,7 +332,6 @@ public class PatientsResource {
 
         token.checkTokenType("readPatients");
         // Check if token is valid against server permissions
-        if (RefinedPermission.checkPermission(token)) {
             List<?> requests = token.getDataItemList("searchIds");
 
             JSONArray ret = new JSONArray();
@@ -468,12 +455,6 @@ public class PatientsResource {
                 }
             }
             return Response.ok().entity(ret).build();
-        } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN)
-                    .entity("Your request is not permitted. You don't have permission to execute this request.")
-                    .build();
-        }
-
     }
 
     private JSONArray getAllIdTypesOfPatient(Patient patient) {
@@ -502,7 +483,6 @@ public class PatientsResource {
                                        @Context HttpServletRequest request) {
         logger.debug("@PUT editPatientBrowser");
 
-        if (RefinedPermission.checkTokenPermission(tokenId)) {
             try {
                 // Collect fields from input form
                 Map<String, String> newFieldValues = new HashMap<String, String>();
@@ -521,11 +501,6 @@ public class PatientsResource {
                 map.put("message", e.getResponse().getEntity());
                 return Response.status(e.getResponse().getStatus()).entity(new Viewable("/errorPage.jsp", map)).build();
             }
-        } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN)
-                    .entity("Your request is not permitted. You don't have permission to execute this request.")
-                    .build();
-        }
     }
 
     /**
@@ -546,7 +521,6 @@ public class PatientsResource {
         logger.debug("@PUT editPatientJSON");
 
         // Collect fields from input form
-        if (RefinedPermission.checkTokenPermission(tokenId)) {
             try {
                 JSONObject newFieldValuesJSON = new JSONObject(data);
                 Map<String, String> newFieldValues = new HashMap<String, String>();
@@ -595,12 +569,6 @@ public class PatientsResource {
                 ioe.printStackTrace();
                 throw new InternalErrorException("Executing post request on callback url failed!");
             }
-        } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN)
-                    .entity("Your request is not permitted. You don't have permission to execute this request.")
-                    .build();
-        }
-
     }
 
     /**
@@ -694,7 +662,6 @@ public class PatientsResource {
 
         Token token = Servers.instance.getTokenByTid(tokenId);
 
-        if (RefinedPermission.checkPermission(token)) {
             if (token == null) {
                 logger.info("No token with id " + tokenId + " found");
                 throw new InvalidTokenException("Please supply a valid 'deletePatient' token.", Status.UNAUTHORIZED);
@@ -723,11 +690,6 @@ public class PatientsResource {
                 }
             }
             return Response.status(Status.NO_CONTENT).build();
-        } else {
-            return Response.status(HttpStatus.SC_FORBIDDEN)
-                    .entity("Your request is not permitted. You don't have permission to execute this request.")
-                    .build();
-        }
     }
 
     /**

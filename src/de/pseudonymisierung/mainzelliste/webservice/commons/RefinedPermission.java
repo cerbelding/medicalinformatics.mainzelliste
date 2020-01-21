@@ -28,17 +28,6 @@ public class RefinedPermission {
 
     private String returnMessage = "";
 
-
-    public static boolean checkTokenPermission(String tokenId) {
-        logger.warn("//TODO: will be obsolete!");
-        return true;
-    }
-
-    public static boolean checkPermission(Token token) {
-        logger.warn("//TODO: will be obsolete!");
-        return true;
-    }
-
     public boolean checkPermission(String tokenParameter, Session session) {
         logger.debug("checkPermission");
         extractJSONObjectTokenValues(tokenParameter);
@@ -174,7 +163,7 @@ public class RefinedPermission {
         Pattern patternCut = Pattern.compile(".*(\\[[][0-9]*\\[]]).*");
         Matcher cut = patternCut.matcher(refinedPermissionDTOS.get(0).getRequestedParameter());
         cut.matches();
-        
+
         List<String> tokenTypeServerPermissionsList = Arrays.asList(tokenTypeServerPermissions.split("\\|"));
 
         List<String> requestValues = new ArrayList<>();
@@ -185,7 +174,6 @@ public class RefinedPermission {
 
             reqValue = refinedPermissionDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + refinedPermissionDTO.getRequestedValue();
 
-            logger.info(reqValue);
             requestValues.add(reqValue);
             requestValues.add(refinedPermissionDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + "*");
             log = log + " " + reqValue;
