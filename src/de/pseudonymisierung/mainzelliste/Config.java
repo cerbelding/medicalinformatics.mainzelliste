@@ -75,6 +75,9 @@ public enum Config {
 	/** Allowed origins for Cross Domain Resource Sharing. */
 	private Set<String> allowedOrigins;
 
+	/** Allowed headers for Cross Domain Resource Sharing */
+	private Set<String> allowedHeaders;
+
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
 	 * the configuration file.
@@ -165,10 +168,15 @@ public enum Config {
 		}
 
 		// Read allowed origins for cross domain resource sharing (CORS)
-		allowedOrigins = new HashSet<String>();
+		allowedOrigins = new HashSet<>();
 		String allowedOriginsString = props.getProperty("servers.allowedOrigins");
 		if (allowedOriginsString != null)
 			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split(";")));
+
+		allowedHeaders = new HashSet<>();
+		String allowedHeadersString = props.getProperty("servers.allowedHeaders");
+		if (allowedHeadersString != null)
+			allowedHeaders.addAll(Arrays.asList(allowedHeadersString.trim().split(";")));
 
 		// Read version number provided by pom.xml
 		version = readVersion();
@@ -322,6 +330,14 @@ public enum Config {
 	 */
 	public boolean originAllowed(String origin) {
 		return this.allowedOrigins.contains(origin);
+	}
+
+	/**
+	 * Returns the allowed Headers to set on Cross Domain Resource Sharing
+	 * @return list of headers set in config servers.allowedHeaders
+	 */
+	public String getAllowedHeaders() {
+		return String.join(",", this.allowedHeaders);
 	}
 
 	/**
