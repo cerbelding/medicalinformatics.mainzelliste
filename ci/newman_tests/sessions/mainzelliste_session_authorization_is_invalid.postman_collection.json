@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "57484281-0f89-4110-88ee-3168df913571",
+		"_postman_id": "89f4a23e-a6be-4e20-aeb4-f2764a9cafbd",
 		"name": "mainzelliste_session_authorization_is_invalid",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -16,16 +16,11 @@
 							"console.log(\"New Session\");",
 							"",
 							"",
-							" pm.response.to.have.body(\"Your permissions do not allow the requested access.\");",
+							"",
 							"pm.test(\"Check ResponseCode\", function(){",
 							"     pm.response.to.have.status(\"Unauthorized\");",
 							"    ",
 							"});",
-							"",
-							"pm.test(\"Check ResponseBody\", function(){",
-							"    ",
-							"});",
-							"",
 							"",
 							"",
 							"",
@@ -41,7 +36,7 @@
 				"header": [
 					{
 						"key": "mainzellisteApiKey",
-						"value": "{{mainzellisteApiKey}}"
+						"value": "THISISNOVALIDAPIKEY"
 					},
 					{
 						"key": "mainzellisteApiVersion",

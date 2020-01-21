@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "508e239d-ffde-4deb-bb4e-737e93007d4d",
-		"name": "mainzelliste_tokens_permission_readPatient",
+		"_postman_id": "d94dbf39-7ff8-423d-bf3e-883b62cf88b3",
+		"name": "mainzelliste_tokens_permission_addPatient",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -56,16 +56,16 @@
 			"response": []
 		},
 		{
-			"name": "NEW_TOKEN (readPatient) - Token anlegen",
+			"name": "NEW_TOKEN (addPatient) - Token anlegen",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "02d7079b-c12b-4349-9070-3eade0bee317",
+						"id": "1ad769cd-bb92-4dd0-af67-a2284e9fc68e",
 						"exec": [
-							"console.log(\"New TOKEN (readPatient)\")",
+							"console.log(\"New TOKEN (addPatient)\")",
 							"var jsonBody;",
-							"pm.collectionVariables.unset(\"tokenId\");",
+							" pm.collectionVariables.unset(\"tokenId\");",
 							"",
 							"",
 							"",
@@ -79,11 +79,11 @@
 							"            },",
 							"            \"type\":{",
 							"                \"type\": \"string\",",
-							"                \"pattern\": \"readPatients\"",
+							"                \"pattern\": \"addPatient\"",
 							"            },",
 							"            \"data\": {",
 							"                \"type\": \"object\",",
-							"                ",
+							"                 \"required\": [\"idTypes\"]",
 							"            },",
 							"            \"uri\": {",
 							"                \"type\": \"string\"",
@@ -119,7 +119,6 @@
 							"    pm.collectionVariables.set(\"tokenId\",tokenId);",
 							"}",
 							"",
-							"",
 							""
 						],
 						"type": "text/javascript"
@@ -144,7 +143,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t]\r\n \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -258,7 +257,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"editPatient\",\r\n     \t\"data\": {\r\n     \t\t\"patientId\": {\r\n\t\t\t\t\"idType\":{{idTypes}}, \r\n\t\t\t\t\"idString\":{{idString}}\r\n\t\t\t}\r\n     \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"editPatient\",\r\n     \t\"data\": {\r\n     \t\t\"patientId\": {\r\n\t\t\t\t\"idType\":{{idTypes}}, \r\n\t\t\t\t\"idString\": \"0003Y0WZ\"\r\n\t\t\t}\r\n     \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -275,14 +274,15 @@
 			"response": []
 		},
 		{
-			"name": "NEW_TOKEN (addPatient) -> 401 unauthorized",
+			"name": "NEW_TOKEN (readPatient)  -> 401 Unauthorized",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "1ad769cd-bb92-4dd0-af67-a2284e9fc68e",
+						"id": "02d7079b-c12b-4349-9070-3eade0bee317",
 						"exec": [
-							"console.log(\"New TOKEN (addPatient)\")",
+							"console.log(\"New TOKEN (readPatient)\")",
+							"",
 							"",
 							"",
 							"pm.test('response must be valid and have a body', function() {",
@@ -318,7 +318,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t]\r\n \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -382,6 +382,234 @@
 						"{{sessionId}}",
 						"tokens",
 						"{{tokenId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ADD_PATIENT (JSON) - Patienten anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "190dd561-b063-48e2-b741-174ae7d50b0d",
+						"exec": [
+							"//Deleting unnecessary keys",
+							"var addPatientData =  pm.variables.get('ADD_PATIENTS_DATA');",
+							"var addPatientsPointer = pm.variables.get('addPatientsPointer');",
+							"",
+							"",
+							"",
+							"if(addPatientData && typeof(addPatientsPointer) === 'number' ){",
+							"",
+							"    var patient = addPatientData[addPatientsPointer];",
+							"    ",
+							"   ",
+							"    Object.keys(patient).forEach(key=> {",
+							"      ",
+							"        pm.collectionVariables.unset(key);",
+							"",
+							"        ",
+							"    });",
+							"    addPatientsPointer++;",
+							"    pm.collectionVariables.set('addPatientsPointer', addPatientsPointer);",
+							"",
+							"",
+							"}",
+							"//Test begins here",
+							"",
+							"var jsonBody;",
+							"",
+							"",
+							" var innerArraySchema = {",
+							"         \"type\": \"object\",",
+							"            \"required\": [\"idType\", \"idString\", \"tentative\", \"uri\"],",
+							"            \"properties\":  ",
+							"            {",
+							"                \"idType\": {",
+							"                    \"type\": \"string\"",
+							"                },",
+							"                \"idString\":{",
+							"                    \"type\": \"string\",",
+							"                },",
+							"                \"tentative\": {",
+							"                    \"type\": \"boolean\",",
+							"                },",
+							"                \"uri\": {",
+							"                    \"type\": \"string\"",
+							"                }",
+							"            }",
+							"        ",
+							"    }",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"type\": \"array\",",
+							"       \"items\" : {",
+							"                \"#ref\": innerArraySchema",
+							"           ",
+							"       }};",
+							"            ",
+							"            ",
+							"   ",
+							"",
+							"",
+							"",
+							"pm.test('response must be valid and have a body', function() {",
+							"    pm.response.to.have.status(201);",
+							"    pm.response.to.be.withBody;",
+							"    pm.response.to.be.json; ",
+							"     ",
+							"    ",
+							"});",
+							"",
+							"",
+							"pm.test(\"response have correct scheme\", function() {",
+							"    var localBody =  pm.response.json();",
+							"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+							"    jsonBody = localBody;",
+							"    console.log(jsonBody);",
+							"    ",
+							"    ",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"if(jsonBody){",
+							"  ",
+							"   ",
+							"    var patients = pm.variables.get(\"patients\");",
+							"    ",
+							"   ",
+							"    ",
+							"    ",
+							"    if(!patients){",
+							"         ",
+							"        patients = []",
+							"    }",
+							"    ",
+							"    var ids = jsonBody",
+							"    ",
+							"  ",
+							"    ",
+							"    newPatient = {",
+							"        ",
+							"        \"ids\": ids,",
+							"        \"fields\":request.data",
+							"      ",
+							"    }",
+							"    ",
+							"    ",
+							"    ",
+							"    patients.push(newPatient);",
+							"    pm.collectionVariables.set('patients', patients);",
+							"    pm.collectionVariables.set('idString', jsonBody[0].idString);",
+							"  ",
+							"    ",
+							"    ",
+							"}",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "be153999-27fa-46fa-ab59-ac3412c8faf8",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "vorname",
+							"value": "{{vorname}}",
+							"type": "text"
+						},
+						{
+							"key": "nachname",
+							"value": "{{nachname}}",
+							"type": "text"
+						},
+						{
+							"key": "geburtsname",
+							"value": "{{geburtsname}}",
+							"type": "text"
+						},
+						{
+							"key": "geburtstag",
+							"value": "{{geburtstag}}",
+							"type": "text"
+						},
+						{
+							"key": "geburtsmonat",
+							"value": "{{geburtsmonat}}",
+							"type": "text"
+						},
+						{
+							"key": "geburtsjahr",
+							"value": "{{geburtsjahr}}",
+							"type": "text"
+						},
+						{
+							"key": "plz",
+							"value": "{{plz}}",
+							"type": "text"
+						},
+						{
+							"key": "ort",
+							"value": "{{ort}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/patients?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"patients"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
 					]
 				}
 			},
@@ -542,14 +770,15 @@
 			"response": []
 		},
 		{
-			"name": "NEW_TOKEN (addPatient) -> 401 unauthorized",
+			"name": "NEW_TOKEN (readPatient)  -> 401 Unauthorized",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "1ad769cd-bb92-4dd0-af67-a2284e9fc68e",
+						"id": "02d7079b-c12b-4349-9070-3eade0bee317",
 						"exec": [
-							"console.log(\"New TOKEN (addPatient)\")",
+							"console.log(\"New TOKEN (readPatient)\")",
+							"",
 							"",
 							"",
 							"pm.test('response must be valid and have a body', function() {",
@@ -558,8 +787,6 @@
 							"     ",
 							"    ",
 							"});",
-							"",
-							"",
 							"",
 							"",
 							"",
@@ -587,7 +814,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t]\r\n \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -678,6 +905,14 @@
 					""
 				]
 			}
+		}
+	],
+	"variable": [
+		{
+			"id": "53165fd2-01eb-44e4-a73b-539a5412b9a8",
+			"key": "tokenId",
+			"value": "b2cbd557-606a-494c-8a62-09eb50859c57",
+			"type": "string"
 		}
 	],
 	"protocolProfileBehavior": {}
