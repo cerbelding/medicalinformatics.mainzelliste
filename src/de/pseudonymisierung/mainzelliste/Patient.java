@@ -25,15 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -580,4 +574,10 @@ public class Patient {
 		// Default case
 		return false;
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(patientJpaId);
+	}
+
 }
