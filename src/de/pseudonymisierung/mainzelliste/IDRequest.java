@@ -161,7 +161,7 @@ public class IDRequest {
 	 * @return The requested IDs.
 	 * @see IDRequest#getAssignedPatient()
 	 */
-	public Set<ID> getRequestedIds() {
+	public Set<ID> createRequestedIds() {
 
 		if (this.assignedPatient == null)
 			return null;
@@ -169,7 +169,7 @@ public class IDRequest {
 		LinkedList<ID> idList = new LinkedList<ID>();
 
 		for (String thisType : this.requestedIdTypes) {
-			idList.add(this.assignedPatient.getOriginal().getId(thisType));
+			idList.add(this.assignedPatient.getOriginal().createId(thisType));
 		}
 		return new CopyOnWriteArraySet<ID>(idList);
 	}

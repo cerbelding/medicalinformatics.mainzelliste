@@ -250,7 +250,7 @@ public enum PatientBackend {
 						// Check that no conflicting external ID exists
 						MatchResult finalIdatMatch = idatMatch; // Make final copy for using in stream
 						boolean conflict = !externalIds.stream().allMatch(id -> {
-							ID idOfMatch = finalIdatMatch.getBestMatchedPatient().getId(id.getType());
+							ID idOfMatch = finalIdatMatch.getBestMatchedPatient().createId(id.getType());
 							return (idOfMatch == null || id.getIdString().equals(idOfMatch.getIdString()));
 						});
 						
@@ -316,7 +316,7 @@ public enum PatientBackend {
 			{
 			case MATCH :
 				for (String idType : idTypes)
-					returnIds.add(match.getBestMatchedPatient().getOriginal().getId(idType));
+					returnIds.add(match.getBestMatchedPatient().getOriginal().createId(idType));
 
 				assignedPatient = match.getBestMatchedPatient();
 				assignedPatient.updateFrom(pNormalized);
@@ -371,7 +371,7 @@ public enum PatientBackend {
 				pNormalized.setIds(newIds);
 
 				for (String idType : idTypes) {
-					ID thisID = pNormalized.getId(idType);
+					ID thisID = pNormalized.createId(idType);
 					returnIds.add(thisID);
 					logger.info("Created new ID " + thisID.getIdString() + " for ID request " + (t == null ? "(null)" : t.getId()));
 				}
@@ -381,7 +381,7 @@ public enum PatientBackend {
 					for (ID thisId : returnIds)
 						thisId.setTentative(true);
 					logger.info("New ID " + returnIds.get(0).getIdString() + " is tentative. Found possible match with ID " +
-							match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
+							match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString()); // TODO: Check what happpens if patient doesn´t have specific id
 				}
 				assignedPatient = pNormalized;
 				break;

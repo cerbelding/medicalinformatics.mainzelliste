@@ -106,77 +106,81 @@ public class PatientsResource {
     }
 
 
-    /**
-     * Create a new patient. Interface for web browser.
-     *
-     * @param tokenId                Id of a valid "addPatient" token.
-     * @param mainzellisteApiVersion The API version used to make the request.
-     * @param form                   Input as provided by the HTML form.
-     * @param request                The injected HttpServletRequest.
-     * @return An HTTP response as specified in the API documentation.
-     */
-    @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces({MediaType.TEXT_HTML, MediaType.WILDCARD})
-    public synchronized Response newPatientBrowser(
-            @QueryParam("tokenId") String tokenId,
-            @QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion,
-            MultivaluedMap<String, String> form,
-            @Context HttpServletRequest request) {
-        try {
-            logger.debug("@POST newPatientBrowser");
-            Token t = Servers.instance.getTokenByTid(tokenId);
-            IDRequest createRet = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request));
-            Set<ID> ids = createRet.getRequestedIds();
-            MatchResult result = createRet.getMatchResult();
-            Map<String, Object> map = new HashMap<String, Object>();
-            if (ids == null) { // unsure case
-                // Copy form to JSP model so that input is redisplayed
-                for (String key : form.keySet()) {
-                    map.put(key, form.getFirst(key));
-                }
-                map.put("readonly", "true");
-                map.put("tokenId", tokenId);
-                map.put("mainzellisteApiVersion", mainzellisteApiVersion);
-                return Response.status(Status.CONFLICT)
-                        .entity(new Viewable("/unsureMatch.jsp", map)).build();
-            } else {
-                if (t != null && t.getData() != null && t.getData().containsKey("redirect")) {
-                    UriTemplate redirectURITempl = new UriTemplate(t.getDataItemString("redirect"));
-                    HashMap<String, String> templateVarMap = new HashMap<String, String>();
-                    for (String templateVar : redirectURITempl.getTemplateVariables()) {
-                        if (templateVar.equals("tokenId")) {
-                            templateVarMap.put(templateVar, tokenId);
-                        } else {
-                            ID thisID = createRet.getAssignedPatient().getId(templateVar);
-                            String idString = thisID.getIdString();
-                            templateVarMap.put(templateVar, idString);
-                        }
-                    }
-                    try {
-                        URI redirectURI = new URI(redirectURITempl.createURI(templateVarMap));
-                        String showResult = Config.instance.getProperty("result.show");
-                        if (showResult != null && !Boolean.parseBoolean(showResult)) {
-                            return Response.status(Status.SEE_OTHER)
-                                    .location(redirectURI)
-                                    .build();
-                        }
-                        // Remove query parameters and pass them to JSP. The redirect is put
-                        // into the "action" tag of a form and the parameters are passed as 
-                        // hidden fields				
-                        MultivaluedMap<String, String> queryParams = UriComponent.decodeQuery(redirectURI, true);
-                        map.put("redirect", redirectURI);
-                        map.put("redirectParams", queryParams);
-                        //return Response.status(Status.SEE_OTHER).location(redirectURI).build();
-                    } catch (URISyntaxException e) {
-                        // Wird auch beim Anlegen des Tokens geprüft.
-                        throw new InternalErrorException("Die übergebene Redirect-URL " + redirectURITempl.getTemplate() + "ist ungültig!");
-                    }
-                }
+	/**
+	 * Create a new patient. Interface for web browser.
+	 * 
+	 * @param tokenId
+	 *            Id of a valid "addPatient" token.
+	 * @param mainzellisteApiVersion
+	 *            The API version used to make the request.
+	 * @param form
+	 *            Input as provided by the HTML form.
+	 * @param request
+	 *            The injected HttpServletRequest.
+	 * @return An HTTP response as specified in the API documentation.
+	 */
+	@POST
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces({MediaType.TEXT_HTML, MediaType.WILDCARD})
+	public synchronized Response newPatientBrowser(
+			@QueryParam("tokenId") String tokenId,
+			@QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion,
+			MultivaluedMap<String, String> form,
+			@Context HttpServletRequest request){
+		try {
+			Token t = Servers.instance.getTokenByTid(tokenId);
+			IDRequest createRet = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request)); 
+			Set<ID> ids = createRet.createRequestedIds();
+			MatchResult result = createRet.getMatchResult();
+			Map <String, Object> map = new HashMap<String, Object>();
+			if (ids == null) { // unsure case
+				// Copy form to JSP model so that input is redisplayed
+				for (String key : form.keySet())
+				{
+					map.put(key, form.getFirst(key));
+				}
+				map.put("readonly", "true");
+				map.put("tokenId", tokenId);
+				map.put("mainzellisteApiVersion", mainzellisteApiVersion);
+				return Response.status(Status.CONFLICT)
+						.entity(new Viewable("/unsureMatch.jsp", map)).build();
+			} else {
+				if (t != null && t.getData() != null && t.getData().containsKey("redirect")) {
+					UriTemplate redirectURITempl = new UriTemplate(t.getDataItemString("redirect"));
+					HashMap<String, String> templateVarMap = new HashMap<String, String>();
+					for (String templateVar : redirectURITempl.getTemplateVariables()) {
+						if (templateVar.equals("tokenId")) {
+							templateVarMap.put(templateVar, tokenId);
+						} else {
+							ID thisID = createRet.getAssignedPatient().createId(templateVar);
+							String idString = thisID.getIdString();
+							templateVarMap.put(templateVar, idString);
+						}
+					}
+					try {
+						URI redirectURI = new URI(redirectURITempl.createURI(templateVarMap));
+						String showResult = Config.instance.getProperty("result.show");
+						if (showResult != null && !Boolean.parseBoolean(showResult)) {
+							return Response.status(Status.SEE_OTHER)
+									.location(redirectURI)
+									.build();
+						}
+						// Remove query parameters and pass them to JSP. The redirect is put
+						// into the "action" tag of a form and the parameters are passed as 
+						// hidden fields				
+						MultivaluedMap<String, String> queryParams = UriComponent.decodeQuery(redirectURI, true);
+						map.put("redirect", redirectURI);
+						map.put("redirectParams", queryParams);
+						//return Response.status(Status.SEE_OTHER).location(redirectURI).build();
+					} catch (URISyntaxException e) {
+						// Wird auch beim Anlegen des Tokens geprüft.
+						throw new InternalErrorException("Die übergebene Redirect-URL " + redirectURITempl.getTemplate() + "ist ungültig!");
+					}
+				}
 
                 // If Idat are to be redisplayed in the result form...
                 if (Boolean.parseBoolean(Config.instance.getProperty("result.printIdat"))) {
-                    //...copy input to JSP 
+                    //...copy input to JSP
                     for (String key : form.keySet()) {
                         map.put(key, form.getFirst(key));
                     }
@@ -215,94 +219,98 @@ public class PatientsResource {
         }
     }
 
-    /**
-     * Create a new patient. Interface for software applications.
-     *
-     * @param tokenId Id of a valid "addPatient" token.
-     * @param request The injected HttpServletRequest.
-     * @param context Injected information of application and request URI.
-     * @param form    Input as provided by the HTTP request.
-     * @return An HTTP response as specified in the API documentation.
-     * @throws JSONException If a JSON error occurs.
-     */
-    @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.APPLICATION_JSON)
-    public synchronized Response newPatientJson(
-            @QueryParam("tokenId") String tokenId,
-            @Context HttpServletRequest request,
-            @Context UriInfo context,
-            MultivaluedMap<String, String> form) throws JSONException {
-        logger.debug("@POST newPatientJson");
-        IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request));
-        if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.getRequestedIds() == null) {
-            JSONObject ret = new JSONObject();
-            if (response.getToken().showPossibleMatches()) {
-                JSONArray possibleMatches = new JSONArray();
-                for (Entry<Double, List<Patient>> possibleMatch : response.getMatchResult().getPossibleMatches().entrySet()) {
-                    for (Patient p : possibleMatch.getValue())
-                        possibleMatches.put(p.getId(IDGeneratorFactory.instance.getDefaultIDType()).toJSON());
-                }
-                ret.put("possibleMatches", possibleMatches);
-            }
-            ret.put("message", "Unable to definitely determined whether the data refers to an existing or to a new "
-                    + "patient. Please check data or resubmit with sureness=true to get a tentative result. Please check"
-                    + " documentation for details.");
-            return Response
-                    .status(Status.CONFLICT)
-                    .entity(ret)
-                    .build();
-        }
-        logger.debug("Accept: " + request.getHeader("Accept"));
-        logger.debug("Content-Type: " + request.getHeader("Content-Type"));
-        List<ID> newIds = new LinkedList<ID>(response.getRequestedIds());
-
-        int apiMajorVersion = Servers.instance.getRequestMajorApiVersion(request);
-
-        if (apiMajorVersion >= 2) {
-            JSONArray ret = new JSONArray();
-            for (ID thisID : newIds) {
-                URI newUri = context.getBaseUriBuilder()
-                        .path(PatientsResource.class)
-                        .path("/{idtype}/{idvalue}")
-                        .build(thisID.getType(), thisID.getIdString());
-
-                ret.put(new JSONObject()
-                        .put("idType", thisID.getType())
-                        .put("idString", thisID.getIdString())
-                        .put("tentative", thisID.isTentative())
-                        .put("uri", newUri));
-            }
-
-            return Response
-                    .status(Status.CREATED)
-                    .entity(ret)
-                    .build();
-        } else {
-            /*
-             *  Old api permits only one ID in response. If several
-             *  have been requested, which one to choose?
-             */
-            if (newIds.size() > 1) {
-                throw new WebApplicationException(
-                        Response.status(Status.BAD_REQUEST)
-                                .entity("Selected API version 1.0 permits only one ID in response, " +
-                                        "but several were requested. Set mainzellisteApiVersion to a " +
-                                        "value >= 2.0 or request only one ID type in token.")
-                                .build());
-            }
-
-            ID newId = newIds.get(0);
-
-            URI newUri = context.getBaseUriBuilder()
-                    .path(PatientsResource.class)
-                    .path("/{idtype}/{idvalue}")
-                    .build(newId.getType(), newId.getIdString());
-
-            JSONObject ret = new JSONObject()
-                    .put("newId", newId.getIdString())
-                    .put("tentative", newId.isTentative())
-                    .put("uri", newUri);
+	/**
+	 * Create a new patient. Interface for software applications.
+	 * 
+	 * @param tokenId
+	 *            Id of a valid "addPatient" token.
+	 * @param request
+	 *            The injected HttpServletRequest.
+	 * @param context
+	 *            Injected information of application and request URI.
+	 * @param form
+	 *            Input as provided by the HTTP request.
+	 * @return An HTTP response as specified in the API documentation.
+	 * @throws JSONException
+	 *             If a JSON error occurs.
+	 */
+	@POST
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public synchronized Response newPatientJson(
+			@QueryParam("tokenId") String tokenId,
+			@Context HttpServletRequest request,
+			@Context UriInfo context,
+			MultivaluedMap<String, String> form) throws JSONException {
+		IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request));
+		if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.createRequestedIds() == null) {
+			JSONObject ret = new JSONObject();
+			if (response.getToken().showPossibleMatches()) {
+				JSONArray possibleMatches = new JSONArray();
+				for (Entry<Double, List<Patient>> possibleMatch : response.getMatchResult().getPossibleMatches().entrySet()) {
+					for (Patient p : possibleMatch.getValue())
+						possibleMatches.put(p.createId(IDGeneratorFactory.instance.getDefaultIDType()).toJSON());
+				}
+				ret.put("possibleMatches", possibleMatches);
+			}
+			ret.put("message", "Unable to definitely determined whether the data refers to an existing or to a new "
+					+ "patient. Please check data or resubmit with sureness=true to get a tentative result. Please check"
+					+ " documentation for details.");
+			return Response
+					.status(Status.CONFLICT)
+					.entity(ret)
+					.build();
+		}
+		logger.debug("Accept: " + request.getHeader("Accept"));
+		logger.debug("Content-Type: " + request.getHeader("Content-Type"));
+		List<ID> newIds = new LinkedList<ID>(response.createRequestedIds());
+		
+		int apiMajorVersion = Servers.instance.getRequestMajorApiVersion(request);
+		
+		if (apiMajorVersion >= 2) {
+			JSONArray ret = new JSONArray();
+			for (ID thisID : newIds) {
+				URI newUri = context.getBaseUriBuilder()
+						.path(PatientsResource.class)
+						.path("/{idtype}/{idvalue}")
+						.build(thisID.getType(), thisID.getIdString());
+	
+				ret.put(new JSONObject()
+					.put("idType", thisID.getType())
+					.put("idString", thisID.getIdString())
+					.put("tentative", thisID.isTentative())
+					.put("uri", newUri));
+			}
+					
+			return Response
+				.status(Status.CREATED)
+				.entity(ret)
+				.build();
+		} else {
+			/*
+			 *  Old api permits only one ID in response. If several
+			 *  have been requested, which one to choose?
+			 */
+			if (newIds.size() > 1) {
+				throw new WebApplicationException(
+						Response.status(Status.BAD_REQUEST)
+						.entity("Selected API version 1.0 permits only one ID in response, " +
+								"but several were requested. Set mainzellisteApiVersion to a " +
+								"value >= 2.0 or request only one ID type in token.")
+								.build());
+			}
+			
+			ID newId = newIds.get(0);
+			
+			URI newUri = context.getBaseUriBuilder()
+					.path(PatientsResource.class)
+					.path("/{idtype}/{idvalue}")
+					.build(newId.getType(), newId.getIdString());
+			
+			JSONObject ret = new JSONObject()
+					.put("newId", newId.getIdString())
+					.put("tentative", newId.isTentative())
+					.put("uri", newUri);
 
             return Response
                     .status(Status.CREATED)
@@ -325,7 +333,7 @@ public class PatientsResource {
             @PathParam("tid") String tid) {
         logger.debug("@GET getPatientsToken");
         logger.info("Received request to get patient with token " + tid);
-        // Check if token exists and has the right type. 
+        // Check if token exists and has the right type.
         // Validity of token is checked upon creation
         Token token = Servers.instance.getTokenByTid(tid);
         if (token == null) {
@@ -534,7 +542,7 @@ public class PatientsResource {
             logger.info("Token with id " + tokenId + " " + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
             throw new InvalidTokenException("Please supply a valid 'editPatient' token.", Status.UNAUTHORIZED);
         }
-        // synchronize on token 
+        // synchronize on token
         synchronized (t) {
             /* Get token again and check if it still exist.
              * This prevents the following race condition:

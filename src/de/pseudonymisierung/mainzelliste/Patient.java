@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,18 +88,18 @@ public class Patient {
 			throw new InternalErrorException();
 		}
 	}
-	
+
 	/**
 	 * map field name to soundex code
 	 */
 	@Transient
 	private Map<String, String> soundex;
-	
+
 	public Map<String, String> getClusterIds()
 	{
 		return soundex;
 	}
-	
+
 	/**
 	 * Set soundex codes for some fiels of the patient.
 	 */
@@ -111,7 +112,7 @@ public class Patient {
 			{
 				soundex.put(field, Soundex.computeSoundex(this.getInputFields().get(field).getValue().toString()));
 			}
-			catch (Exception e) 
+			catch (Exception e)
 			{
 				Logger.getLogger(Patient.class).error("Exception: ", e);
 				throw new InternalErrorException();
@@ -333,11 +334,10 @@ public class Patient {
 	 * @throws InvalidIDException
 	 *             if the provided ID type is undefined.
 	 */
-	public ID getId(String type) {
-		for (ID thisId : ids) {
-			if (thisId.getType().equals(type))
-				return thisId;
-		}
+	public ID createId(String type) {
+		ID thisId = getId(type);
+		if (thisId != null)
+			return thisId;
 		// ID of requested type was not found and is not external -> generate new ID
 		IDGenerator<? extends ID> factory = IDGeneratorFactory.instance.getFactory(type);
 
@@ -347,10 +347,30 @@ public class Patient {
 		
 		if(!factory.isExternal()) {
 			ID newID = factory.getNext();
+			Persistor.instance.addId(newID);
 			this.addId(newID);
 			return newID;
 		}
 
+		return null;
+	}
+
+	/**
+	 * Get the ID of the specified type from this patient.
+	 *
+	 * @param type
+	 *            The ID type. See {@link ID} for the general structure of an
+	 *            ID.
+	 * @return This patient's ID of the given type or null if the ID is
+	 *         not defined for this patient.
+	 * @throws InvalidIDException
+	 *             if the provided ID type is undefined.
+	 */
+	public ID getId(String type) {
+		for (ID thisId : ids) {
+			if (thisId.getType().equals(type))
+				return thisId;
+		}
 		return null;
 	}
 
