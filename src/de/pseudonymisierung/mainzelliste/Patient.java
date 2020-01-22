@@ -294,11 +294,10 @@ public class Patient {
 	 * @throws InvalidIDException
 	 *             if the provided ID type is undefined.
 	 */
-	public ID getId(String type) {
-		for (ID thisId : ids) {
-			if (thisId.getType().equals(type))
-				return thisId;
-		}
+	public ID createId(String type) {
+		ID thisId = getId(type);
+		if (thisId != null)
+			return thisId;
 		// ID of requested type was not found and is not external -> generate new ID
 		IDGenerator<? extends ID> factory = IDGeneratorFactory.instance.getFactory(type);
 
@@ -314,6 +313,25 @@ public class Patient {
 			return newID;
 		}
 
+		return null;
+	}
+
+	/**
+	 * Get the ID of the specified type from this patient.
+	 *
+	 * @param type
+	 *            The ID type. See {@link ID} for the general structure of an
+	 *            ID.
+	 * @return This patient's ID of the given type or null if the ID is
+	 *         not defined for this patient.
+	 * @throws InvalidIDException
+	 *             if the provided ID type is undefined.
+	 */
+	public ID getId(String type) {
+		for (ID thisId : ids) {
+			if (thisId.getType().equals(type))
+				return thisId;
+		}
 		return null;
 	}
 
