@@ -97,7 +97,7 @@ public class RefinedPermission {
         AtomicBoolean returnValue = new AtomicBoolean(true);
         requestedPermissions.forEach(r -> {
             if (!detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("]", "")) && !r.getRequestedParameter().equals("type")) {
-                this.setReturnMessage(r.getRequestedParameter() + " is not in server permissions ");
+                this.setReturnMessage(r.getRequestedParameter() + ":" + r.getRequestedValue() + " is not allowed to request!");
                 logger.info(this.getReturnMessage() + detailedServerPermissionsForRequestedTokenType);
                 returnValue.set(false);
             }
@@ -227,7 +227,7 @@ public class RefinedPermission {
             logger.debug(functionName + requestedParameterAndValue + " matches (single) wildcard in config");
             return true;
         }
-        this.setReturnMessage(requestedParameterAndValue + " is not in config!");
+        this.setReturnMessage(requestedParameterAndValue + " is not allowed to request!!");
         logger.info(functionName + " " + this.getReturnMessage());
 
         return false;
