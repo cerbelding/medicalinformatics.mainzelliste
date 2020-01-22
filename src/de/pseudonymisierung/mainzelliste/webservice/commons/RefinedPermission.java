@@ -3,7 +3,6 @@ package de.pseudonymisierung.mainzelliste.webservice.commons;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidJSONException;
-import de.pseudonymisierung.mainzelliste.webservice.Token;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -96,7 +95,7 @@ public class RefinedPermission {
 
         AtomicBoolean returnValue = new AtomicBoolean(true);
         requestedPermissions.forEach(r -> {
-            if (!detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("]", "")) && !r.getRequestedParameter().equals("type")) {
+            if (!detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replace("[", "").replace("]", "")) && !r.getRequestedParameter().equals("type")) {
                 this.setReturnMessage(r.getRequestedParameter() + ":" + r.getRequestedValue() + " is not allowed to request!");
                 logger.debug(this.getReturnMessage() + detailedServerPermissionsForRequestedTokenType);
                 returnValue.set(false);
@@ -141,7 +140,7 @@ public class RefinedPermission {
                 //Call check
                 matchingGroup = matcher.group(1);
 
-                logger.debug("multiple existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("]", "")));
+                logger.debug("multiple existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replace("[", "").replace("]", "")));
             } else {
                 logger.debug("single existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter()));
                 if (!isParameterValueCombinationAllowed(r.getRequestedParameter(), r.getRequestedValue(), detailedServerPermissionsForRequestedTokenType)) {
@@ -164,14 +163,14 @@ public class RefinedPermission {
         List<String> requestValues = new ArrayList<>();
 
         String reqValue = "";
-        String log = "";
+        StringBuilder log = new StringBuilder("");
         for(RefinedPermissionDTO refinedPermissionDTO: refinedPermissionDTOS){
 
             reqValue = refinedPermissionDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + refinedPermissionDTO.getRequestedValue();
 
             requestValues.add(reqValue);
             requestValues.add(refinedPermissionDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + "*");
-            log = log + " " + reqValue;
+            log.append(" " + reqValue);
         }
 
         List<String> requestedValuesWhichAreAlsoInConfig = requestValues.stream().filter(f -> tokenTypeServerPermissionsList.stream().anyMatch(s -> s.contains(f))).collect(Collectors.toList());
