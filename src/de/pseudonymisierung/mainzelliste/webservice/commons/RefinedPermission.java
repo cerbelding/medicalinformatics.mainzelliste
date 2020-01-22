@@ -98,7 +98,7 @@ public class RefinedPermission {
         requestedPermissions.forEach(r -> {
             if (!detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("]", "")) && !r.getRequestedParameter().equals("type")) {
                 this.setReturnMessage(r.getRequestedParameter() + ":" + r.getRequestedValue() + " is not allowed to request!");
-                logger.info(this.getReturnMessage() + detailedServerPermissionsForRequestedTokenType);
+                logger.debug(this.getReturnMessage() + detailedServerPermissionsForRequestedTokenType);
                 returnValue.set(false);
             }
         });
@@ -124,7 +124,6 @@ public class RefinedPermission {
                 matcher.matches();
 
                 if (matchingGroup == null || !matchingGroup.equals(matcher.group(1))) {
-                    logger.info("Call check " + requestedPermissions.stream().filter(e -> e.getRequestedParameter().contains(matcher.group(1))).collect(Collectors.toList()));
 
                     Pattern patternCut = Pattern.compile(".*(\\[[][0-9]*\\[]]).*");
                     Matcher cut = patternCut.matcher(r.getRequestedParameter());
@@ -138,17 +137,13 @@ public class RefinedPermission {
                             return false;
                         }
                     }
-
-                } else {
-                    logger.debug("matchingroup: " + matchingGroup);
                 }
-
                 //Call check
                 matchingGroup = matcher.group(1);
 
-                logger.info("multiple existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("]", "")));
+                logger.debug("multiple existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter().replaceAll("[0-9]*", "").replaceAll("\\[", "").replaceAll("]", "")));
             } else {
-                logger.info("single existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter()));
+                logger.debug("single existing values: " + r.getRequestedParameter() + ":" + r.getRequestedValue() + " " + detailedServerPermissionsForRequestedTokenType.contains(r.getRequestedParameter()));
                 if (!isParameterValueCombinationAllowed(r.getRequestedParameter(), r.getRequestedValue(), detailedServerPermissionsForRequestedTokenType)) {
                     return false;
                 }
@@ -211,7 +206,7 @@ public class RefinedPermission {
         String requestedParameterAndValue = requestedParameter + ":" + requestedValue;
         String functionName = "isParameterValueCombinationAllowed()";
 
-        logger.info(functionName + " request " + requestedParameterAndValue);
+        logger.debug(functionName + " request " + requestedParameterAndValue);
 
         List<String> tokenTypeServerPermissionsList = Arrays.asList(tokenTypeServerPermissions.split("\\|"));
         List<String> tokenTypeServerPermissionsListWildCard = tokenTypeServerPermissionsList.stream().filter(o -> o.contains("*")).collect(Collectors.toList());
