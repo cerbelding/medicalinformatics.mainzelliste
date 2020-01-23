@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste.matcher;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -198,6 +199,10 @@ public abstract class FieldComparator<F extends Field<?>> {
 			return 0.0;
 		if (fieldLeft instanceof CompoundField<?> && fieldRight instanceof CompoundField<?>)
 			return compareBackend((CompoundField<F>) fieldLeft, (CompoundField<F>) fieldRight);
+		else if (fieldLeft instanceof CompoundField<?>)
+			return compareBackend((CompoundField<F>) fieldLeft, new CompoundField<F>(Collections.singletonList(fieldRight)));
+		else if (fieldRight instanceof CompoundField<?>)
+			return compareBackend(new CompoundField<F>(Collections.singletonList(fieldLeft)), (CompoundField<F>) fieldRight);
 		else
 			return compareBackend(fieldLeft, fieldRight);
 
@@ -220,7 +225,7 @@ public abstract class FieldComparator<F extends Field<?>> {
 	{
 
 		int nNonEmptyLeft = fieldLeft.getSize() - fieldLeft.nEmptyFields();
-		int nNonEmptyRight = fieldLeft.getSize() - fieldRight.nEmptyFields();
+		int nNonEmptyRight = fieldRight.getSize() - fieldRight.nEmptyFields();
 
 		// let fieldsA be the array with less non-missing fields
 		List<F> fieldsA;
