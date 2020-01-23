@@ -424,14 +424,17 @@ public class PatientsResource {
 
     private Response readPatientWildCardSelect(Token token, List<?> requests) {
         logger.info("Request all Ids for a idtype");
-        List<String> resultIds = (List<String>)token.getDataItemList("resultIds");
         String idType;
 
         if (token.getDataItemList("resultFields") != null) {
             throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
         }
 
-        if (resultIds.size() > 1) {
+        //validate resultIds
+        List<String> resultIds = (List<String>)token.getDataItemList("resultIds");
+        if (resultIds == null || resultIds.isEmpty()) {
+            throw new InvalidTokenException("Please provide a resultIds in token data!");
+        }else if (resultIds.size() > 1) {
             throw new NotImplementedException("It's only possible to request one IdType as wildcard select.");
         }
 
