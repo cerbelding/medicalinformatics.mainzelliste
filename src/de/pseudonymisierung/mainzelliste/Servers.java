@@ -49,7 +49,6 @@ import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
-import org.apache.openjpa.lib.log.Log;
 
 /**
  * Keeps track of servers, i.e. each communication partner that is not a user.
@@ -109,8 +108,7 @@ public enum Servers {
 		for (int i = 0; ; i++)
 		{
 			if (!props.containsKey("servers." + i + ".apiKey") ||
-				!props.containsKey("servers." + i + ".permissions") ||
-				!props.containsKey("servers." + i + ".allowedRemoteAdresses"))
+				!props.containsKey("servers." + i + ".permissions"))
 				break;
 
 			Server s = new Server();
@@ -119,8 +117,10 @@ public enum Servers {
 			
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
 			s.permissions = new HashSet<String>(Arrays.asList(permissions));
-			
-			String allowedRemoteAdresses[] = props.getProperty("servers." + i + ".allowedRemoteAdresses").split("[;,]");
+
+			String allowedRemoteAdressesString = props.getProperty("servers." + i + ".allowedRemoteAdresses");
+			String allowedRemoteAdresses[] = (allowedRemoteAdressesString != null) ?  allowedRemoteAdressesString.split("[;,]") : new String[]{"127.0.0.1", "0:0:0:0:0:0:0:1"};
+			logger.info("No AllowedRemoteAddresses are specified for servers." + i + ". Allowing localhost as default.");
 			s.allowedRemoteAdressRanges = new LinkedList<SubnetUtils>();
 			s.allowedRemoteAdresses = new HashSet<String>();
 			for (String thisAddress : allowedRemoteAdresses) {
