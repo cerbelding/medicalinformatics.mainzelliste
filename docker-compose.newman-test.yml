@@ -12,7 +12,9 @@ services:
       - POSTGRES_USER=mainzelliste
       - POSTGRES_PASSWORD=PleasePutASafePasswordHere
   mainzelliste:
-    image: medicalinformatics/mainzelliste:1.9-latest
+    image: mainzelliste:test
+    build:
+      context: .
     ports:
       - 8080:8080
     environment:
@@ -25,6 +27,9 @@ services:
       - ./ci/newman_mainzelliste_configs/active_config:/run/secrets/
   newman:
     image: newman_html_report
+    build:
+      context: ./ci
+      dockerfile: Dockerfile.newman
     volumes:
       - ./ci:/etc/newman
     depends_on:
