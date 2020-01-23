@@ -1,12 +1,18 @@
-#Debug Options:
-#&& ls -ll && ls -ll ./ && ls -ll ./newman_mainzelliste_configs && ls -ll ./newman_mainzelliste_configs/active_config \
+# Debug Options:
+# && ls -ll && ls -ll ./ && ls -ll ./newman_mainzelliste_configs && ls -ll ./newman_mainzelliste_configs/active_config \
+
+OVERRIDE_FILE="";
+if [ -f "../docker-compose.override.yml" ]; then
+  OVERRIDE_FILE="-f ../docker-compose.override.yml";
+fi;
 
 initConfigs(){
+
    echo "Searching  newman_mainzelliste_configs/${1##*/}.conf .." \
-    && if [ -f newman_mainzelliste_configs/${1##*/}.conf ]
+    && if [ -f newman_mainzelliste_configs/"${1##*/}".conf ]
       then
         echo "ci/newman_mainzelliste_configs/${1##*/}.conf exists"
-        cp newman_mainzelliste_configs/${1##*/}.conf newman_mainzelliste_configs/active_config/mainzellisteConfig
+        cp newman_mainzelliste_configs/"${1##*/}".conf newman_mainzelliste_configs/active_config/mainzellisteConfig
     else
         echo "no ci/newman_mainzelliste_configs/${1##*/}.conf - use default config"
         cp newman_mainzelliste_configs/mainzelliste_default.conf newman_mainzelliste_configs/active_config/mainzellisteConfig
@@ -14,7 +20,7 @@ initConfigs(){
 
 
     echo "Searching  test_data/${1##*/}.json .." \
-    && if [ -f  test_data/${1##*/}.json ]
+    && if [ -f  test_data/"${1##*/}".json ]
       then
         echo "ci/test_data/${1##*/}.json exists"
         NEWMANDATA=${1##*/}.json
@@ -28,15 +34,12 @@ initConfigs(){
 executeNewmanTest(){
 
     initConfigs $1 \
-    && docker-compose -f ../docker-compose.test.yml run \
+    && docker-compose -f ../docker-compose.newman-test.yml $OVERRIDE_FILE run \
     --service-ports newman run -d \
-    test_data/${NEWMANDATA} -n 1 -e newman_environment_variables/newman_environmentVariables.json ${1} \
+    test_data/${NEWMANDATA} -n 1 -e newman_environment_variables/newman_environmentVariables.json "${1}" \
     --reporters="cli,htmlextra,junit" --reporter-htmlextra-export=test_results/"${1##*/}.html" --reporter-junit-export=test_results/"${1##*/}.xml" \
     || docker-compose down  \
     && docker-compose down;
-
-
-
 
 }
 
@@ -44,8 +47,9 @@ executeNewmanTest(){
 # This functon creates an TestEnvironment for Testing the Mainzelliste with Postman.
 initTestEnvironment(){
 
-    initConfigs $1 \
-    && docker-compose -f ../docker-compose.test.yml up
+    initConfigs "$1" \
+    && docker-compose -f ../docker-compose.newman-test.yml $OVERRIDE_FILE up
+
 }
 
 
@@ -62,15 +66,12 @@ function iterateDirAndExecuteFuntion(){
 
   for subFile in $SUBFILES
     do
-      if [ -d ${subFile} ]
+      if [ -d "${subFile}" ]
       then
-        iterateDirAndExecuteFuntion $subFile/*  $FUNCTION
+        iterateDirAndExecuteFuntion "$subFile/*"  "$FUNCTION"
       else
-         $FUNCTION ${subFile}
+         $FUNCTION "${subFile}"
       fi;
     done;
 
-
 }
-
-
