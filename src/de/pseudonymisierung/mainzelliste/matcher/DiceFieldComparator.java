@@ -64,8 +64,9 @@ public class DiceFieldComparator extends FieldComparator<HashedField> {
 
 		int nLeft = bLeft.cardinality();
 		int nRight = bRight.cardinality();
-		bLeft.and(bRight);
-		return (2.0 * bLeft.cardinality() / (nLeft + nRight));
+		BitSet bAnd = (BitSet)bLeft.clone();
+		bAnd.and(bRight);
+		return (2.0 * bAnd.cardinality() / (nLeft + nRight));
 	}
 }
 
