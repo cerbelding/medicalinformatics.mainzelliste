@@ -1,0 +1,45 @@
+## This compose file provides a basic configuration for running mainzelliste as a developer.
+## To use this configuration copy its contents to docker-compose.override.yml.
+## You can refer to docker.md and docker-compose.dev.yml for futher configuration options
+version: "3.1"
+services:
+  db:
+    environment:
+      - POSTGRES_DB=yourDatabaseName
+      - POSTGRES_USER=yourDatabaseUser
+      - POSTGRES_PASSWORD=PleasePutASafePasswordHere
+    ## Persist the database mainzelliste uses you need to uncomment the following two lines
+    # volumes:
+      # - ./data/db:/var/lib/postgresql/data
+  mainzelliste:
+    ports:
+      - 8080:8080
+    environment:
+      - ML_REVERSEPROXY_FQDN=somehost.domain.org
+      - ML_REVERSEPROXY_SSL=false
+      - ML_DB_NAME=yourDatabaseName
+      - ML_DB_USER=yourDatabaseUser
+      - ML_DB_PASS=PleasePutASafePasswordHere
+      - ML_API_KEY=changeThisApiKey
+      - ML_ALLOWEDREMOTEADDRESSES=0.0.0.0/0
+### You can use docker secrets like shown below. Just uncomment the lines.
+### Enabling the secret mainzellisteConfig will pass a specified mainzelliste config file to the container.
+### This will lead to ML_DB_NAME, ML_DB_USER, ML_DB_PASS, ML_DB_TYPE, ML_DB_DRIVER, ML_DB_HOST, ML_DB_PORT, 
+### ML_API_KEY and ML_ALLOWEDREMOTEADDRESSES to not be processed.
+    # secrets:
+      # - mainzellisteDbName
+      # - mainzellisteDbUser
+      # - mainzellisteDbPassword
+      # - mainzellisteApiKey
+      # - mainzellisteConfig
+# secrets:
+  # mainzellisteDbName:
+    # file: ./config/secrets/mainzellisteDbName
+  # mainzellisteDbUser:
+    # file: ./config/secrets/mainzellisteDbUser
+  # mainzellisteDbPassword:
+    # file: ./config/secrets/mainzellisteDbPassword
+  # mainzellisteApiKey:
+    # file: ./config/secrets/mainzellisteApiKey
+  # mainzellisteConfig:
+    # file: ./config/mainzelliste.docker.conf

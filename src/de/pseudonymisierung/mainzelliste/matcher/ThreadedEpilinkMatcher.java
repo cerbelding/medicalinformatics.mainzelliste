@@ -3,24 +3,24 @@
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Affero General Public License as published by the Free 
+ * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License 
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Additional permission under GNU GPL version 3 section 7:
  *
- * If you modify this Program, or any covered work, by linking or combining it 
- * with Jersey (https://jersey.java.net) (or a modified version of that 
- * library), containing parts covered by the terms of the General Public 
- * License, version 2.0, the licensors of this Program grant you additional 
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Jersey (https://jersey.java.net) (or a modified version of that
+ * library), containing parts covered by the terms of the General Public
+ * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
 package de.pseudonymisierung.mainzelliste.matcher;
@@ -38,7 +38,7 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
  * match with.
  */
 public class ThreadedEpilinkMatcher extends EpilinkMatcher {
-	
+
 	/**
 	 * Container for the best MatchResult. A single instance of this class is
 	 * accessed by all workers and updated whenever a better match is found.
@@ -47,7 +47,7 @@ public class ThreadedEpilinkMatcher extends EpilinkMatcher {
 		@SuppressWarnings("javadoc")
 		public MatchResult matchResult;
 	}
-	
+
 	/**
 	 * Thread that matches on a subset of patients.
 	 */
@@ -63,10 +63,10 @@ public class ThreadedEpilinkMatcher extends EpilinkMatcher {
 		/** The best match this worker finds. */
 		private MatchResultContainer bestMatchResult;
 
-		
+
 		/**
 		 * Create an instance.
-		 * 
+		 *
 		 * @param left
 		 *            The (new) patient which to compare against the others.
 		 * @param iterator
@@ -79,7 +79,7 @@ public class ThreadedEpilinkMatcher extends EpilinkMatcher {
 			this.left = left;
 			this.bestMatchResult = bestMatchResult;
 		}
-	
+
 		/**
 		 * Draws patient from the queue provided in the constructor and compares
 		 * the new patient against them until no more patients are in the queue.
@@ -109,7 +109,7 @@ public class ThreadedEpilinkMatcher extends EpilinkMatcher {
 			} while (true);
 		}
 	}
-	
+
 	/**
 	 * Puts all patients to match against in a queue and creates a set of workers to process the queue.
 	 * @see MatchCallable
@@ -130,6 +130,6 @@ public class ThreadedEpilinkMatcher extends EpilinkMatcher {
 		while (!service.isTerminated()) {};
 		return resultContainer.matchResult;
 	}
-	
-	
+
+
 }

@@ -25,40 +25,20 @@
  */
 package de.pseudonymisierung.mainzelliste.dto;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.List;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.NoResultException;
-import javax.persistence.Persistence;
-import javax.persistence.TypedQuery;
-
-import org.apache.log4j.Logger;
-
-import de.pseudonymisierung.mainzelliste.AuditTrail;
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.Initializer;
-import de.pseudonymisierung.mainzelliste.ID;
-import de.pseudonymisierung.mainzelliste.IDGeneratorMemory;
-import de.pseudonymisierung.mainzelliste.IDRequest;
-import de.pseudonymisierung.mainzelliste.Patient;
+import de.pseudonymisierung.mainzelliste.*;
+import de.pseudonymisierung.mainzelliste.exceptions.IllegalUsedCharacterException;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+import org.apache.log4j.Logger;
+import org.apache.maven.artifact.versioning.ComparableVersion;
+
+import javax.persistence.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Driver;
-import java.util.Enumeration;
-import javax.servlet.ServletContext;
+import java.sql.*;
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -373,13 +353,52 @@ public enum Persistor {
 		// Refreshes cached entity 
 		em.refresh(edited); 
 	}
-	
+
+
+	public synchronized  void deletePatient(ID id){
+        Set<ID> allPatientIDs = getAllPatientIDs(id);
+
+	    anonymizeIdRequests(id);
+        deletePatientIDAT(id);
+
+        for (ID specificPatientID : allPatientIDs){
+            deleteId(specificPatientID);
+        }
+
+    }
+
+    /**
+     * Remove a patient from the database, including duplicates.
+     * In addition, all patients that are either a duplicate of the given patient
+     * or those of which the patient is a duplicate are deleted. This includes transitive
+     * relations (duplicate of duplicate).
+     *
+     * @param id An ID of the patient to delete.
+     */
+    public synchronized void deletePatientWithDuplicates(ID id) {
+        /* The subgraph of duplicates is a tree whose root can be found by following
+         * the "original" link recursively. From there, determine all connected patients
+         * by breadth-first search.
+         */
+        List<Patient> allInstances = getPatientWithDuplicates(id);
+        if (allInstances == null)
+            return;
+
+        for (int i = 0; i < allInstances.size(); i++) {
+            deletePatient(allInstances.get(i).getId(id.getType()));
+
+        }
+
+    }
+
 	/**
 	 * Remove a patient from the database.
 	 * 
 	 * @param id An ID of the patient to persist.
 	 */
-	public synchronized void deletePatient(ID id) {
+	public synchronized void deletePatientIDAT(ID id) {
+        checkForSuspectSQLCharacters(id.getIdString());
+
 		em.getTransaction().begin();
 		TypedQuery<Patient> q = em.createQuery("SELECT p FROM Patient p JOIN p.ids id WHERE id.idString = :idString AND id.type = :idType", Patient.class);
 		q.setParameter("idString", id.getIdString());
@@ -389,6 +408,50 @@ public enum Persistor {
 			em.remove(p);
 		em.getTransaction().commit();
 	}
+
+	public synchronized void deleteId (ID id) {
+        checkForSuspectSQLCharacters(id.getIdString());
+
+	    em.getTransaction().begin();
+	    Query query = em.createQuery("DELETE FROM ID id WHERE id.idString like :id").setParameter("id", id.getIdString());
+	    query.executeUpdate();
+	    em.getTransaction().commit();
+	}
+
+    private synchronized void anonymizeIdRequests(ID id){
+        em.getTransaction().begin();
+        try {
+            Patient patient = getPatient(id);
+            // Anonymize fields of all IDRequests that yielded this patient as result
+            TypedQuery<IDRequest> qIdRequest = em.createQuery("SELECT r FROM IDRequest r WHERE r.assignedPatient = :p", IDRequest.class);
+            qIdRequest.setParameter("p", patient);
+            for (IDRequest idRequest : qIdRequest.getResultList()) {
+                for (Field<?> f : idRequest.getInputFields().values()) {
+                    if (f instanceof PlainTextField)
+                        f.setValue("ANONYMIZED");
+                    else if (f instanceof IntegerField)
+                        f.setValue("0");
+                    else
+                        f.setValue("");
+                }
+            }
+            // Finally, remove the patient record
+            //em.remove(patient);
+            em.getTransaction().commit();
+        } catch (Throwable t) {
+            logger.error("Error while deleting patients", t);
+            em.getTransaction().rollback();
+            throw new InternalErrorException(t);
+        }
+
+    }
+
+    private synchronized Set<ID> getAllPatientIDs(ID id){
+
+        Patient patient = getPatient(id);
+        return patient.getIds();
+
+    }
 
 	/**
 	 * Persist the given AuditTrail instance.
@@ -417,7 +480,7 @@ public enum Persistor {
 		em.close();
 		return result;
 	}
-	
+
 	/** Get patient with duplicates. Works like
 	 * {@link Persistor#getDuplicates(ID)}, but the requested patient is
 	 * included in the result.
@@ -433,7 +496,7 @@ public enum Persistor {
 		duplicates.add(p);
 		return duplicates;
 	}
-	
+
 	/** Get duplicates of a patient.
 	 * 
 	 * Returns a list of all patients that are marked as duplicates of the given
@@ -543,7 +606,49 @@ public enum Persistor {
 			
 			em.getTransaction().commit();
 		} // End of update 1.1 -> 1.3.1
-		
+
+		if (isSchemaVersionUpdate(fromVersion, "1.9.0")) { // < 1.9
+			logger.info("Updating database schema for version 1.9...");
+			em.getTransaction().begin();
+			// Read HashedFields from the database and change the value type from Bitstring to base64 encoding
+			// This improves the parsing performance and reduces the space requirements.
+			List<HashedField> hashedFields = em.createQuery("SELECT f from HashedField f", HashedField.class)
+							.getResultList();
+			for (HashedField hashedField : hashedFields) {
+				hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString()));
+				em.persist(hashedField);
+			}
+			// Read all Patients and change the HashedField type in the fieldsStrings from BitString to base64
+			List<Patient> patients = getPatients();
+			for (Patient patient : patients) {
+				Collection<Field<?>> fields = new ArrayList<>(patient.getFields().values());
+				fields.addAll(patient.getInputFields().values());
+				fields.stream()
+								.flatMap(f -> {
+									// Unwrap Fields that are subfields of a CompoundField
+									if (f instanceof CompoundField<?>) {
+										@SuppressWarnings("unchecked")
+										final List<Field<?>> subFields = ((CompoundField) f).getValue();
+										return subFields.stream();
+									} else {
+										return Stream.of(f);
+									}
+								})
+								.filter(f -> f instanceof HashedField)
+								.map(f -> (HashedField)f)
+								.forEach(hashedField -> hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString())));
+				// Replace fields and thereby update the fieldsString
+				patient.setFields(patient.getFields());
+				patient.setInputFields(patient.getInputFields());
+				em.merge(patient);
+			}
+			// Update schema version
+			this.setSchemaVersion("1.9.0", em);
+			fromVersion = "1.9.0";
+			em.getTransaction().commit();
+		} // End of update < 1.9
+
+
 		// Update schema version to release version, even if no changes are necessary
 		em.getTransaction().begin();
 		this.setSchemaVersion(Config.instance.getVersion(), em);
@@ -595,7 +700,18 @@ public enum Persistor {
 		em.createNativeQuery("UPDATE mainzelliste_properties SET " + quoteIdentifier("value") + "='" + toVersion + 
 				"' WHERE property='version'").executeUpdate(); 
 	}
-	
+
+	/**
+	 * Check if toVersion is higher than fromVersion.
+	 * @param fromVersion The previous version string
+	 * @param toVersion The new version string
+	 * @return true if version was updated
+	 */
+	private boolean isSchemaVersionUpdate(String fromVersion, String toVersion) {
+		ComparableVersion fv = new ComparableVersion(fromVersion);
+		return 0 > fv.compareTo(new ComparableVersion(toVersion));
+	}
+
 	/**
 	 * Create mainzelliste_properties if not exists. Check if JPA schema was
 	 * initialized. If no, set version to current, otherwise, it is assumed that
@@ -652,7 +768,6 @@ public enum Persistor {
 		if (Config.instance.getProperty("db.username") != null) connectionProps.put("user",  Config.instance.getProperty("db.username"));
 		if (Config.instance.getProperty("db.password") != null) connectionProps.put("password",  Config.instance.getProperty("db.password"));
 		String url = Config.instance.getProperty("db.url");
-
 		for(int count=0; true; count++) {
 			try {
 				Class.forName(Config.instance.getProperty("db.driver"));
@@ -698,4 +813,17 @@ public enum Persistor {
 		}
 		return identifierQuoteString + identifier + identifierQuoteString;
 	}
+
+    /**
+     * Utility function to prevent illegal use of SQL features
+     * @param checkValue
+     */
+
+	private void checkForSuspectSQLCharacters(String checkValue){
+	    if (checkValue.contains("%") || checkValue.contains(";")|| checkValue.contains("--")){
+	        logger.error("Found illegal character in " + checkValue);
+	        throw new IllegalUsedCharacterException();
+
+        }
+    }
 }

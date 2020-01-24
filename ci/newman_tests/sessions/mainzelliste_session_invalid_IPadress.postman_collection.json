@@ -1,0 +1,73 @@
+{
+	"info": {
+		"_postman_id": "ee064df1-419c-460c-bcc0-c4fe57b7f9d7",
+		"name": "mainzelliste_session_invalid_IPadress",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NEW_SESSION - Sitzung anlegen -> failed authorization invalid",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "bc0fd897-1662-4d59-823e-eb08c2740b50",
+						"exec": [
+							"console.log(\"New Session\");",
+							"",
+							"",
+							"",
+							"pm.test(\"Check ResponseCode\", function(){",
+							"     pm.response.to.have.status(\"Unauthorized\");",
+							"    ",
+							"});",
+							"",
+							"pm.test(\"Check ResponseBody\", function(){",
+							"     pm.expect(pm.response.text()).to.have.string('Rejecting your IP address');",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"id": "5825aab3-97d9-4beb-9927-3c12ef9d2a70",
+			"key": "sessionId",
+			"value": "e48ed497-f209-4742-807c-83cac7414286",
+			"type": "string"
+		}
+	],
+	"protocolProfileBehavior": {}
+}

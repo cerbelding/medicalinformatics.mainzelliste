@@ -3,59 +3,42 @@
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Affero General Public License as published by the Free 
+ * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License 
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Additional permission under GNU GPL version 3 section 7:
  *
- * If you modify this Program, or any covered work, by linking or combining it 
- * with Jersey (https://jersey.java.net) (or a modified version of that 
- * library), containing parts covered by the terms of the General Public 
- * License, version 2.0, the licensors of this Program grant you additional 
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Jersey (https://jersey.java.net) (or a modified version of that
+ * library), containing parts covered by the terms of the General Public
+ * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Locale;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.Properties;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.matcher.Matcher;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import de.pseudonymisierung.mainzelliste.matcher.*;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
@@ -65,37 +48,37 @@ import java.net.URL;
  * {@link java.util.Properties#load(InputStream) java.util.Properties}).
  */
 public enum Config {
-	
+
 	/** The singleton instance */
 	instance;
-	
+
 	/** The software version of this instance. */
 	private final String version;
-	
-	/** Default paths from where configuration is read if no path is given in the context descriptor */ 
+
+	/** Default paths from where configuration is read if no path is given in the context descriptor */
 	private final String defaultConfigPaths[] = {"/etc/mainzelliste/mainzelliste.conf", "/WEB-INF/classes/mainzelliste.conf"};
 
 	/** The configured fields, keys are field names, values the respective field types. */
 	private final Map<String,Class<? extends Field<?>>> FieldTypes;
-	
+
 	/** Properties object that holds the configuration parameters. */
 	private Properties props;
-	
-	/** The record transformer matching the configured field transformations. */ 
+
+	/** The record transformer matching the configured field transformations. */
 	private RecordTransformer recordTransformer;
 	/** The configured matcher */
 	private Matcher matcher;
-	
+
 	/** Logging instance */
 	private Logger logger = Logger.getLogger(Config.class);
-	
+
 	/** Allowed origins for Cross Domain Resource Sharing. */
 	private Set<String> allowedOrigins;
-	
+
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
 	 * the configuration file.
-	 * 
+	 *
 	 * @throws InternalErrorException
 	 *             If an error occurs during initialization. This signals a
 	 *             fatal error and prevents starting the application.
@@ -108,8 +91,8 @@ public enum Config {
 			ServletContext context = Initializer.getServletContext();
 			String configPath = context.getInitParameter("de.pseudonymisierung.mainzelliste.ConfigurationFile");
 
-			// try to read config from configured path  
-			if (configPath != null) { 
+			// try to read config from configured path
+			if (configPath != null) {
 				logger.info("Reading config from path " + configPath + "...");
 				props = readConfigFromFile(configPath);
 				if (props == null) {
@@ -129,18 +112,21 @@ public enum Config {
 				if (props == null) {
 					throw new Error("Configuration file could not be found at any default location");
 				}
-			}			
+			}
 
-			logger.info("Config read successfully");
+
+            addSubConfigurationPropertiesToProps();
+
+            logger.info("Config read successfully");
 			logger.debug(props);
-			
+
 		} catch (IOException e)	{
 			logger.fatal("Error reading configuration file. Please configure according to installation manual.", e);
 			throw new Error(e);
 		}
-		
+
 		this.recordTransformer = new RecordTransformer(props);
-		
+
 		try {
 			Class<?> matcherClass = Class.forName("de.pseudonymisierung.mainzelliste.matcher." + props.getProperty("matcher"));
 			matcher = (Matcher) matcherClass.newInstance();
@@ -150,7 +136,7 @@ public enum Config {
 			logger.fatal("Initialization of matcher failed: " + e.getMessage(), e);
 			throw new InternalErrorException();
 		}
-		
+
 		// Read field types from configuration
 		Pattern pattern = Pattern.compile("field\\.(\\w+)\\.type");
 		java.util.regex.Matcher patternMatcher;
@@ -159,7 +145,7 @@ public enum Config {
 			patternMatcher = pattern.matcher(propKey);
 			if (patternMatcher.find())
 			{
-				String fieldName = patternMatcher.group(1);					
+				String fieldName = patternMatcher.group(1);
 				String fieldClassStr = props.getProperty(propKey).trim();
 				try {
 					Class<? extends Field<?>> fieldClass;
@@ -177,18 +163,64 @@ public enum Config {
 				}
 			}
 		}
-		
+
 		// Read allowed origins for cross domain resource sharing (CORS)
 		allowedOrigins = new HashSet<String>();
-		String allowedOriginsString = props.getProperty("servers.allowedOrigins"); 
-		if (allowedOriginsString != null)			
+		String allowedOriginsString = props.getProperty("servers.allowedOrigins");
+		if (allowedOriginsString != null)
 			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split(";")));
-		
+
 		// Read version number provided by pom.xml
 		version = readVersion();
 	}
-	
-	/**
+
+    /**
+     * Reads subConfiguration.{n}.uri(s) and adds the values to Config.props
+     *
+     */
+    private void addSubConfigurationPropertiesToProps() {
+        //
+        // add custom configuration values
+
+		// get custom config attributes
+		List<String> subConfigurations = props.stringPropertyNames().stream().filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
+				.map(k -> Integer.parseInt(k.split("\\.")[1])).sorted()
+				.map(d -> "subConfiguration." + d + ".uri")
+				.collect(Collectors.toList());
+
+
+        for (String attribute : subConfigurations) {
+            // read custom configuration properties from url
+            Properties subConfigurationProperties;
+            try {
+                URL subConfigurationURL = new URL(props.getProperty(attribute).trim());
+                subConfigurationProperties = readConfigFromUrl(subConfigurationURL);
+                logger.info("Sub configuration file " + attribute + " = " + subConfigurationURL + " has been read in.");
+            }  catch (MalformedURLException e) {
+                logger.fatal("Custom configuration file '" + attribute +
+                        "' could not be read from provided URL " + attribute, e);
+                throw new Error(e);
+            } catch (IOException e) {
+                logger.fatal("Error reading custom configuration file '" + attribute +
+                        "'. Please configure according to installation manual.", e);
+                throw new Error(e);
+            }
+
+            // merge configuration files
+            for (String currentKey : subConfigurationProperties.stringPropertyNames()) {
+                if(props.containsKey(currentKey) && !subConfigurationProperties.getProperty(currentKey).trim()
+                        .equals(props.getProperty(currentKey).trim())) {
+                    String msg = "Sub configuration tries to override main config or former sub config values. This is not allowed. Property key: " + currentKey +
+                            ", custom configuration file: " + attribute;
+                    logger.fatal(msg);
+                    throw new Error(msg);
+                }
+            }
+            props.putAll(subConfigurationProperties);
+        }
+    }
+
+    /**
 	 * Get the {@link RecordTransformer} instance configured for this instance.
 	 * @return The {@link RecordTransformer} instance configured for this instance.
 	 */
@@ -215,12 +247,12 @@ public enum Config {
 	/**
 	 * Get the specified property from the configuration.
 	 * @param propKey Property name.
-	 * @return The property value or null if no such property exists. 
+	 * @return The property value or null if no such property exists.
 	 */
 	public String getProperty(String propKey){
 		return props.getProperty(propKey);
 	}
-	
+
 	/**
 	 * Get the names of fields configured for this instance.
 	 * @return The names of fields configured for this instance.
@@ -228,7 +260,7 @@ public enum Config {
 	public Set<String> getFieldKeys(){
 		return FieldTypes.keySet();
 	}
-	
+
 	/**
 	 * Get the type of the given field.
 	 * @param fieldKey Name of the field as defined in configuration.
@@ -238,7 +270,7 @@ public enum Config {
 		assert FieldTypes.keySet().contains(fieldKey);
 		return FieldTypes.get(fieldKey);
 	}
-	
+
 	/**
 	 * Check whether a field with the given name is configured.
 	 * @param fieldName The field name to check
@@ -251,33 +283,33 @@ public enum Config {
 	/**
 	 * Get the distribution instance (e.g. the name of the project this instance
 	 * runs for).
-	 * 
+	 *
 	 * @return The value of configuration parameter "dist".
 	 * */
 	public String getDist() {
 		return getProperty("dist");
 	}
-	
+
 	/**
 	 * Get the software version of this instance.
-	 * 
+	 *
 	 * @return The software version of this instance.
-	 * 
+	 *
 	 */
 	public String getVersion() {
 		return version;
 	}
-	
+
 	/**
 	 * Checks whether this instance is run in debug mode, i.e. authentication is
 	 * disabled and tokens are not invalidated.
-	 * 
+	 *
 	 * @return true if debug mode is enabled.
 	 */
 	public boolean debugIsOn()
 	{
 		String debugMode = this.props.getProperty("debug");
-		return (debugMode.trim() != null && debugMode.equals("true"));
+		return (debugMode != null && debugMode.equals("true"));
 	}
 
 	/**
@@ -289,11 +321,11 @@ public enum Config {
 		String audittrail = this.props.getProperty("gcp.audittrail");
 		return (audittrail.trim() != null && audittrail.equals("true"));
 	}
-	
+
 	/**
 	 * Checks whether the given origin is allowed. Used to check the origin in
 	 * Cross Domain Resource Sharing.
-	 * 
+	 *
 	 * @param origin
 	 *            The origin to check.
 	 * @return true if resource sharing with this origin is allowed.
@@ -301,11 +333,11 @@ public enum Config {
 	public boolean originAllowed(String origin) {
 		return this.allowedOrigins.contains(origin);
 	}
-	
+
 	/**
 	 * Get the logo file from the path defined by configuration parameter
 	 * 'operator.logo'.
-	 * 
+	 *
 	 * @return The file object. It is checked that the file exists.
 	 * @throws FileNotFoundException
 	 *             if the logo file cannot be found at the specified location.
@@ -335,7 +367,7 @@ public enum Config {
 			}
 		}
 	}
-	
+
 	/**
 	 * Read configuration from the given file. Tries to read the file in the
 	 * following order:
@@ -343,7 +375,7 @@ public enum Config {
 	 * <li>From inside the application via getResourceAsStream().
 	 * <li>From the file system
 	 * </ol>
-	 * 
+	 *
 	 * @param configPath
 	 *            Path to configuration file.
 	 * @return The configuration as a Properties object or null if the given
@@ -358,12 +390,39 @@ public enum Config {
 		// Else: read from file System
 		if (configInputStream == null) {
 			File f = new File(configPath);
-			if (f.exists()) 
+			if (f.exists())
 				configInputStream = new FileInputStream(configPath);
 			else return null;
 		}
-		
-		Reader reader = new InputStreamReader(configInputStream, "UTF-8");
+		return readConfigFromInputStream(configInputStream);
+	}
+
+	/**
+	 * Read configuration from the given URL.
+	 *
+	 * @param url
+	 *            url of the configuration file.
+	 * @return The configuration as a Properties object
+	 * @throws IOException
+	 *             If an I/O error occurs while reading the configuration file.
+	 */
+	private Properties readConfigFromUrl(URL url) throws IOException {
+		try (BufferedInputStream in = new BufferedInputStream(url.openStream()) ) {
+			return readConfigFromInputStream(in);
+		}
+	}
+
+	/**
+	 * Read configuration from the given input stream.
+	 *
+	 * @param configInputStream
+	 *            input stream of the configuration file.
+	 * @return The configuration as a Properties object
+	 * @throws IOException
+	 *             If an I/O error occurs while reading the configuration file.
+	 */
+	private Properties readConfigFromInputStream(InputStream configInputStream) throws IOException {
+		Reader reader = new InputStreamReader(configInputStream, StandardCharsets.UTF_8);
 		Properties props = new Properties();
 		props.load(reader);
 		// trim property values
@@ -371,12 +430,12 @@ public enum Config {
 			String value = props.getProperty(key);
 			if (!value.equals(value.trim())) {
 				props.setProperty(key, value.trim());
-		}
+			}
 		}
 		configInputStream.close();
 		return props;
 	}
-	
+
 	/**
 	 * Get resource bundle for the best matching locale of the request. The best
 	 * matching locale is determined by iterating through the following list of
@@ -388,7 +447,7 @@ public enum Config {
 	 * given order.
 	 * <li>"en" as fallback (i.e. English is the default language).
 	 * </ol>
-	 * 
+	 *
 	 * @param req
 	 *            The servlet request.
 	 * @return The matching resource bundle.
@@ -400,7 +459,7 @@ public enum Config {
 		Object storedResourceBundle = req.getAttribute(storedResourceBundleKey);
 		if (storedResourceBundle != null && storedResourceBundle instanceof ResourceBundle)
 				return (ResourceBundle) storedResourceBundle;
-		
+
 		// Base name of resource bundle files
 		String baseName = "MessageBundle";
 
@@ -448,18 +507,18 @@ public enum Config {
 		// If this line is reached, no resource bundle (including system default) could be found, which is an error
 		throw new Error ("Could not find resource bundle with base name '" + baseName + "' for any of the locales: " + preferredLocales);
 	}
-	
+
 	/**
 	 * Returns application name and version for use in HTTP headers Server and
 	 * User-Agent. Format: "Mainzelliste/x.y.z", with the version as returned by
 	 * {@link #getVersion()}.
-	 * 
+	 *
 	 * @return The version string.
 	 */
 	public String getUserAgentString() {
 		return "Mainzelliste/" + getVersion();
 	}
-	
+
 	/**
 	 * Get configured log level (DEBUG by default).
 	 * @return The log level.
@@ -467,7 +526,7 @@ public enum Config {
 	Level getLogLevel() {
 		String level = this.props.getProperty("log.level");
 		Level ret = Level.DEBUG;
-		
+
 		if (level == null || level.equals("DEBUG"))
 			ret = Level.DEBUG;
 		else if (level.equals("WARN"))
@@ -478,10 +537,10 @@ public enum Config {
 			ret = Level.FATAL;
 		else if (level.equals("INFO"))
 			ret = Level.INFO;
-		
+
 		return ret;
 	}
-	
+
 	/**
 	 * Read version string from properties file "version.properties",
 	 * which is copied from pom.xml by Maven.
@@ -506,5 +565,5 @@ public enum Config {
 		} catch (IOException e) {
 			throw new Error ("I/O error while reading version.properties", e);
 		}
-	}	
+	}
 }

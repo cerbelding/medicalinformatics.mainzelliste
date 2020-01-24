@@ -25,7 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import org.apache.commons.lang.NotImplementedException;
+import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 
 import java.util.Properties;
 

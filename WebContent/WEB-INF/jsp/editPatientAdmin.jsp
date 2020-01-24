@@ -12,7 +12,7 @@
 <%@page import="de.pseudonymisierung.mainzelliste.Patient"%>
 <%@page import="de.pseudonymisierung.mainzelliste.IDGeneratorFactory"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+  pageEncoding="UTF-8"%>
 <%
 	ResourceBundle bundle = Config.instance.getResourceBundle(request);
 	String idTypes[] = IDGeneratorFactory.instance.getIDTypes();
@@ -43,7 +43,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <link rel="stylesheet" type="text/css"
-	href="<%=request.getContextPath() %>/static/css/patientenliste.css">
+  href="<%=request.getContextPath() %>/static/css/patientenliste.css">
 
 <title>Patienten bearbeiten</title>
 
@@ -52,18 +52,63 @@
 var originalIds = <%=originalIds.toString() %>;
 
 function fillOriginalId() {
-	var idType = document.getElementById("idTypeOriginal").value;
-	var idString = originalIds[idType];
-	if (idString === undefined)
-		idString = "";
-	
-	document.getElementById("idStringOriginal").value = idString;
+  var idType = document.getElementById("idTypeOriginal").value;
+  var idString = originalIds[idType];
+  if (idString === undefined)
+    idString = "";
+
+  document.getElementById("idStringOriginal").value = idString;
 }
 
 </script>
 </head>
 
 <body>
+  <jsp:include page="header.jsp"></jsp:include>
+  <div class="inhalt">
+    <div>&nbsp;</div>
+    <div class="formular">
+      <form method="post" id="form_person">
+        <h1>Patienten bearbeiten</h1>
+        <jsp:include page="patientFormElements.jsp"></jsp:include>
+        <div id ="form_elements_admin">
+		<fieldset class="patienten_daten">
+        <table class="daten_tabelle">
+          <tr>
+            <td><label for="tentative">Vorläufig</label></td>
+            <td colspan="2"><input type="checkbox" id="tentative" name="tentative"
+              <% if (map.get("tentative").equals(true)) {%>
+              checked="${it.tentative}" <% } %>
+              /></td>
+          </tr>
+          <tr>
+            <td rowspan="2">Duplikat von:</td>
+            <td><label for="idTypeOriginal">ID-Typ:</label></td>
+            <td>
+              <select name="idTypeOriginal" id="idTypeOriginal" onchange="fillOriginalId();s">
+                <%
+                for (String idType : idTypes)
+                {
+                  String selected = idType.equals(defaultIdType) ?
+                      "selected=\"selected\"" : "";
+                %>
+                  <option value="<%=idType %>" <%=selected %>>
+                    <%=idType %>
+                  </option>
+                <%
+                }
+                %>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td><label for="idStringOriginal">ID-Wert:</label>
+            </td>
+            <td><input type="text" name="idStringOriginal" id="idStringOriginal"
+              value="<%= originalIds.has(defaultIdType) ? originalIds.get(defaultIdType) : "" %>">
+            </td>
+          </tr>
+        </table>
 	<jsp:include page="header.jsp"></jsp:include>
 	<div class="inhalt">
 		<div>&nbsp;</div>
