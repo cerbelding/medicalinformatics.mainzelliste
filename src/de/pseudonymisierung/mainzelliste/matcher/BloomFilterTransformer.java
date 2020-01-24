@@ -118,6 +118,7 @@ public class BloomFilterTransformer extends FieldTransformer<PlainTextField, Has
 	public HashedField transform(PlainTextField input)
 	{
 		BitSet bitSet = new BitSet(hashLength);
+		if (input.isEmpty()) return new HashedField(bitSet);
 		Collection<String> nGrams = getNGrams(input.getValue());
 		for (String nGram : nGrams)
 		{

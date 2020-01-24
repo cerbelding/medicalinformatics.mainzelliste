@@ -25,13 +25,15 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import java.util.Base64;
 import java.util.BitSet;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Transient;
 
-import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
 import de.pseudonymisierung.mainzelliste.matcher.DiceFieldComparator;
+import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Hashed fields for error-tolerant matching. The value of a hashed field
@@ -43,34 +45,60 @@ import de.pseudonymisierung.mainzelliste.matcher.DiceFieldComparator;
  * @see DiceFieldComparator
  */
 @Entity
-public class HashedField extends Field<BitSet>{
+public class HashedField extends Field<BitSet> {
 
-	/**	The value is encoded as a String to allow storage in a database. */
-	@Column(length = BloomFilterTransformer.hashLength)
+	/**	The bit array is stored as the base64 encoded binary representation of the {@link BitSet}. */
+	@Column
 	protected String value;
+
+	/** BitSet reference to prevent repeated instantiations from base64 encoded binary data */
+	@Transient
+	private BitSet bitSet;
+
+	/** Base64 decoder instance */
+	private static Base64.Decoder b64Decoder = Base64.getDecoder();
+
+	/** Base64 encoder instance */
+	private static Base64.Encoder b64Encoder = Base64.getEncoder();
+
+	/**
+	 * Conversion of the Base64 encoded binary representation of a BitSet to a BitSet.
+	 * This encoding is used internally as it is much faster to parse than bit strings.
+	 *
+	 * @param b64 Base64 String
+	 * @return A BitSet
+	 */
+	public static BitSet base64ToBitSet(String b64) {
+		return BitSet.valueOf(b64Decoder.decode(b64));
+	}
+
+	/**
+	 * Conversion of a BitSet to a Base64 encoded String representation
+	 * @param bs A BitSet
+	 * @return Base64 String
+	 */
+	public static String bitSetToBase64(BitSet bs) {
+		return b64Encoder.encodeToString(bs.toByteArray());
+	}
 
 	/**
 	 * Conversion of the String representation of a bit string to a BitSet.
 	 *
-	 * @param b
-	 *            String of the format [01]*
+	 * @param b String of the format [01]*
 	 * @return A BitSet with all bit i set for which b[i].equals("1").
 	 */
-	private static BitSet String2BitSet(String b)
-	{
+	public static BitSet bitStringToBitSet(String b) {
 		if (b == null)
 			return null;
 		BitSet bs = new BitSet(b.length());
-		for (int i = 0; i < b.length(); i++)
-		{
-			switch (b.charAt(i))
-			{
-			case '1' :
-				bs.set(i);
-			case '0' :
-				break;
-			default : // illegal value
-				return null;
+		for (int i = 0; i < b.length(); i++) {
+			switch (b.charAt(i)) {
+				case '1' :
+					bs.set(i);
+				case '0' :
+					break;
+				default : // illegal value
+					return null;
 			}
 		}
 		return bs;
@@ -79,17 +107,14 @@ public class HashedField extends Field<BitSet>{
 	/**
 	 * Conversion of a BitSet to a String representation.
 	 *
-	 * @param hash
-	 *            A BitSet
-	 * @return A String of length hash.size() where the i-th position is set to
-	 *         "1" if the i-th bit of hash is set and "0" otherwise.
+	 * @param bs A BitSet
+	 * @return A String of length bs.size() where the i-th position is set to
+	 *         "1" if the i-th bit of bs is set and "0" otherwise.
 	 */
-	private static String BitSet2String(BitSet hash)
-	{
-		StringBuffer result = new StringBuffer(hash.size());
-		for (int i = 0; i < hash.length(); i++)
-		{
-			if (hash.get(i))
+	public static String bitSetToBitString(BitSet bs) {
+		StringBuffer result = new StringBuffer(bs.size());
+		for (int i = 0; i < bs.length(); i++) {
+			if (bs.get(i))
 				result.append("1");
 			else
 				result.append("0");
@@ -101,7 +126,7 @@ public class HashedField extends Field<BitSet>{
 	 * Create an empty instance.
 	 */
 	public HashedField() {
-		this.value = "";
+		this.value = null;
 	}
 
 	/**
@@ -109,42 +134,62 @@ public class HashedField extends Field<BitSet>{
 	 * @param b A BitSet.
 	 */
 	public HashedField(BitSet b) {
-		this.value = BitSet2String(b);
+		setValue(b);
 	}
 
-	/** Create an instance from a String representation of a bit string.
-	 *
-	 * @param b A String of the format [01]*.
+	/**
+	 * Create an instance from a bit string
+	 * @param s String of the format [01]*
 	 */
-	public HashedField(String b)
-	{
-		this.value = b;
+	public HashedField(String s) {
+		this.bitSet = bitStringToBitSet(s);
+		this.value = bitSetToBase64(bitSet);
 	}
 
 	@Override
 	public BitSet getValue() {
-		return String2BitSet(this.value);
+		if (bitSet == null && this.value != null) {
+			bitSet = base64ToBitSet(this.value);
+		}
+		return bitSet;
 	}
 
 	@Override
-	public String getValueJSON() {
-		return this.value;
+	public Object getValueJSON() {
+		return this.value== null ? JSONObject.NULL : this.value;
 	}
 
 	@Override
-	public void setValue(BitSet hash) {
-		this.value = BitSet2String(hash);
+	public void setValue(BitSet b) {
+		this.bitSet = b;
+		this.value = b == null ? null : bitSetToBase64(b);
 	}
 
+	/**
+	 * Set the value of this Field from a Base64 encoded binary representation of a BitSet
+	 *
+	 * Attention: This is different from the constructor above, where the String is a bit string!
+	 *
+	 * @param s Base64 string
+	 */
 	@Override
 	public void setValue(String s) {
 		this.value = s;
+		this.bitSet = s == null ? null : base64ToBitSet(s);
 	}
 
 	@Override
-	public HashedField clone()
-	{
-		HashedField result = new HashedField(new String(this.value));
-		return result;
+	public boolean isEmpty() {
+		return this.getValue() == null || this.getValue().isEmpty();
+	}
+
+	@Override
+	public String toString() {
+		return value;
+	}
+
+	@Override
+	public HashedField clone() {
+		return new HashedField((BitSet) this.getValue().clone());
 	}
 }

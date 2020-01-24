@@ -41,9 +41,12 @@ import org.apache.log4j.Logger;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+import org.apache.maven.artifact.versioning.ComparableVersion;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Driver;
+import java.util.stream.Stream;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -583,7 +586,49 @@ public enum Persistor {
 			
 			em.getTransaction().commit();
 		} // End of update 1.1 -> 1.3.1
-		
+
+		if (isSchemaVersionUpdate(fromVersion, "1.9.0")) { // < 1.9
+			logger.info("Updating database schema for version 1.9...");
+			em.getTransaction().begin();
+			// Read HashedFields from the database and change the value type from Bitstring to base64 encoding
+			// This improves the parsing performance and reduces the space requirements.
+			List<HashedField> hashedFields = em.createQuery("SELECT f from HashedField f", HashedField.class)
+							.getResultList();
+			for (HashedField hashedField : hashedFields) {
+				hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString()));
+				em.persist(hashedField);
+			}
+			// Read all Patients and change the HashedField type in the fieldsStrings from BitString to base64
+			List<Patient> patients = getPatients();
+			for (Patient patient : patients) {
+				Collection<Field<?>> fields = new ArrayList<>(patient.getFields().values());
+				fields.addAll(patient.getInputFields().values());
+				fields.stream()
+								.flatMap(f -> {
+									// Unwrap Fields that are subfields of a CompoundField
+									if (f instanceof CompoundField<?>) {
+										@SuppressWarnings("unchecked")
+										final List<Field<?>> subFields = ((CompoundField) f).getValue();
+										return subFields.stream();
+									} else {
+										return Stream.of(f);
+									}
+								})
+								.filter(f -> f instanceof HashedField)
+								.map(f -> (HashedField)f)
+								.forEach(hashedField -> hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString())));
+				// Replace fields and thereby update the fieldsString
+				patient.setFields(patient.getFields());
+				patient.setInputFields(patient.getInputFields());
+				em.merge(patient);
+			}
+			// Update schema version
+			this.setSchemaVersion("1.9.0", em);
+			fromVersion = "1.9.0";
+			em.getTransaction().commit();
+		} // End of update < 1.9
+
+
 		// Update schema version to release version, even if no changes are necessary
 		em.getTransaction().begin();
 		this.setSchemaVersion(Config.instance.getVersion(), em);
@@ -635,7 +680,18 @@ public enum Persistor {
 		em.createNativeQuery("UPDATE mainzelliste_properties SET " + quoteIdentifier("value") + "='" + toVersion + 
 				"' WHERE property='version'").executeUpdate(); 
 	}
-	
+
+	/**
+	 * Check if toVersion is higher than fromVersion.
+	 * @param fromVersion The previous version string
+	 * @param toVersion The new version string
+	 * @return true if version was updated
+	 */
+	private boolean isSchemaVersionUpdate(String fromVersion, String toVersion) {
+		ComparableVersion fv = new ComparableVersion(fromVersion);
+		return 0 > fv.compareTo(new ComparableVersion(toVersion));
+	}
+
 	/**
 	 * Create mainzelliste_properties if not exists. Check if JPA schema was
 	 * initialized. If no, set version to current, otherwise, it is assumed that
