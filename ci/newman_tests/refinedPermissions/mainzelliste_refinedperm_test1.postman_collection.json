@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "80804776-eff4-4e90-a947-f6ac38297eee",
+		"_postman_id": "6f30aeef-571a-4247-8416-b1e79f281920",
 		"name": "mainzelliste_refinedperm_test1",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -64,9 +64,6 @@
 						"id": "1ad769cd-bb92-4dd0-af67-a2284e9fc68e",
 						"exec": [
 							"console.log(\"New TOKEN (addPatient)\")",
-							"var jsonBody;",
-							" pm.collectionVariables.unset(\"tokenId\");",
-							"",
 							"",
 							"pm.test('response must be valid and have a body', function() {",
 							"    pm.response.to.have.status(401);",
@@ -79,14 +76,6 @@
 							"});",
 							"",
 							"",
-							"",
-							"",
-							"",
-							"",
-							"if(jsonBody){",
-							"    var tokenId = jsonBody.id;",
-							"    pm.collectionVariables.set(\"tokenId\",tokenId);",
-							"}",
 							"",
 							""
 						],
@@ -137,9 +126,6 @@
 						"id": "1ad769cd-bb92-4dd0-af67-a2284e9fc68e",
 						"exec": [
 							"console.log(\"New TOKEN (addPatient)\")",
-							"var jsonBody;",
-							" pm.collectionVariables.unset(\"tokenId\");",
-							"",
 							"",
 							"pm.test('response must be valid and have a body', function() {",
 							"    pm.response.to.have.status(401);",
@@ -152,13 +138,6 @@
 							"});",
 							"",
 							"",
-							"",
-							"",
-							"",
-							"if(jsonBody){",
-							"    var tokenId = jsonBody.id;",
-							"    pm.collectionVariables.set(\"tokenId\",tokenId);",
-							"}",
 							"",
 							""
 						],
@@ -214,7 +193,6 @@
 							"",
 							"pm.test('response must be valid and have a body', function() {",
 							"    pm.response.to.have.status(401);",
-							"    pm.response.to.have.body()",
 							"",
 							"pm.test(\"response have not in server permissions string\", function() {",
 							"    var localBody =  pm.response.text();",
