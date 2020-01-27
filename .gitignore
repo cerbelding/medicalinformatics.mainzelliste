@@ -21,3 +21,6 @@ docker-compose.override.yml
 # Ignore Docker services' data directory
 /data/
 /config/secrets/
+
+
+/ci/test_results/

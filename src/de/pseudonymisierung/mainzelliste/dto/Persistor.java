@@ -541,7 +541,7 @@ public enum Persistor {
 		q.setParameter("idType", id.getType());
 		Patient p = q.getSingleResult();
 		if (p != null) {
-			removeBlockingKeys(getBlockingKeys(Collections.singletonList(p)));
+			Collections.singletonList(p).forEach(em::remove);
 			em.remove(p);
 		}
 		em.getTransaction().commit();
