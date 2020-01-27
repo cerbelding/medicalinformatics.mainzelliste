@@ -1,14 +1,18 @@
 package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
+import de.pseudonymisierung.mainzelliste.blocker.BlockingKey;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+import de.pseudonymisierung.mainzelliste.matcher.Matcher;
+import de.pseudonymisierung.mainzelliste.matcher.NullMatcher;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.log4j.Logger;
 
 import javax.ws.rs.WebApplicationException;
@@ -28,20 +32,19 @@ import java.util.stream.Collectors;
  */
 public enum PatientBackend {
 
-    /**
-     * The singleton instance.
-     */
-    instance;
+	/** The singleton instance. */
+	instance;
 
-    /**
-     * The logging instance
-     */
-    private Logger logger = Logger.getLogger(this.getClass());
+	/** The logging instance */
+	private Logger logger = Logger.getLogger(this.getClass());
 
-    /**
-     * Creates an instance. Invoked on first access to {@link PatientBackend#instance}.
-     */
-    private PatientBackend() {
+	/** The TLS context depending on the configuration parameters */
+	private SSLConnectionSocketFactory sslsf;
+
+	/**
+	 * Creates an instance. Invoked on first access to {@link PatientBackend#instance}.
+	 */
+	private PatientBackend() {
     }
 
     /**
@@ -68,7 +71,7 @@ public enum PatientBackend {
             MultivaluedMap<String, String> form,
             ApiVersion apiVersion) {
 
-        HashMap<String, Object> ret = new HashMap<String, Object>();
+        HashMap<String, Object> ret = new HashMap<>();
         // create a token if started in debug mode
         AddPatientToken t;
 
@@ -100,7 +103,7 @@ public enum PatientBackend {
             }
         }
 
-        List<ID> returnIds = new LinkedList<ID>();
+        List<ID> returnIds = new LinkedList<>();
         MatchResult match = new MatchResult(MatchResultType.NON_MATCH, null, 0);
         IDRequest request;
 
@@ -155,6 +158,7 @@ public enum PatientBackend {
 
             final Patient idMatch;
             MatchResult idatMatch = null;
+			final Set<BlockingKey> bks = new HashSet<>();
 
             if (hasIdat) {
                 Validator.instance.validateForm(form, true);
@@ -167,7 +171,18 @@ public enum PatientBackend {
                 pNormalized = Config.instance.getRecordTransformer().transform(p);
                 pNormalized.setInputFields(chars);
 
-                idatMatch = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
+				// Blocking
+				bks.addAll(Config.instance.getBlockingKeyExtractors().extract(pNormalized));
+
+				// Matching
+				final Matcher matcher = Config.instance.getMatcher();
+				List<Patient> candidatePatients;
+				if (matcher instanceof NullMatcher) {
+					candidatePatients = new ArrayList<>();
+				} else {
+					candidatePatients = Persistor.instance.getPatients(bks);
+				}
+				idatMatch = matcher.match(pNormalized, candidatePatients);
                 logger.debug("Best matching weight for IDAT matching: " + idatMatch.getBestMatchedWeight());
             }
             if (hasExternalId) {
@@ -329,7 +344,11 @@ public enum PatientBackend {
 
             ret.put("request", request);
 
-            Persistor.instance.addIdRequest(request);
+			if (match.getResultType().equals(MatchResultType.MATCH)) {
+                Persistor.instance.addIdRequest(request);
+			} else {
+				Persistor.instance.addIdRequest(request, bks);
+			}
 
         }
 
