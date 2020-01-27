@@ -65,8 +65,6 @@ public class TokenParam extends AbstractParam<Token> {
 				t = new EditPatientToken();
 			else
 				t = new Token();
-			if(!("".equals(jsob.optString("id"))))
-				t.setId(jsob.getString("id"));
 			t.setType(jsob.getString("type"));
 			HashMap<String, Object> data = new ObjectMapper().readValue (jsob.getString("data"), new TypeReference<HashMap<String, Object>>() {});
 
