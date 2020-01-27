@@ -7,4 +7,4 @@ source ./executeTestFunctions.sh
 
 
 
-iterateDirAndExecuteFuntion  newman_tests/ executeNewmanTest
+iterateDirAndExecuteFunction  newman_tests/ executeNewmanTest
