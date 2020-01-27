@@ -93,6 +93,14 @@ public class EpilinkMatcher implements Matcher {
 		return thresholdNonMatch;
 	}
 
+	/**
+	 * Get the exchange groups used by this matcher
+	 * @return The exchange groups
+	 */
+	public List<List<String>> getExchangeGroups() {
+		return exchangeGroups;
+	}
+
 	/** The minimum weight for possible matches. */
 	private double thresholdNonMatch;
 
@@ -116,9 +124,6 @@ public class EpilinkMatcher implements Matcher {
 
 	/** The logging instance. */
 	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
-
-	private String blockingSpeedOptimization;
-	private String[] blockingFields;
 
 	@Override
 	public void initialize(Properties props) throws InternalErrorException
@@ -180,13 +185,6 @@ public class EpilinkMatcher implements Matcher {
 		this.thresholdMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_match"));
 		this.thresholdNonMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_non_match"));
 
-		if (props.getProperty("blocking.soundex.type") != null) {
-			this.blockingSpeedOptimization = props.getProperty("blocking.soundex.type");
-			this.blockingFields = Arrays.stream(props.getProperty("blocking.soundex.fields").split(","))
-					.map(String::trim)
-					.toArray(String[]::new);
-		}
-
 		// initialize exchange groups
 		//TODO Mechanismus generalisieren für andere Matcher
 		this.nonExchangeFields = new HashSet<String>(this.weights.keySet());
@@ -205,73 +203,14 @@ public class EpilinkMatcher implements Matcher {
 
 	@Override
 	public MatchResult match(Patient patient, Iterable<Patient> patientList) {
-
-		if (blockingSpeedOptimization != null && blockingSpeedOptimization.equalsIgnoreCase("Soundex")) {
-			return matchAlgorithmSoundexBlocked(patient, patientList, blockingFields);
-		} else {
-			return matchAlgorithmClassic(patient, patientList);
-		}
-
-	}
-
-	public MatchResult matchAlgorithmClassic(Patient patient, Iterable<Patient> patientList) {
-
-
 		MatchTempResult tempMatchResult = new MatchTempResult();
 
-
-		for (Patient patientFromList : patientList)
-		{
+		for (Patient patientFromList : patientList) {
 			// assert that the persons have the fields required for matching
 			if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
 				continue;
-
 			tempMatchResult = calculateBestMatches(patient, patientFromList, tempMatchResult);
-
 		}
-
-		return getMatchResult(tempMatchResult.getBestMatch(), tempMatchResult.getBestWeight(), tempMatchResult.getPossibleMatches());
-
-	}
-
-	private MatchResult matchAlgorithmSoundexBlocked(Patient patient, Iterable<Patient> patientList, String[] blockingFields) {
-
-
-		MatchTempResult tempMatchResult = new MatchTempResult();
-
-
-		////////////////////////////////////////////////////////////////////
-		//check equality of soundex codes
-		boolean equalClusterId;
-
-		patient.setClusterIdByField(blockingFields);
-		for (Patient patientFromList : patientList)
-		{
-			// assert that the persons have the fields required for matching
-			if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
-				continue;
-
-			equalClusterId= false;
-			patientFromList.setClusterIdByField(blockingFields);
-
-			for(String f :blockingFields)
-			{
-				if(patient.getClusterIds().get(f).equals(patientFromList.getClusterIds().get(f)))
-				{
-					equalClusterId= true;
-					continue;
-				}
-			}
-
-			if(!equalClusterId)
-			{
-				continue;
-			}
-
-			tempMatchResult = calculateBestMatches(patient, patientFromList, tempMatchResult);
-
-		}
-
 		return getMatchResult(tempMatchResult.getBestMatch(), tempMatchResult.getBestWeight(), tempMatchResult.getPossibleMatches());
 	}
 

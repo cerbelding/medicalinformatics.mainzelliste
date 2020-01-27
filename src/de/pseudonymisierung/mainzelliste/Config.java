@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
 import org.apache.log4j.Level;
@@ -66,8 +67,12 @@ public enum Config {
 
 	/** The record transformer matching the configured field transformations. */
 	private RecordTransformer recordTransformer;
+
 	/** The configured matcher */
 	private Matcher matcher;
+
+	/** The configured blockingkey extractors */
+	private BlockingKeyExtractors blockingKeyExtractors;
 
 	/** Logging instance */
 	private Logger logger = Logger.getLogger(Config.class);
@@ -164,6 +169,9 @@ public enum Config {
 			}
 		}
 
+		// Parse blockingkey extractors after the matcher as the blocking may depend on the matcher config
+		this.blockingKeyExtractors = new BlockingKeyExtractors(props);
+
 		// Read allowed origins for cross domain resource sharing (CORS)
 		allowedOrigins = new HashSet<String>();
 		String allowedOriginsString = props.getProperty("servers.allowedOrigins");
@@ -226,6 +234,14 @@ public enum Config {
 	 */
 	public RecordTransformer getRecordTransformer() {
 		return recordTransformer;
+	}
+
+	/**
+	 * Get the {@link BlockingKeyExtractors} instance configured for this instance.
+	 * @return The {@link BlockingKeyExtractors} instance configured for this instance.
+	 */
+	public BlockingKeyExtractors getBlockingKeyExtractors() {
+		return this.blockingKeyExtractors;
 	}
 
 	/**
