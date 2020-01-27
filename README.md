@@ -107,6 +107,7 @@ As an open source project, Mainzelliste profits from contributions from the rese
 - Benjamin Gathmann, Universitätsklinikum Freiburg
 - Christian Koch, DKFZ-Heidelberg
 - Daniel Volk, Universitätsmedizin Mainz
+- David Croft, DKFZ-Heidelberg
 - Dirk Langner, Universitätsmedizin Greifswald
 - Florens Rohde, Universität Leipzig
 - Florian Stampe, DKFZ-Heidelberg
@@ -115,7 +116,7 @@ As an open source project, Mainzelliste profits from contributions from the rese
 - Cornelius Knopp, Universitätsmedizin Göttingen 
 - Martin Lablans, DKFZ-Heidelberg
 - Matthias Lemmer, Universität Marburg
-- Moanies Ben Amor, DKFZ-Heidelberg
+- Moanes Ben Amor, DKFZ-Heidelberg
 - Maximilian Ataian, Universitätsmedizin Mainz
 - Project FP7-305653-chILD-EU
 - Stephan Rusch, Universitätsklinikum Freiburg
