@@ -25,15 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -75,11 +69,7 @@ public class Patient {
 		try {
 			JSONObject fieldsJson = new JSONObject();
 			for (String fieldName : fields.keySet()) {
-				JSONObject thisField = new JSONObject();
-				thisField.put("class", fields.get(fieldName).getClass()
-						.getName());
-				thisField.put("value", fields.get(fieldName).getValueJSON());
-				fieldsJson.put(fieldName, thisField);
+				fieldsJson.put(fieldName, fields.get(fieldName).toJSON());
 			}
 			return fieldsJson.toString();
 		} catch (JSONException e) {
@@ -108,7 +98,7 @@ public class Patient {
 				String fieldName = (String) it.next();
 				JSONObject thisFieldJson = fieldsJson.getJSONObject(fieldName);
 				String fieldClass = thisFieldJson.getString("class");
-				String fieldValue = thisFieldJson.getString("value");
+				String fieldValue = thisFieldJson.has("value") ? thisFieldJson.getString("value") : null;
 				Field<?> thisField = (Field<?>) Class.forName(fieldClass)
 						.newInstance();
 				thisField.setValue(fieldValue);
@@ -550,4 +540,10 @@ public class Patient {
 		// Default case
 		return false;
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(patientJpaId);
+	}
+
 }
