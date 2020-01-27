@@ -77,7 +77,7 @@ New features:
 
 Bug fixes:
 
-- Cookie unship (merged) (grüner Stern)
+- Cookie unship (merged)
 - Make /run/secrets/manzellisteConfig usable without unused mandatory fields (merged)
 - HashCode Method for Patient class - Fixes issues with patient counted multiple times because of multiple external ids (not merged yet)
 
@@ -115,6 +115,7 @@ As an open source project, Mainzelliste profits from contributions from the rese
 - Cornelius Knopp, Universitätsmedizin Göttingen 
 - Martin Lablans, DKFZ-Heidelberg
 - Matthias Lemmer, Universität Marburg
+- Moanies Ben Amor, DKFZ-Heidelberg
 - Maximilian Ataian, Universitätsmedizin Mainz
 - Project FP7-305653-chILD-EU
 - Stephan Rusch, Universitätsklinikum Freiburg
