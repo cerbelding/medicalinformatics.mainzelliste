@@ -44,11 +44,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import org.apache.openjpa.lib.log.Log;
 
 /**
  * Keeps track of servers, i.e. each communication partner that is not a user.
@@ -142,7 +145,7 @@ public enum Servers {
 
 		if (Config.instance.getProperty("debug") == "true")
 		{
-			Token t = new Token("4223", "addPatient");
+			Token t = new AddPatientToken();
 			tokensByTid.put(t.getId(), t);
 		}
 
@@ -190,9 +193,10 @@ public enum Servers {
 	 * 
 	 * @return The new session object.
 	 */
-	public Session newSession() {
+	public Session newSession(String serverName) {
 		String sid = UUID.randomUUID().toString();
 		Session s = new Session(sid);
+		s.setParentServerName(serverName);
 		synchronized (sessions) {
 			sessions.put(sid, s);
 		}
@@ -335,7 +339,7 @@ public enum Servers {
 			logger.info("Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(perms.toArray()) + ".");
 		}
 		
-		if(!perms.contains(permission)){ // Check permission
+		if(!perms.contains(permission) && perms.stream().noneMatch(p -> p.matches(permission + ".*}"))){ // Check permission
 			logger.info("Access from " + req.getRemoteHost() + " is denied since they lack permission " + permission + ".");
 			throw new WebApplicationException(Response
 					.status(Status.UNAUTHORIZED)
@@ -362,6 +366,7 @@ public enum Servers {
 		getSession(sessionId).addToken(t);
 
 		synchronized (tokensByTid) {
+			// register token in server
 			tokensByTid.put(t.getId(), t);
 		}
 	}
@@ -557,6 +562,11 @@ public enum Servers {
 			return true;
 		}
 		return false;
+	}
+
+	public Set<String> getServerPermissionsForServerName(String serverName){
+		Server server = servers.get(getApiKeyForServerName(serverName));
+		return server.permissions;
 	}
 
 	public String getApiKeyForServerName(String serverName){
