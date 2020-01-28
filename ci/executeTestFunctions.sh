@@ -34,7 +34,7 @@ initConfigs(){
 executeNewmanTest(){
 
     initConfigs $1 \
-    && docker-compose -f ../docker-compose.newman-test.yml $OVERRIDE_FILE run \
+    && docker-compose -f ../docker-compose.newman.yml $OVERRIDE_FILE run \
     --service-ports newman run -d \
     test_data/${NEWMANDATA} -n 1 -e newman_environment_variables/newman_environmentVariables.json "${1}" \
     --reporters="cli,htmlextra,junit" --reporter-htmlextra-export=test_results/"${1##*/}.html" --reporter-junit-export=test_results/"${1##*/}.xml" \
@@ -48,7 +48,7 @@ executeNewmanTest(){
 initTestEnvironment(){
 
     initConfigs "$1" \
-    && docker-compose -f ../docker-compose.newman-test.yml $OVERRIDE_FILE up
+    && docker-compose -f ../docker-compose.newman.yml $OVERRIDE_FILE up
 
 }
 

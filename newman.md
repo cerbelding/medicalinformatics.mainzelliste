@@ -16,7 +16,7 @@ On each commit, all the collections are executed automatically on bitbucket.org.
 
 ## Further information
 
-* docker-compose.newman-test.yml: The Docker environment is defined here.
+* docker-compose.newman.yml: The Docker environment is defined here.
 *  ci/  The relevant test data is stored in this directory. Each test case is defined in a separate Postman Collection. A Mainzelliste configuration file is provided for each test case. The configuration file has the same file name as the Postman Collection (including the file extension of the collection).
 *  newman_environment_variables/:  The Newman Environment variables are stored here. Currently there is one file for all test cases.
 *  newman_mainzelliste_configs/:  This folder contains the Mainzelliste configuration files associated with the test cases. If there is no configuration file for a test case, a default configuration is chosen.
