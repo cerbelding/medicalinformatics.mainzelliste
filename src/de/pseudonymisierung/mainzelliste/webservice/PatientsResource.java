@@ -25,6 +25,28 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
+
+import de.pseudonymisierung.mainzelliste.exceptions.*;
+import org.apache.log4j.Logger;
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+
+import com.sun.jersey.api.uri.UriComponent;
 import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.spi.resource.Singleton;
@@ -334,6 +356,15 @@ public class PatientsResource {
         // Check if token is valid against server permissions
             List<?> requests = token.getDataItemList("searchIds");
 
+        //TODO: Validate permissions
+        if (requests.size() > 0 && ((LinkedHashMap) requests.get(0)).containsValue("*")) {
+            return readPatientWildCardSelect(token, requests);
+        } else {
+            return readPatientIndividualSelect(token, requests, request);
+        }
+    }
+
+    private Response readPatientIndividualSelect(Token token, List<?> requests, HttpServletRequest request) {
             JSONArray ret = new JSONArray();
             ArrayList<Patient> patientList = new ArrayList<>();
             for (Object item : requests) {
@@ -455,6 +486,41 @@ public class PatientsResource {
                 }
             }
             return Response.ok().entity(ret).build();
+    }
+
+    private Response readPatientWildCardSelect(Token token, List<?> requests) {
+        logger.info("Request all Ids for a idtype");
+        String idType;
+
+        if (token.getDataItemList("resultFields") != null) {
+            throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
+        }
+
+        //validate resultIds
+        List<String> resultIds = (List<String>)token.getDataItemList("resultIds");
+        if (resultIds == null || resultIds.isEmpty()) {
+            throw new InvalidTokenException("Please provide a resultIds in token data!");
+        }else if (resultIds.size() > 1) {
+            throw new NotImplementedException("It's only possible to request one IdType as wildcard select.");
+        }
+
+        Map<String, String> thisSearchId = (Map<String, String>) requests.get(0);
+        idType = thisSearchId.get("idType");
+        logger.info("idType:" + idType);
+
+        //search id and resultId is the same
+        if (resultIds.contains(idType) && resultIds.size() == 1) {
+            List<ID> selectedIDs = PatientBackend.instance.getIdsWithType(idType);
+            return Response.ok().entity(selectedIDs).build();
+        }
+
+        if (!resultIds.contains(idType)) {
+            List<ID> returnIds = PatientBackend.instance.getIdsOfPatientWithIdType(idType,
+                    resultIds.toArray(new String[0]));
+            return Response.ok().entity(returnIds).build();
+        }
+
+        return null;
     }
 
     private JSONArray getAllIdTypesOfPatient(Patient patient) {
