@@ -97,6 +97,7 @@ public class Initializer implements ServletContextListener {
 		Servers s = Servers.instance;
 		Validator v = Validator.instance;
 
+		Config.instance.getBlockingKeyExtractors().updateBlockingKeyExtractors();
 		/* 
 		 * Limit Jersey logging to avoid spamming the log with "the request body has been consumed" messages
 		 * (see http://stackoverflow.com/questions/2011895/how-to-fix-jersey-post-request-parameters-warning).

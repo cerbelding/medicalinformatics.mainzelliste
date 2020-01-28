@@ -1,3 +1,9 @@
+### alpha 1.9 - 2019-10-31
+New features:
+
+* new CheckMatch endpoint: will retrive the best match for the patient by using a Token of type "checkMatch"
+* new Validation endpoint: added endpoint for token validation with REST-API
+
 ### rc 1.8.0 - 2019-08-06
 
 New features:
