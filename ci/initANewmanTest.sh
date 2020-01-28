@@ -11,5 +11,5 @@ FULLPATH=${TESTSUBDIR}${PREFIX}${TESTFILE}${FILEEXTENSION}
 
 
 #Creating an Testenvironment
-iterateDirAndExecuteFuntion  newman_tests/$FULLPATH initTestEnvironment
+iterateDirAndExecuteFunction  newman_tests/$FULLPATH initTestEnvironment
 

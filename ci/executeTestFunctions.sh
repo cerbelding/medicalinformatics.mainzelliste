@@ -58,7 +58,7 @@ This function iterates ofer all Subfolders, if an file is detected the $2 functi
  paramters: path to the folder/file
  last parameter : Function which should called
 "
-function iterateDirAndExecuteFuntion(){
+function iterateDirAndExecuteFunction(){
 
   length=$(($#-1))
   SUBFILES=${@:1:$length}
@@ -68,7 +68,7 @@ function iterateDirAndExecuteFuntion(){
     do
       if [ -d "${subFile}" ]
       then
-        iterateDirAndExecuteFuntion "$subFile/*"  "$FUNCTION"
+        iterateDirAndExecuteFunction "$subFile/*"  "$FUNCTION"
       else
          $FUNCTION "${subFile}"
       fi;
