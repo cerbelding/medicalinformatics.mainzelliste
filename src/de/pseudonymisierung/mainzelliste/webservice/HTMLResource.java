@@ -3,24 +3,24 @@
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Affero General Public License as published by the Free 
+ * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License 
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Additional permission under GNU GPL version 3 section 7:
  *
- * If you modify this Program, or any covered work, by linking or combining it 
- * with Jersey (https://jersey.java.net) (or a modified version of that 
- * library), containing parts covered by the terms of the General Public 
- * License, version 2.0, the licensors of this Program grant you additional 
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Jersey (https://jersey.java.net) (or a modified version of that
+ * library), containing parts covered by the terms of the General Public
+ * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
 package de.pseudonymisierung.mainzelliste.webservice;
@@ -78,10 +78,10 @@ public class HTMLResource {
 
 	/** The logging instance. */
 	Logger logger = Logger.getLogger(HTMLResource.class);
-	
+
 	/**
 	 * Get the form for entering a new patient.
-	 * 
+	 *
 	 * @param tokenId
 	 *            Id of a valid "addPatient" token.
 	 * @param request
@@ -108,10 +108,10 @@ public class HTMLResource {
 				.entity("Please supply a valid token id as URL parameter 'tokenId'.")
 				.build());
 	}
-	
+
 	/**
 	 * Get the form for changing an existing patient's IDAT.
-	 * 
+	 *
 	 * @param tokenId
 	 *            Id of a valid "editPatient" token.
 	 * @return The edit form or an error message if the given token is not
@@ -127,7 +127,7 @@ public class HTMLResource {
 		Map <String, Object> map = new HashMap<String, Object>();
 		map.put("tokenId", tokenId);
 		map.putAll(p.getInputFields());
-		
+
 		return Response.ok(new Viewable("/editPatient.jsp", map)).build();
 	}
 
@@ -156,13 +156,13 @@ public class HTMLResource {
 		return Response.ok(new Viewable("/viewAuditTrail.jsp", at)).build();
 
 	}
-	
+
 	/**
 	 * Get the administrator form for editing an existing patient's IDAT. The
 	 * arguments can be omitted, in which case an input form is shown where an
 	 * ID of the patient to edit can be input. Authentication is handled by the
 	 * servlet container as defined in web.xml.
-	 * 
+	 *
 	 * @param idType
 	 *            Type of the ID of the patient to edit.
 	 * @param idString
@@ -177,8 +177,8 @@ public class HTMLResource {
 			@QueryParam("idString") String idString
 			) {
 		// Authentication by Tomcat
-		
-		if (StringUtils.isEmpty(idType) || StringUtils.isEmpty(idString))  
+
+		if (StringUtils.isEmpty(idType) || StringUtils.isEmpty(idString))
 			return Response.ok(new Viewable("/selectPatient.jsp")).build();
 
 		ID patId = IDGeneratorFactory.instance.buildId(idType, idString);
@@ -220,7 +220,7 @@ public class HTMLResource {
 
 	/**
 	 * Receives edit operations from the admin form.
-	 * 
+	 *
 	 * @param idType
 	 *            Type of the ID of the patient to edit.
 	 * @param idString
@@ -231,7 +231,7 @@ public class HTMLResource {
 	 *            The injected HttpServletRequest.
 	 * @return The edit form for the changed patient or the patient selection
 	 *         form if the patient was deleted via the form.
-	 * 
+	 *
 	 */
 	@POST
 	@Path("/admin/editPatient")
@@ -242,7 +242,7 @@ public class HTMLResource {
 			@QueryParam("idString") String idString,
 			MultivaluedMap<String, String> form,
 			@Context HttpServletRequest req){
-		
+
 		if (form.containsKey("delete")) {
 			logger.info(String.format("Handling delete operation for patient with id of type %s and value %s.",
 					idType, idString));
@@ -268,10 +268,10 @@ public class HTMLResource {
 					.location(UriBuilder.fromResource(this.getClass()).path("admin/editPatient").build())
 					.build();
 		}
-		
+
 		logger.info(String.format("Handling edit operation for patient with id of type %s and value %s.",
 					idType, idString));
-		
+
 		ID idPatToEdit = IDGeneratorFactory.instance.buildId(idType, idString);
 		Patient pToEdit = Persistor.instance.getPatient(idPatToEdit);
 		// save patient for Audit Trail
@@ -286,7 +286,7 @@ public class HTMLResource {
 							idType, idString))
 					.build());
 		}
-		
+
 		// read input fields from form
 		Patient pInput = new Patient();
 		Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
@@ -301,12 +301,12 @@ public class HTMLResource {
 		}
 
 		pInput.setFields(chars);
-		
+
 		// transform input fields
 		Patient pNormalized = Config.instance.getRecordTransformer().transform(pInput);
 		// set input fields
 		pNormalized.setInputFields(chars);
-		
+
 		// assign changed fields to patient in database, persist
 		pToEdit.setFields(pNormalized.getFields());
 		pToEdit.setInputFields(pNormalized.getInputFields());
@@ -315,7 +315,7 @@ public class HTMLResource {
 		pToEdit.setTentative(form.getFirst("tentative") != null);
 		// assign original
 		String idStringOriginal = form.getFirst("idStringOriginal");
-		String idTypeOriginal = form.getFirst("idTypeOriginal");		
+		String idTypeOriginal = form.getFirst("idTypeOriginal");
 		if (!StringUtils.isEmpty(idStringOriginal) && ! StringUtils.isEmpty(idTypeOriginal))
 		{
 			ID originalId = IDGeneratorFactory.instance.buildId(idTypeOriginal, idStringOriginal);
@@ -342,7 +342,7 @@ public class HTMLResource {
 		}
 
 		Persistor.instance.updatePatient(pToEdit);
-		
+
 		return Response
 				.status(Status.SEE_OTHER)
 				.header("Cache-control", "must-revalidate")
@@ -357,7 +357,7 @@ public class HTMLResource {
 
 	/**
 	 * Returns the logo file from the configured path (configuration parameter operator.logo).
-	 * 
+	 *
 	 * @return A "200 Ok" response containing the file, or an appropriate error code and message on failure.
 	 */
 	@GET
