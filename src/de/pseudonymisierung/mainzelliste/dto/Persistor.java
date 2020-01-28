@@ -26,6 +26,8 @@
 package de.pseudonymisierung.mainzelliste.dto;
 
 import de.pseudonymisierung.mainzelliste.*;
+import de.pseudonymisierung.mainzelliste.blocker.BlockingKey;
+import de.pseudonymisierung.mainzelliste.blocker.BlockingMemory;
 import de.pseudonymisierung.mainzelliste.exceptions.IllegalUsedCharacterException;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
@@ -38,6 +40,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -219,6 +222,40 @@ public enum Persistor {
 		// Entities are not detached, because the IDs are lazy-loaded
 		List<Patient> pl;
 		pl = this.em.createQuery("select p from Patient p", Patient.class).getResultList();
+		logger.debug("Retrieved " + pl.size() + " patients (all)");
+		return pl;
+	}
+
+	/**
+	 * Return a subset of the patients currently persisted in the patient list that
+	 * have at least one of the {@link BlockingKey}s
+	 * @param bks The blocking keys that the requested patients must have
+	 * @return Subset of the persisted patients
+	 */
+	public synchronized List<Patient> getPatients(Set<BlockingKey> bks) {
+		if (bks.isEmpty()) {
+			return getPatients();
+		}
+
+		final List<String> bkStrings = bks.stream()
+						.map(BlockingKey::getKey)
+						.collect(Collectors.toList());
+
+		final String query =
+						"SELECT p " +
+										"FROM Patient p " +
+										"WHERE p.patientJpaId IN ( " +
+										"SELECT b.patient.patientJpaId " +
+										"FROM BlockingKey b " +
+										"WHERE b.key IN :bks)";
+
+		final List<Patient> pl = this.em
+						.createQuery(query, Patient.class)
+						.setParameter("bks", bkStrings)
+						.getResultList();
+
+		logger.debug("Retrieved " + pl.size() + " patients");
+
 		return pl;
 	}
 
@@ -262,13 +299,41 @@ public enum Persistor {
 	 */
 	public synchronized List<Set<ID>> getAllIds() {
 		List<Patient> patients = this.getPatients();
-		List<Set<ID>> ret = new LinkedList<Set<ID>>();
+		List<Set<ID>> ret = new LinkedList<>();
 		for (Patient p : patients) {
 			Set<ID> thisPatientIds = p.getIds();
 			this.em.detach(thisPatientIds);
 			ret.add(thisPatientIds);
 		}
 		return ret;
+	}
+
+	/**
+	 * Returns a list of the IDs of a specific idType of all patients.
+	 *
+	 * @return A list where every item represents the IDs of one patient.
+	 */
+	public synchronized List<ID> getIdsWithType(String idType) {
+		EntityManager em = emf.createEntityManager();
+		TypedQuery<ID> query = em.createQuery("SELECT i from ID i where i.type='" + idType + "'", ID.class);
+		List<ID> result = query.getResultList();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * Returns a list of IDs of all patients, who own at least one ID with the given idType.
+	 *
+	 * @return A list where every item represents the IDs of one patient.
+	 */
+	public synchronized List<ID> getIdsOfPatientsWithIdType(String idType, String[] resultIdTypes ) {
+		String resultIdTypesStr = String.join(", ", resultIdTypes);
+		TypedQuery<ID> query = emf.createEntityManager().createQuery(
+				"select i from Patient p join p.ids i where i.type in ('" + resultIdTypesStr + "') and" +
+				" EXISTS (select someP from Patient someP join someP.ids somePid " +
+						"where someP = p and somePid.type = '"+ idType +"' )",
+				ID.class);
+		return query.getResultList();
 	}
 
 	/**
@@ -279,11 +344,99 @@ public enum Persistor {
 	 *            The ID request to persist.
 	 */
 	public synchronized void addIdRequest(IDRequest req) {
+		addIdRequest(req, Collections.emptyList());
+	}
+
+	/**
+	 * Add an ID request to the database and include a collection of {@link BlockingKey}s in the transaction
+	 * @param req The ID request to persist
+	 * @param blockingKeys The blocking keys to persist
+	 */
+	public synchronized void addIdRequest(IDRequest req, Collection<BlockingKey> blockingKeys) {
 		em.getTransaction().begin();
-		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.		
+		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.
+		IDGeneratorFactory.instance.getGeneratorMemories().forEach(em::merge);
 		em.getTransaction().commit();
 	}
-	
+
+	/**
+	 * Add a collection of {@link BlockingKey}s to the database.
+	 * @param blockingKeys The blocking keys to persist
+	 */
+	public synchronized void addBlockingKeys(Collection<BlockingKey> blockingKeys) {
+		em.getTransaction().begin();
+		blockingKeys.forEach(em::persist);
+		em.getTransaction().commit();
+	}
+
+	/**
+	 * Get all {@link BlockingKey}s from the database.
+	 * @return The blocking keys persisted in the database.
+	 */
+	public synchronized Collection<BlockingKey> getBlockingKeys() {
+		final List<BlockingKey> bks = this.em.createQuery("SELECT b FROM BlockingKey b", BlockingKey.class)
+						.getResultList();
+		return bks;
+	}
+
+	/**
+	 * Get the {@link BlockingKey}s for a collection of patients from the database.
+	 * @return The blocking keys persisted in the database.
+	 */
+	public synchronized Collection<BlockingKey> getBlockingKeys(Collection<Patient> patients) {
+		if (patients.isEmpty()) return Collections.emptyList();
+
+		final List<Integer> patientIds = patients.stream()
+						.map(Patient::getPatientJpaId)
+						.collect(Collectors.toList());
+
+		final List<BlockingKey> bks = this.em.createQuery("SELECT b FROM BlockingKey b" +
+						" WHERE b.patient.patientJpaId IN :ids", BlockingKey.class)
+						.setParameter("ids", patientIds)
+						.getResultList();
+		return bks;
+	}
+
+	/**
+	 * Remove a collection of {@link BlockingKey}s from the database.
+	 * @param blockingKeys The blocking keys to remove from the database
+	 */
+	public synchronized void removeBlockingKeys(Collection<BlockingKey> blockingKeys) {
+		em.getTransaction().begin();
+		blockingKeys.forEach(em::remove);
+		em.getTransaction().commit();
+	}
+
+	/**
+	 * Update an already persisted {@link BlockingMemory} in the database
+	 * @param mem The blocking memory to update
+	 */
+	public synchronized void updateBlockingMemory(BlockingMemory mem) {
+		em.getTransaction().begin();
+		em.merge(mem);
+		em.getTransaction().commit();
+	}
+
+	/**
+	 * Get all {@link BlockingMemory}s from the database.
+	 * @return The blocking memories persisted in the database.
+	 */
+	public synchronized List<BlockingMemory> getBlockingMemories() {
+		final List<BlockingMemory> bms = this.em.createQuery("SELECT b FROM BlockingMemory b", BlockingMemory.class)
+						.getResultList();
+		return bms;
+	}
+
+	/**
+	 * Remove a collection of {@link BlockingMemory}s from the database.
+	 * @param blockingMemories The blocking memories to remove from the database
+	 */
+	public synchronized void removeBlockingMemories(Collection<BlockingMemory> blockingMemories) {
+		em.getTransaction().begin();
+		blockingMemories.forEach(em::remove);
+		em.getTransaction().commit();
+	}
+
 	/**
 	 * Update the persisted properties of an ID generator (e.g. the counter from
 	 * which PIDs are generated).
@@ -347,6 +500,9 @@ public enum Persistor {
 	 *            The patient to persist.
 	 */
 	public synchronized void updatePatient(Patient p) {
+		// Update blocking keys
+		Config.instance.getBlockingKeyExtractors().updateBlockingKeys(Collections.singletonList(p));
+
 		em.getTransaction().begin();
 		Patient edited = em.merge(p);
 		em.getTransaction().commit();
@@ -404,8 +560,10 @@ public enum Persistor {
 		q.setParameter("idString", id.getIdString());
 		q.setParameter("idType", id.getType());
 		Patient p = q.getSingleResult();
-		if (p != null)
+		if (p != null) {
+			Collections.singletonList(p).forEach(em::remove);
 			em.remove(p);
+		}
 		em.getTransaction().commit();
 	}
 

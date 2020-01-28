@@ -27,6 +27,7 @@ package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -85,4 +86,9 @@ public class ExternalIDGenerator implements IDGenerator<ExternalID>{
 
     @Override
 	public boolean isExternal() { return true; }
+
+    @Override
+    public Optional<IDGeneratorMemory> getMemory() {
+        return Optional.empty();
+    }
 }

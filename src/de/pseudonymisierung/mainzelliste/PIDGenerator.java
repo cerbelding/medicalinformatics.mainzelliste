@@ -39,6 +39,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
 
@@ -736,7 +737,6 @@ public class PIDGenerator implements IDGenerator<PID>{
 		String pid = createPIDString(this.counter + 1);
 		this.counter++;
 		mem.set("counter", Integer.toString(this.counter));
-		mem.commit();
 		return new PID(pid, idType);
 	}
 
@@ -762,4 +762,9 @@ public class PIDGenerator implements IDGenerator<PID>{
 
 	@Override
 	public boolean isExternal() { return false; }
+
+	@Override
+	public Optional<IDGeneratorMemory> getMemory() {
+		return Optional.of(mem);
+	}
 }

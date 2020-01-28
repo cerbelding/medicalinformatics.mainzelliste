@@ -5,14 +5,19 @@ source ./executeTestFunctions.sh
 PREFIX=
 FILEEXTENSION=.postman_collection.json
 
-TESTSUBDIR=sessions/
-TESTFILE=mainzelliste_session_authorization_is_invalid
+if [ -n "$1" ]; then
+
+    TESTFILE="$1"
+    FULLPATH=${TESTFILE}${FILEEXTENSION}
+
+else
+    TESTFILE=mainzelliste_session_authorization_is_invalid
+    TESTSUBDIR=sessions/
+    FULLPATH=${TESTSUBDIR}${PREFIX}${TESTFILE}${FILEEXTENSION}
+fi
+
+echo "Use testfile $TESTFILE"
 
 
-FULLPATH=${TESTSUBDIR}${PREFIX}${TESTFILE}${FILEEXTENSION}
-
-
-
-
-iterateDirAndExecuteFuntion  newman_tests/$FULLPATH executeNewmanTest
+iterateDirAndExecuteFunction  newman_tests/$FULLPATH executeNewmanTest
 

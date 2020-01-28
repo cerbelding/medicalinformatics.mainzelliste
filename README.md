@@ -13,6 +13,7 @@ The following article describes the underlying concepts of Mainzelliste and the 
 Java developers should have a look at [Mainzelliste.Client](https://bitbucket.org/medinfo_mainz/mainzelliste.client), a library that handles the HTTP calls necessary for using Mainzelliste in a client application.
 
 Information about the official docker image of Mainzelliste you can find [here](./docker.md). 
+Information about the newman tests you can find [here](./docker.md). 
 
 ## References
 
@@ -77,7 +78,7 @@ New features:
 
 Bug fixes:
 
-- Cookie unship (merged) (grüner Stern)
+- Cookie unship (merged)
 - Make /run/secrets/manzellisteConfig usable without unused mandatory fields (merged)
 - HashCode Method for Patient class - Fixes issues with patient counted multiple times because of multiple external ids (not merged yet)
 
@@ -107,6 +108,7 @@ As an open source project, Mainzelliste profits from contributions from the rese
 - Benjamin Gathmann, Universitätsklinikum Freiburg
 - Christian Koch, DKFZ-Heidelberg
 - Daniel Volk, Universitätsmedizin Mainz
+- David Croft, DKFZ-Heidelberg
 - Dirk Langner, Universitätsmedizin Greifswald
 - Florens Rohde, Universität Leipzig
 - Florian Stampe, DKFZ-Heidelberg
@@ -115,6 +117,7 @@ As an open source project, Mainzelliste profits from contributions from the rese
 - Cornelius Knopp, Universitätsmedizin Göttingen 
 - Martin Lablans, DKFZ-Heidelberg
 - Matthias Lemmer, Universität Marburg
+- Moanes Ben Amor, DKFZ-Heidelberg
 - Maximilian Ataian, Universitätsmedizin Mainz
 - Project FP7-305653-chILD-EU
 - Stephan Rusch, Universitätsklinikum Freiburg
