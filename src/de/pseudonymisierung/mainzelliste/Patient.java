@@ -25,15 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -75,11 +69,7 @@ public class Patient {
 		try {
 			JSONObject fieldsJson = new JSONObject();
 			for (String fieldName : fields.keySet()) {
-				JSONObject thisField = new JSONObject();
-				thisField.put("class", fields.get(fieldName).getClass()
-						.getName());
-				thisField.put("value", fields.get(fieldName).getValueJSON());
-				fieldsJson.put(fieldName, thisField);
+				fieldsJson.put(fieldName, fields.get(fieldName).toJSON());
 			}
 			return fieldsJson.toString();
 		} catch (JSONException e) {
@@ -88,36 +78,6 @@ public class Patient {
 		}
 	}
 	
-	/**
-	 * map field name to soundex code
-	 */
-	@Transient
-	private Map<String, String> soundex;
-	
-	public Map<String, String> getClusterIds()
-	{
-		return soundex;
-	}
-	
-	/**
-	 * Set soundex codes for some fiels of the patient.
-	 */
-	public void setClusterIdByField(String[] fieldsNames)
-	{
-		soundex= new HashMap<String, String>();
-		for(String field : fieldsNames)
-		{
-			try
-			{
-				soundex.put(field, Soundex.computeSoundex(this.getInputFields().get(field).getValue().toString()));
-			}
-			catch (Exception e) 
-			{
-				Logger.getLogger(Patient.class).error("Exception: ", e);
-				throw new InternalErrorException();
-			}
-		}
-	}
 
 	/**
 	 * Creates a map of fields from its JSON representation. Used to read
@@ -138,7 +98,7 @@ public class Patient {
 				String fieldName = (String) it.next();
 				JSONObject thisFieldJson = fieldsJson.getJSONObject(fieldName);
 				String fieldClass = thisFieldJson.getString("class");
-				String fieldValue = thisFieldJson.getString("value");
+				String fieldValue = thisFieldJson.has("value") ? thisFieldJson.getString("value") : null;
 				Field<?> thisField = (Field<?>) Class.forName(fieldClass)
 						.newInstance();
 				thisField.setValue(fieldValue);
@@ -581,4 +541,10 @@ public class Patient {
 		// Default case
 		return false;
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(patientJpaId);
+	}
+
 }

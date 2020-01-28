@@ -1,0 +1,1091 @@
+{
+	"info": {
+		"_postman_id": "a8f1137f-ab0f-405e-aada-20b189cc147b",
+		"name": "genericTest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "session",
+			"item": [
+				{
+					"name": "INIT Variables",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "703a47f4-d007-4719-85ea-ad274e9081d6",
+								"exec": [
+									"database = {}",
+									"",
+									"pm.collectionVariables.set('REQUESTS', data.REQUESTS);",
+									"pm.collectionVariables.set('pointer', -1);",
+									"pm.collectionVariables.set('database', database);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "9eaa51fd-36e6-4b75-afc3-b0a2c1f711a2",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}",
+							"host": [
+								"{{url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "NEW_SESSION - Sitzung anlegen",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9d6887cd-821d-4333-bba8-2e0c075022e8",
+								"exec": [
+									"var pointer = pm.variables.get('pointer')",
+									"var request = pm.variables.get('REQUESTS')[pointer];",
+									"",
+									"var Ajv = require('ajv'),",
+									"    ajv = new Ajv({logger: console}),",
+									"    schema = {",
+									"        \"properties\": {",
+									"            \"sessionId\": {",
+									"                \"type\": \"string\"",
+									"            },",
+									"            \"uri\": {",
+									"                \"type\": \"string\"",
+									"            }",
+									"        }",
+									"    };",
+									"",
+									"pm.test(\"Check StatusCode\", function(){",
+									"    pm.response.to.have.status(\"Created\");",
+									"});",
+									"",
+									"pm.test(\"Check ResponseSchema\", function(){",
+									"     var jsonData = pm.response.json();",
+									"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+									"});",
+									"",
+									"",
+									"",
+									"",
+									"//Add data ",
+									"var database = pm.variables.get('database');",
+									"",
+									"",
+									"var sessionResponseObj = { ",
+									"    \"id\": request.id,",
+									"    \"response\": pm.response.json()",
+									"    ",
+									"}",
+									"",
+									"",
+									"if(database.sessions){",
+									"    database.sessions.push(sessionResponseObj);",
+									"}",
+									"else{",
+									"    database['sessions'] = [sessionResponseObj]",
+									"}",
+									"    ",
+									"pm.collectionVariables.set('database', database );",
+									"",
+									"",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "7d08cccf-058e-4b55-8f2b-46049f0d7e78",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "mainzellisteApiKey",
+								"value": "{{mainzellisteApiKey}}"
+							},
+							{
+								"key": "mainzellisteApiVersion",
+								"value": "{{mainzellisteApiVersion}}"
+							}
+						],
+						"url": {
+							"raw": "{{url}}/sessions",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"sessions"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Add Patient",
+			"item": [
+				{
+					"name": "NEW_TOKEN (addPatient) - Token anlegen",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1ad769cd-bb92-4dd0-af67-a2284e9fc68e",
+								"exec": [
+									"//Unset Variables",
+									"",
+									"pm.collectionVariables.unset(\"body\");",
+									"pm.collectionVariables.unset('sessionId');",
+									"",
+									"",
+									"",
+									"var pointer = pm.variables.get('pointer')",
+									"var request = pm.variables.get('REQUESTS')[pointer];",
+									"var jsonBody;",
+									"",
+									"",
+									"var Ajv = require('ajv'),",
+									"    ajv = new Ajv({logger: console}),",
+									"    schema = {",
+									"        \"properties\": {",
+									"            \"id\": {",
+									"                \"type\": \"string\"",
+									"            },",
+									"            \"type\":{",
+									"                \"type\": \"string\",",
+									"                \"pattern\": \"addPatient\"",
+									"            },",
+									"            \"data\": {",
+									"                \"type\": \"object\",",
+									"                 \"required\": [\"idTypes\"]",
+									"            },",
+									"            \"uri\": {",
+									"                \"type\": \"string\"",
+									"            }",
+									"        }",
+									"    };",
+									"",
+									"",
+									"",
+									"",
+									"pm.test('response must be valid and have a body', function() {",
+									"    pm.response.to.have.status(201);",
+									"    pm.response.to.be.withBody;",
+									"    pm.response.to.be.json; ",
+									"     ",
+									"    ",
+									"});",
+									"",
+									"pm.test(\"response have correct scheme\", function() {",
+									"    var localBody =  pm.response.json();",
+									"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+									"    jsonBody = localBody;",
+									"    ",
+									"});",
+									"",
+									"pm.test('response header have correct scheme', function(){",
+									"    pm.expect(pm.response.headers.has('Location')).to.be.true;",
+									"})",
+									"",
+									"",
+									"",
+									"",
+									"",
+									"//Add data ",
+									"var database = pm.variables.get('database');",
+									"",
+									"",
+									"var tokenResponseObj = { ",
+									"    \"id\": request.id,",
+									"    \"response\": pm.response.json()",
+									"    ",
+									"}",
+									"",
+									"console.log(request.id);",
+									"",
+									"",
+									"if(database.tokens){",
+									"    database.tokens.push(tokenResponseObj);",
+									"}",
+									"else{",
+									"    database['tokens'] = [tokenResponseObj]",
+									"}",
+									"    ",
+									"pm.collectionVariables.set('database', database );",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "10902c95-9181-49ef-b50d-be36f5c2924d",
+								"exec": [
+									"",
+									"var request = pm.variables.get('REQUESTS')[pm.variables.get('pointer')];",
+									"",
+									"if(request){",
+									"    ",
+									"    pm.collectionVariables.set(\"body\", JSON.stringify(request.body));",
+									"    ",
+									"    var session = request.url.session;",
+									"    ",
+									"    if(session.hasOwnProperty('id')){",
+									"         var pmSessionId = session.id;",
+									"         ",
+									"         ",
+									"         var sessions = pm.variables.get('database').sessions;",
+									"         var sessionId = sessions.filter( session => session.id == pmSessionId)[0].response.sessionId;",
+									"         pm.collectionVariables.set('sessionId', sessionId);",
+									"        ",
+									"    }",
+									"    else{",
+									"        var sessionId = request.url.session.idString;",
+									"        pm.collectionVariables.set('sessionId', sessionId);",
+									"        ",
+									"    }",
+									"  ",
+									"    ",
+									"    ",
+									"}",
+									"",
+									"",
+									"",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "mainzellisteApiKey",
+								"value": "{{mainzellisteApiKey}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "mainzellisteApiVersion",
+								"value": "{{mainzellisteApiVersion}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{{body}}"
+						},
+						"url": {
+							"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"sessions",
+								"{{sessionId}}",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ADD_PATIENT (JSON) - Patienten anlegen",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "190dd561-b063-48e2-b741-174ae7d50b0d",
+								"exec": [
+									"//Deleting unnecessary keys",
+									"",
+									"pm.collectionVariables.unset('payload');",
+									" pm.collectionVariables.unset('tokenId');",
+									"",
+									"",
+									"",
+									"//Test begins here",
+									"",
+									"var jsonBody;",
+									"",
+									"",
+									" var innerArraySchema = {",
+									"         \"type\": \"object\",",
+									"            \"required\": [\"idType\", \"idString\", \"tentative\", \"uri\"],",
+									"            \"properties\":  ",
+									"            {",
+									"                \"idType\": {",
+									"                    \"type\": \"string\"",
+									"                },",
+									"                \"idString\":{",
+									"                    \"type\": \"string\",",
+									"                },",
+									"                \"tentative\": {",
+									"                    \"type\": \"boolean\",",
+									"                },",
+									"                \"uri\": {",
+									"                    \"type\": \"string\"",
+									"                }",
+									"            }",
+									"        ",
+									"    }",
+									"",
+									"",
+									"var Ajv = require('ajv'),",
+									"    ajv = new Ajv({logger: console}),",
+									"    schema = {",
+									"        \"type\": \"array\",",
+									"       \"items\" : {",
+									"                \"#ref\": innerArraySchema",
+									"           ",
+									"       }};",
+									"            ",
+									"            ",
+									"   ",
+									"",
+									"",
+									"",
+									"pm.test('response must be valid and have a body', function() {",
+									"    pm.response.to.have.status(201);",
+									"    pm.response.to.be.withBody;",
+									"    pm.response.to.be.json; ",
+									"     ",
+									"    ",
+									"});",
+									"",
+									"",
+									"pm.test(\"response have correct scheme\", function() {",
+									"    var localBody =  pm.response.json();",
+									"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+									"    jsonBody = localBody;",
+									"    console.log(jsonBody);",
+									"    ",
+									"    ",
+									"});",
+									"",
+									"",
+									"",
+									"",
+									"",
+									"",
+									"if(jsonBody){",
+									"  ",
+									"   ",
+									"    var patients = pm.variables.get(\"patients\");",
+									"    ",
+									"   ",
+									"    ",
+									"    ",
+									"    if(!patients){",
+									"         ",
+									"        patients = []",
+									"    }",
+									"    ",
+									"    var ids = jsonBody",
+									"    ",
+									"  ",
+									"    ",
+									"    newPatient = {",
+									"        ",
+									"        \"ids\": ids,",
+									"        \"fields\":request.data",
+									"      ",
+									"    }",
+									"    ",
+									"    ",
+									"    ",
+									"    patients.push(newPatient);",
+									"    pm.collectionVariables.set('patients', patients);",
+									"    pm.collectionVariables.set('idString', jsonBody[0].idString);",
+									"  ",
+									"    ",
+									"    ",
+									"}",
+									"",
+									"",
+									"",
+									"",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "be153999-27fa-46fa-ab59-ac3412c8faf8",
+								"exec": [
+									"",
+									"",
+									"var request = pm.variables.get('REQUESTS')[pm.variables.get('pointer')];",
+									"",
+									"if(request){",
+									"    ",
+									"",
+									"    const payload = Object.keys(request.data).reduce((acc, cur) => {",
+									"        return `${acc}${cur}=${request.data[cur]}&`;",
+									"    }, '');",
+									"    ",
+									"    pm.collectionVariables.set('payload', payload);",
+									"    ",
+									"    ",
+									"    var token = request.token;",
+									"    ",
+									"    if(token.hasOwnProperty('id')){",
+									"         var pmTokenId = token.id;",
+									"         ",
+									"         ",
+									"         var tokens = pm.variables.get('database').tokens;",
+									"         var tokenId = tokens.filter( token => token.id == pmTokenId)[0].response.id;",
+									"         pm.collectionVariables.set('tokenId', tokenId);",
+									"        ",
+									"    }",
+									"    else{",
+									"        var tokenId = request.tokenId.idString;",
+									"        pm.collectionVariables.set('tokenId', tokenId);",
+									"        ",
+									"    }",
+									"",
+									"",
+									"",
+									"",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "mainzellisteApiKey",
+								"value": "{{mainzellisteApiKey}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							},
+							{
+								"key": "mainzellisteApiVersion",
+								"value": "{{mainzellisteApiVersion}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{{payload}}"
+						},
+						"url": {
+							"raw": "{{url}}/patients?tokenId={{tokenId}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"patients"
+							],
+							"query": [
+								{
+									"key": "tokenId",
+									"value": "{{tokenId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Get all Patient Ids",
+			"item": [
+				{
+					"name": "NEW TOKEN(realAllPatiens of idType)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "35fd30d8-a27b-4521-a9c8-23e0c3d92d7c",
+								"exec": [
+									"//Unset Variables",
+									"",
+									"pm.collectionVariables.unset(\"body\");",
+									"pm.collectionVariables.unset(\"sessionId\");",
+									"",
+									"",
+									"",
+									"var pointer = pm.variables.get('pointer')",
+									"var request = pm.variables.get('REQUESTS')[pointer];",
+									"var jsonBody;",
+									"",
+									"var Ajv = require('ajv'),",
+									"    ajv = new Ajv({logger: console}),",
+									"    schema = {",
+									"        \"properties\": {",
+									"            \"id\": {",
+									"                \"type\": \"string\"",
+									"            },",
+									"            \"type\":{",
+									"                \"type\": \"string\",",
+									"                \"pattern\": \"readPatients\"",
+									"            },",
+									"            \"data\": {",
+									"                \"type\": \"object\",",
+									"                ",
+									"            },",
+									"            \"uri\": {",
+									"                \"type\": \"string\"",
+									"            }",
+									"        }",
+									"    };",
+									"",
+									"",
+									"",
+									"pm.test('response must be valid and have a body', function() {",
+									"    pm.response.to.have.status(201);",
+									"    pm.response.to.be.withBody;",
+									"    pm.response.to.be.json; ",
+									"     ",
+									"    ",
+									"});",
+									"",
+									"",
+									"pm.test(\"response have correct scheme\", function() {",
+									"    var localBody =  pm.response.json();",
+									"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+									"    jsonBody = localBody;",
+									"    console.log(jsonBody);",
+									"    ",
+									"    ",
+									"});",
+									"",
+									"",
+									"",
+									"//Add data ",
+									"var database = pm.variables.get('database');",
+									"",
+									"",
+									"var tokenResponseObj = { ",
+									"    \"id\": request.id,",
+									"    \"response\": pm.response.json()",
+									"    ",
+									"}",
+									"",
+									"console.log(request.id);",
+									"",
+									"",
+									"if(database.tokens){",
+									"    database.tokens.push(tokenResponseObj);",
+									"}",
+									"else{",
+									"    database['tokens'] = [tokenResponseObj]",
+									"}",
+									"    ",
+									"pm.collectionVariables.set('database', database );",
+									"",
+									"",
+									"if(jsonBody){",
+									"    var patients = pm.variables.get('patients');",
+									"",
+									"",
+									"    //Concat ResultIds with SearchIds",
+									"      var concatedIdsArray =  request.body.data.resultIds.concat(request.body.data.searchIds.map(searchId => searchId.idType));",
+									"      ",
+									"     ",
+									"      concatedIdsArray = [...new Set(concatedIdsArray) ];",
+									"    ",
+									"            ",
+									"      var filteredPatients = patients.filter( (patient_x) =>  ",
+									"           concatedIdsArray.every( searchIdType =>  patient_x.ids.map(patient_id => patient_id.idType).includes(searchIdType)) );",
+									"   ",
+									"    ",
+									"    console.log(filteredPatients)",
+									"    ",
+									"   ",
+									"    var expectedResultLength = filteredPatients.length;",
+									"    console.log(\"expectedLength\" + expectedResultLength);",
+									"    pm.collectionVariables.set('expectedResultLength', expectedResultLength);",
+									"            ",
+									"    ",
+									"    ",
+									"       ",
+									"        ",
+									"        ",
+									"    ",
+									"    ",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "0cbddf60-2620-4c4c-a03e-d5ed96b1b539",
+								"exec": [
+									"",
+									"var request = pm.variables.get('REQUESTS')[pm.variables.get('pointer')];",
+									"",
+									"if(request){",
+									"    ",
+									"    pm.collectionVariables.set(\"body\", JSON.stringify(request.body));",
+									"    ",
+									"    ",
+									"    var session = request.url.session;",
+									"    ",
+									"    if(session.hasOwnProperty('id')){",
+									"         var pmSessionId = session.id;",
+									"         ",
+									"         ",
+									"         var sessions = pm.variables.get('database').sessions;",
+									"         var sessionId = sessions.filter( session => session.id == pmSessionId)[0].response.sessionId;",
+									"         pm.collectionVariables.set('sessionId', sessionId);",
+									"        ",
+									"    }",
+									"    else{",
+									"        var sessionId = request.url.session.idString;",
+									"        pm.collectionVariables.set('sessionId', sessionId);",
+									"        ",
+									"    }",
+									"  ",
+									"    ",
+									"    ",
+									"}",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "mainzellisteApiKey",
+								"value": "{{mainzellisteApiKey}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "mainzellisteApiVersion",
+								"value": "{{mainzellisteApiVersion}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{{body}}"
+						},
+						"url": {
+							"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"sessions",
+								"{{sessionId}}",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET_PATIENT - Patientenliste lesen (With Wildcard)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "afe1f9cd-0e36-4d02-89b0-d177ae59e2e1",
+								"exec": [
+									"//Unset Variables",
+									"",
+									"pm.collectionVariables.unset('tokenId');",
+									"",
+									"",
+									"",
+									"//Test begins here",
+									"",
+									"var jsonBody;",
+									"",
+									"",
+									"",
+									"",
+									"",
+									"",
+									" var innerArraySchema = {",
+									"         \"type\": \"object\",",
+									"            \"required\": [\"idType\", \"idString\", \"tentative\", \"uri\"],",
+									"            \"properties\":  ",
+									"            {",
+									"                \"idType\": {",
+									"                    \"type\": \"string\"",
+									"                },",
+									"                \"idString\":{",
+									"                    \"type\": \"string\",",
+									"                },",
+									"                \"tentative\": {",
+									"                    \"type\": \"boolean\",",
+									"                },",
+									"               ",
+									"            }",
+									"        ",
+									"    }",
+									"",
+									"",
+									"var Ajv = require('ajv'),",
+									"    ajv = new Ajv({logger: console}),",
+									"    schema = {",
+									"        \"type\": \"array\",",
+									"       \"items\" : {",
+									"                \"#ref\": innerArraySchema",
+									"           ",
+									"       }};",
+									"            ",
+									"            ",
+									"   ",
+									"",
+									"",
+									"pm.test('response must be valid and have a valid scheme body', function() {",
+									"    pm.response.to.have.status(200);",
+									"    pm.response.to.be.withBody;",
+									"    pm.response.to.be.json;",
+									"    var localBody =  pm.response.json();",
+									"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+									"     ",
+									"    ",
+									"    ",
+									"});",
+									"",
+									"",
+									"",
+									"pm.test(\"Check number of results\", function(){",
+									"     var localBody = JSON.parse(responseBody);",
+									"     pm.expect(localBody).to.have.lengthOf(pm.variables.get('expectedResultLength'))",
+									"    ",
+									"    ",
+									"    ",
+									"})",
+									"",
+									"",
+									"",
+									"",
+									"/*",
+									"pm.test(\"Check Patientdata (NOT IMPLEMENTED YET)\", function () {",
+									"    var localBody = JSON.parse(responseBody);",
+									"    var patients =  JSON.parse(pm.variables.get(\"patients\"));",
+									"    ",
+									"    console.log(patients);",
+									"    console.log(localBody)",
+									"    ",
+									"    localBody.forEach(responseElement => {",
+									"    ",
+									"    //Search for corresponding patient",
+									"    var patient = patients.find( x_patient =>  x_patient.properties.some(x_property => x_property.idString === responseElement.idString && x_property.idType === responseElement.type) );",
+									"    ",
+									"    pm.expect(patient).to.not.be.undefined;",
+									"   ",
+									"   ",
+									"        for(var propt in responseElement){",
+									"            ",
+									"           pm.expect(patient[\"idType\"]).to.eql(responseElement[propt]);",
+									"           ",
+									"        }",
+									"        ",
+									"    });",
+									"    ",
+									"   ",
+									"    jsonBody = localBody;",
+									"});",
+									"*/",
+									"",
+									"pm.test('Check PatientID', function () {",
+									"    ",
+									"    ",
+									"    var localBody = JSON.parse(responseBody);",
+									"    var patients =  pm.variables.get(\"patients\");",
+									"    ",
+									"    ",
+									"    localBody.forEach(responseElement => {",
+									"    ",
+									"    //Search for corresponding patient",
+									"    var filteredPatients = patients.filter( x_patient => x_patient.ids.some(x_property => x_property.idString === responseElement.idString && x_property.idType === responseElement.type));",
+									"    ",
+									"  ",
+									"        ",
+									"    pm.expect(filteredPatients).to.have.lengthOf(1);",
+									"    ",
+									"    var patient = filteredPatients[0];",
+									"    ",
+									"   ",
+									"    var patientProperty = patient.ids.find(x => x.idString === responseElement.idString && x.idType === responseElement.type);",
+									"    ",
+									"  ",
+									"    ",
+									"    pm.expect(patientProperty).to.not.be.undefined;",
+									"    ",
+									"  ",
+									"            ",
+									"       ",
+									"        ",
+									"        for(var propt in responseElement){",
+									"            ",
+									"           ",
+									"            ",
+									"            if(propt == \"type\"){",
+									"                pm.expect(patientProperty[\"idType\"]).to.eql(responseElement[propt]);",
+									"            }",
+									"            ",
+									"            else{",
+									"               ",
+									"                pm.expect(patientProperty[propt]).to.eql(responseElement[propt]);",
+									"            }",
+									"            ",
+									"         ",
+									"            ",
+									"        ",
+									"        }",
+									"        ",
+									"    });",
+									"    ",
+									"})",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "7fcd230d-0cd4-4598-b3b5-4c0ba43e7127",
+								"exec": [
+									"",
+									"",
+									"var request = pm.variables.get('REQUESTS')[pm.variables.get('pointer')];",
+									"",
+									"if(request){",
+									"    ",
+									"    var token = request.token;",
+									"    ",
+									"    if(token.hasOwnProperty('id')){",
+									"         var pmTokenId = token.id;",
+									"         ",
+									"         ",
+									"         var tokens = pm.variables.get('database').tokens;",
+									"         var tokenId = tokens.filter( token => token.id == pmTokenId)[0].response.id;",
+									"         pm.collectionVariables.set('tokenId', tokenId);",
+									"        ",
+									"    }",
+									"    else{",
+									"        var tokenId = request.tokenId.idString;",
+									"        pm.collectionVariables.set('tokenId', tokenId);",
+									"        ",
+									"    }",
+									"",
+									"",
+									"",
+									"",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "mainzellisteApiKey",
+								"value": "{{mainzellisteApiKey}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "mainzellisteApiVersion",
+								"value": "{{mainzellisteApiVersion}}"
+							}
+						],
+						"url": {
+							"raw": "{{url}}/patients/tokenId/{{tokenId}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"patients",
+								"tokenId",
+								"{{tokenId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "eacd5a7d-7579-42b2-a698-98ae5c6bf40e",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "ccd36cc8-9b7e-490c-9e05-946dac2b5b31",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "e957e54c-996d-487d-b809-693076c13e20",
+				"type": "text/javascript",
+				"exec": [
+					"var pointer = pm.variables.get('pointer');",
+					"pointer++;",
+					"pm.collectionVariables.set('pointer', pointer);",
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "02ed7692-2ad1-4cbc-aa29-28c2fc49e6dd",
+				"type": "text/javascript",
+				"exec": [
+					"var pointer = pm.variables.get('pointer');",
+					"pointer++;",
+					"",
+					"",
+					"var nextRequest =  pm.variables.get('REQUESTS')[pointer];",
+					"",
+					"if(nextRequest){",
+					"    nextRequest = pm.variables.get('REQUESTS')[pointer].request;",
+					"}",
+					"",
+					"",
+					"",
+					"",
+					"",
+					"console.log(nextRequest);",
+					"",
+					"if(nextRequest){",
+					"    ",
+					"    switch(nextRequest){",
+					"    case \"post_session\":",
+					"        postman.setNextRequest('NEW_SESSION - Sitzung anlegen');",
+					"        break;",
+					"        ",
+					"    case \"add_patient_token\":",
+					"        postman.setNextRequest('NEW_TOKEN (addPatient) - Token anlegen');",
+					"        break;",
+					"        ",
+					"    case \"add_patient\":",
+					"        postman.setNextRequest('ADD_PATIENT (JSON) - Patienten anlegen');",
+					"        break;",
+					"    case \"get_allPatientIds_token\":",
+					"        postman.setNextRequest('NEW TOKEN(realAllPatiens of idType)');",
+					"        break;",
+					"    ",
+					"    case \"get_allPatientIds\":",
+					"        postman.setNextRequest('GET_PATIENT - Patientenliste lesen (With Wildcard)');",
+					"        break;    ",
+					"    ",
+					"        ",
+					"        ",
+					"        ",
+					"        ",
+					"    default:",
+					"        postman.setNextRequest(null);",
+					"        break;",
+					"    ",
+					"    ",
+					"}",
+					"    ",
+					"}",
+					"else {",
+					"      postman.setNextRequest(null);",
+					"}",
+					"",
+					"",
+					"",
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "5446b813-62b4-4f6a-98a4-d256055ca231",
+			"key": "REQUESTS",
+			"value": null,
+			"type": "any",
+			"disabled": true
+		},
+		{
+			"id": "51ec80e6-436e-4315-866e-fa596cdd4082",
+			"key": "pointer",
+			"value": "-2",
+			"type": "string",
+			"disabled": true
+		}
+	],
+	"protocolProfileBehavior": {}
+}

@@ -44,6 +44,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 
@@ -109,8 +111,7 @@ public enum Servers {
 		for (int i = 0; ; i++)
 		{
 			if (!props.containsKey("servers." + i + ".apiKey") ||
-				!props.containsKey("servers." + i + ".permissions") ||
-				!props.containsKey("servers." + i + ".allowedRemoteAdresses"))
+				!props.containsKey("servers." + i + ".permissions"))
 				break;
 
 			Server s = new Server();
@@ -119,8 +120,10 @@ public enum Servers {
 			
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
 			s.permissions = new HashSet<String>(Arrays.asList(permissions));
-			
-			String allowedRemoteAdresses[] = props.getProperty("servers." + i + ".allowedRemoteAdresses").split("[;,]");
+
+			String allowedRemoteAdressesString = props.getProperty("servers." + i + ".allowedRemoteAdresses");
+			String allowedRemoteAdresses[] = (allowedRemoteAdressesString != null) ?  allowedRemoteAdressesString.split("[;,]") : new String[]{"127.0.0.1", "0:0:0:0:0:0:0:1"};
+			logger.info("No AllowedRemoteAddresses are specified for servers." + i + ". Allowing localhost as default.");
 			s.allowedRemoteAdressRanges = new LinkedList<SubnetUtils>();
 			s.allowedRemoteAdresses = new HashSet<String>();
 			for (String thisAddress : allowedRemoteAdresses) {
@@ -142,7 +145,7 @@ public enum Servers {
 
 		if (Config.instance.getProperty("debug") == "true")
 		{
-			Token t = new Token("4223", "addPatient");
+			Token t = new AddPatientToken();
 			tokensByTid.put(t.getId(), t);
 		}
 
@@ -190,9 +193,10 @@ public enum Servers {
 	 * 
 	 * @return The new session object.
 	 */
-	public Session newSession() {
+	public Session newSession(String serverName) {
 		String sid = UUID.randomUUID().toString();
 		Session s = new Session(sid);
+		s.setParentServerName(serverName);
 		synchronized (sessions) {
 			sessions.put(sid, s);
 		}
@@ -335,7 +339,7 @@ public enum Servers {
 			logger.info("Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(perms.toArray()) + ".");
 		}
 		
-		if(!perms.contains(permission)){ // Check permission
+		if(!perms.contains(permission) && perms.stream().noneMatch(p -> p.matches(permission + ".*}"))){ // Check permission
 			logger.info("Access from " + req.getRemoteHost() + " is denied since they lack permission " + permission + ".");
 			throw new WebApplicationException(Response
 					.status(Status.UNAUTHORIZED)
@@ -362,6 +366,7 @@ public enum Servers {
 		getSession(sessionId).addToken(t);
 
 		synchronized (tokensByTid) {
+			// register token in server
 			tokensByTid.put(t.getId(), t);
 		}
 	}
@@ -557,6 +562,11 @@ public enum Servers {
 			return true;
 		}
 		return false;
+	}
+
+	public Set<String> getServerPermissionsForServerName(String serverName){
+		Server server = servers.get(getApiKeyForServerName(serverName));
+		return server.permissions;
 	}
 
 	public String getApiKeyForServerName(String serverName){

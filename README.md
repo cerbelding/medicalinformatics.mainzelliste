@@ -48,6 +48,8 @@ The Mainzelliste API has been implemented in the following projects and software
 - [Electronic data capture system by Fraunhofer FOKUS](https://cdn3.scrivito.com/fokus/57a537e2ec27cb7b/0a3a0655dcc079f58890e39dbdca4781/E-HEALTH_Standards_PB_03-2015_v03.pdf)
 - [CentraXX](http://www.kairos.de/produkte/centraxx/) by Kairos GmbH 
 - Platform for medical research by Climedo Health GmbH ([Description of electronic health record component](https://www.climedo.de/digitale-probandenakte/))
+- The [NEW ESID online database network](https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btz525/5526873)
+- Biobank network of the Ruhr University Bochum (BioNetRUB)
 
 We have compiled this list from the results of public search engines. If you use the Mainzelliste or its API, we would be glad to include your project in this list. Please don't hestitate to [contact us](mailto:info@mainzelliste.de).
 
@@ -55,11 +57,48 @@ We have compiled this list from the results of public search engines. If you use
 
 We would love to include your useful changes to the Mainzelliste code in a future official release. See the related [Wiki page](https://bitbucket.org/medicalinformatics/mainzelliste/wiki/Contributing) for further information on contributing code.
 
-
 ## Release notes
 
-All notable changes to the mainzelliste project you can see in the [changelog](./changelog.md)
+alpha 1.9.0 - status 2019-02-01
 
+New features:
+
+- BestMatch/CheckMatch REST-API /patients/checkMatch/{tokenId} (not merged yet) 
+- Callback and redirect functionality for all CRUD functions (not merged yet) 
+- HTTP proxy feature for callbacks (not merged yet) 
+- New id generator (EGKIDGenerator) (merged) 
+- Multi configs - Allow sub configuration files (not merged yet) 
+- Blocking for bloomfilter → Feature Leipzig (reviewing) 
+- Audittrail → Feature Marburg (reviewing)
+- Status endpoint (not implemented yet) 
+- Request all Ids for one Id types/projects (not merged yet) 
+- Multiple token reuse (partly implemented)
+- Refined permission concept (not implemented yet)
+
+Bug fixes:
+
+- Cookie unship (merged)
+- Make /run/secrets/manzellisteConfig usable without unused mandatory fields (merged)
+- HashCode Method for Patient class - Fixes issues with patient counted multiple times because of multiple external ids (not merged yet)
+
+
+Other:
+
+- Bitbucket pipelines
+
+  - The Bitbucket pipeline ensures high quality software through automated testing. The automated tests are implemented with Docker and Newman (REST API). This allows any commit to the bitbucket repository to be automatically checked for possible errors. For each test case all required Docker Containers are booted, the functionality is checked via the REST interfaces provided by the "Mainzelliste" and after the test case all Docker Containers are shut down again. This ensures that all test cases are executed independently.
+
+    - bitbucket-pipelines.yml: The bitbucket-pipelines.yml file defines your pipelines builds configuration. It is iterated over each test case. For each test case a docker environment is started using the docker-compose.test.yml file.
+    - docker-compose.test.yml: The Docker environment is defined here.
+    - ci/  The relevant test data is stored in this directory. Each test case is defined in a separate Postman Collection. A Mainzelliste configuration file is provided for each test case. The configuration file has the same file name as the Postman Collection (including the file extension of the collection).
+      - newman_environment_variables/:  The Newman Environment variables are stored here. Currently there is one file for all test cases.
+      - newman_mainzelliste_configs/:  This folder contains the Mainzelliste configuration files associated with the test cases. If there is no configuration file for a test case, a default configuration is chosen.
+      - newman_tests/: The test cases are saved here. A collection contains exactly one test case.
+      - test_data/: Here are some mockup test data. There is also a collection file that contains some relevant API requests. To ensure that the test cases are standardized, you should copy the required requests from this collection. If a request does not yet exist, you should add it to the collection.
+      - test_results/: Here the Newman results are stored in HTML and XML format. This allows a pretty presentation of the tests.
+
+
+All historically notable changes to the mainzelliste project you can see in the [changelog](./changelog.md)
 
 ### Contributions
 As an open source project, Mainzelliste profits from contributions from the research community. We would like to thank the following colleagues for their code contributions (sorted by name in ascending order):
@@ -68,13 +107,16 @@ As an open source project, Mainzelliste profits from contributions from the rese
 - Benjamin Gathmann, Universitätsklinikum Freiburg
 - Christian Koch, DKFZ-Heidelberg
 - Daniel Volk, Universitätsmedizin Mainz
+- David Croft, DKFZ-Heidelberg
 - Dirk Langner, Universitätsmedizin Greifswald
 - Florens Rohde, Universität Leipzig
 - Florian Stampe, DKFZ-Heidelberg
 - Galina Tremper, DKFZ-Heidelberg
 - Jens Schwanke, Universitätsmedizin Göttingen
+- Cornelius Knopp, Universitätsmedizin Göttingen 
 - Martin Lablans, DKFZ-Heidelberg
 - Matthias Lemmer, Universität Marburg
+- Moanes Ben Amor, DKFZ-Heidelberg
 - Maximilian Ataian, Universitätsmedizin Mainz
 - Project FP7-305653-chILD-EU
 - Stephan Rusch, Universitätsklinikum Freiburg
