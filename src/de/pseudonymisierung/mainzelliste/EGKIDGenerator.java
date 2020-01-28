@@ -123,7 +123,7 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
 	}
     
     /**
-	 * Validation Algorithm to check if the given ID-value is a valid eGK-Number (German Health Insurance Number) 
+	 * Validation Algorithm to check if the given ID-value is a valid eGK-Number (German Health Insurance Number)
 	 *
 	 * @param input Input argument
 	 * @return boolean value if 'value' matches the LUHN Algorithm
@@ -150,7 +150,9 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
 		for (int i=2; i<chara.length; i++) {
 			inta[i] = chara[i-1] - '0';
 		}
-		return check(inta);
+
+		int checksum = Integer.valueOf(input.substring(input.length()-1, input.length()));
+		return check(inta, checksum);
 	}
 
 	/**
@@ -172,7 +174,7 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
 	* @param digits the digits to check
 	* @return boolean value if digits passed the validation
 	*/
-	public static boolean check(int[] digits) {
+	public static boolean check(int[] digits, int checksum) {
 	    // initialize the sum
 		int sum = 0;
 		// initialize lenght by length of 'digits'
@@ -191,6 +193,6 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
 	    	sum = sum + digits[i];
 	    }
 		// if sum of checksums modulo 10 is true, id is a valid eGK-Number 
-	    return sum % 10 == 0;
+	    return sum % 10 == checksum;
 	}
 }
