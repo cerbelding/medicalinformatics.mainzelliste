@@ -69,27 +69,48 @@ public class Token {
 	private String parentSessionId;
 
 	private String parentServerName;
+
+	/** This is the amount of uses set at the creation of a Token. Defaults to 1 */
+	private int allowedUses;
+
+	/** The remaining amount of uses allowed for the token */
+	private int remainingUses;
+
 	/**
 	 * Create emtpy instance. Used internally only.
 	 */
 	Token() {
 	    this.id = UUID.randomUUID().toString();
+	    this.allowedUses = 1;
+	    this.remainingUses = 1;
 	}
 
 	/**
-	 * Create token with the given id and type. Initializes empty container for
-	 * token data. Performs no checking if the given token id is unique and if
-	 * the provided token type is known.
-	 *
-	 * @param tid
-	 *            The token id.
+	 * Create token with the type. Initializes empty container for
+	 * token data. Performs no checking if the provided token type is known.
+	 * The token is allowed to be used one time.
 	 * @param type
 	 *            The token type.
 	 */
 	public Token(String type) {
+	    this(type, 1);
+	}
+
+	/**
+	 * Create Token with given type and amount of uses. Initializes empty container for
+	 * token data. Performs no checking if the provided token type is known.
+	 * @param type
+	 * 				The token type
+	 * @param allowedUses
+	 * 				The amount of uses allowed for this Token.
+	 * 			 	This defaults to 1 and it is not possible to set lower than 1
+	 */
+	public Token(String type, int allowedUses){
 		this.id = UUID.randomUUID().toString();
 		this.type = type;
-		this.data = new HashMap<String, Object>();
+		this.data = new HashMap<>();
+		this.allowedUses = Math.max(allowedUses, 1);
+		this.remainingUses = Math.max(allowedUses, 1);
 	}
 
 	/**
@@ -111,8 +132,8 @@ public class Token {
 			this.checkReadPatients();
 		else if (this.type.equals("editPatient"))
 			this.checkEditPatient(apiVersion);
-		else if (this.type.equals("deletePatient"));
-		else if (this.type.equals("checkMatch"));
+		else if (this.type.equals("deletePatient")); // TODO: checkDeletePatient
+		else if (this.type.equals("checkMatch")); // TODO: checkCheckMatch
 		else
 			throw new InvalidTokenException("Token type " + this.type
 					+ " unknown!");
@@ -561,7 +582,25 @@ public class Token {
 		}
 	}
 
-    public String getParentSessionId() {
+	/**
+	 * Reduces the remaining amount of uses for this {@link Token} by 1.
+	 * @return
+	 * 			the remaining amount of uses for this token
+	 */
+	public int decreaseRemainingUses(){
+		remainingUses = getRemainingUses() - 1;
+		return remainingUses;
+	}
+
+	public int getAllowedUses() {
+		return allowedUses;
+	}
+
+	public int getRemainingUses() {
+		return remainingUses;
+	}
+
+	public String getParentSessionId() {
         return parentSessionId;
     }
 
