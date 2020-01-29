@@ -58,13 +58,14 @@ public class TokenParam extends AbstractParam<Token> {
 		try {
 			JSONObject jsob = new JSONObject(param);
 			String tokenType = jsob.optString("type");
+			int allowedUses = jsob.optInt("allowedUses");
 			Token t;
 			if (tokenType.equals("addPatient"))
-				t = new AddPatientToken();
+				t = (allowedUses == 0) ? new AddPatientToken() : new AddPatientToken(allowedUses);
 			else if (tokenType.equals("editPatient"))
-				t = new EditPatientToken();
+				t = (allowedUses == 0) ? new EditPatientToken() : new EditPatientToken(allowedUses);
 			else
-				t = new Token(tokenType);
+				t = (allowedUses == 0) ? new Token(tokenType) : new Token(tokenType, allowedUses);
 			HashMap<String, Object> data = new ObjectMapper().readValue (jsob.getString("data"), new TypeReference<HashMap<String, Object>>() {});
 
 			// compatibility fix: "idtypes" -> "idTypes"
