@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class RefinedPermission {
 
-    final static private String JAVA_LANG_STRING = "java.lang.String";
+    final static private String JAVA_LANG_ALLOWED_TYPES ="java.lang.String|java.lang.Integer|java.lang.Long|java.lang.Float|java.lang.Double|java.lang.Boolean";
     final static private String JSON_OBJECT = "JSONObject";
     final static private String JSON_ARRAY = "JSONArray";
 
@@ -261,8 +261,8 @@ public class RefinedPermission {
 
                 try {
                     Object parameterValue = tokenParameterJson.get((String) parameterKey);
-                    if (parameterValue.getClass().getTypeName().equals(JAVA_LANG_STRING)) {
-                        tokenValues.add(new RefinedPermissionDTO((String) parameterKey, (String) parameterValue));
+                    if (parameterValue.getClass().getTypeName().matches(JAVA_LANG_ALLOWED_TYPES)) {
+                        tokenValues.add(new RefinedPermissionDTO((String) parameterKey, String.valueOf(parameterValue)));
                     } else {
                         extractSubJSONTokenValues((String) parameterKey, parameterValue);
                     }
@@ -289,8 +289,8 @@ public class RefinedPermission {
                 try {
                     if (parameterArray.get(i).getClass().toString().contains(JSON_OBJECT) || parameterArray.get(i).getClass().toString().contains(JSON_ARRAY)) {
                         extractSubJSONTokenValues(parameterDescriber + "[" + i + "]", parameterArray.get(i));
-                    } else if (parameterArray.get(i).getClass().getTypeName().equals(JAVA_LANG_STRING)) {
-                        tokenValues.add(new RefinedPermissionDTO(parameterDescriber, (String) parameterArray.get(i)));
+                    } else if (parameterArray.get(i).getClass().getTypeName().matches(JAVA_LANG_ALLOWED_TYPES)) {
+                        tokenValues.add(new RefinedPermissionDTO(parameterDescriber, String.valueOf(parameterArray.get(i))));
                     }
 
                 } catch (JSONException e) {
@@ -308,8 +308,8 @@ public class RefinedPermission {
                     Object parameterSubValue = parameterValueJson.get((String) parameterSubKey);
                     if (parameterSubValue.getClass().getName().contains(JSON_OBJECT) || parameterSubValue.getClass().getName().contains(JSON_ARRAY)) {
                         extractSubJSONTokenValues(parameterDescriber + "." + parameterSubKey, parameterSubValue);
-                    } else if (parameterSubValue.getClass().getTypeName().equals(JAVA_LANG_STRING)) {
-                        tokenValues.add(new RefinedPermissionDTO(parameterDescriber + "." + parameterSubKey, (String) parameterSubValue));
+                    } else if (parameterSubValue.getClass().getTypeName().matches(JAVA_LANG_ALLOWED_TYPES)) {
+                        tokenValues.add(new RefinedPermissionDTO(parameterDescriber + "." + parameterSubKey, String.valueOf(parameterSubValue)));
                     }
 
                 } catch (JSONException e) {
