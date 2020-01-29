@@ -37,6 +37,8 @@
 package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
+
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -121,8 +123,13 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
 	public boolean isExternal() {
 		 return true; 
 	}
-    
-    /**
+
+	@Override
+	public Optional<IDGeneratorMemory> getMemory() {
+		return Optional.empty();
+	}
+
+	/**
 	 * Validation Algorithm to check if the given ID-value is a valid eGK-Number (German Health Insurance Number)
 	 *
 	 * @param input Input argument
