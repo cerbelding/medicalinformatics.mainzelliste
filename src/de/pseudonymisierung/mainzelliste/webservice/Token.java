@@ -567,7 +567,7 @@ public class Token {
 		JSONObject ret = new JSONObject();
 		try {
 			if (apiVersion.majorVersion >= 2) {
-				ret.put("id", this.id).put("type", this.type);
+				ret.put("id", this.id).put("type", this.type).put("allowedUses", this.allowedUses).put("remainingUses", this.remainingUses);
 				ObjectMapper mapper = new ObjectMapper();
 				String dataString = mapper.writeValueAsString(data);
 				ret.put("data", new JSONObject(dataString));
