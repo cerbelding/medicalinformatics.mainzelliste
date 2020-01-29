@@ -206,6 +206,7 @@ public class Token {
 	 * @param type
 	 *            The new token type.
 	 */
+	@Deprecated
 	public void setType(String type) {
 		this.type = type;
 	}
