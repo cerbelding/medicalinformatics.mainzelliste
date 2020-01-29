@@ -48,7 +48,7 @@ import java.time.LocalDate;
 @Singleton
 public class MonitoringResource {
     /** The logging instance. */
-    Logger logger = Logger.getLogger(HTMLResource.class);
+    Logger logger = Logger.getLogger(this.getClass());
 
     @Path("IDRequestCount")
     @GET
