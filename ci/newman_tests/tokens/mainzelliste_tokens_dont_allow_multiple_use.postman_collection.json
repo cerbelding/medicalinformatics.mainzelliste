@@ -1,0 +1,269 @@
+{
+	"info": {
+		"_postman_id": "a090ca45-9748-4c4d-8b21-c35bd9b52828",
+		"name": "mainzelliste_tokens_dont_allow_multiple_use",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NEW_SESSION",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"console.log(\"newSession\")",
+							"var jsonBody = JSON.parse(responseBody);",
+							"",
+							"tests[\"Session created\"] = responseCode.code === 201;",
+							"tests[\"Body has sessionId\"] = responseBody.has(\"sessionId\");",
+							"tests[\"Body has uri\"] = responseBody.has(\"uri\");",
+							"",
+							"var sessionId = jsonBody.sessionId;",
+							"postman.setGlobalVariable(\"sessionId\", sessionId);",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TOKEN_ADD_PATIENT_ALLOWED",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "99008150-ca3f-44f4-be3c-3d7d19cc0bdb",
+						"exec": [
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Token created\"] = responseCode.code === 201;",
+							"tests[\"Body has id\"] = responseBody.has(\"id\");",
+							"tests[\"Type is addPatient\"] = jsonBody.type === \"addPatient\";",
+							"tests[\"Body has data\"] = responseBody.has(\"data\");",
+							"tests[\"Data has idTypes\"] = \"idTypes\" in jsonBody.data;",
+							"tests[\"Body has allowedUses\"] = responseBody.has(\"allowedUses\");",
+							"tests[\"Body has remainingUses\"] = responseBody.has(\"remainingUses\");",
+							"var tokenId = jsonBody.id;",
+							"postman.setGlobalVariable(\"tokenId\", tokenId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n    \"allowedUses\": 2,\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TOKEN_ADD_PATIENT_NOT_ALLOWED",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "99008150-ca3f-44f4-be3c-3d7d19cc0bdb",
+						"exec": [
+							"tests[\"No permissions\"] = responseCode.code === 401;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n\t\"allowedUses\": 3,\r\n    \"data\": {\r\n     \t\"idtypes\": [{{idTypes}}]\r\n    }\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TOKEN_ADD_PATIENT_ALLOWED",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "99008150-ca3f-44f4-be3c-3d7d19cc0bdb",
+						"exec": [
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Token created\"] = responseCode.code === 201;",
+							"tests[\"Body has id\"] = responseBody.has(\"id\");",
+							"tests[\"Type is addPatient\"] = jsonBody.type === \"addPatient\";",
+							"tests[\"Body has data\"] = responseBody.has(\"data\");",
+							"tests[\"Data has idTypes\"] = \"idTypes\" in jsonBody.data;",
+							"tests[\"Body has allowedUses\"] = responseBody.has(\"allowedUses\");",
+							"tests[\"Body has remainingUses\"] = responseBody.has(\"remainingUses\");",
+							"var tokenId = jsonBody.id;",
+							"postman.setGlobalVariable(\"tokenId\", tokenId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n    \"allowedUses\": \"2\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TOKEN_ADD_PATIENT_NOT_ALLOWED",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "99008150-ca3f-44f4-be3c-3d7d19cc0bdb",
+						"exec": [
+							"tests[\"No permissions\"] = responseCode.code === 401;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n\t\"allowedUses\": \"3\",\r\n    \"data\": {\r\n     \t\"idtypes\": [{{idTypes}}]\r\n    }\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
