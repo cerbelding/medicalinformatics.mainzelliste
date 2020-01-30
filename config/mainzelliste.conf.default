@@ -343,6 +343,8 @@ result.printIdat = true
 extendedPermissionCheck = true
 #If failed auth message should not send back to requester
 #extendedPermissionCheck.failedAuthMessage = deactivated
+#extendedPermissionCheck.caseSensitive = true
+
 
 # A passphrase used for authentication
 servers.0.apiKey = 

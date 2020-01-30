@@ -1,5 +1,6 @@
 package de.pseudonymisierung.mainzelliste.webservice.commons;
 
+import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidJSONException;
@@ -24,13 +25,14 @@ public class RefinedPermission {
     final private static Logger logger = Logger.getLogger(RefinedPermission.class);
 
     private List<RefinedPermissionDTO> tokenValues = new ArrayList<>();
+    private Set<String> serverPermissions = null;
 
     private String returnMessage = "";
 
     public boolean checkPermission(String tokenParameter, Session session) {
         logger.debug("checkPermission");
-        extractJSONObjectTokenValues(tokenParameter);
-        Set<String> serverPermissions = getServerPermissions(session.getParentServerName());
+
+        prepareTokenValuesAndServerPermissions(tokenParameter, session);
 
         if (compareRequestAndPermissions(tokenValues, serverPermissions)) {
             tokenValues.clear();
@@ -40,6 +42,21 @@ public class RefinedPermission {
             return false;
         }
 
+    }
+
+    private void prepareTokenValuesAndServerPermissions(String tokenParameter, Session session) {
+        serverPermissions = getServerPermissions(session.getParentServerName());
+
+        if(isCaseInsensitiveConfigured()){
+            serverPermissions = serverPermissions.stream().map(s -> s.toLowerCase()).collect(Collectors.toSet());
+            extractJSONObjectTokenValues(tokenParameter.toLowerCase());
+        }else{
+            extractJSONObjectTokenValues(tokenParameter);
+        }
+    }
+
+    private boolean isCaseInsensitiveConfigured() {
+        return Config.instance.getProperty("extendedPermissionCheck.caseSensitive") == null || !Config.instance.getProperty("extendedPermissionCheck.caseSensitive").equals("true");
     }
 
     private boolean compareRequestAndPermissions(List<RefinedPermissionDTO> requestedPermissions, Set<String> serverPermissions) {
