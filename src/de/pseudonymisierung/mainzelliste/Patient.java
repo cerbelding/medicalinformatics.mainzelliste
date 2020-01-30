@@ -26,6 +26,7 @@
 package de.pseudonymisierung.mainzelliste;
 
 import java.util.*;
+import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -307,6 +308,7 @@ public class Patient {
 		
 		if(!factory.isExternal()) {
 			ID newID = factory.getNext();
+			Persistor.instance.addId(newID);
 			factory.getMemory().ifPresent(IDGeneratorMemory::commit);
 			this.addId(newID);
 			return newID;
