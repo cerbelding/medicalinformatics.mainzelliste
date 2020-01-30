@@ -27,11 +27,11 @@ package de.pseudonymisierung.mainzelliste.webservice;
 
 import com.sun.jersey.spi.resource.Singleton;
 import de.pseudonymisierung.mainzelliste.Servers;
-import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.ValidatorException;
-import org.apache.log4j.Logger;
+import de.pseudonymisierung.mainzelliste.service.MonitoringService;
 
+import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -40,83 +40,68 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.sql.Date;
-import java.time.DateTimeException;
-import java.time.LocalDate;
+import java.util.function.Supplier;
 
 @Path("/monitoring")
 @Singleton
 public class MonitoringResource {
-    /** The logging instance. */
-    Logger logger = Logger.getLogger(this.getClass());
+    private final MonitoringService service = new MonitoringService();
 
-    @Path("IDRequestCount")
+    @Path("metrics/IDRequestCount")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response getIDRequestCount(@QueryParam("start") String startDateStr, @QueryParam("end") String endDateStr,
                                       @Context HttpServletRequest request) {
-        Servers.instance.checkPermission(request, "getIDRequestCount");
-
-        // validate start date
-        Date startDate;
-        try {
-            startDate = parseDate(startDateStr);
-        } catch ( IllegalArgumentException exc) {
-            throw new ValidatorException(startDateStr + " is not a valid start date");
-        }
-
-        // validate end date
-        Date endDate;
-        try {
-            endDate = parseDate(endDateStr);
-        } catch ( IllegalArgumentException exc) {
-            throw new ValidatorException(endDateStr + " is not a valid end date");
-        }
-
-        try {
-            long count = Persistor.instance.getIDRequestCount(startDate, endDate);
-            return Response.ok().entity(count+"").build();
-        } catch (RuntimeException e) {
-            logger.fatal( "Persistence provider error. Can't get IDRequestCount. Cause: " +  e.getMessage());
-            throw new InternalErrorException("An internal error occured: Please contact the administrator.");
-        }
+        return processGetMethod(request, "getIDRequestCount",
+                () -> service.getIDRequestCount(startDateStr, endDateStr));
     }
 
-    @Path("tentativePatientCount")
+    @Path("metrics/tentativePatientCount")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response getTentativePatientCount(@Context HttpServletRequest request) {
-        Servers.instance.checkPermission(request, "getTentativePatientCount");
-        try {
-            long count = Persistor.instance.getTentativePatientCount();
-            return Response.ok().entity(count+"").build();
-        } catch (RuntimeException e) {
-            logger.fatal( "Persistence provider error. Can't get patientCount. Cause: " +  e.getMessage());
-            throw new InternalErrorException("An internal error occured: Please contact the administrator.");
-        }
+        return processGetMethod(request, "getTentativePatientCount", service::getTentativePatientCount);
     }
 
-    @Path("patientCount")
+    @Path("metrics/patientCount")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response getPatientCount(@Context HttpServletRequest request) {
-        Servers.instance.checkPermission(request, "getPatientCount");
-        try {
-            long count = Persistor.instance.getPatientCount();
-            return Response.ok().entity(count+"").build();
-        } catch (RuntimeException e) {
-            logger.fatal( "Persistence provider error. Can't get patientCount. Cause: " +  e.getMessage());
-            throw new InternalErrorException("An internal error occured: Please contact the administrator.");
-        }
+        return processGetMethod(request, "getPatientCount", service::getPatientCount);
     }
 
-    private Date parseDate(String dateAsString) {
+    /**
+     * Returns the cpu usage for the whole system. between 0.0 and 1.0
+     * @param request request information for HTTP servlet
+     * @return amount of memory in bytes
+     */
+    @Path("status/cpuInfo")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response getCpuInfo(@Context HttpServletRequest request) {
+        return processGetMethod(request, "getCpuInfo", service::getCpuInfo);
+    }
+
+    /**
+     * Return the amount of used memory usage in bytes
+     * @param request request information for HTTP servlet
+     * @return amount of memory in bytes
+     */
+    @Path("status/memoryInfo")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response getMemoryInfo(@Context HttpServletRequest request) {
+        return processGetMethod(request, "getMemoryInfo", service::getMemoryInfo);
+    }
+
+    private Response processGetMethod(HttpServletRequest request, String permission, Supplier<String> serviceFunction) {
+        Servers.instance.checkPermission(request, permission);
         try {
-            return Date.valueOf(LocalDate.parse(dateAsString));
-        } catch (DateTimeException exc) {
-            throw new IllegalArgumentException(exc);
-        } catch (NullPointerException exc) {
-            return null;
+            return Response.ok().entity(serviceFunction.get()).build();
+        } catch (PersistenceException e) {
+            throw new InternalErrorException(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            throw new ValidatorException(e.getMessage());
         }
     }
 }

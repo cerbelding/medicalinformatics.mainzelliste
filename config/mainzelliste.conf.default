@@ -346,7 +346,7 @@ extendedPermissionCheck = true
 
 # A passphrase used for authentication
 servers.0.apiKey =
-# Monitoring permissions: getPatientCount;getTentativePatientCount;getIDRequestCount
+# Monitoring permissions: getPatientCount;getTentativePatientCount;getIDRequestCount;getCpuInfo;getMemoryInfo
 servers.0.permissions = createSession;showSessionIds;createToken;tt_addPatient;tt_readPatients;tt_editPatient
 
 

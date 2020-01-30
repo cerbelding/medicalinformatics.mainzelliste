@@ -694,12 +694,13 @@
 					}
 				],
 				"url": {
-					"raw": "{{url}}/monitoring/patientCount",
+					"raw": "{{url}}/monitoring/metrics/patientCount",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"monitoring",
+						"metrics",
 						"patientCount"
 					]
 				}
@@ -737,12 +738,13 @@
 					}
 				],
 				"url": {
-					"raw": "{{url}}/monitoring/tentativePatientCount",
+					"raw": "{{url}}/monitoring/metrics/tentativePatientCount",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"monitoring",
+						"metrics",
 						"tentativePatientCount"
 					]
 				}
@@ -795,12 +797,13 @@
 					}
 				],
 				"url": {
-					"raw": "{{url}}/monitoring/IDRequestCount?start={{startDate}}&end={{endDate}}",
+					"raw": "{{url}}/monitoring/metrics/IDRequestCount?start={{startDate}}&end={{endDate}}",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"monitoring",
+						"metrics",
 						"IDRequestCount"
 					],
 					"query": [
@@ -812,6 +815,48 @@
 							"key": "end",
 							"value": "{{endDate}}"
 						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getCpuInfo",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "741596fd-6d5d-4cba-94b3-a6b7aeccbb0a",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"type": "text",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"type": "text",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/monitoring/status/cpuInfo",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"monitoring",
+						"status",
+						"cpuInfo"
 					]
 				}
 			},
@@ -838,6 +883,20 @@
 					""
 				]
 			}
+		}
+	],
+	"variable": [
+		{
+			"id": "fc2846eb-f027-431d-a9af-5b96e0b50e03",
+			"key": "idTypes",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"id": "fdf96831-9d64-4284-ad5d-8818ff99df7b",
+			"key": "tokenId",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"protocolProfileBehavior": {}
