@@ -25,29 +25,22 @@
  */
 package de.pseudonymisierung.mainzelliste.dto;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import javax.persistence.*;
-
 import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKey;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingMemory;
 import de.pseudonymisierung.mainzelliste.exceptions.IllegalUsedCharacterException;
-import org.apache.log4j.Logger;
-
-
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+import org.apache.log4j.Logger;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
+import javax.persistence.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Driver;
+import java.sql.Date;
+import java.sql.*;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -618,6 +611,60 @@ public enum Persistor {
         return patient.getIds();
 
     }
+
+	/**
+	 * return id request count
+	 * @return id request count
+	 */
+	public long getIDRequestCount(Date startDate, Date endDate) {
+		EntityManager em = emf.createEntityManager();
+		String whereClause = "";
+		if(startDate != null || endDate != null) {
+			whereClause = " where";
+		}
+		String startDateClause = "";
+		if(startDate != null) {
+			startDateClause = " r.timestamp >= : startDate";
+		}
+		String endDateClause = "";
+		if(endDate != null) {
+			endDateClause = (startDateClause.isEmpty()? "" : " and")+ " r.timestamp <= : endDate";
+		}
+
+		TypedQuery<Long> typedQuery = em.createQuery("select COUNT(r) from IDRequest r" + whereClause + startDateClause + endDateClause, Long.class);
+
+		if(!startDateClause.isEmpty()) {
+			typedQuery.setParameter("startDate", startDate, TemporalType.TIMESTAMP);
+		}
+		if(!endDateClause.isEmpty()) {
+			typedQuery.setParameter("endDate", endDate, TemporalType.TIMESTAMP);
+		}
+		long result = typedQuery.getSingleResult();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * return patient count
+	 * @return patient count
+	 */
+	public long getPatientCount() {
+		EntityManager em = emf.createEntityManager();
+		long result = em.createQuery("select COUNT(p) from Patient p", Long.class).getSingleResult();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * return tentative patient count
+	 * @return patient count
+	 */
+	public long getTentativePatientCount() {
+		EntityManager em = emf.createEntityManager();
+		long result = em.createQuery("select COUNT(i) from ID i where i.tentative = true", Long.class).getSingleResult();
+		em.close();
+		return result;
+	}
 
 	/** Get patient with duplicates. Works like
 	 * {@link Persistor#getDuplicates(ID)}, but the requested patient is
