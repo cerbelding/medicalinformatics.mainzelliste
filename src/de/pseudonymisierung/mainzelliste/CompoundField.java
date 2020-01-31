@@ -3,24 +3,24 @@
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Affero General Public License as published by the Free 
+ * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License 
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Additional permission under GNU GPL version 3 section 7:
  *
- * If you modify this Program, or any covered work, by linking or combining it 
- * with Jersey (https://jersey.java.net) (or a modified version of that 
- * library), containing parts covered by the terms of the General Public 
- * License, version 2.0, the licensors of this Program grant you additional 
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Jersey (https://jersey.java.net) (or a modified version of that
+ * library), containing parts covered by the terms of the General Public
+ * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
 package de.pseudonymisierung.mainzelliste;
@@ -43,26 +43,26 @@ import org.codehaus.jettison.json.JSONObject;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 
 /**
- * CompoundField represents a field that is composed of several subfields. For example, 
+ * CompoundField represents a field that is composed of several subfields. For example,
  * a name with several components can be modeled as CompoundField<PlainTextField>.
- *   
+ *
  * @param <T> The class of the components (a subclass of Field<?>).
  */
 @Entity
 @XmlRootElement
 public class CompoundField<T extends Field<?>> extends Field<List<T>> {
-	
+
 
 	/** The value of a compound field is a list of fields of a common type */
-	@OneToMany(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, 
+	@OneToMany(cascade={CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH},
 				fetch=FetchType.EAGER, targetEntity = Field.class)
 	private List<T> value;
-	
+
 	/**
 	 * Get the number of components. This is the number of Fields this CompoundField can hold, some
 	 * of which can be empty at a given time. To get the number of non-empty fields,
 	 * call getSize() - nEmptyFields.
-	 * 
+	 *
 	 * @return The number of components.
 	 */
 	public int getSize() {
@@ -78,19 +78,28 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 		super(value);
 	}
 
+	/** Construct a CompoundField from a string passed as input to the Mainzelliste
+	 *
+	 * See {@link #setValueFromInputString(String)}
+	 * @param s json string representation
+	 */
+	public CompoundField(String s) {
+		setValueFromInputString(s);
+	}
+
 	/** Construct a CompoundField with the given number of components.
-	 * 
+	 *
 	 * @param size The number of components.
 	 */
 	public CompoundField(int size)
-	{		
+	{
 		super(new Vector<T>(size));
 		for (int i = 0; i < size; i++)
 		{
 			value.add(null);
 		}
 	}
-	
+
 	@Override
 	public List<T> getValue()
 	{
@@ -108,11 +117,11 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 	}
 
 	@Override
-	public void setValue(List<T> value)	
+	public void setValue(List<T> value)
 	{
 		this.value = value;
 	}
-	
+
 	/**
 	 * Set value from a String. Required format: A JSON array whose member are JSON representations of fields,
 	 * as returned by {@link Field#toJSON()}.
@@ -135,7 +144,36 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 			throw new InternalErrorException();
 		}
 	}
-	
+
+	/**
+	 * Set value from the string passed as input to the Mainzelliste. This string represents a JSON array
+	 * similar to the output of {@link #getValueJSON()}, but the field values are not the internally used string
+	 * representations of the fields but the input strings.
+	 * For most fields these string representations are the same, but e.g. for {@link HashedField} the input string is
+	 * a bitstring whereas internally a Base64 encoding is used.
+	 * @param s A JSON array of the input fields
+	 */
+	private void setValueFromInputString(String s) {
+		try {
+			JSONArray arr = new JSONArray(s);
+			this.value = new LinkedList<T>();
+			for (int fieldInd = 0; fieldInd < arr.length(); fieldInd++) {
+				JSONObject obj = arr.getJSONObject(fieldInd);
+				@SuppressWarnings("unchecked")
+				Class<? extends Field<?>> fieldClass = (Class<? extends Field<?>>)Class.forName(obj.getString("class"));
+				@SuppressWarnings("unchecked")
+				T thisField = (T)Field.build(
+								fieldClass,
+								obj.getString("value")
+				);
+				this.value.add(thisField);
+			}
+		} catch (Exception e) {
+			Logger.getLogger(this.getClass()).error("Exception:", e);
+			throw new InternalErrorException();
+		}
+	}
+
 	/**
 	 * Set the i-th component.
 	 * @param i The index of the component to set.
@@ -143,9 +181,9 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 	 */
 	public void setValueAt(int i, T value)
 	{
-		this.value.set(i,  value);	
+		this.value.set(i,  value);
 	}
-	
+
 	/**
 	 * Get the number of currently empty components. If a component is empty is
 	 * determined by calling its isEmpty() method.
@@ -160,11 +198,11 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 		}
 		return result;
 	}
-	
+
 	@Override
 	/**
-	 * Check if this CompoundField is empty. 
-	 * @return true if all components of this CompoundField are empty. 
+	 * Check if this CompoundField is empty.
+	 * @return true if all components of this CompoundField are empty.
 	 */
 	public boolean isEmpty()
 	{
@@ -173,7 +211,7 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 		else
 			return false;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	/**
@@ -190,7 +228,7 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 		}
 		return new CompoundField<T>((List<T>) copies);
 	}
-	
+
 	@Override
 	public JSONArray getValueJSON() throws JSONException {
 		JSONArray obj = new JSONArray();
@@ -199,7 +237,7 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 		}
 		return obj;
 	}
-	
 
-	
+
+
 }

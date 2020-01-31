@@ -1,0 +1,210 @@
+[{
+    
+    "REQUESTS": [
+    {
+        "request": "post_session",
+        "id":0
+
+
+
+    },
+    {
+        "request": "add_patient_token",
+        "id": 1,
+        "url": {
+            "session": {
+                "id": 0
+            }
+        },
+        "body": {
+            "type": "addPatient",
+            "data": {
+                 "idtypes": ["pid"]
+            },
+            "ids":{
+                "extid": "123"
+            }
+        
+
+        }
+    },
+    {
+        "request": "add_patient",        
+        "id":2,
+        "token": {
+            "id":1
+        },
+        "data": {
+            "vorname": "Barry",
+            "nachname": "Sullivan",
+            "geburtsname": "Hogan",
+            "geburtsjahr": "1919",
+            "ort": "Zeitz",
+            "plz": "47754",
+            "geburtstag": "21",
+            "geburtsmonat": "09"
+        
+        }
+
+
+    },
+    {
+        "request": "add_patient_token",
+        "id": 3,
+        "url": {
+            "session": {
+                "id": 0
+            }
+        },
+        "body": {
+            "type": "addPatient",
+            "data": {
+                 "idtypes": ["pid", "intid"]
+            },
+            "ids":{
+                "extid": "123"
+            }
+        
+
+        }
+    },
+    {
+        "request": "add_patient",        
+        "id":4,
+        "token": {
+            "id":3
+        },
+        "data": {
+            "vorname": "Herman",
+            "nachname": "Erickson",
+            "geburtsname": "Ellison",
+            "geburtsjahr": "1919",
+            "ort": "Duncan",
+            "plz": "06450",
+            "geburtstag": "21",
+            "geburtsmonat": "09"
+        
+        }
+
+
+    },
+    {
+        "request": "add_patient_token",
+        "id": 5,
+        "url": {
+            "session": {
+                "id": 0
+            }
+        },
+        "body": {
+            "type": "addPatient",
+            "data": {
+                 "idtypes": ["pid", "intid"]
+            },
+            "ids":{
+                "extid": "123"
+            }
+        
+
+        }
+    },
+    {
+        "request": "add_patient",        
+        "id":6,
+        "token": {
+            "id":5
+        },
+        "data": {
+            "vorname": "Ashton",
+            "nachname": "Gregory",
+            "geburtsname": "Vaughn",
+            "geburtsjahr": "1919",
+            "ort": "Pike Creek",
+            "plz": "71916",
+            "geburtstag": "21",
+            "geburtsmonat": "01"
+        
+        }
+
+
+    },
+    {
+        "request": "add_patient_token",
+        "id": 7,
+        "url": {
+            "session": {
+                "id": 0
+            }
+        },
+        "body": {
+            "type": "addPatient",
+            "data": {
+                 "idtypes": ["pid", "intid"]
+            },
+            "ids":{
+                "extid": "123"
+            }
+        
+
+        }
+    },
+    {
+        "request": "add_patient",        
+        "id":8,
+        "token": {
+            "id":7
+        },
+        "data": {
+            "vorname": "Murphy",
+            "nachname": "Mcclain",
+            "geburtsname": "Oliver",
+            "geburtsjahr": "1919",
+            "ort": "Giurdignano",
+            "plz": "637234",
+            "geburtstag": "01",
+            "geburtsmonat": "08"
+        
+        }
+
+
+    },
+    {
+        "request": "get_allPatientIds_token",
+        "id": 9,
+        "url": {
+            "session": {
+                "id": 0
+            }
+        },
+        "body": {
+            "type": "readPatients",
+            "data": {
+                       "searchIds": [
+                            {
+                                "idType":"pid",
+                                "idString":"*"
+                            }
+                        ],
+            "resultIds":["pid"]
+            }
+        
+        }
+    
+    },
+
+
+
+    
+    {
+        "request": "get_allPatientIds",
+        "id":10,
+        "token": {
+            "id":9
+        }
+        
+
+    }
+    ]
+}]
+    
+

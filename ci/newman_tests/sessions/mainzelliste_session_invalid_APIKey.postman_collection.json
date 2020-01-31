@@ -1,0 +1,73 @@
+{
+	"info": {
+		"_postman_id": "7dc063fe-8903-4de9-bcc8-41b5ac2c3192",
+		"name": "mainzelliste_session_invalid_APIKey",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NEW_SESSION - Sitzung anlegen -> failed authorization invalid",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "bc0fd897-1662-4d59-823e-eb08c2740b50",
+						"exec": [
+							"console.log(\"New Session\");",
+							"",
+							"",
+							"",
+							"pm.test(\"Check ResponseCode\", function(){",
+							"     pm.response.to.have.status(\"Unauthorized\");",
+							"    ",
+							"});",
+							"",
+							"pm.test(\"Check ResponseBody\", function(){",
+							"     pm.response.to.have.body(\"Please supply your API key in HTTP header field 'mainzellisteApiKey'.\");",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "THISISNOVALIDAPIKEY"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"id": "01c36f77-66ac-4008-b365-39ca64c8cc43",
+			"key": "sessionId",
+			"value": "e48ed497-f209-4742-807c-83cac7414286",
+			"type": "string"
+		}
+	],
+	"protocolProfileBehavior": {}
+}

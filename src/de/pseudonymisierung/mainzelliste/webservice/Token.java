@@ -3,24 +3,24 @@
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Affero General Public License as published by the Free 
+ * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License 
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Additional permission under GNU GPL version 3 section 7:
  *
- * If you modify this Program, or any covered work, by linking or combining it 
- * with Jersey (https://jersey.java.net) (or a modified version of that 
- * library), containing parts covered by the terms of the General Public 
- * License, version 2.0, the licensors of this Program grant you additional 
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Jersey (https://jersey.java.net) (or a modified version of that
+ * library), containing parts covered by the terms of the General Public
+ * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
 package de.pseudonymisierung.mainzelliste.webservice;
@@ -32,6 +32,8 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Response.Status;
 
+import de.pseudonymisierung.mainzelliste.Servers;
+import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -65,24 +67,28 @@ public class Token {
 	 */
 	private Map<String, ?> data;
 
-	/** 
-	 * Create emtpy instance. Used internally only. 
+	private String parentSessionId;
+
+	private String parentServerName;
+	/**
+	 * Create emtpy instance. Used internally only.
 	 */
 	Token() {
+	    this.id = UUID.randomUUID().toString();
 	}
 
 	/**
 	 * Create token with the given id and type. Initializes empty container for
 	 * token data. Performs no checking if the given token id is unique and if
 	 * the provided token type is known.
-	 * 
+	 *
 	 * @param tid
 	 *            The token id.
 	 * @param type
 	 *            The token type.
 	 */
-	public Token(String tid, String type) {
-		this.id = tid;
+	public Token(String type) {
+		this.id = UUID.randomUUID().toString();
 		this.type = type;
 		this.data = new HashMap<String, Object>();
 	}
@@ -90,10 +96,10 @@ public class Token {
 	/**
 	 * Check if a token is valid, i.e. it has a known type and the data items
 	 * for the specific type have the correct format.
-	 * 
+	 *
 	 * @param apiVersion
 	 *            API version to use for the check.
-	 * 
+	 *
 	 * @throws InvalidTokenException
 	 *             if the format is incorrect. A specific error message is
 	 *             returned to the client with status code 400 (bad request).
@@ -106,6 +112,8 @@ public class Token {
 			this.checkReadPatients();
 		else if (this.type.equals("editPatient"))
 			this.checkEditPatient(apiVersion);
+		else if (this.type.equals("deletePatient"));
+		else if (this.type.equals("checkMatch"));
 		else
 			throw new InvalidTokenException("Token type " + this.type
 					+ " unknown!");
@@ -116,7 +124,7 @@ public class Token {
 
 	/**
 	 * Check if this token has the expected type.
-	 * 
+	 *
 	 * @param expected
 	 *            The expected token type.
 	 * @throws InvalidTokenException
@@ -130,7 +138,7 @@ public class Token {
 
 	/**
 	 * Get the unique id of this token.
-	 * 
+	 *
 	 * @return The token id.
 	 */
 	public String getId() {
@@ -139,7 +147,7 @@ public class Token {
 
 	/**
 	 * Set the unique id of this token. Performs no check of uniqueness.
-	 * 
+	 *
 	 * @param id
 	 *            The new token id.
 	 */
@@ -149,7 +157,7 @@ public class Token {
 
 	/**
 	 * Get the URI of this token.
-	 * 
+	 *
 	 * @return The token URI.
 	 */
 	public URI getURI() {
@@ -158,7 +166,7 @@ public class Token {
 
 	/**
 	 * Set the URI of this token.
-	 * 
+	 *
 	 * @param uri
 	 *            The new token URI.
 	 */
@@ -168,7 +176,7 @@ public class Token {
 
 	/**
 	 * Get the type of this token, e.g. "addPatient", "editPatient" etc.
-	 * 
+	 *
 	 * @return The token type.
 	 */
 	public String getType() {
@@ -177,7 +185,7 @@ public class Token {
 
 	/**
 	 * Set the type of this token, e.g. "addPatient", "editPatient" etc.
-	 * 
+	 *
 	 * @param type
 	 *            The new token type.
 	 */
@@ -187,7 +195,7 @@ public class Token {
 
 	/**
 	 * Get the data container of this token.
-	 * 
+	 *
 	 * @return A map where keys are the names of data items and values the data
 	 *         items. Data items can be map or collection types again.
 	 */
@@ -198,7 +206,7 @@ public class Token {
 	/**
 	 * Get a particular data element by its key. This method is preferable to
 	 * getData().get() as it handles the case data==null safely.
-	 * 
+	 *
 	 * @param item
 	 *            The name of the data item to get.
 	 * @return The requested data item. Null if no such item exists or if no
@@ -214,7 +222,7 @@ public class Token {
 	/**
 	 * Get a particular data element by its key. Assumes that the requested data
 	 * item is a list.
-	 * 
+	 *
 	 * @param item
 	 *            The name of the data item to get.
 	 * @return The requested data item. Null if no such item exists or if no
@@ -231,7 +239,7 @@ public class Token {
 
 	/**
 	 * Check whether the token has the given data item.
-	 * 
+	 *
 	 * @param item
 	 *            The name of the data item to check.
 	 * @return true if a data item with the given name exists.
@@ -243,7 +251,7 @@ public class Token {
 	/**
 	 * Get a particular data element by its key. Assumes that the requested data
 	 * item is a map.
-	 * 
+	 *
 	 * @param item
 	 *            The name of the data item to get.
 	 * @return The requested data item. Null if no such item exists or if no
@@ -261,7 +269,7 @@ public class Token {
 
 	/**
 	 * Set the data container to the provided map.
-	 * 
+	 *
 	 * @param data
 	 *            The new data container, copied by reference.
 	 */
@@ -285,7 +293,7 @@ public class Token {
 
 	/**
 	 * Check whether this is a valid addPatient token.
-	 * 
+	 *
 	 * @param apiVersion
 	 *            The API version to use.
 	 */
@@ -309,20 +317,11 @@ public class Token {
 
 		// Check callback URL
 		String callback = this.getDataItemString("callback");
-		if (callback != null && !callback.equals("")) {
-			if (!Pattern.matches(
-					Config.instance.getProperty("callback.allowedFormat"),
-					callback)) {
-				throw new InvalidTokenException("Callback address " + callback
-						+ " does not conform to allowed format!");
-			}
-			try {
-				@SuppressWarnings("unused")
-				URI callbackURI = new URI(callback);
-			} catch (URISyntaxException e) {
-				throw new InvalidTokenException("Callback address " + callback
-						+ " is not a valid URI!");
-			}
+		if (callback != null && !callback.equals("") && Servers.instance.hasServerPermission(getParentServerName(), "callback"))
+			MainzellisteCallbackUtil.checkCallbackUrl(callback);
+		String redirect = this.getDataItemString("redirect");
+		if (redirect != null && !redirect.equals("") && Servers.instance.hasServerPermission(getParentServerName(), "redirect")){
+			// @Florian paste code here
 		}
 
 		// Check redirect URL
@@ -400,12 +399,17 @@ public class Token {
 			}
 			checkIdType(idType);
 
-			if (!Persistor.instance.patientExists(idType, idString)) {
+			if (!Persistor.instance.patientExists(idType, idString) && !idString.equals("*")) {
 				throw new InvalidTokenException(
 						"No patient found with provided " + idType + " '"
 								+ idString + "'!");
 			}
 		}
+
+		// Check callback URL
+		String callback = this.getDataItemString("callback");
+		if (callback != null && !callback.equals(""))
+			MainzellisteCallbackUtil.checkCallbackUrl(callback);
 
 		// Check fields
 		checkResultFields();
@@ -417,19 +421,23 @@ public class Token {
 	 */
 	private void checkResultFields() {
 		Set<String> fieldList = Config.instance.getFieldKeys();
-			try {
-				List<?> fields = this.getDataItemList("resultFields");
-				for (Object thisField : fields) {
+		try {
+			List<?> fields = this.getDataItemList("resultFields");
+
+			if (fields == null)
+				return; // Allow omitting resultFields (same semantics as providing empty array).
+
+			for (Object thisField : fields) {
 				if (!fieldList.contains(thisField.toString()))
-						throw new InvalidTokenException("Field '" + thisField
-								+ "' provided in field list is unknown!");
-				}
-			} catch (ClassCastException e) {
-				throw new InvalidTokenException(
-					"Illegal format for data item 'resultFields'! "
-								+ "Please provide a list of field names.");
+					throw new InvalidTokenException("Field '" + thisField
+							+ "' provided in field list is unknown!");
 			}
+		} catch (ClassCastException e) {
+			throw new InvalidTokenException(
+					"Illegal format for data item 'resultFields'! "
+							+ "Please provide a list of field names.");
 		}
+	}
 
 	/**
 	 * Check if "resultIds" contains only valid ID types.
@@ -438,11 +446,15 @@ public class Token {
 		Set<String> definedIdTypes = new HashSet<String>(Arrays.asList(IDGeneratorFactory.instance.getIDTypes()));
 		try {
 			List<?> resultIdTypes = this.getDataItemList("resultIds");
+
+			if (resultIdTypes == null)
+				return; // Allow omitting resultIds (same semantics as providing empty array).
+
 			for (Object thisIdType : resultIdTypes) {
 				if (!definedIdTypes.contains(thisIdType.toString()))
 					throw new InvalidTokenException("ID type '" + thisIdType
 							+ "' provided in ID type list is unknown!");
-	}
+			}
 		} catch (ClassCastException e) {
 			throw new InvalidTokenException(
 					"Illegal format for data item 'resultIds'! "
@@ -480,7 +492,7 @@ public class Token {
 
 	/**
 	 * Check that the provided list contains only valid id types.
-	 * 
+	 *
 	 * @param listIdTypes
 	 *            The list of ID types to check.
 	 * @throws InvalidTokenException
@@ -512,7 +524,7 @@ public class Token {
 
 	/**
 	 * Check if an ID with the given type is configured.
-	 * 
+	 *
 	 * @param idType
 	 *            The name of the ID type to check.
 	 * @throws InvalidTokenException
@@ -528,7 +540,7 @@ public class Token {
 
 	/**
 	 * Get this token as JSON.
-	 * 
+	 *
 	 * @param apiVersion
 	 *            The API version to use.
 	 * @return A JSON representation of the token.
@@ -552,6 +564,22 @@ public class Token {
 			throw new Error(e);
 		}
 	}
+
+    public String getParentSessionId() {
+        return parentSessionId;
+    }
+
+    public void setParentSessionId(String parentSessionId) {
+        this.parentSessionId = parentSessionId;
+    }
+
+    public String getParentServerName() {
+        return parentServerName;
+    }
+
+    public void setParentServerName(String parentServerName) {
+        this.parentServerName = parentServerName;
+    }
 
 	private void checkAuditTrail() {
 		if (!this.getData().containsKey("auditTrail"))

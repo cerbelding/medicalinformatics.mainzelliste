@@ -44,11 +44,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import org.apache.openjpa.lib.log.Log;
 
 /**
  * Keeps track of servers, i.e. each communication partner that is not a user.
@@ -64,6 +67,8 @@ public enum Servers {
 	 * Represents one registered server.
 	 */
 	class Server {
+
+		String name;
 		/** The apiKey by which this server authenticates itself. */
 		String apiKey;
 		/** The permissions of this server. */
@@ -108,17 +113,19 @@ public enum Servers {
 		for (int i = 0; ; i++)
 		{
 			if (!props.containsKey("servers." + i + ".apiKey") ||
-				!props.containsKey("servers." + i + ".permissions") ||
-				!props.containsKey("servers." + i + ".allowedRemoteAdresses"))
+				!props.containsKey("servers." + i + ".permissions"))
 				break;
 
 			Server s = new Server();
-			s.apiKey = props.getProperty("servers." + i + ".apiKey");
+			s.name = "server" + i;
+			s.apiKey = props.getProperty("servers." + i + ".apiKey").trim();
 			
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
 			s.permissions = new HashSet<String>(Arrays.asList(permissions));
-			
-			String allowedRemoteAdresses[] = props.getProperty("servers." + i + ".allowedRemoteAdresses").split("[;,]");
+
+			String allowedRemoteAdressesString = props.getProperty("servers." + i + ".allowedRemoteAdresses");
+			String allowedRemoteAdresses[] = (allowedRemoteAdressesString != null) ?  allowedRemoteAdressesString.split("[;,]") : new String[]{"127.0.0.1", "0:0:0:0:0:0:0:1"};
+			logger.info("No AllowedRemoteAddresses are specified for servers." + i + ". Allowing localhost as default.");
 			s.allowedRemoteAdressRanges = new LinkedList<SubnetUtils>();
 			s.allowedRemoteAdresses = new HashSet<String>();
 			for (String thisAddress : allowedRemoteAdresses) {
@@ -134,9 +141,13 @@ public enum Servers {
 			servers.put(s.apiKey, s);
 		}
 			
+		if(servers.size() == 0) {
+			logger.error("No servers added. Is your config complete?");
+		}
+
 		if (Config.instance.getProperty("debug") == "true")
 		{
-			Token t = new Token("4223", "addPatient");
+			Token t = new AddPatientToken();
 			tokensByTid.put(t.getId(), t);
 			//set localhost for debugging
 			IPsByTid.put(t.getId(), "127.0.0.1");
@@ -186,9 +197,10 @@ public enum Servers {
 	 * 
 	 * @return The new session object.
 	 */
-	public Session newSession() {
+	public Session newSession(String serverName) {
 		String sid = UUID.randomUUID().toString();
 		Session s = new Session(sid);
+		s.setParentServerName(serverName);
 		synchronized (sessions) {
 			sessions.put(sid, s);
 		}
@@ -281,6 +293,7 @@ public enum Servers {
 	 * @param permission
 	 *            The permission to check, e.g. "addPatient".
 	 */
+	//TODO: This function is not only checking permissions. it's also adding the configured server permission to a session. The function should have another name and function should be separated.
 	public void checkPermission(HttpServletRequest req, String permission) {
 		@SuppressWarnings("unchecked")
 		Set<String> perms = (Set<String>) req.getSession(true).getAttribute("permissions");
@@ -292,7 +305,7 @@ public enum Servers {
 			Server server = servers.get(apiKey);
 			
 			if(server == null){
-				logger.info("No server found with provided API key " + apiKey);
+				logger.info("No server found with provided API key \"" + apiKey + "\"");
 				throw new WebApplicationException(Response
 						.status(Status.UNAUTHORIZED)
 						.entity("Please supply your API key in HTTP header field 'mainzellisteApiKey'.")
@@ -323,11 +336,15 @@ public enum Servers {
 			}
 
 			perms = server.permissions;
+
 			req.getSession().setAttribute("permissions", perms);
+			req.getSession().setAttribute("serverName", getServerNameForApiKey(apiKey));
+
+
 			logger.info("Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(perms.toArray()) + ".");
 		}
 		
-		if(!perms.contains(permission)){ // Check permission
+		if(!perms.contains(permission) && perms.stream().noneMatch(p -> p.matches(permission + ".*}"))){ // Check permission
 			logger.info("Access from " + req.getRemoteHost() + " is denied since they lack permission " + permission + ".");
 			throw new WebApplicationException(Response
 					.status(Status.UNAUTHORIZED)
@@ -356,6 +373,7 @@ public enum Servers {
 		getSession(sessionId).addToken(t);
 
 		synchronized (tokensByTid) {
+			// register token in server
 			tokensByTid.put(t.getId(), t);
 			IPsByTid.put(t.getId(), remoteAddress);
 		}
@@ -552,4 +570,36 @@ public enum Servers {
 	public int getRequestMinorApiVersion(HttpServletRequest req) {
 		return this.getRequestApiVersion(req).minorVersion;
 	}
+
+	public String getServerNameForApiKey(String apiKey){
+		Server server = servers.get(apiKey);
+		return server.name;
+
+	}
+
+	public boolean hasServerPermission(String serverName, String permission){
+
+		Server server = servers.get(getApiKeyForServerName(serverName));
+		if(server.permissions.contains(permission)) {
+			return true;
+		}
+		return false;
+	}
+
+	public Set<String> getServerPermissionsForServerName(String serverName){
+		Server server = servers.get(getApiKeyForServerName(serverName));
+		return server.permissions;
+	}
+
+	public String getApiKeyForServerName(String serverName){
+
+		for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
+			if(serverName.equals(entry.getValue().name)){
+				return entry.getKey();
+			}
+		}
+
+		return "Server not found";
+	}
+
 }

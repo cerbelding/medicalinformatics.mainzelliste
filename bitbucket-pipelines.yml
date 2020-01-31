@@ -1,0 +1,39 @@
+image: python:3.7.3
+
+pipelines:
+  default:
+    - step:
+        script:
+          - pip3 install docker
+          - pip3 install docker-compose
+          - docker build -t newman_html_report -f ci/Dockerfile.newman ./ci
+          - ls -ll ./ci
+          - ls -ll ./ci/newman_mainzelliste_configs
+          - cd ci
+          - ./executeAllNewmanContainerTests.sh
+          - cd ..
+          - mkdir -p newman/test-reports/junit/
+          - cp -a ci/test_results/. ./newman/test-reports/junit/
+          - ls -ll ./ci/test_results/
+          - ls -ll ./newman/test-reports/junit/
+        artifacts:
+          - ci/test_results/**
+
+
+
+
+
+options:
+  docker: true
+
+
+    #   - step:
+ #       name: docker-compose up and down
+ #       script:
+ #         - apt-get update
+ #         # Add python pip and bash
+ #         - apt-get -y install python3-minimal python3-pip
+          # Install docker-compose via pip
+ #         - pip3 install docker-compose
+ #         - docker-compose -f docker-compose.newman.yml up
+ #         - docker-compose down

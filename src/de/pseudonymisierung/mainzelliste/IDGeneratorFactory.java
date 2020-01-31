@@ -25,12 +25,15 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
@@ -155,12 +158,41 @@ public enum IDGeneratorFactory {
 	 * @return The set of generated IDs.
 	 */
 	public Set<ID> generateIds() {
+		return generateIds(this.generators.keySet());
+	}
+
+	/**
+	 * Generates a set of IDs for a new patient by calling the appropriate ID
+	 * generator for every requested ID type. For external IDs no values are
+	 * generated.
+	 * 
+	 * @param idTypes
+	 *            Types of the IDs to generate. Duplicates are removed from this
+	 *            parameter, i.e. not more than one ID per ID type will be
+	 *            generated.
+	 * @return The set of generated IDs.
+	 * @throws NullPointerException if the specified collection is null
+	 */
+	public Set<ID> generateIds(Collection<String> idTypes) {
+		HashSet<String> idTypesDedup = new HashSet<String>(idTypes);
 		HashSet<ID> ids = new HashSet<ID>();
-		for (String idType : this.generators.keySet()) {
+		for (String idType : idTypesDedup) {
 			if (!this.generators.get(idType).isExternal())
-			ids.add(this.generators.get(idType).getNext());
+				ids.add(this.generators.get(idType).getNext());
 		}
 		return ids;
+	}
+
+	/**
+	 * Get all {@link IDGeneratorMemory}s
+	 * @return A set of id generator memories
+	 */
+	public Set<IDGeneratorMemory> getGeneratorMemories() {
+		return this.generators.values().stream()
+						.map(IDGenerator::getMemory)
+						.filter(Optional::isPresent)
+						.map(Optional::get)
+						.collect(Collectors.toSet());
 	}
 
 	/**
@@ -227,7 +259,7 @@ public enum IDGeneratorFactory {
 		if (this.getFactory(idType) == null)
 			throw new InvalidIDException(String.format(
 					"No ID type %s defined!", idType));
-		
+
 		return this.getFactory(idType).buildId(idString);
 	}
 }
