@@ -335,7 +335,7 @@ public enum Config {
 	 */
 	public boolean auditTrailIsOn() {
 		String audittrail = this.props.getProperty("gcp.audittrail");
-		return (audittrail.trim() != null && audittrail.equals("true"));
+		return (audittrail != null && audittrail.equals("true"));
 	}
 
 	/**

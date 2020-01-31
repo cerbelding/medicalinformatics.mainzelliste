@@ -4,6 +4,7 @@ import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerResponse;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
 import de.pseudonymisierung.mainzelliste.Servers;
+import de.pseudonymisierung.mainzelliste.webservice.Token;
 import org.apache.log4j.Logger;
 
 public class DeleteTokenFilter implements ContainerResponseFilter {
@@ -12,13 +13,21 @@ public class DeleteTokenFilter implements ContainerResponseFilter {
 
     @Override
     public ContainerResponse filter(ContainerRequest request, ContainerResponse response) {
-        logger.info("DeleteTokenFilter");
         // Tokens are only used in patient resource
         if(request.getAbsolutePath().toString().contains("/patients")){
             if(100 <= response.getStatus() && response.getStatus() < 400){
                 String tokenId = getTokenId(request);
-                logger.info("Deleting Token " + tokenId + " from Mainzelliste");
-                Servers.instance.deleteToken(tokenId);
+                logger.info("Checking if token with id " + tokenId + " can be be deleted ...");
+                Token token = Servers.instance.getTokenByTid(tokenId);
+                if(token != null){
+                    int remainingUses = token.decreaseRemainingUses();
+                    if(remainingUses > 0){
+                        logger.info("Token with id " + token.getId() + " should not be deleted. Remaining uses are: " + remainingUses);
+                    } else {
+                        logger.info("Deleting Token with id " + token.getId() + " from Mainzelliste");
+                        Servers.instance.deleteToken(token.getId());
+                    }
+                }
             }
         }
         return response;

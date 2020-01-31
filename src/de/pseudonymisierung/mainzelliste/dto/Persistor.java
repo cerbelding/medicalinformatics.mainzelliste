@@ -40,6 +40,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -610,6 +611,60 @@ public enum Persistor {
         return patient.getIds();
 
     }
+
+	/**
+	 * return id request count
+	 * @return id request count
+	 */
+	public long getIDRequestCount(Date startDate, Date endDate) {
+		EntityManager em = emf.createEntityManager();
+		String whereClause = "";
+		if(startDate != null || endDate != null) {
+			whereClause = " where";
+		}
+		String startDateClause = "";
+		if(startDate != null) {
+			startDateClause = " r.timestamp >= : startDate";
+		}
+		String endDateClause = "";
+		if(endDate != null) {
+			endDateClause = (startDateClause.isEmpty()? "" : " and")+ " r.timestamp <= : endDate";
+		}
+
+		TypedQuery<Long> typedQuery = em.createQuery("select COUNT(r) from IDRequest r" + whereClause + startDateClause + endDateClause, Long.class);
+
+		if(!startDateClause.isEmpty()) {
+			typedQuery.setParameter("startDate", startDate, TemporalType.TIMESTAMP);
+		}
+		if(!endDateClause.isEmpty()) {
+			typedQuery.setParameter("endDate", endDate, TemporalType.TIMESTAMP);
+		}
+		long result = typedQuery.getSingleResult();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * return patient count
+	 * @return patient count
+	 */
+	public long getPatientCount() {
+		EntityManager em = emf.createEntityManager();
+		long result = em.createQuery("select COUNT(p) from Patient p", Long.class).getSingleResult();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * return tentative patient count
+	 * @return patient count
+	 */
+	public long getTentativePatientCount() {
+		EntityManager em = emf.createEntityManager();
+		long result = em.createQuery("select COUNT(i) from ID i where i.tentative = true", Long.class).getSingleResult();
+		em.close();
+		return result;
+	}
 
 	/**
 	 * Persist the given AuditTrail instance.

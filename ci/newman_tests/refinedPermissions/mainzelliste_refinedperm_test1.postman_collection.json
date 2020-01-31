@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "6f30aeef-571a-4247-8416-b1e79f281920",
+		"_postman_id": "75da7ecb-090c-492f-87fb-f054f6166cd9",
 		"name": "mainzelliste_refinedperm_test1",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -196,7 +196,7 @@
 							"",
 							"pm.test(\"response have not in server permissions string\", function() {",
 							"    var localBody =  pm.response.text();",
-							"    pm.expect(localBody).to.have.string('data.nichtErlaubt:nicht erlaubt is not allowed to request!');",
+							"    pm.expect(localBody).to.have.string('data.nichterlaubt:nicht erlaubt is not allowed to request!');",
 							"});",
 							"     ",
 							"    ",
