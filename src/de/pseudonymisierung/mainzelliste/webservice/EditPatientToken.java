@@ -49,7 +49,11 @@ public class EditPatientToken extends Token {
 	 * Create Token with type "editPatient"
 	 */
 	public EditPatientToken(){
-		super("editPatient");
+		this(1);
+	}
+
+	public EditPatientToken(int allowedUses) {
+		super("editPatient", allowedUses);
 	}
 
 	/**

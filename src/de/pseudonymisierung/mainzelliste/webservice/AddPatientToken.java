@@ -25,7 +25,11 @@ public class AddPatientToken extends Token {
 	 * Create a Token with type "addPatient".
 	 */
 	public AddPatientToken() {
-		super("addPatient");
+		this(1);
+	}
+
+	public AddPatientToken(int allowedUses) {
+		super("addPatient", allowedUses);
 		this.fields = new HashMap<>();
 		this.ids = new HashMap<>();
 		this.requestedIdTypes = new HashSet<>();
