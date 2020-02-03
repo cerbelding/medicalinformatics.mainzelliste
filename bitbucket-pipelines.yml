@@ -16,20 +16,6 @@ pipelines:
           - cp -a ci/test_results/. ./newman/test-reports/junit/
           - ls -ll ./ci/test_results/
           - ls -ll ./newman/test-reports/junit/
-          - pipe: snyk/snyk-scan:0.2.0
-            variables:
-              SNYK_TOKEN: "$snyktoken"
-              LANGUAGE: "docker"
-              IMAGE_NAME: "newman_html_report" # Only required if LANGUAGE set to "docker"
-              # PROTECT: "<boolean>" # Optional.
-              # DONT_BREAK_BUILD: "<boolean>" # Optional.
-              # MONITOR: "<boolean>" # Optional.
-              # SEVERITY_THRESHOLD: "<low|medium|high>" # Optional.
-              # ORGANIZATION: "<string>" # Optional.
-              # PROJECT_FOLDER: "<string>" # Optional.
-              # TARGET_FILE: "<string>" # Optional.
-              # EXTRA_ARGS: "<string>" # Optional.
-              # DEBUG: "<boolean>" # Optional.
         artifacts:
           - ci/test_results/**
 
