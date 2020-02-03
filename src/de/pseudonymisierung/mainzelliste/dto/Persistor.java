@@ -38,9 +38,9 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
 import javax.persistence.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Date;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -300,7 +300,7 @@ public enum Persistor {
 	 */
 	public synchronized List<Set<ID>> getAllIds() {
 		List<Patient> patients = this.getPatients();
-		List<Set<ID>> ret = new LinkedList<Set<ID>>();
+		List<Set<ID>> ret = new LinkedList<>();
 		for (Patient p : patients) {
 			Set<ID> thisPatientIds = p.getIds();
 			this.em.detach(thisPatientIds);
@@ -662,6 +662,34 @@ public enum Persistor {
 	public long getTentativePatientCount() {
 		EntityManager em = emf.createEntityManager();
 		long result = em.createQuery("select COUNT(i) from ID i where i.tentative = true", Long.class).getSingleResult();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * Persist the given AuditTrail instance.
+	 *
+	 * @param at The audit trail record built by the caller.
+	 */
+	public synchronized void createAuditTrail(AuditTrail at) {
+		em.getTransaction().begin();
+		em.persist(at);
+		em.getTransaction().commit();
+		em.refresh(at);
+	}
+
+	public synchronized List<AuditTrail> getAuditTrail(String idString, String idType) {
+		EntityManager em = emf.createEntityManager();
+		TypedQuery<AuditTrail> q = em.createQuery("SELECT a FROM AuditTrail a WHERE a.idValue = :idString AND a.idType = :idType", AuditTrail.class);
+		q.setParameter("idString", idString);
+		q.setParameter("idType", idType);
+		List<AuditTrail> result = q.getResultList();
+
+		if (result.isEmpty()) {
+			em.close();
+			return null;
+		}
+
 		em.close();
 		return result;
 	}

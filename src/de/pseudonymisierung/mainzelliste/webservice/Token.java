@@ -45,6 +45,7 @@ import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
+import javax.ws.rs.core.Response;
 
 /**
  * A temporary "ticket" to realize authorization and/or access to a resource.
@@ -137,6 +138,9 @@ public class Token {
 		else
 			throw new InvalidTokenException("Token type " + this.type
 					+ " unknown!");
+		if (Config.instance.auditTrailIsOn()) {
+			this.checkAuditTrail();
+		}
 	}
 
 	/**
@@ -441,10 +445,10 @@ public class Token {
 		Set<String> fieldList = Config.instance.getFieldKeys();
 		try {
 			List<?> fields = this.getDataItemList("resultFields");
-			
+
 			if (fields == null)
 				return; // Allow omitting resultFields (same semantics as providing empty array).
-			
+
 			for (Object thisField : fields) {
 				if (!fieldList.contains(thisField.toString()))
 					throw new InvalidTokenException("Field '" + thisField
@@ -467,7 +471,7 @@ public class Token {
 
 			if (resultIdTypes == null)
 				return; // Allow omitting resultIds (same semantics as providing empty array).
-			
+
 			for (Object thisIdType : resultIdTypes) {
 				if (!definedIdTypes.contains(thisIdType.toString()))
 					throw new InvalidTokenException("ID type '" + thisIdType
@@ -616,4 +620,35 @@ public class Token {
     public void setParentServerName(String parentServerName) {
         this.parentServerName = parentServerName;
     }
+
+	private void checkAuditTrail() {
+		if (!this.getData().containsKey("auditTrail"))
+			throw new InvalidTokenException("Invalid Token object, audtiTrail key is not specified", Response.Status.BAD_REQUEST);
+
+		// check format
+		Map<String,?> auditTrail;
+		try {
+			auditTrail = this.getDataItemMap("auditTrail");
+		} catch (ClassCastException e) {
+			throw new InvalidTokenException(
+					"Field 'auditTrail' has wrong format. Expected map of key/value pairs, received: "
+							+ this.getData().get("auditTrail"));
+		}
+
+		// check keys
+		if (   auditTrail == null ||
+				!auditTrail.keySet().contains("username") ||
+				!auditTrail.keySet().contains("remoteSystem") ||
+				!auditTrail.keySet().contains("reasonForChange"))
+			throw new InvalidTokenException(
+					"Field 'auditTrail' has wrong format. One or more keys are missing, received: "
+							+ this.getData().get("auditTrail"));
+
+		// check for null or missing values
+		if (    auditTrail.values().contains(null) || auditTrail.values().contains(""))
+			throw new InvalidTokenException(
+					"Field 'auditTrail' has wrong format. One or more values are missing, received: "
+							+ this.getData().get("auditTrail"));
+	}
+
 }

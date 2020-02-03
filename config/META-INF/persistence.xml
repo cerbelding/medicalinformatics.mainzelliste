@@ -18,6 +18,7 @@
     <class>de.pseudonymisierung.mainzelliste.matcher.MatchResult</class>
     <class>de.pseudonymisierung.mainzelliste.blocker.BlockingKey</class>
     <class>de.pseudonymisierung.mainzelliste.blocker.BlockingMemory</class>
+    <class>de.pseudonymisierung.mainzelliste.AuditTrail</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <!-- See /etc/mainzelliste/default.conf for database access config. -->
   </persistence-unit>

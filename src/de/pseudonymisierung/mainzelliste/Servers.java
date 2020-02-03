@@ -88,6 +88,8 @@ public enum Servers {
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
 	/** All currently valid tokens, identified by their token ids. */
 	private final Map<String, Token> tokensByTid = new HashMap<String, Token>();
+	/** All Remote IPs with valid tokens by token ids. */
+	private final Map<String, String> IPsByTid = new HashMap<String, String>();
 
 	/** Time of inactivity after which a session is invalidated. */
 	private final long sessionTimeout;
@@ -147,6 +149,8 @@ public enum Servers {
 		{
 			Token t = new AddPatientToken();
 			tokensByTid.put(t.getId(), t);
+			//set localhost for debugging
+			IPsByTid.put(t.getId(), "127.0.0.1");
 		}
 
 		// Read session timeout (maximum time a session can be inactive) from
@@ -244,6 +248,7 @@ public enum Servers {
 
 			for (Token t : s.getTokens()) {
 				tokensByTid.remove(t.getId());
+				IPsByTid.remove(t.getId());
 			}
 			s.deleteAllTokens();
 			sessions.remove(sid);
@@ -356,8 +361,10 @@ public enum Servers {
 	 *            Id of the session in which to register the token.
 	 * @param t
 	 *            The token to register.
+	 * @param remoteAddress
+	 *            The IP address of the system trying to register this token.
 	 */
-	public void registerToken(String sessionId, Token t) {
+	public void registerToken(String sessionId, Token t, String remoteAddress) {
 		Session s = getSession(sessionId);
 		String tid = UUID.randomUUID().toString();
 		t.setId(tid);
@@ -368,6 +375,7 @@ public enum Servers {
 		synchronized (tokensByTid) {
 			// register token in server
 			tokensByTid.put(t.getId(), t);
+			IPsByTid.put(t.getId(), remoteAddress);
 		}
 	}
 
@@ -409,6 +417,7 @@ public enum Servers {
 
 		synchronized (tokensByTid) {
 			tokensByTid.remove(tokenId);
+			IPsByTid.remove(tokenId);
 		}
 	}
 
@@ -436,6 +445,19 @@ public enum Servers {
 	public Token getTokenByTid(String tokenId) {
 		synchronized (tokensByTid) {
 			return tokensByTid.get(tokenId);
+		}
+	}
+
+	/**
+	 * Get the remote IP address of a specific token by its id.
+	 *
+	 * @param tokenId
+	 *            Id of the token to get the remote IP from.
+	 * @return The remote IP in String format or null if no token with the given id exists.
+	 */
+	public String getRemoteIpByTid(String tokenId) {
+		synchronized (tokensByTid) {
+			return IPsByTid.get(tokenId);
 		}
 	}
 

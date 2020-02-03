@@ -44,6 +44,36 @@ db.password = mainzelliste
 #log.filename = /var/log/tomcat6/mainzelliste.log
 #log.level = DEBUG
 
+#performance tuning soundex-like blocking
+
+#blocking.soundex.type = Soundex
+#blocking.soundex.fields = vorname, nachname
+
+# GCP Features
+#
+# Institutions in heavily regulated invironments, for example CROs or other facilities
+# working in the field of clinical trials, have to fulfill restrictive requirements
+# in terms of logging and comprehensibility whenever data is created, modified or simply viewed.
+# (WHO Guidlines for GCP, ICH GCP E6 and others)
+# A so-called audit trail is a common feature implemented by systems used to access or modify this
+# kind of data.
+# It typically stores timestamp, user/system identifier, record name, old value, new value, reason for change and the action taken.
+#
+# This property activates the mainzelliste audit trail feature which creates a new table in the database
+# for storing those records. It further extends the token format to include audit trail information in the 'data' field:
+#
+# auditTrail: {
+#   username: "foo_user",
+#   remoteSystem: "bar_system",
+#   reasonForChange: "reason"
+# }
+#
+# PLEASE NOTE:
+# When this option is active, requests to the system without a valid audit trail object
+# inside the access token will be denied.
+
+gcp.audittrail = false
+
 # Field definitions
 #
 # Every input field must be defined here with field.{fieldname}.type = {fieldtype},
@@ -325,10 +355,10 @@ result.printIdat = true
 # 
 # - showSessionIds: see own sessions via GET /sessions
 # - createSession: create session via POST /sessions
-# - manageSessionPatients: manage the set of patients related to a session 
+# - manageSessionPatients: manage the set of patients related to a session
 # - callback: the permission to allow callbacks
 #	(operations on /sessions/{sessionid}/patients)
-# 
+#
 # - createToken: create tokens -- in addition, permission "tt_x" is req'd, where x is one of these TOKEN TYPES:
 #   - tt_addPatient: allows to generate one (1) ID. Token is invalidated afterwards even if an existing ID was returned.
 #	- tt_readPatients: allows to read IDAT or pseudonyms of patients
