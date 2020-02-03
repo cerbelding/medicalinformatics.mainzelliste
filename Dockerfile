@@ -19,7 +19,7 @@ RUN mvn clean && \
     cd extracted && \
     unzip /workingdir/target/mainzelliste-*.war
 
-FROM tomcat:8-jre8-alpine
+FROM tomcat:8-jdk8-openjdk-slim
 
 ENV ML_CONFIG_FILE ""
 
