@@ -23,12 +23,14 @@ FROM tomcat:8-jdk8-openjdk-slim
 
 ENV ML_CONFIG_FILE ""
 
+RUN apt-get update && \
+	apt-get -y install patch && \
+	rm -rf /var/lib/apt/lists/*
+
 ## Create mainzelliste user with www-data group
 RUN set -x ; \
-    addgroup -g 82 -S www-data && \
-    adduser -u 82 -D -S -G www-data mainzelliste
+    adduser --disabled-password --system --ingroup www-data mainzelliste
 
-RUN rm -r /usr/local/tomcat/webapps/*
 COPY --from=build --chown=mainzelliste:www-data /workingdir/extracted/ /usr/local/tomcat/webapps/ROOT/
 COPY --chown=mainzelliste:www-data ./docker/ml_entrypoint.sh ./config/mainzelliste.conf.default /
 RUN mkdir /etc/mainzelliste && touch /etc/mainzelliste/mainzelliste.conf && chown -R mainzelliste /etc/mainzelliste/mainzelliste.conf
