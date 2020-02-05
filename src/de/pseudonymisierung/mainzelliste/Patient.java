@@ -148,7 +148,7 @@ public class Patient {
 				newInputFields.put(fieldName, from.getInputFields().get(fieldName));
 				// otherwise leave old value
 			} else {
-				newInputFields.put(fieldName, this.fields.get(fieldName));
+				newInputFields.put(fieldName, this.inputFields.get(fieldName));
 			}
 		}
 

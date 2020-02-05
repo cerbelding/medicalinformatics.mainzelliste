@@ -329,6 +329,16 @@ public enum Config {
 	}
 
 	/**
+	 * Checks whether this instance has audit trailing enabled by the administrator.
+	 *
+	 * @return true if audit trail is enabled.
+	 */
+	public boolean auditTrailIsOn() {
+		String audittrail = this.props.getProperty("gcp.audittrail");
+		return (audittrail != null && audittrail.equals("true"));
+	}
+
+	/**
 	 * Checks whether the given origin is allowed. Used to check the origin in
 	 * Cross Domain Resource Sharing.
 	 *

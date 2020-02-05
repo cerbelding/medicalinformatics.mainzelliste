@@ -88,7 +88,7 @@ public enum PatientBackend {
                 }
 
                 t = new AddPatientToken();
-                Servers.instance.registerToken(s.getId(), t);
+                Servers.instance.registerToken(s.getId(), t, "127.0.0.1");
                 tokenId = t.getId();
             } else {
                 logger.error("No token with id " + tokenId + " found");
@@ -254,11 +254,12 @@ public enum PatientBackend {
             }
 
             Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
+			String atChangeType; // The action taken depending on the match result, for Audit Trail logging
 
             // If a list of ID types is given in token, return these types
             Set<String> idTypes;
             idTypes = t.getRequestedIdTypes();
-            if (idTypes.size() == 0) { // otherwise use the default ID type
+			if (idTypes.isEmpty()) { // otherwise use the default ID type
                 idTypes = new CopyOnWriteArraySet<String>();
                 idTypes.add(IDGeneratorFactory.instance.getDefaultIDType());
             }
@@ -293,10 +294,11 @@ public enum PatientBackend {
                         assignedPatient.setInputFields(inputFieldSet);
                         Persistor.instance.updatePatient(assignedPatient);
                     }
-
+				    atChangeType = "match";
                     break;
 
                 case NON_MATCH:
+                    atChangeType = "create";
                 case POSSIBLE_MATCH:
                     if (match.getResultType() == MatchResultType.POSSIBLE_MATCH
                             && (form.getFirst("sureness") == null || !Boolean.parseBoolean(form.getFirst("sureness")))) {
@@ -333,9 +335,11 @@ public enum PatientBackend {
                                 match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
                     }
                     assignedPatient = pNormalized;
+                    atChangeType = "tentative";
                     break;
 
                 default:
+                    atChangeType = "illegal_match";
                     logger.error("Illegal match result: " + match.getResultType());
                     throw new InternalErrorException();
             }
@@ -352,6 +356,18 @@ public enum PatientBackend {
 				Persistor.instance.addIdRequest(request, bks);
 			}
 
+            if (Config.instance.auditTrailIsOn()) {
+                for (ID id : assignedPatient.getIds()) {
+                    AuditTrail at = buildAuditTrailRecord(tokenId,
+                            id.getIdString(),
+                            id.getType(),
+                            atChangeType,
+                            null,
+                            request.getAssignedPatient().toString()
+                    );
+                    Persistor.instance.createAuditTrail(at);
+                }
+            }
         }
 
         return request;
@@ -366,7 +382,7 @@ public enum PatientBackend {
      *                       empty string. All values are processed by field transformation
      *                       as defined in the configuration file.
      */
-    public void editPatient(ID patientId, Map<String, String> newFieldValues) {
+	public void editPatient(ID patientId, Map<String, String> newFieldValues, String tokenId) {
         // Check that provided ID is valid
         if (patientId == null) {
             // Calling methods should provide a legal id, therefore log an error if id is null
@@ -400,6 +416,8 @@ public enum PatientBackend {
         Patient pNormalized = Config.instance.getRecordTransformer().transform(pInput);
         // set input fields
         pNormalized.setInputFields(chars);
+		// Save existing patient as string for audit trail
+		String pOld = pToEdit.toString();
 
         // assign changed fields to patient in database, persist
         pToEdit.setFields(pNormalized.getFields());
@@ -445,6 +463,20 @@ public enum PatientBackend {
         }
 
         // Save to database
+		if (Config.instance.auditTrailIsOn()) {
+			for (ID id : pToEdit.getIds()) {
+				//Prepare the audit trail record
+				AuditTrail at = buildAuditTrailRecord(tokenId,
+						id.getIdString(),
+						id.getType(),
+						"edit",
+						pOld,
+						pToEdit.toString());
+				//Persist patient and audit trail accordingly
+				Persistor.instance.createAuditTrail(at);
+			}
+		}
+
         Persistor.instance.updatePatient(pToEdit);
     }
 
@@ -464,6 +496,40 @@ public enum PatientBackend {
 			logger.fatal( "Persistence provider error. Can't get ids. Cause: " +  e.getMessage());
 			throw new InternalErrorException("An internal error occured: Please contact the administrator.");
 		}
+	}
+
+	public AuditTrail buildAuditTrailRecord(String tokenId, String idString, String idType, String changeType, String oldRecord, String newRecord) {
+		// Get token for this action, its ID has allready been checked by the caller's parent
+		Token t = Servers.instance.getTokenByTid(tokenId);
+
+		// Get remote IP for this token
+		String remoteIP = Servers.instance.getRemoteIpByTid(tokenId);
+		if (remoteIP == null) {
+			String infoLog = "Remote IP for Token with ID " + tokenId + " could not be determined. Token was invalidated by a concurrent request or the session timed out during this request.";
+			logger.info(infoLog);
+			throw new WebApplicationException(Response
+					.status(Status.BAD_REQUEST)
+					.entity("Please supply a valid 'editPatient' token.")
+					.build());
+		}
+		//Build audit trail record, debug aware to prevent NPE and keep audit trail consistent
+		AuditTrail at = new AuditTrail( new Date(),
+				idString,
+				idType,
+				(Config.instance.debugIsOn()) ? "debug" : t.getDataItemMap("auditTrail")
+						.get("username")
+						.toString(),
+				(Config.instance.debugIsOn()) ? "debug" : t.getDataItemMap("auditTrail")
+						.get("remoteSystem")
+						.toString(),
+				remoteIP,
+				changeType,
+				(Config.instance.debugIsOn()) ? "debug" : t.getDataItemMap("auditTrail")
+						.get("reasonForChange")
+						.toString(),
+				oldRecord,
+				newRecord);
+		return at;
 	}
 
 	/**
