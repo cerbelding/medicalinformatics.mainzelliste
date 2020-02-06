@@ -162,7 +162,7 @@ public class Patient {
 				} else {
 					if (!myId.equals(thisId)) {
 						throw new ConflictingDataException(
-								String.format("ID of type $s should be updated with value %s but already has value %s",
+								String.format("ID of type %s should be updated with value %s but already has value %s",
 										idType, thisId.getIdString(), myId.getIdString()));
 					}
 				}
@@ -262,13 +262,17 @@ public class Patient {
 	 *
 	 * @param ids
 	 *            A set of ID objects that identify the patient.
-	 * @param c
+	 * @param fields
 	 *            The fields of the patient. A map with field names as keys and
 	 *            the corresponding Field objects as values.
 	 */
-	public Patient(Set<ID> ids, Map<String, Field<?>> c) {
-		this.ids = ids;
-		this.setFields(c);
+	public Patient(Set<ID> ids, Map<String, Field<?>> fields) {
+		if(ids != null) {
+			this.ids = ids;
+		}
+		if(fields != null) {
+			this.setFields(fields);
+		}
 	}
 
 	/**
