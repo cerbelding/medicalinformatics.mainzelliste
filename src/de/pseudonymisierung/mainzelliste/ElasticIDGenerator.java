@@ -63,6 +63,9 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	/** Length of a valid PID */
 	private int idLength = 8;
 
+	/** The prefix applied to all generated ids. */
+	private String prefix;
+
 	/**
 	 * Vocabulary for the generated IDs. <p>
 	 * The value is read from mainzelliste configuration. If no value is applied, 
@@ -89,12 +92,17 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 		this.counter = Integer.parseInt(memCounter);
 
 		this.idType = idType;
-
+		// initialize default configuration
+		this.idLength = 5;
+		this.vocabulary = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
+		this.prefix = idType.toUpperCase();
 		try {
 			if (props.containsKey("length"))
 				this.idLength = Integer.parseInt(props.getProperty("length"));
 			if(props.containsKey("vocabulary"))
 				vocabulary = props.getProperty("vocabulary").toCharArray();
+			if (props.containsKey("prefix"))
+				prefix = props.getProperty("prefix");
 		} catch (NumberFormatException e) {
 			logger.fatal("Number format error in configuration of IDGenerator for ID type " + idType, e);
 			throw new InternalErrorException(e);
@@ -111,6 +119,10 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 
 		Random randomGenerator = new Random(counter);
 		StringBuilder stringBuilder = new StringBuilder();
+
+		if(prefix != null){
+			stringBuilder.append(prefix);
+		}
 
 		for(int i = 0; i < idLength; i++){
 			int randomNumber = randomGenerator.nextInt(this.vocabulary.length);

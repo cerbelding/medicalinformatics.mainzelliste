@@ -26,6 +26,7 @@
 package de.pseudonymisierung.mainzelliste;
 
 import java.util.*;
+import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -147,7 +148,7 @@ public class Patient {
 				newInputFields.put(fieldName, from.getInputFields().get(fieldName));
 				// otherwise leave old value
 			} else {
-				newInputFields.put(fieldName, this.fields.get(fieldName));
+				newInputFields.put(fieldName, this.inputFields.get(fieldName));
 			}
 		}
 
@@ -293,11 +294,10 @@ public class Patient {
 	 * @throws InvalidIDException
 	 *             if the provided ID type is undefined.
 	 */
-	public ID getId(String type) {
-		for (ID thisId : ids) {
-			if (thisId.getType().equals(type))
-				return thisId;
-		}
+	public ID createId(String type) {
+		ID thisId = getId(type);
+		if (thisId != null)
+			return thisId;
 		// ID of requested type was not found and is not external -> generate new ID
 		IDGenerator<? extends ID> factory = IDGeneratorFactory.instance.getFactory(type);
 
@@ -307,11 +307,31 @@ public class Patient {
 		
 		if(!factory.isExternal()) {
 			ID newID = factory.getNext();
+			Persistor.instance.addId(newID);
 			factory.getMemory().ifPresent(IDGeneratorMemory::commit);
 			this.addId(newID);
 			return newID;
 		}
 
+		return null;
+	}
+
+	/**
+	 * Get the ID of the specified type from this patient.
+	 *
+	 * @param type
+	 *            The ID type. See {@link ID} for the general structure of an
+	 *            ID.
+	 * @return This patient's ID of the given type or null if the ID is
+	 *         not defined for this patient.
+	 * @throws InvalidIDException
+	 *             if the provided ID type is undefined.
+	 */
+	public ID getId(String type) {
+		for (ID thisId : ids) {
+			if (thisId.getType().equals(type))
+				return thisId;
+		}
 		return null;
 	}
 
