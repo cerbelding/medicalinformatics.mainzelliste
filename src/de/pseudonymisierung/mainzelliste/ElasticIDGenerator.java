@@ -116,7 +116,7 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	 */
 	private String createPIDString(int counter) {
 
-		Random randomGenerator = new Random(counter);
+		Random randomGenerator = new Random();
 		StringBuilder stringBuilder = new StringBuilder();
 
 		if(prefix != null){
