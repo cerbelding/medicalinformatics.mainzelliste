@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "a1cf012e-7534-46fb-91eb-b128d9574fa7",
-		"name": "mainzelliste_id_egk_prob381__EditPatient_addNewExternalID",
+		"_postman_id": "44d34c2a-d91a-437c-ad49-bde67c581a96",
+		"name": "mainzelliste_egk_editPatient_addNewExternalID",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -345,6 +345,16 @@
 						],
 						"type": "text/javascript"
 					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "554321f5-b823-41fa-9b3e-bf33802ef786",
+						"exec": [
+							"pm.variables.set('Mobil', 'T019468877');"
+						],
+						"type": "text/javascript"
+					}
 				}
 			],
 			"request": {
@@ -365,7 +375,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"extid\":\"{{Mobil}}\"\n}"
+					"raw": "{\n\t\"egk\":\"{{Mobil}}\"\n}"
 				},
 				"url": {
 					"raw": "{{url}}/patients/tokenId/{{tokenId}}",
@@ -421,7 +431,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"egk\",\r\n\t \t\t\t\"idString\":\"{{Mobil}}\"\r\n\t \t\t}\r\n\t\t]\r\n \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"egk\",\r\n\t \t\t\t\"idString\":\"{{Mobil}}\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultFields\":[\"vorname\",\"nachname\",\"geburtsname\",\"geburtsjahr\",\"ort\",\"plz\",\"geburtstag\",\"geburtsmonat\"],\r\n\t\t\"resultIds\":[\"egk\", \"intid\"]\r\n\r\n \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -443,14 +453,69 @@
 				{
 					"listen": "test",
 					"script": {
-						"type": "text/javascript",
+						"id": "8a8d671e-833f-477a-80ae-966f3ce1c178",
 						"exec": [
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
 							"",
-							"tests[\"patient found\"] = responseCode.code === 200;",
-							""
-						]
+							"",
+							"",
+							"var innerArraySchema = {",
+							"    \"type\": \"object\",",
+							"    \"required\": [\"idType\", \"idString\", \"tentative\", \"uri\"],",
+							"    \"properties\": {",
+							"        \"fields\": {",
+							"            \"type\": \"object\",",
+							"",
+							"        },",
+							"        \"ids\": {",
+							"            \"type\": \"array\",",
+							"            \"items\": {",
+							"                \"type\": \"object\",",
+							"                \"properties\": {",
+							"                    \"idType\": {",
+							"                        \"type\": \"string\"",
+							"                    },",
+							"                    \"idString\": {",
+							"                        \"type\": \"string\"",
+							"                    }",
+							"",
+							"                }",
+							"",
+							"            }",
+							"        }",
+							"",
+							"",
+							"    }",
+							"",
+							"}",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({",
+							"        logger: console",
+							"    }),",
+							"    schema = {",
+							"        \"type\": \"array\",",
+							"        \"items\": {",
+							"            \"#ref\": innerArraySchema",
+							"",
+							"        }",
+							"    };",
+							"",
+							"pm.test('response must be valid and have a valid scheme body', function() {",
+							"    pm.response.to.have.status(200);",
+							"    pm.response.to.be.withBody;",
+							"    pm.response.to.be.json;",
+							"    var localBody = pm.response.json();",
+							"    pm.expect(ajv.validate(schema, localBody)).to.be.true;",
+							"",
+							"",
+							"",
+							"",
+							"});"
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
