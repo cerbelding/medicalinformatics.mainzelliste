@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source ./executeTestFunctions.sh
+source ./testHelpers.sh
 # Iterates all Test Dir and Subdirectories and execute the newman Test
 
 

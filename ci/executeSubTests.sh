@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source ./executeTestFunctions.sh
+source ./testHelpers.sh
 
 
 PREFIX=

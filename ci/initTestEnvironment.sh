@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-source ./executeTestFunctions.sh
+source ./testHelpers.sh
 PREFIX=
 FILEEXTENSION=.postman_collection.json
 
-TESTSUBDIR=
-TESTFILE=mainzelliste_getAllPatiens_with_idType
+TESTSUBDIR=tokens/validate/
+TESTFILE=mainzelliste_validate_token_addPatient
 
 
 FULLPATH=${TESTSUBDIR}${PREFIX}${TESTFILE}${FILEEXTENSION}
