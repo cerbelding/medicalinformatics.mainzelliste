@@ -75,3 +75,38 @@ function iterateDirAndExecuteFunction(){
     done;
 
 }
+
+
+function getPath(){
+  INPUTPATH=$1
+  ROOTFOLDER=$2
+  BASE_DIRECTORY=$(echo "${INPUTPATH}" | cut -d "/" -f1)
+
+  if [[ "$ROOTFOLDER" == "${BASE_DIRECTORY}/" ]]; then
+    ROOTFOLDER=""
+  fi
+
+ PATHTOCHECK="${ROOTFOLDER}${INPUTPATH}"
+
+
+  if [ -f "${PATHTOCHECK}" ]; then
+      echo "File Found!"
+
+
+      FULLPATH=${PATHTOCHECK}
+      return 0
+
+  elif  [ -d  "${PATHTOCHECK}" ]; then
+    echo "Folder found"
+    FULLPATH=${PATHTOCHECK}
+    return 0
+
+  else
+    echo "File not Found, please submit a regular File or Folder"
+    return 1
+
+  fi
+
+
+
+}

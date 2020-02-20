@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 source ./testHelpers.sh
-PREFIX=
-FILEEXTENSION=.postman_collection.json
 
-TESTSUBDIR=tokens/validate/
-TESTFILE=mainzelliste_validate_token_addPatient
+ROOTFOLDER=newman_tests/
 
 
-FULLPATH=${TESTSUBDIR}${PREFIX}${TESTFILE}${FILEEXTENSION}
+if [ -n "$1" ]; then
+    getPath  "${1}" ${ROOTFOLDER}
+    echo $FULLPATH
+    iterateDirAndExecuteFunction  $FULLPATH initTestEnvironment
+else
+    echo "Error Code 2 Please subnmit a valid Path"
+fi
 
-
-#Creating an Testenvironment
-iterateDirAndExecuteFunction  newman_tests/$FULLPATH initTestEnvironment
 

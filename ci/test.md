@@ -1,8 +1,8 @@
 #Mainzeliste Tests
-
+In order to guarantee the quality of the Mainzelliste, integration tests are provided to developers and testers.
 
 ##Quickstart
-In order to guarantee the quality of the Mainzelliste, integration tests are provided to developers and testers.
+To test the Mainzelliste the following commands can be used.
 ###Run all Tests
 To execute all tests in the newman_tests folder execute following line:
 
@@ -33,15 +33,15 @@ To create a test environment execute following line:
 Every Testcase is an isolated Postman Collection with its own Mainzelliste configuration and Test data.
 
 ###Writing new Testcases
-1. Create Collection 
-1. Init Test environment
-1. Write Test case
+1. Create Collection in a appropriated folder or subfolder of **newman_tests/**
+    1. If necessary add custom config file otherwise the default config will be used
+1. Write Test case (e.g with the help of init test environment)
    1. If the request already exists use the  [request from request-Collection](./test_data/mainzelliste_z-test-requests_Collection.postman_collection.json)
    1. If the request does not exist
         1. Write new request
         2. Add the request to [request-Collection](./test_data/mainzelliste_z-test-requests_Collection.postman_collection.json)
- 
-##File structure:
+1. If necessary add custom data file otherwise the default data will be used
+##File structure
 [**/newman_tests/:**](./newman_tests)
 > All Testcases are stored here.
 
@@ -84,13 +84,15 @@ Every Testcase is an isolated Postman Collection with its own Mainzelliste confi
 
 
 [**/newman_environment_variables/:** ](./newman_environment_variables)
->All Newman Environment Variables are stored here. Currently only one File is supported.
+>All Newman environment variables are stored here. Currently only one file is supported.
+>Variables should be store in postman's collectionVariables API, therefore its not necessary to add environment variables.
 
 
 [**/test_results/:**](./test_results)
-> After executing one or more tests, the output of the tests will be generated here
->Two types of documents are stored for this purpose:
->   * **.xml**: A file format similar to junit
+> After executing one or more tests, the output of the tests will be generated here.
+>
+>Two types of documents are stored:
+>   * **.xml**: A xml-format makes possible to interprate the tests as junit tests
 >   * **.html**: For visual inspection
  
 

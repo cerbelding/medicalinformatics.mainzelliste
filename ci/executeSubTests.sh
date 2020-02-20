@@ -1,23 +1,14 @@
 #!/usr/bin/env bash
 source ./testHelpers.sh
 
+ROOTFOLDER=newman_tests/
 
-PREFIX=
-FILEEXTENSION=.postman_collection.json
 
 if [ -n "$1" ]; then
-
-    TESTFILE="$1"
-    FULLPATH=${TESTFILE}${FILEEXTENSION}
-
+    getPath  "${1}" ${ROOTFOLDER}
+    echo $FULLPATH
+    iterateDirAndExecuteFunction  $FULLPATH executeNewmanTest
 else
-    TESTFILE=mainzelliste_session_authorization_is_invalid
-    TESTSUBDIR=sessions/
-    FULLPATH=${TESTSUBDIR}${PREFIX}${TESTFILE}${FILEEXTENSION}
+    echo "Error Code 2 Please subnmit a valid Path"
 fi
-
-echo "Use testfile $TESTFILE"
-
-
-iterateDirAndExecuteFunction  newman_tests/$FULLPATH executeNewmanTest
 
