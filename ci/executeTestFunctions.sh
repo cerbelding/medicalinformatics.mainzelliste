@@ -15,7 +15,7 @@ initConfigs(){
         cp newman_mainzelliste_configs/"${1##*/}".conf newman_mainzelliste_configs/active_config/mainzellisteConfig
     else
         echo "no ci/newman_mainzelliste_configs/${1##*/}.conf - use default config"
-        cp newman_mainzelliste_configs/mainzelliste_default.conf newman_mainzelliste_configs/active_config/mainzellisteConfig
+        cp newman_mainzelliste_configs/default/mainzelliste_default.conf newman_mainzelliste_configs/active_config/mainzellisteConfig
       fi \
 
 
