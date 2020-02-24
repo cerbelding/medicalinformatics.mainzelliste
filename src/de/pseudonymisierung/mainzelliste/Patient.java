@@ -171,6 +171,9 @@ public class Patient {
 	public Patient updateFrom(Patient from) {
 		// Put updated fields in new map
 		Map<String, Field<?>> newFields = new HashMap<String, Field<?>>();
+		Set<String> fieldKeys = new HashSet<>();
+		fieldKeys.addAll(from.getFields().keySet());
+		fieldKeys.addAll(this.getFields().keySet());
 		for (String fieldName : from.getFields().keySet()) {
 			// If field is null or empty, update
 			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
@@ -182,9 +185,10 @@ public class Patient {
 		}
 
 		Map<String, Field<?>> newInputFields = new HashMap<String, Field<?>>();
-		Set<String> fieldKeys = from.getInputFields().keySet();
-		fieldKeys.addAll(this.getInputFields().keySet());
-		for (String fieldName : fieldKeys) {
+		Set<String> inputFieldKeys = new HashSet<>();
+		inputFieldKeys.addAll(from.getInputFields().keySet());
+		inputFieldKeys.addAll(this.getInputFields().keySet());
+		for (String fieldName : inputFieldKeys) {
 			// If field is not null or empty, update
 			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
 				newInputFields.put(fieldName, from.getInputFields().get(fieldName));
