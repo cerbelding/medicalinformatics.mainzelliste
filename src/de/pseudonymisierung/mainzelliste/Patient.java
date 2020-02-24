@@ -182,7 +182,9 @@ public class Patient {
 		}
 
 		Map<String, Field<?>> newInputFields = new HashMap<String, Field<?>>();
-		for (String fieldName : from.getInputFields().keySet()) {
+		Set<String> fieldKeys = from.getInputFields().keySet();
+		fieldKeys.addAll(this.getInputFields().keySet());
+		for (String fieldName : fieldKeys) {
 			// If field is not null or empty, update
 			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
 				newInputFields.put(fieldName, from.getInputFields().get(fieldName));
