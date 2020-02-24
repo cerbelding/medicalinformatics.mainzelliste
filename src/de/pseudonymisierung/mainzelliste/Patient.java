@@ -180,7 +180,7 @@ public class Patient {
 
 		for (String fieldName : from.getInputFields().keySet()) {
 			// If field is null or empty, update
-			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
+			if (!this.inputFields.containsKey(fieldName) || this.inputFields.get(fieldName).isEmpty()) {
 				this.inputFields.put(fieldName, from.getInputFields().get(fieldName));
 				// otherwise leave old value
 			}
