@@ -32,6 +32,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
+import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
 import de.pseudonymisierung.mainzelliste.matcher.DiceFieldComparator;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -48,7 +49,7 @@ import org.codehaus.jettison.json.JSONObject;
 public class HashedField extends Field<BitSet> {
 
 	/**	The bit array is stored as the base64 encoded binary representation of the {@link BitSet}. */
-	@Column
+	@Column(length = BloomFilterTransformer.hashLength)
 	protected String value;
 
 	/** BitSet reference to prevent repeated instantiations from base64 encoded binary data */
