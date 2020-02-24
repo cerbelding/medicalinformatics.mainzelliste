@@ -169,32 +169,20 @@ public class Patient {
 	 * @return The modified patient object on which the method is called.
 	 */
 	public Patient updateFrom(Patient from) {
-		// Put updated fields in new map
-		Map<String, Field<?>> newFields = new HashMap<String, Field<?>>();
-		Set<String> fieldKeys = new HashSet<>();
-		fieldKeys.addAll(from.getFields().keySet());
-		fieldKeys.addAll(this.getFields().keySet());
+
 		for (String fieldName : from.getFields().keySet()) {
 			// If field is null or empty, update
 			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
-				newFields.put(fieldName, from.getFields().get(fieldName));
+				this.fields.put(fieldName, from.getFields().get(fieldName));
 				// otherwise leave old value
-			} else {
-				newFields.put(fieldName, this.fields.get(fieldName));
 			}
 		}
 
-		Map<String, Field<?>> newInputFields = new HashMap<String, Field<?>>();
-		Set<String> inputFieldKeys = new HashSet<>();
-		inputFieldKeys.addAll(from.getInputFields().keySet());
-		inputFieldKeys.addAll(this.getInputFields().keySet());
-		for (String fieldName : inputFieldKeys) {
-			// If field is not null or empty, update
+		for (String fieldName : from.getInputFields().keySet()) {
+			// If field is null or empty, update
 			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
-				newInputFields.put(fieldName, from.getInputFields().get(fieldName));
+				this.inputFields.put(fieldName, from.getInputFields().get(fieldName));
 				// otherwise leave old value
-			} else {
-				newInputFields.put(fieldName, this.fields.get(fieldName));
 			}
 		}
 
@@ -202,23 +190,19 @@ public class Patient {
 		for (ID thisId : from.getIds()) {
 			if (externalIdTypes.contains(thisId.getType())) {
 				String idType = thisId.getType();
-				ID myId = this.getId(idType);
-				if (myId == null) {
-					this.addId(thisId);
-				} else {
-					if (!myId.equals(thisId)) {
-						throw new ConflictingDataException(
-								String.format("ID of type $s should be updated with value %s but already has value %s",
-										idType, thisId.getIdString(), myId.getIdString()));
-					}
+				ID currentId = this.getId(idType);
+				boolean isIdAdded = this.addId(thisId);
+				if (!isIdAdded && !currentId.equals(thisId)) {
+					throw new ConflictingDataException(
+						String.format("ID of type $s should be updated with value %s but already has value %s",
+							idType, thisId.getIdString(), currentId.getIdString()));
 				}
 			}
 		}
-		// Set fields to updated map. This is more safe than setting fields
-		// direct
-		// because setFields does other stuff
-		this.setFields(newFields);
-		this.setInputFields(newInputFields);
+
+		// update the fieldsString and inputFieldsString for database
+		this.fieldsString = fieldsToString(this.fields);
+		this.inputFieldsString = fieldsToString(this.inputFields);
 		return this;
 	}
 
