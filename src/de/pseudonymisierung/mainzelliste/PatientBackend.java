@@ -232,6 +232,7 @@ public enum PatientBackend {
 				// Normalization, Transformation
 				pNormalized = Config.instance.getRecordTransformer().transform(p);
 				pNormalized.setInputFields(chars);
+				pNormalized.setIds(new HashSet<>(externalIds));
 
 				idatMatch = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
 				logger.debug("Best matching weight for IDAT matching: " + idatMatch.getBestMatchedWeight());
@@ -319,35 +320,24 @@ public enum PatientBackend {
 					returnIds.add(match.getBestMatchedPatient().getOriginal().createId(idType));
 
 				assignedPatient = match.getBestMatchedPatient();
-				assignedPatient.updateFrom(pNormalized);
+				if(form.getFirst("readOnly") == null || !Boolean.parseBoolean(form.getFirst("readOnly")))
+					assignedPatient.updateFrom(pNormalized);
+
 				Persistor.instance.updatePatient(assignedPatient);
 				// log token to separate concurrent request in the log file
 				logger.info("Found match with ID " + returnIds.get(0).getIdString() + " for ID request " + t.getId());
-
-				// Add optional fields if they are not already entered
-//				Map<String, String> newFieldValues = new HashMap<String, String>();
-				Map<String, Field<?>> fieldSet = new HashMap<String, Field<?>>(assignedPatient.getFields());
-				Map<String, Field<?>> inputFieldSet = new HashMap<String, Field<?>>(assignedPatient.getInputFields());
-				boolean updatePatient = false;
-
-				for (String key : pNormalized.getFields().keySet()) {
-					if (!assignedPatient.getFields().containsKey(key)) {
-						updatePatient = true;
-						fieldSet.put(key, Field.build(key, pNormalized.getFields().get(key).toString()));
-						inputFieldSet.put(key, Field.build(key, pNormalized.getInputFields().get(key).toString()));
-					}
-				}
-
-				if (updatePatient) {
-					assignedPatient.setFields(fieldSet);
-					assignedPatient.setInputFields(inputFieldSet);
-					Persistor.instance.updatePatient(assignedPatient);
-				}
 
 				break;
 
 			case NON_MATCH :
 			case POSSIBLE_MATCH :
+				if (form.getFirst("readOnly") != null && Boolean.parseBoolean(form.getFirst("readOnly"))) {
+					throw new WebApplicationException(
+							Response.status(Status.NOT_FOUND)
+									.entity("Patient not found!")
+									.build());
+				}
+
 				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH
 				&& (form.getFirst("sureness") == null || !Boolean.parseBoolean(form.getFirst("sureness")))) {
 					return new IDRequest(p.getFields(), idTypes, match, null, t);
