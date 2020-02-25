@@ -191,7 +191,7 @@ public class Patient {
 			if (externalIdTypes.contains(thisId.getType())) {
 				String idType = thisId.getType();
 				ID currentId = this.getId(idType);
-				boolean isIdAdded = this.addId(thisId);
+				boolean isIdAdded = this.addExternalId(thisId);
 				if (!isIdAdded && !currentId.equals(thisId)) {
 					throw new ConflictingDataException(
 						String.format("ID of type $s should be updated with value %s but already has value %s",
@@ -377,6 +377,21 @@ public class Patient {
 				return false;
 		}
 		ids.add(id);
+		return true;
+	}
+
+	/**
+	 * Adds an external Id to a patient. If not in database the external Id will be persisted.
+	 * @param externalId the {@link ID} to add
+	 * @return true if the id was added, false if the id was already attached to patient
+	 */
+	private boolean addExternalId(ID externalId) {
+		for (ID thisId : ids) {
+			if (thisId.getType().equals(externalId.getType()))
+				return false;
+		}
+		Persistor.instance.addId(externalId); //Needs to be persisted
+		ids.add(externalId);
 		return true;
 	}
 
