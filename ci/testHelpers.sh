@@ -15,7 +15,7 @@ initConfigs(){
         cp newman_mainzelliste_configs/"${1##*/}".conf newman_mainzelliste_configs/active_config/mainzellisteConfig
     else
         echo "no ci/newman_mainzelliste_configs/${1##*/}.conf - use default config"
-        cp newman_mainzelliste_configs/mainzelliste_default.conf newman_mainzelliste_configs/active_config/mainzellisteConfig
+        cp newman_mainzelliste_configs/default/mainzelliste_default.conf newman_mainzelliste_configs/active_config/mainzellisteConfig
       fi \
 
 
@@ -73,5 +73,40 @@ function iterateDirAndExecuteFunction(){
          $FUNCTION "${subFile}"
       fi;
     done;
+
+}
+
+
+function getPath(){
+  INPUTPATH=$1
+  ROOTFOLDER=$2
+  BASE_DIRECTORY=$(echo "${INPUTPATH}" | cut -d "/" -f1)
+
+  if [[ "$ROOTFOLDER" == "${BASE_DIRECTORY}/" ]]; then
+    ROOTFOLDER=""
+  fi
+
+ PATHTOCHECK="${ROOTFOLDER}${INPUTPATH}"
+
+
+  if [ -f "${PATHTOCHECK}" ]; then
+      echo "File Found!"
+
+
+      FULLPATH=${PATHTOCHECK}
+      return 0
+
+  elif  [ -d  "${PATHTOCHECK}" ]; then
+    echo "Folder found"
+    FULLPATH=${PATHTOCHECK}
+    return 0
+
+  else
+    echo "File not Found, please submit a regular File or Folder"
+    return 1
+
+  fi
+
+
 
 }
