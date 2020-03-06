@@ -298,7 +298,6 @@ public enum PatientBackend {
                     break;
 
                 case NON_MATCH:
-                    atChangeType = "create";
                 case POSSIBLE_MATCH:
                     if (match.getResultType() == MatchResultType.POSSIBLE_MATCH
                             && (form.getFirst("sureness") == null || !Boolean.parseBoolean(form.getFirst("sureness")))) {
@@ -335,11 +334,11 @@ public enum PatientBackend {
                                 match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
                     }
                     assignedPatient = pNormalized;
-                    atChangeType = "tentative";
+                    atChangeType = match.getResultType() == MatchResultType.POSSIBLE_MATCH ?
+                            "tentative" : "create";
                     break;
 
                 default:
-                    atChangeType = "illegal_match";
                     logger.error("Illegal match result: " + match.getResultType());
                     throw new InternalErrorException();
             }
