@@ -768,9 +768,15 @@ public class PatientsResource {
             ID id = IDGeneratorFactory.instance.buildId(idType, idString);
 
             if (withDuplicates) {
-                Persistor.instance.deletePatientWithDuplicates(id);
+                List<Patient> deletedPatients = Persistor.instance.deletePatientWithDuplicates(id);
+                if (Config.instance.auditTrailIsOn()) {
+                    deletedPatients.forEach( p -> performAuditTrail(p, token.getId(), "delete"));
+                }
             } else {
-                Persistor.instance.deletePatient(id);
+                Patient deletedPatient = Persistor.instance.deletePatient(id);
+                if (Config.instance.auditTrailIsOn()) {
+                    performAuditTrail(deletedPatient, token.getId(), "delete");
+                }
             }
             String callback = token.getDataItemString("callback");
             if (callback != null && callback.length() > 0) {
@@ -884,4 +890,18 @@ public class PatientsResource {
         }
     }
 
+    /* Utils */
+
+    private void performAuditTrail(Patient patient, String tokenId,String action)
+    {
+        patient.getIds().forEach(id -> Persistor.instance.createAuditTrail(
+                PatientBackend.instance.buildAuditTrailRecord(
+                        tokenId,
+                        id.getIdString(),
+                        id.getType(),
+                        action,
+                        patient.toString(),
+                        null)
+        ));
+    }
 }

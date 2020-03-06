@@ -525,16 +525,16 @@ public enum Persistor {
 	}
 
 
-	public synchronized  void deletePatient(ID id){
+	public synchronized Patient deletePatient(ID id){
         Set<ID> allPatientIDs = getAllPatientIDs(id);
 
 	    anonymizeIdRequests(id);
-        deletePatientIDAT(id);
+        Patient deletedPatient = deletePatientIDAT(id);
 
         for (ID specificPatientID : allPatientIDs){
             deleteId(specificPatientID);
         }
-
+        return deletedPatient;
     }
 
     /**
@@ -544,29 +544,25 @@ public enum Persistor {
      * relations (duplicate of duplicate).
      *
      * @param id An ID of the patient to delete.
+	 * @return deleted patients
      */
-    public synchronized void deletePatientWithDuplicates(ID id) {
+    public synchronized List<Patient> deletePatientWithDuplicates(ID id) {
         /* The subgraph of duplicates is a tree whose root can be found by following
          * the "original" link recursively. From there, determine all connected patients
          * by breadth-first search.
          */
         List<Patient> allInstances = getPatientWithDuplicates(id);
-        if (allInstances == null)
-            return;
-
-        for (int i = 0; i < allInstances.size(); i++) {
-            deletePatient(allInstances.get(i).getId(id.getType()));
-
-        }
-
+		allInstances.forEach( p -> p.getId(id.getType()));
+        return allInstances;
     }
 
 	/**
 	 * Remove a patient from the database.
 	 * 
 	 * @param id An ID of the patient to persist.
+	 * @return deleted patient
 	 */
-	public synchronized void deletePatientIDAT(ID id) {
+	public synchronized Patient deletePatientIDAT(ID id) {
         checkForSuspectSQLCharacters(id.getIdString());
 
 		em.getTransaction().begin();
@@ -579,6 +575,7 @@ public enum Persistor {
 			em.remove(p);
 		}
 		em.getTransaction().commit();
+		return p;
 	}
 
 	public synchronized void deleteId (ID id) {
