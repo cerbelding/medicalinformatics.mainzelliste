@@ -1,3 +1,12 @@
+### 1.8.0 - 2020-03-16
+#### Added
+- Example configuration files for docker: docker-compose.user.yml and docker-compose.dev.yml
+- SSL Configuration via reverse proxy in docker
+
+#### Changed
+- Port for remote debugging in docker container now always defaults to 1099
+- Updated references and contributor list
+
 ### rc 1.8.0 - 2019-08-06
 
 New features:
