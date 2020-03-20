@@ -25,11 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
-import com.sun.jersey.api.uri.UriComponent;
 import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.spi.resource.Singleton;
-import de.pseudonymisierung.mainzelliste.*;
 
 import de.pseudonymisierung.mainzelliste.AuditTrail;
 import de.pseudonymisierung.mainzelliste.Config;
@@ -62,7 +60,6 @@ import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -802,26 +799,17 @@ public class PatientsResource {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Path("checkMatch/{tokenId}")
-    public Response getBestMatch(@Context HttpServletRequest request, @PathParam("tokenId") String tokenId, MultivaluedMap<String, String> form) throws JSONException {
+    public Response getBestMatch(@Context HttpServletRequest request, @PathParam("tokenId")
+            String tokenId, MultivaluedMap<String, String> form) throws JSONException {
         logger.debug("checkMatch" + "tokenId: " + tokenId);
 
         //TODO: add permission checks
         Token token = Servers.instance.getTokenByTid(tokenId);
         token.checkTokenType("checkMatch");
 
-        Validator.instance.validateForm(form, true);
-
-        Map<String, Field<?>> chars = PatientBackend.instance.mapMapWithConfigFields(form);
-
-        Patient patient = new Patient();
-        patient.setFields(chars);
-        // Normalization, Transformation
-        patient = Config.instance.getRecordTransformer().transform(patient);
-        patient.setInputFields(chars);
-
-        MatchResult matchResult = Config.instance.getMatcher().match(patient, Persistor.instance.getPatients());
+        MatchResult matchResult = PatientBackend.instance.checkMatch(form);
         logger.info("CheckMatch/Bestmatch score: " + matchResult.getBestMatchedWeight());
-        List<Double> similarityScores = Arrays.asList(matchResult.getBestMatchedWeight());
+        List<Double> similarityScores = Collections.singletonList(matchResult.getBestMatchedWeight());
         JSONArray jsonArray = new JSONArray();
         JSONObject jsonPatientObject = new JSONObject().put("similarityScore", similarityScores.get(0));
 
