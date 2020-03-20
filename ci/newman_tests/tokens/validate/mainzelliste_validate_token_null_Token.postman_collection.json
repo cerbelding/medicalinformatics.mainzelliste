@@ -1,0 +1,152 @@
+{
+	"info": {
+		"_postman_id": "6243524e-692c-4e7e-b906-11f1a7a0e829",
+		"name": "mainzelliste_validate_token_null_Token",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NEW_SESSION - Sitzung anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9d6887cd-821d-4333-bba8-2e0c075022e8",
+						"exec": [
+							"console.log(\"New Session\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"sessionId\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check StatusCode\", function(){",
+							"    pm.response.to.have.status(\"Created\");",
+							"});",
+							"",
+							"pm.test(\"Check ResponseSchema\", function(){",
+							"     var jsonData = pm.response.json();",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "VALIDATE_NULL_TOKEN",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "77dfaed2-5f42-46e7-b6ec-955f5e5891fd",
+						"exec": [
+							"pm.test('response must be valid', function() {",
+							"    pm.response.to.have.status(400);",
+							"",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "d2ef3087-f723-4f4d-ad46-65ae6172fe16",
+						"exec": [
+							"postman.setGlobalVariable(\"tokenId\", \"\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/validate/token",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"validate",
+						"token"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "4166b40b-d06c-43d8-905c-e344ba57dda8",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "9e8d8f9c-ae10-4d5d-8825-1a0cd9df9f56",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "1afb795b-6fac-41f0-b6ea-00846e512a35",
+			"key": "sessionId",
+			"value": "92d94b2f-4b84-4df0-9aeb-fc0f2343a534",
+			"type": "string"
+		}
+	],
+	"protocolProfileBehavior": {}
+}
