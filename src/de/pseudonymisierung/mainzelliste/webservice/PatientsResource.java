@@ -807,7 +807,7 @@ public class PatientsResource {
         Token token = Servers.instance.getTokenByTid(tokenId);
         token.checkTokenType("checkMatch");
 
-        MatchResult matchResult = PatientBackend.instance.checkMatch(form);
+        MatchResult matchResult = PatientBackend.instance.findMatch(form);
         logger.info("CheckMatch/Bestmatch score: " + matchResult.getBestMatchedWeight());
         List<Double> similarityScores = Collections.singletonList(matchResult.getBestMatchedWeight());
         JSONArray jsonArray = new JSONArray();

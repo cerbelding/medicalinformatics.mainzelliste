@@ -138,7 +138,7 @@ public enum PatientBackend {
 
             Patient inputPatient = new Patient();
             final Set<BlockingKey> bks = new HashSet<>();
-            match = checkMatch(form, inputPatient, bks);
+            match = findMatch(form, inputPatient, bks);
 
             Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
 			String atChangeType; // The action taken depending on the match result, for Audit Trail logging
@@ -357,11 +357,11 @@ public enum PatientBackend {
      * @param inputFields idat
      * @return best match patient with matching weight
      */
-    public MatchResult checkMatch(MultivaluedMap<String, String> inputFields) {
-        return checkMatch(inputFields, new Patient(), Collections.emptySet());
+    public MatchResult findMatch(MultivaluedMap<String, String> inputFields) {
+        return findMatch(inputFields, new Patient(), Collections.emptySet());
     }
 
-    private MatchResult checkMatch(MultivaluedMap<String, String> form, Patient inputPatient,
+    private MatchResult findMatch(MultivaluedMap<String, String> form, Patient inputPatient,
             Set<BlockingKey> bks) {
         // create instance of the new Patient and add external Ids to it
         List<ID> externalIds = IDGeneratorFactory.instance.getExternalIdTypes().stream()
@@ -386,7 +386,8 @@ public enum PatientBackend {
 
             // normalize and transform fields of the new patient
             Map<String, Field<?>> inputFields = mapMapWithConfigFields(form);
-            inputPatient = Config.instance.getRecordTransformer().transform(new Patient(null, inputFields));
+            inputPatient = Config.instance.getRecordTransformer()
+                    .transform(new Patient(new HashSet<>(externalIds), inputFields));
             inputPatient.setInputFields(inputFields);
 
             // Blocking key extraction
@@ -429,7 +430,6 @@ public enum PatientBackend {
                                         .build());
                     }
 
-                    // TODO: Felder / IDs aktualisieren -> auslagern in eigene Methode
                     return idatMatch;
                 } else { // No id match, no IDAT match
                     return new MatchResult(MatchResultType.NON_MATCH, null, 0);
@@ -457,7 +457,6 @@ public enum PatientBackend {
                                     .build());
                 }
 
-                // TODO: Felder / IDs aktualisieren
                 return new MatchResult(MatchResultType.MATCH, idMatch, 1.0);
             }
         } else {
