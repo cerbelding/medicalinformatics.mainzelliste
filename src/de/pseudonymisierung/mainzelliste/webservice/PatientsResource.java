@@ -127,7 +127,8 @@ public class PatientsResource {
 		try {
             logger.debug("@POST newPatientBrowser");
 			Token token = Servers.instance.getTokenByTid(tokenId);
-			IDRequest createRet = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request)); 
+			IDRequest createRet = PatientBackend.instance.createNewPatient(tokenId, form,
+                    Servers.instance.getRequestApiVersion(request));
 			Set<ID> ids = createRet.createRequestedIds();
 			MatchResult result = createRet.getMatchResult();
 			Map <String, Object> map = new HashMap<String, Object>();
@@ -249,7 +250,8 @@ public class PatientsResource {
 			@Context UriInfo context,
 			MultivaluedMap<String, String> form) throws JSONException {
         logger.debug("@POST newPatientJson");
-		IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form, Servers.instance.getRequestApiVersion(request));
+		IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form,
+                Servers.instance.getRequestApiVersion(request));
 		if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.createRequestedIds() == null) {
 			JSONObject ret = new JSONObject();
 			if (response.getToken().showPossibleMatches()) {
