@@ -251,7 +251,7 @@ public enum PatientBackend {
 						// Check that no conflicting external ID exists
 						MatchResult finalIdatMatch = idatMatch; // Make final copy for using in stream
 						boolean conflict = !externalIds.stream().allMatch(id -> {
-							ID idOfMatch = finalIdatMatch.getBestMatchedPatient().createId(id.getType());
+							ID idOfMatch = finalIdatMatch.getBestMatchedPatient().getId(id.getType());
 							return (idOfMatch == null || id.getIdString().equals(idOfMatch.getIdString()));
 						});
 						
@@ -320,9 +320,7 @@ public enum PatientBackend {
 					returnIds.add(match.getBestMatchedPatient().getOriginal().createId(idType));
 
 				assignedPatient = match.getBestMatchedPatient();
-				if(form.getFirst("readOnly") == null || !Boolean.parseBoolean(form.getFirst("readOnly")))
-					assignedPatient.updateFrom(pNormalized);
-
+				assignedPatient.updateFrom(pNormalized);
 				Persistor.instance.updatePatient(assignedPatient);
 				// log token to separate concurrent request in the log file
 				logger.info("Found match with ID " + returnIds.get(0).getIdString() + " for ID request " + t.getId());
@@ -331,13 +329,6 @@ public enum PatientBackend {
 
 			case NON_MATCH :
 			case POSSIBLE_MATCH :
-				if (form.getFirst("readOnly") != null && Boolean.parseBoolean(form.getFirst("readOnly"))) {
-					throw new WebApplicationException(
-							Response.status(Status.NOT_FOUND)
-									.entity("Patient not found!")
-									.build());
-				}
-
 				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH
 				&& (form.getFirst("sureness") == null || !Boolean.parseBoolean(form.getFirst("sureness")))) {
 					return new IDRequest(p.getFields(), idTypes, match, null, t);
