@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "bc1e9346-21bf-401d-946e-a069744d4254",
+		"_postman_id": "49cc5eb3-5458-43ff-9387-78e0427d3cf8",
 		"name": "mainzelliste_AddPatient_ReadPatient",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -58,7 +58,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"type": "text/javascript",
+						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
 						"exec": [
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
@@ -70,7 +70,8 @@
 							"",
 							"var tokenId = jsonBody.id;",
 							"postman.setGlobalVariable(\"tokenId\", tokenId);"
-						]
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -114,7 +115,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"type": "text/javascript",
+						"id": "c5cd62d4-b1d6-45ce-9c09-548a3700d0e8",
 						"exec": [
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
@@ -126,7 +127,8 @@
 							"",
 							"postman.setGlobalVariable(\"idType\", \"pid\")",
 							"postman.setGlobalVariable(\"idString\", jsonBody[0].idString);"
-						]
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -188,6 +190,18 @@
 							"key": "ort",
 							"value": "{{ort}}",
 							"type": "text"
+						},
+						{
+							"key": "extid",
+							"value": "2222222222",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "sureness",
+							"value": "true",
+							"type": "text",
+							"disabled": true
 						}
 					]
 				},
@@ -301,7 +315,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultFields\": [\"vorname\", \"nachname\"]\r\n \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultFields\": [\"vorname\", \"nachname\", \"geburtsname\", \"geburtstag\", \"geburtsmonat\", \"geburtsjahr\", \"plz\", \"ort\"]\r\n \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -323,14 +337,22 @@
 				{
 					"listen": "test",
 					"script": {
-						"type": "text/javascript",
+						"id": "7bd5d1bd-3d45-4962-bab5-21c604dc7674",
 						"exec": [
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
 							"",
 							"tests[\"patient found\"] = responseCode.code === 200;",
-							""
-						]
+							"tests[\"patient vorname matches\"] = jsonBody[0].fields.vorname === pm.variables.get(\"vorname\");",
+							"tests[\"patient nachname matches\"] = jsonBody[0].fields.nachname === pm.variables.get(\"nachname\");",
+							"tests[\"patient geburtsname matches\"] = jsonBody[0].fields.geburtsname === pm.variables.get(\"geburtsname\");",
+							"tests[\"patient geburtstag matches\"] = jsonBody[0].fields.geburtstag === pm.variables.get(\"geburtstag\");",
+							"tests[\"patient geburtsmonat matches\"] = jsonBody[0].fields.geburtsmonat == pm.variables.get(\"geburtsmonat\");",
+							"tests[\"patient geburtsjahr matches\"] = jsonBody[0].fields.geburtsjahr === pm.variables.get(\"geburtsjahr\");",
+							"tests[\"patient plz matches\"] = jsonBody[0].fields.plz === pm.variables.get(\"plz\");",
+							"tests[\"patient ort matches\"] = jsonBody[0].fields.ort === pm.variables.get(\"ort\");"
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
