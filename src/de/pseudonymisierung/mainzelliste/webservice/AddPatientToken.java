@@ -1,9 +1,14 @@
 package de.pseudonymisierung.mainzelliste.webservice;
 
+import de.pseudonymisierung.mainzelliste.Config;
+import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidFieldException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
@@ -39,22 +44,27 @@ public class AddPatientToken extends Token {
 	public void setData(Map<String, ?> data) {
 		super.setData(data);
 		// read fields from JSON data
-		this.fields = new HashMap<String, String>();
+		this.fields = new HashMap<>();
 		if (this.getData().containsKey("fields")) {
 			Map<String, ?> serverFields = this.getDataItemMap("fields");
-			for (String key : serverFields.keySet()) {
-				String value = serverFields.get(key).toString();
-				fields.put(key, value);
+			for (Map.Entry<String, ?> entry : serverFields.entrySet()) {
+				if (!Config.instance.fieldExists(entry.getKey()))
+					throw new InvalidFieldException("Unknown field '" + entry.getKey() + "'.");
+				fields.put(entry.getKey(), entry.getValue().toString());
 			}
 		}
-		this.ids = new HashMap<String, String>();
+
+		// read external ids from JSON data
+		this.ids = new HashMap<>();
 		if (this.getData().containsKey("ids")) {
 			Map<String, ?> serverIds = this.getDataItemMap("ids");
-			for (String key : serverIds.keySet()) {
-				String value = serverIds.get(key).toString();
-				ids.put(key, value);
+			for (Map.Entry<String, ?> entry : serverIds.entrySet()) {
+				if (!IDGeneratorFactory.instance.getExternalIdTypes().contains(entry.getKey()))
+					throw new InvalidIDException("Unknown id type '" + entry.getKey() + "'.");
+				ids.put(entry.getKey(), entry.getValue().toString());
 			}
 		}
+
 		this.requestedIdTypes = new HashSet<String>();
 		if (this.hasDataItem("idTypes")) {
 			List<?> idtypes = this.getDataItemList("idTypes");
