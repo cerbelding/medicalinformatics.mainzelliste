@@ -136,9 +136,11 @@ public enum PatientBackend {
                 form.add(key, t.getIds().get(key));
             }
 
-            Patient inputPatient = new Patient();
+            // create patient from input form and normalize its fields
+            Patient inputPatient = createPatientFrom(form);
+            // find match with the given IDAT of the input patient
             final Set<BlockingKey> bks = new HashSet<>();
-            match = findMatch(form, inputPatient, bks);
+            match = findMatch(inputPatient, bks);
 
             Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
 			String atChangeType; // The action taken depending on the match result, for Audit Trail logging
@@ -358,38 +360,77 @@ public enum PatientBackend {
      * @return best match patient with matching weight
      */
     public MatchResult findMatch(MultivaluedMap<String, String> inputFields) {
-        return findMatch(inputFields, new Patient(), Collections.emptySet());
+        return findMatch(createPatientFrom(inputFields), Collections.emptySet());
     }
 
-    private MatchResult findMatch(MultivaluedMap<String, String> form, Patient inputPatient,
-            Set<BlockingKey> bks) {
-        // create instance of the new Patient and add external Ids to it
-        List<ID> externalIds = IDGeneratorFactory.instance.getExternalIdTypes().stream()
-                .filter(form::containsKey)
-                .map(idType -> IDGeneratorFactory.instance.buildId(idType, form.getFirst(idType)))
-                .collect(Collectors.toList());
-        inputPatient.setIds(new HashSet<>(externalIds));
+    private MatchResult findMatch(Patient inputPatient, Set<BlockingKey> bks) {
+        // input patient should contain only external Ids
+        Set<ID> externalIds = inputPatient.getIds();
+        // External Id matching
+        if (!externalIds.isEmpty()) {
+            // Find matches with all given external IDs
+            Set<Patient> idMatches = externalIds.stream().map(Persistor.instance::getPatient)
+                    .filter(Objects::nonNull).collect(Collectors.toSet());
+            if (idMatches.size() > 1) {// Found multiple patients with matching external ID
+                throw new WebApplicationException(Response.status(Status.CONFLICT)
+                        .entity("Multiple patients found with the given external IDs!").build());
+            } else if (idMatches.isEmpty()) { // No patient with matching external ID
+                MatchResult idatMatchResult = findMatchWithIdat(inputPatient, bks);
+                if (idatMatchResult != null && idatMatchResult.getResultType() == MatchResultType.MATCH) {
+                    // No match with ID, but with IDAT.
+                    // Check that no conflicting external ID exists
+                    boolean conflict = !externalIds.stream().allMatch(id -> {
+                        ID idOfMatch = idatMatchResult.getBestMatchedPatient().getId(id.getType());
+                        return (idOfMatch == null || id.getIdString().equals(idOfMatch.getIdString()));
+                    });
 
-        boolean hasIdat = form.keySet().containsAll(Validator.instance.getRequiredFields());
-        boolean hasExternalId = !externalIds.isEmpty();
+                    if (conflict) {
+                        throw new WebApplicationException(
+                                Response.status(Status.CONFLICT)
+                                        .entity("Found existing patient with matching IDAT but conflicting external ID(s).")
+                                        .build());
+                    }
 
-        if (!hasIdat && !hasExternalId) {
+                    return idatMatchResult;
+                } else { // No id match, no IDAT match
+                    return new MatchResult(MatchResultType.NON_MATCH, null, 0);
+                }
+            } else { // idMatches.size() == 1 : Found patient with matching external ID
+                final Patient idMatch = idMatches.iterator().next();
+                boolean idMatchHasIdat = Validator.instance.getRequiredFields().stream().allMatch(f ->
+                        idMatch.getFields().containsKey(f) && !idMatch.getFields().get(f).isEmpty());
+                // Check if IDAT of input and match (if present) matches
+                if (inputPatient.getFields().isEmpty() && idMatchHasIdat) {
+                    MatchResult matchWithIdMatch = Config.instance.getMatcher().match(inputPatient, Collections.singletonList(idMatch));
+                    if (matchWithIdMatch.getResultType() != MatchResultType.MATCH) {
+                        throw new WebApplicationException(
+                                Response.status(Status.CONFLICT)
+                                        .entity("Found existing patient with matching external ID but conflicting IDAT!")
+                                        .build());
+                    }
+                }
+                // If an IDAT match exists, check if it is the same patient
+                MatchResult idatMatchResult = findMatchWithIdat(inputPatient, bks);
+                if (idatMatchResult != null && idatMatchResult.getResultType() == MatchResultType.MATCH &&
+                        !idatMatchResult.getBestMatchedPatient().equals(idMatch)) {
+                    throw new WebApplicationException(
+                            Response.status(Status.CONFLICT)
+                                    .entity("External ID and IDAT match with different patients, respectively!")
+                                    .build());
+                }
+
+                return new MatchResult(MatchResultType.MATCH, idMatch, 1.0);
+            }
+        } else if (inputPatient.getFields().isEmpty()) {
             throw new WebApplicationException(Response.status(Status.BAD_REQUEST)
                     .entity("Neither complete IDAT nor an external ID has been given as input!").build());
         }
+        return findMatchWithIdat(inputPatient, bks);
+    }
 
-        MatchResult idatMatch = null;
-
-        // IDAT Matching and normalize patient fields
-        if (hasIdat) {
-            Validator.instance.validateForm(form, true);
-
-            // normalize and transform fields of the new patient
-            Map<String, Field<?>> inputFields = mapMapWithConfigFields(form);
-            inputPatient = Config.instance.getRecordTransformer()
-                    .transform(new Patient(new HashSet<>(externalIds), inputFields));
-            inputPatient.setInputFields(inputFields);
-
+    private MatchResult findMatchWithIdat(Patient inputPatient, Set<BlockingKey> bks) {
+        MatchResult result = null;
+        if (!inputPatient.getFields().isEmpty()) {
             // Blocking key extraction
             bks.addAll(Config.instance.getBlockingKeyExtractors().extract(inputPatient));
 
@@ -401,66 +442,31 @@ public enum PatientBackend {
             } else {
                 candidatePatients = Persistor.instance.getPatients(bks);
             }
-            idatMatch = matcher.match(inputPatient, candidatePatients);
-            logger.debug("Best matching weight for IDAT matching: " + idatMatch.getBestMatchedWeight());
+            result = matcher.match(inputPatient, candidatePatients);
+            logger.debug("Best matching weight for IDAT matching: " + result.getBestMatchedWeight());
         }
+        return result;
+    }
 
-        // External Id matching
-        if (hasExternalId) {
-            // Find matches with all given external IDs
-            Set<Patient> idMatches = externalIds.stream().map(Persistor.instance::getPatient)
-                    .filter(Objects::nonNull).collect(Collectors.toSet());
-            if (idMatches.size() > 1) {// Found multiple patients with matching external ID
-                throw new WebApplicationException(Response.status(Status.CONFLICT)
-                        .entity("Multiple patients found with the given external IDs!").build());
-            } else if (idMatches.isEmpty()) { // No patient with matching external ID
-                if (idatMatch != null && idatMatch.getResultType() == MatchResultType.MATCH) {
-                    // No match with ID, but with IDAT.
-                    // Check that no conflicting external ID exists
-                    MatchResult finalIdatMatch = idatMatch; // Make final copy for using in stream
-                    boolean conflict = !externalIds.stream().allMatch(id -> {
-                        ID idOfMatch = finalIdatMatch.getBestMatchedPatient().getId(id.getType());
-                        return (idOfMatch == null || id.getIdString().equals(idOfMatch.getIdString()));
-                    });
+    private Patient createPatientFrom(MultivaluedMap<String, String> forms) {
+        // create external Id list
+        List<ID> externalIds = IDGeneratorFactory.instance.getExternalIdTypes().stream()
+                .filter(forms::containsKey)
+                .map(idType -> IDGeneratorFactory.instance.buildId(idType, forms.getFirst(idType)))
+                .collect(Collectors.toList());
 
-                    if (conflict) {
-                        throw new WebApplicationException(
-                                Response.status(Status.CONFLICT)
-                                        .entity("Found existing patient with matching IDAT but conflicting external ID(s).")
-                                        .build());
-                    }
+        // check if required fields are available
+        if (forms.keySet().containsAll(Validator.instance.getRequiredFields())) {
+            Validator.instance.validateForm(forms, false);
 
-                    return idatMatch;
-                } else { // No id match, no IDAT match
-                    return new MatchResult(MatchResultType.NON_MATCH, null, 0);
-                }
-            } else { // idMatches.size() == 1 : Found patient with matching external ID
-                final Patient idMatch = idMatches.iterator().next();
-                boolean idMatchHasIdat = Validator.instance.getRequiredFields().stream().allMatch(f ->
-                        idMatch.getFields().containsKey(f) && !idMatch.getFields().get(f).isEmpty());
-                // Check if IDAT of input and match (if present) matches
-                if (hasIdat && idMatchHasIdat) {
-                    MatchResult matchWithIdMatch = Config.instance.getMatcher().match(inputPatient, Collections.singletonList(idMatch));
-                    if (matchWithIdMatch.getResultType() != MatchResultType.MATCH) {
-                        throw new WebApplicationException(
-                                Response.status(Status.CONFLICT)
-                                        .entity("Found existing patient with matching external ID but conflicting IDAT!")
-                                        .build());
-                    }
-                }
-                // If an IDAT match exists, check if it is the same patient
-                if (idatMatch != null && idatMatch.getResultType() == MatchResultType.MATCH &&
-                        !idatMatch.getBestMatchedPatient().equals(idMatch)) {
-                    throw new WebApplicationException(
-                            Response.status(Status.CONFLICT)
-                                    .entity("External ID and IDAT match with different patients, respectively!")
-                                    .build());
-                }
-
-                return new MatchResult(MatchResultType.MATCH, idMatch, 1.0);
-            }
+            // normalize and transform fields of the new patient
+            Map<String, Field<?>> inputFields = mapMapWithConfigFields(forms);
+            Patient inputPatient =  Config.instance.getRecordTransformer()
+                    .transform(new Patient(new HashSet<>(externalIds), inputFields));
+            inputPatient.setInputFields(inputFields);
+            return inputPatient;
         } else {
-            return idatMatch;
+            return new Patient(new HashSet<>(externalIds), null);
         }
     }
 
