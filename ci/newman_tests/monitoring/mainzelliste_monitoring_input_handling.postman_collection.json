@@ -1,0 +1,211 @@
+{
+	"info": {
+		"_postman_id": "d39a64d3-669d-4989-853a-8db984a68c88",
+		"name": "mainzelliste_monitoring_input_handling",
+		"description": "Check how the Monitoring reacts to wrong inputs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "getIDRequestCount (Wrong start date)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "58ee2466-6a00-4dc0-b369-7a35c7487b9e",
+						"exec": [
+							"pm.test(\"expect bad request\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "1c7d22ec-976b-430f-9b19-8348227ebf3d",
+						"exec": [
+							"const endDate = new Date();",
+							"endDate.setDate(endDate.getDate()+1);",
+							"postman.setGlobalVariable(\"endDate\",",
+							"endDate.getFullYear() + \"-\" + ((endDate.getMonth()<10)?\"0\":\"\") +(endDate.getMonth()+1) + \"-\" + ((endDate.getDate()<10)?\"0\":\"\") + endDate.getDate());"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"type": "text",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"type": "text",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/monitoring/metrics/IDRequestCount?start=2020&end={{endDate}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"monitoring",
+						"metrics",
+						"IDRequestCount"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "2020"
+						},
+						{
+							"key": "end",
+							"value": "{{endDate}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getIDRequestCount (Wrong end date)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "58ee2466-6a00-4dc0-b369-7a35c7487b9e",
+						"exec": [
+							"pm.test(\"expect bad request\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "1c7d22ec-976b-430f-9b19-8348227ebf3d",
+						"exec": [
+							"const endDate = new Date();",
+							"endDate.setDate(endDate.getDate()+1);",
+							"postman.setGlobalVariable(\"endDate\",",
+							"endDate.getFullYear() + \"-\" + ((endDate.getMonth()<10)?\"0\":\"\") +(endDate.getMonth()+1) + \"-\" + ((endDate.getDate()<10)?\"0\":\"\") + endDate.getDate());",
+							"",
+							"// start date should be yesterday",
+							"const startDate = new Date(endDate);",
+							"startDate.setDate(startDate.getDate()-2);",
+							"postman.setGlobalVariable(\"startDate\", ",
+							"startDate.getFullYear() + \"-\" + ((startDate.getMonth()<10)?\"0\":\"\") +(startDate.getMonth()+1) + \"-\" + ((startDate.getDate()<10)?\"0\":\"\") + startDate.getDate());"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"type": "text",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"type": "text",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/monitoring/metrics/IDRequestCount?start={{startDate}}&end=2020-31-01",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"monitoring",
+						"metrics",
+						"IDRequestCount"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "{{startDate}}"
+						},
+						{
+							"key": "end",
+							"value": "2020-31-01"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getIDRequestCount (end date before start date)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "58ee2466-6a00-4dc0-b369-7a35c7487b9e",
+						"exec": [
+							"pm.test(\"expect bad request\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "1c7d22ec-976b-430f-9b19-8348227ebf3d",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"type": "text",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"type": "text",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/monitoring/metrics/IDRequestCount?startDate=2020-03-01&end=2020-01-30",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"monitoring",
+						"metrics",
+						"IDRequestCount"
+					],
+					"query": [
+						{
+							"key": "end",
+							"value": "2020-01-30"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

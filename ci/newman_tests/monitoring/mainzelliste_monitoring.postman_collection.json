@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "872a7068-fa2f-4052-b2d9-dc6e3ebf8eef",
+		"_postman_id": "1c4435ab-9b70-464b-b1b2-93f16425b8e5",
 		"name": "mainzelliste_monitoring",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -771,12 +771,16 @@
 					"script": {
 						"id": "1c7d22ec-976b-430f-9b19-8348227ebf3d",
 						"exec": [
-							"const date = new Date();",
-							"date.setDate(date.getDate()+1);",
-							"postman.setGlobalVariable(\"endDate\", date.getFullYear() + \"-\" + date.getMonth()+1 + \"-\" + ((date.getDate()<10)?\"0\":\"\") + date.getDate());",
-							"const startDate = new Date(date);",
+							"const endDate = new Date();",
+							"endDate.setDate(endDate.getDate()+1);",
+							"postman.setGlobalVariable(\"endDate\",",
+							"endDate.getFullYear() + \"-\" + ((endDate.getMonth()<10)?\"0\":\"\") +(endDate.getMonth()+1) + \"-\" + ((endDate.getDate()<10)?\"0\":\"\") + endDate.getDate());",
+							"",
+							"// start date should be yesterday",
+							"const startDate = new Date(endDate);",
 							"startDate.setDate(startDate.getDate()-2);",
-							"postman.setGlobalVariable(\"startDate\", startDate.getFullYear() + \"-\" + startDate.getMonth()+1 + \"-\" + ((startDate.getDate()<10)?\"0\":\"\") + startDate.getDate());"
+							"postman.setGlobalVariable(\"startDate\", ",
+							"startDate.getFullYear() + \"-\" + ((startDate.getMonth()<10)?\"0\":\"\") +(startDate.getMonth()+1) + \"-\" + ((startDate.getDate()<10)?\"0\":\"\") + startDate.getDate());"
 						],
 						"type": "text/javascript"
 					}
@@ -887,15 +891,15 @@
 	],
 	"variable": [
 		{
-			"id": "fc2846eb-f027-431d-a9af-5b96e0b50e03",
+			"id": "25b91ffa-4aa7-41c8-b00c-bb328cda9878",
 			"key": "idTypes",
-			"value": "",
+			"value": "null",
 			"type": "string"
 		},
 		{
-			"id": "fdf96831-9d64-4284-ad5d-8818ff99df7b",
+			"id": "671ae823-69c7-400b-ab06-1e9fbc1b1281",
 			"key": "tokenId",
-			"value": "",
+			"value": "8b4e53aa-77de-4891-9f6a-ac97a8d9ce3d",
 			"type": "string"
 		}
 	],
