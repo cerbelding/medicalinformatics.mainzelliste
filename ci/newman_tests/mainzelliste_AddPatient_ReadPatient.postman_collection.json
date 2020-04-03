@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "49cc5eb3-5458-43ff-9387-78e0427d3cf8",
+		"_postman_id": "0cb76c2b-e95d-45ce-959f-af702c936085",
 		"name": "mainzelliste_AddPatient_ReadPatient",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -218,6 +218,102 @@
 							"key": "tokenId",
 							"value": "{{tokenId}}"
 						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "INVALID_TOKEN_ADD_PATIENT_FIELD",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
+						"exec": [
+							"tests[\"Bad Request\"] = responseCode.code === 400;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"fields\" : {\r\n     \t\t\t\"UnknownField\":\"UnknownFieldValue\"\r\n     \t\t},\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "INVALID_TOKEN_ADD_PATIENT_EXTID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
+						"exec": [
+							"tests[\"Bad Request\"] = responseCode.code === 400;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"ids\":{\r\n     \t\t\t\"UnknownExtIdType\":\"UnknownExtIdValue\"\r\n     \t\t},\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
 					]
 				}
 			},
