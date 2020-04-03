@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "d39a64d3-669d-4989-853a-8db984a68c88",
+		"_postman_id": "4d3482c0-5b27-4bb4-994c-cc725a6f2b47",
 		"name": "mainzelliste_monitoring_input_handling",
 		"description": "Check how the Monitoring reacts to wrong inputs",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -187,7 +187,7 @@
 					}
 				],
 				"url": {
-					"raw": "{{url}}/monitoring/metrics/IDRequestCount?startDate=2020-03-01&end=2020-01-30",
+					"raw": "{{url}}/monitoring/metrics/IDRequestCount?start=2020-02-20&end=2020-01-30",
 					"host": [
 						"{{url}}"
 					],
@@ -197,6 +197,10 @@
 						"IDRequestCount"
 					],
 					"query": [
+						{
+							"key": "start",
+							"value": "2020-02-20"
+						},
 						{
 							"key": "end",
 							"value": "2020-01-30"
