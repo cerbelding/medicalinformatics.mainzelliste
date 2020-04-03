@@ -102,7 +102,7 @@ public class MonitoringResource {
         } catch (PersistenceException e) {
             throw new InternalErrorException(e.getMessage());
         } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Your request couldn't be processed due to bad input format of the parameters. Message: " + e.getMessage()).build();
+            throw new ValidatorException("Your request couldn't be processed due to bad input format of the parameters. Message: " + e.getMessage());
         }
     }
 }

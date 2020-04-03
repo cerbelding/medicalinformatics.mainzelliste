@@ -43,7 +43,6 @@ public class MonitoringService {
             Date startDate = parseDate(startDateStr);
             Date endDate = parseDate(endDateStr);
             if(endDate != null && startDate != null && endDate.before(startDate)){
-                logger.warn("Couldn't process request for idRequestCount because end date is before start date. Returning Bad Request message.");
                 throw new IllegalArgumentException("The input is invalid because endDate is before startDate");
             }
             return Persistor.instance.getIDRequestCount(startDate, endDate) + "";
