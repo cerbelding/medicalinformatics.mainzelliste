@@ -145,6 +145,66 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "getIDRequestCount (end date before start date)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "58ee2466-6a00-4dc0-b369-7a35c7487b9e",
+						"exec": [
+							"pm.test(\"expect bad request\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "1c7d22ec-976b-430f-9b19-8348227ebf3d",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"type": "text",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"type": "text",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/monitoring/metrics/IDRequestCount?end=2020-01-30",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"monitoring",
+						"metrics",
+						"IDRequestCount"
+					],
+					"query": [
+						{
+							"key": "end",
+							"value": "2020-01-30"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"protocolProfileBehavior": {}
