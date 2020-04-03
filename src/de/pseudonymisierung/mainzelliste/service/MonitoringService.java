@@ -41,6 +41,9 @@ public class MonitoringService {
     public String getIDRequestCount(String startDateStr, String endDateStr) {
         try {
             return Persistor.instance.getIDRequestCount(parseDate(startDateStr), parseDate(endDateStr)) + "";
+        } catch (IllegalArgumentException e) {
+            logger.warn("Couldn't process request because of invalid input format. Message: " + e.getMessage());
+            throw e;
         } catch (RuntimeException e) {
             logger.fatal( "Persistence provider error. Can't get IDRequestCount. Cause: " +  e.getMessage());
             throw new PersistenceException("An internal error occured: Please contact the administrator.", e);
@@ -51,7 +54,7 @@ public class MonitoringService {
         try {
             return Date.valueOf(LocalDate.parse(dateAsString));
         } catch (DateTimeParseException exc) {
-            throw new IllegalArgumentException("invalid format of the given date parameter : " + dateAsString, exc);
+            throw new IllegalArgumentException("invalid format of the given date parameter : " + dateAsString + ". Please make sure to enter dates in the format YYYY-MM-DD", exc);
         } catch (NullPointerException exc) {
             return null;
         }

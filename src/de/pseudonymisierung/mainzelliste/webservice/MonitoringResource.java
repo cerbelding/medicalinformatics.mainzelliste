@@ -30,6 +30,7 @@ import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.ValidatorException;
 import de.pseudonymisierung.mainzelliste.service.MonitoringService;
+import org.apache.log4j.Logger;
 
 import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;
@@ -101,7 +102,7 @@ public class MonitoringResource {
         } catch (PersistenceException e) {
             throw new InternalErrorException(e.getMessage());
         } catch (IllegalArgumentException e) {
-            throw new ValidatorException(e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity("Your request couldn't be processed due to bad input format of the parameters. Message: " + e.getMessage()).build();
         }
     }
 }
