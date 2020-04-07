@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "7232fe30-7699-4e2d-aeaf-80b279896d58",
 		"name": "mainzelliste_checkMatch_check_responses",
-		"description": "This test should test different cases of record linkage with external ids:\n\nPrecondition, database has one patient.\n\nIDAT|ExternalId|ExpectedResponseCode\nidentical|identical|201\nidentical|not given|201\nidentical|other|409\nother|identical|409\nother|not given|201\nother|other|200\n",
+		"description": "This test should test different cases of record linkage with external ids:\n\n> Precondition, database has one patient.\n\n|IDAT|ExternalId|ExpectedResponseCode|\n|----|----------|--------------------|\n|identical|identical|200|\n|identical|not given|200|\n|identical|other|409|\n|other|identical|409|\n|other|not given|200|\n|other|other|200|",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -145,42 +145,42 @@
 					"urlencoded": [
 						{
 							"key": "vorname",
-							"value": "{{vorname}}",
+							"value": "Max",
 							"type": "text"
 						},
 						{
 							"key": "nachname",
-							"value": "{{nachname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtsname",
-							"value": "{{geburtsname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtstag",
-							"value": "{{geburtstag}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsmonat",
-							"value": "{{geburtsmonat}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsjahr",
-							"value": "{{geburtsjahr}}",
+							"value": "2000",
 							"type": "text"
 						},
 						{
 							"key": "plz",
-							"value": "{{plz}}",
+							"value": "12345",
 							"type": "text"
 						},
 						{
 							"key": "ort",
-							"value": "{{ort}}",
+							"value": "Musterstadt",
 							"type": "text"
 						},
 						{
@@ -309,42 +309,42 @@
 					"urlencoded": [
 						{
 							"key": "vorname",
-							"value": "{{vorname}}",
+							"value": "Max",
 							"type": "text"
 						},
 						{
 							"key": "nachname",
-							"value": "{{nachname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtsname",
-							"value": "{{geburtsname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtstag",
-							"value": "{{geburtstag}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsmonat",
-							"value": "{{geburtsmonat}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsjahr",
-							"value": "{{geburtsjahr}}",
+							"value": "2000",
 							"type": "text"
 						},
 						{
 							"key": "plz",
-							"value": "{{plz}}",
+							"value": "12345",
 							"type": "text"
 						},
 						{
 							"key": "ort",
-							"value": "{{ort}}",
+							"value": "Musterstadt",
 							"type": "text"
 						},
 						{
@@ -413,42 +413,42 @@
 					"urlencoded": [
 						{
 							"key": "vorname",
-							"value": "{{vorname}}",
+							"value": "Max",
 							"type": "text"
 						},
 						{
 							"key": "nachname",
-							"value": "{{nachname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtsname",
-							"value": "{{geburtsname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtstag",
-							"value": "{{geburtstag}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsmonat",
-							"value": "{{geburtsmonat}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsjahr",
-							"value": "{{geburtsjahr}}",
+							"value": "2000",
 							"type": "text"
 						},
 						{
 							"key": "plz",
-							"value": "{{plz}}",
+							"value": "12345",
 							"type": "text"
 						},
 						{
 							"key": "ort",
-							"value": "{{ort}}",
+							"value": "Musterstadt",
 							"type": "text"
 						},
 						{
@@ -515,42 +515,42 @@
 					"urlencoded": [
 						{
 							"key": "vorname",
-							"value": "{{vorname}}",
+							"value": "Max",
 							"type": "text"
 						},
 						{
 							"key": "nachname",
-							"value": "{{nachname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtsname",
-							"value": "{{geburtsname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtstag",
-							"value": "{{geburtstag}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsmonat",
-							"value": "{{geburtsmonat}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsjahr",
-							"value": "{{geburtsjahr}}",
+							"value": "2000",
 							"type": "text"
 						},
 						{
 							"key": "plz",
-							"value": "{{plz}}",
+							"value": "12345",
 							"type": "text"
 						},
 						{
 							"key": "ort",
-							"value": "{{ort}}",
+							"value": "Musterstadt",
 							"type": "text"
 						},
 						{
@@ -615,38 +615,43 @@
 					"mode": "urlencoded",
 					"urlencoded": [
 						{
+							"key": "vorname",
+							"value": "OtherFirstName",
+							"type": "text"
+						},
+						{
 							"key": "nachname",
 							"value": "OtherLastName",
 							"type": "text"
 						},
 						{
 							"key": "geburtsname",
-							"value": "{{geburtsname}}",
+							"value": "OtherBirthName",
 							"type": "text"
 						},
 						{
 							"key": "geburtstag",
-							"value": "{{geburtstag}}",
+							"value": "31",
 							"type": "text"
 						},
 						{
 							"key": "geburtsmonat",
-							"value": "{{geburtsmonat}}",
+							"value": "12",
 							"type": "text"
 						},
 						{
 							"key": "geburtsjahr",
-							"value": "{{geburtsjahr}}",
+							"value": "2000",
 							"type": "text"
 						},
 						{
 							"key": "plz",
-							"value": "{{plz}}",
+							"value": "54321",
 							"type": "text"
 						},
 						{
 							"key": "ort",
-							"value": "{{ort}}",
+							"value": "OtherPlace",
 							"type": "text"
 						},
 						{
@@ -659,11 +664,6 @@
 							"value": "true",
 							"type": "text",
 							"disabled": true
-						},
-						{
-							"key": "vorname",
-							"value": "OtherFirstName",
-							"type": "text"
 						}
 					]
 				},
@@ -719,42 +719,42 @@
 					"urlencoded": [
 						{
 							"key": "vorname",
-							"value": "OtherFirstName",
+							"value": "JustAnotherPatient",
 							"type": "text"
 						},
 						{
 							"key": "nachname",
-							"value": "OtherLastName",
+							"value": "WithAnotherLastname",
 							"type": "text"
 						},
 						{
 							"key": "geburtsname",
-							"value": "{{geburtsname}}",
+							"value": "AndOtherBirthName",
 							"type": "text"
 						},
 						{
 							"key": "geburtstag",
-							"value": "{{geburtstag}}",
+							"value": "31",
 							"type": "text"
 						},
 						{
 							"key": "geburtsmonat",
-							"value": "{{geburtsmonat}}",
+							"value": "12",
 							"type": "text"
 						},
 						{
 							"key": "geburtsjahr",
-							"value": "{{geburtsjahr}}",
+							"value": "1999",
 							"type": "text"
 						},
 						{
 							"key": "plz",
-							"value": "{{plz}}",
+							"value": "54321",
 							"type": "text"
 						},
 						{
 							"key": "ort",
-							"value": "{{ort}}",
+							"value": "AndOtherPlace",
 							"type": "text"
 						},
 						{
@@ -823,42 +823,42 @@
 					"urlencoded": [
 						{
 							"key": "vorname",
-							"value": "OtherFirstName",
+							"value": "AgainOtherFirstName",
 							"type": "text"
 						},
 						{
 							"key": "nachname",
-							"value": "OtherLastName",
+							"value": "AgainOtherLastName",
 							"type": "text"
 						},
 						{
 							"key": "geburtsname",
-							"value": "{{geburtsname}}",
+							"value": "AgainOtherBirthName",
 							"type": "text"
 						},
 						{
 							"key": "geburtstag",
-							"value": "{{geburtstag}}",
+							"value": "10",
 							"type": "text"
 						},
 						{
 							"key": "geburtsmonat",
-							"value": "{{geburtsmonat}}",
+							"value": "08",
 							"type": "text"
 						},
 						{
 							"key": "geburtsjahr",
-							"value": "{{geburtsjahr}}",
+							"value": "1998",
 							"type": "text"
 						},
 						{
 							"key": "plz",
-							"value": "{{plz}}",
+							"value": "32154",
 							"type": "text"
 						},
 						{
 							"key": "ort",
-							"value": "{{ort}}",
+							"value": "AgainOtherPlace",
 							"type": "text"
 						},
 						{
@@ -887,6 +887,28 @@
 				}
 			},
 			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "8d397bfc-5ad8-4d42-9152-188572851f01",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "17b48e31-c879-4d92-9373-9e518e1a4fba",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	],
 	"protocolProfileBehavior": {}
