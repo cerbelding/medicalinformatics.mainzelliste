@@ -400,9 +400,10 @@ public enum PatientBackend {
                 boolean idMatchHasIdat = Validator.instance.getRequiredFields().stream().allMatch(f ->
                         idMatch.getFields().containsKey(f) && !idMatch.getFields().get(f).isEmpty());
                 // Check if IDAT of input and match (if present) matches
-                if (inputPatient.getFields().isEmpty() && idMatchHasIdat) {
+                if (!inputPatient.getFields().isEmpty() && idMatchHasIdat) {
                     MatchResult matchWithIdMatch = Config.instance.getMatcher().match(inputPatient, Collections.singletonList(idMatch));
                     if (matchWithIdMatch.getResultType() != MatchResultType.MATCH) {
+                        logger.debug("Best matching weight on ID Matching: " + matchWithIdMatch.getBestMatchedWeight());
                         throw new WebApplicationException(
                                 Response.status(Status.CONFLICT)
                                         .entity("Found existing patient with matching external ID but conflicting IDAT!")
