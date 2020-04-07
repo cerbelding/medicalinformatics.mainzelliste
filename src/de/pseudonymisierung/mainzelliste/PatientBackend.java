@@ -403,6 +403,7 @@ public enum PatientBackend {
                 if (!inputPatient.getFields().isEmpty() && idMatchHasIdat) {
                     MatchResult matchWithIdMatch = Config.instance.getMatcher().match(inputPatient, Collections.singletonList(idMatch));
                     if (matchWithIdMatch.getResultType() != MatchResultType.MATCH) {
+                        logger.debug("Best matching weight on ID Matching: " + matchWithIdMatch.getBestMatchedWeight());
                         throw new WebApplicationException(
                                 Response.status(Status.CONFLICT)
                                         .entity("Found existing patient with matching external ID but conflicting IDAT!")
