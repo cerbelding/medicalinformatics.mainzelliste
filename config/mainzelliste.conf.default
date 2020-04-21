@@ -427,3 +427,10 @@ callback.allowSelfsigned = false
 # custom configuration
 # subConfiguration.{n}.uri = https://www.example.org/mainzelliste.sub.conf
 # subConfiguration.{n}.uri = file:///etc/mainzelliste/mainzelliste.sub.conf
+
+# gui configuration
+# url of control number generator
+# gui.cng.url = http://localhost:8080/paths_war/paths/getIdToken
+# gui.cng.apiKey = test
+# version of mainzelliste (ml) rest api
+# gui.ml.apiVersion = 3.0

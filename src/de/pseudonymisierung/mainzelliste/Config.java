@@ -83,6 +83,9 @@ public enum Config {
 	/** Allowed headers for Cross Domain Resource Sharing */
 	private Set<String> allowedHeaders;
 
+	/** some gui configurations */
+	private GUI guiConfig;
+
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
 	 * the configuration file.
@@ -188,6 +191,9 @@ public enum Config {
 
 		// Read version number provided by pom.xml
 		version = readVersion();
+
+		// read gui configuration
+		this.guiConfig = new GUI(props);
 	}
 
     /**
@@ -574,6 +580,14 @@ public enum Config {
 	}
 
 	/**
+	 * Get gui configuration
+	 */
+	public GUI getGuiConfiguration()
+	{
+		return guiConfig;
+	}
+
+	/**
 	 * Read version string from properties file "version.properties",
 	 * which is copied from pom.xml by Maven.
 	 * @return The version string.
@@ -596,6 +610,21 @@ public enum Config {
 			return version;
 		} catch (IOException e) {
 			throw new Error ("I/O error while reading version.properties", e);
+		}
+	}
+
+	public static class GUI {
+		/** url of control number generator */
+		public final String cngUrl;
+		/** api key of control number generator */
+		public final String cgnApiKey;
+		/** version of mainzelliste (ml) rest api */
+		public final String mlApiVersion;
+
+		private GUI(Properties properties) {
+			this.cngUrl = Optional.ofNullable((String)properties.get("gui.cng.url")).orElse("");
+			this.cgnApiKey = Optional.ofNullable((String)properties.get("gui.cng.apiKey")).orElse("");
+			this.mlApiVersion = Optional.ofNullable((String)properties.get("gui.ml.apiVersion")).orElse("");
 		}
 	}
 }
