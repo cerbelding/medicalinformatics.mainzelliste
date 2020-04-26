@@ -75,6 +75,8 @@ public enum Servers {
 		Set<String> permissions;
 		/** Remote IP addresses that are accepted for requests by this server. */
 		Set<String> allowedRemoteAdresses;
+		/** Authenticate  properties of this server */
+		Authenticator authenticate;
 		/**
 		 * Remote IP address ranges that are accepted for requests by this
 		 * server.
@@ -113,13 +115,16 @@ public enum Servers {
 		for (int i = 0; ; i++)
 		{
 			if (!props.containsKey("servers." + i + ".apiKey") ||
-				!props.containsKey("servers." + i + ".permissions"))
+				!props.containsKey("servers." + i + ".permissions") ||
+				!props.containsKey("servers." + i + ".clientId") ||
+				!props.containsKey("servers." + i + ".clientSecret") ||
+				!props.containsKey("servers." + i + ".metadataUrl"))
 				break;
 
 			Server s = new Server();
 			s.name = "server" + i;
 			s.apiKey = props.getProperty("servers." + i + ".apiKey").trim();
-			
+
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
 			s.permissions = new HashSet<String>(Arrays.asList(permissions));
 
@@ -138,6 +143,12 @@ public enum Servers {
 					s.allowedRemoteAdresses.add(thisAddress);
 				}
 			}
+			String clientId =  props.getProperty("servers." + i + ".clientId");
+			String clientSecret =  props.getProperty("servers." + i + ".clientSecret");
+			String metadataUrl =  props.getProperty("servers." + i + ".metadataUrl");
+			String subs[] = props.getProperty("servers." + i + ".subs").split("[;,]");
+			s.authenticate = new OauthAuthenticator(clientId, clientSecret, metadataUrl,  new HashSet<String>(Arrays.asList(subs)));
+
 			servers.put(s.apiKey, s);
 		}
 			
