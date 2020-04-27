@@ -21,6 +21,7 @@
 
 <body>
 <script>
+  const UNSURE_CASE = "unsureCase";
   async function postData(url = '', headers, data = {}) {
     // Default options are marked with *
     const response = await fetch(url, {
@@ -42,9 +43,11 @@
       }
     } else if (response.redirected ) {
       window.location = response.url;
+    } else if( response.status === 409) {
+      return UNSURE_CASE;
+    } else {
+      throw new TypeError("Can't create PSD!");
     }
-
-    throw new TypeError("Can't create PSD!");
   }
 
   function createPSD() {
@@ -54,7 +57,7 @@
     // validate form
     let isValid = true;
     formData.forEach(function (value, key) {
-      if (!validate( key, value)) {
+      if (!validate( key)) {
         isValid = false;
       }
     });
@@ -83,7 +86,9 @@
     .then((data) => {
       if (!!data && !!data.idString) { // data should be a json
         showResult(data.idString, jsonObject);
-      } else { // data should be a url
+      } else if (!!data && data === UNSURE_CASE) {
+        showUnsureCase();
+      } else { // data should be an url
         let createdId;
         try {
           createdId = new URL(!data.redirect ? data : data.redirect).searchParams.has("intid");
@@ -111,17 +116,39 @@
     document.getElementById("result-box").style.display = "";
   }
 
-  function showError( error = "", show = true) {
-    document.getElementById("error-content").innerHTML = show ? error : "" ;
+  function showUnsureCase(show = true) {
+    changeCreateBoxToUnsureCase(show);
+    document.getElementById("loading-box").style.display = "none";
+    document.getElementById("create-box").style.display = "";
+  }
+
+  function changeCreateBoxToUnsureCase( show = false ) {
+    document.getElementById("unsure-case-text").style.display = show ? "" : "none";
+    document.getElementById("unsure-case-buttons").style.display = show ? "" : "none";
+    document.getElementById("create-text").style.display = !show ? "" : "none";
+    document.getElementById("create-buttons").style.display = !show ? "" : "none";
+    document.getElementById("sureness").value = show
+    //change input field to readOnly
+    document.querySelectorAll("input[type=text]").forEach((node) => node.readOnly = show);
+    document.querySelectorAll("select").forEach( node => {
+      let hiddenField = document.getElementById(node.id + "-hidden");
+      hiddenField.disabled = !show
+      hiddenField.value = show ? node.value : "";
+      node.disabled = show;
+    })
+  }
+
+  function showError(error = "", show = true) {
+    document.getElementById("error-content").innerHTML = show ? error : "";
     document.getElementById("loading-box").style.display = "none";
     document.getElementById("error-box").style.display = show ? "" : "none";
     // if show false go back to add patient
-    if(!show) {
+    if (!show) {
       document.getElementById("create-box").style.display = "";
     }
   }
 
-  function validate( filedName, value = "" ) {
+  function validate( filedName ) {
     let inputElement = document.getElementById(filedName);
     // check if required
     if(!inputElement) {
@@ -148,55 +175,68 @@
     } else {
       if(!!errorMessage) {
         errorMessage.style.display = "";
-        errorMessage.textContent = '<%= bundle.getString("fieldRequired") %>' // (!value || !value.trim()) ? "" : "";
+        errorMessage.textContent = '<%= bundle.getString("fieldRequired") %>'
       }
       inputElement.style.borderColor = "#c64b4b";
       return false;
     }
   }
-
 </script>
 
-<jsp:include page="header.jsp"></jsp:include>
+<jsp:include page="header.jsp"/>
 <div class="inhalt">
     <div id="create-box" class="formular">
-        <form action="<%=request.getContextPath() %>/patients?mainzellisteApiVersion=${it.mainzellisteApiVersion}&amp;tokenId=${it.tokenId}<%=languageInUrl %>"
-              method="post" id="form_person" novalidate>
-            <h1><%= bundle.getString("createPatientTitle")%>
-            </h1>
-            <h3 class="header_left"><%=bundle.getString("entryNotesTitle") %>
-            </h3>
-            <p>
-                <%=bundle.getString("entryNotesText") %>
-            </p>
-            <ul class="hinweisen_liste">
-                <li>
-              <span class="blauer_text">
-                <%=bundle.getString("entryNotesFirstName") %>
-              </span>
-                </li>
-                <li>
-              <span class="blauer_text">
-                <%=bundle.getString("entryNotesDoubleName") %>
-              </span>
-                </li>
-                <li>
-              <span class="blauer_text">
-                <%=bundle.getString("entryNotesBirthName") %>
-              </span>
-                </li>
-                <li>
-              <span class="blauer_text">
-                <%=bundle.getString("entryNotesRequiredFields") %>
-              </span>
-                </li>
-            </ul>
+        <form method="post" id="form_person" novalidate>
+            <div id="create-text">
+                <h1><%= bundle.getString("createPatientTitle")%>
+                </h1>
+                <h3 class="header_left"><%=bundle.getString("entryNotesTitle") %>
+                </h3>
+                <p>
+                    <%=bundle.getString("entryNotesText") %>
+                </p>
+                <ul class="hinweisen_liste">
+                    <li>
+                  <span class="blauer_text">
+                    <%=bundle.getString("entryNotesFirstName") %>
+                  </span>
+                    </li>
+                    <li>
+                  <span class="blauer_text">
+                    <%=bundle.getString("entryNotesDoubleName") %>
+                  </span>
+                    </li>
+                    <li>
+                  <span class="blauer_text">
+                    <%=bundle.getString("entryNotesBirthName") %>
+                  </span>
+                    </li>
+                    <li>
+                  <span class="blauer_text">
+                    <%=bundle.getString("entryNotesRequiredFields") %>
+                  </span>
+                    </li>
+                </ul>
+            </div>
+            <div id="unsure-case-text" style="display: none;">
+                <h1><%=bundle.getString("unsureCase") %></h1>
+                <%=bundle.getString("unsureCaseText") %>
+                <ul class="hinweisen_liste">
+                    <li><span class="blauer_text"><%=bundle.getString("unsureCaseInfoRevise") %></span></li>
+                    <li><span class="blauer_text"><%=bundle.getString("unsureCaseInfoConfirm") %></span></li>
+                    <li><span class="blauer_text"><%=bundle.getString("unsureCaseInfoSupport") %></span></li>
+                </ul>
+            </div>
             <jsp:include page="patientFormElements.jsp">
                 <jsp:param name="showPlaceholders" value="true"/>
             </jsp:include>
-            <p class="buttons">
-                <input class="submit_anlegen" type="button" onclick="createPSD()"
-                       value=" <%=bundle.getString("createPatientSubmit") %> "/>
+            <p id="create-buttons" class="buttons">
+                <input class="submit_anlegen" type="button" onclick="createPSD()" value=" <%=bundle.getString("createPatientSubmit") %> "/>
+            </p>
+            <p id="unsure-case-buttons" class="buttons" style="display: none;">
+                <input class="submit_korrigieren" type="button" name="korrigieren" value=" <%=bundle.getString("correct") %> " onclick="showUnsureCase(false)"/>
+                <input type="hidden" name="sureness" id="sureness" value="false">
+                <input class="submit_bestaetigen" type="button" name="bestaetigen" value=" <%=bundle.getString("confirm") %>" onclick="createPSD()" />
             </p>
         </form>
     </div>

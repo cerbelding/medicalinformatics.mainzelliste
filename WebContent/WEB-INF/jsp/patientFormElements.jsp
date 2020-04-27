@@ -78,6 +78,7 @@
               }
               } else {
             %>
+            <input type="hidden" id="geburtstag-hidden" name="geburtstag" value="" required disabled />
             <select class="geburtstag" name="geburtstag" id="geburtstag" required >
               <option value=""><%=bundle.getString("day")%></option>
               <%
@@ -111,6 +112,7 @@
               }
               } else {
             %>
+            <input type="hidden" id="geburtsmonat-hidden" name="geburtsmonat" value="" required  disabled/>
             <select class="geburtsmonat" name="geburtsmonat" id="geburtsmonat" required>
               <option value=""><%=bundle.getString("month")%>:
               </option>
@@ -148,6 +150,7 @@
               }
               } else {
             %>
+            <input type="hidden" id="geburtsjahr-hidden" name="geburtsjahr" value="" required  disabled/>
             <select class="geburtsjahr" name="geburtsjahr" id="geburtsjahr" required>
               <option value=""><%=bundle.getString("year")%>:
               </option>
