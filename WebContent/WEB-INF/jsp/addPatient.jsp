@@ -227,7 +227,7 @@
                     <li><span class="blauer_text"><%=bundle.getString("unsureCaseInfoSupport") %></span></li>
                 </ul>
             </div>
-            <jsp:include page="patientFormElements.jsp">
+            <jsp:include page="addPatientFormElements.jsp">
                 <jsp:param name="showPlaceholders" value="true"/>
             </jsp:include>
             <p id="create-buttons" class="buttons">
