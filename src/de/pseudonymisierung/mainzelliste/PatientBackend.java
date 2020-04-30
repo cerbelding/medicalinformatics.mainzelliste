@@ -52,199 +52,203 @@ public enum PatientBackend {
      */
     private Session debugSession = null;
 
-    /**
-     * PID request. Looks for a patient with the specified data in the database.
-     * If a match is found, the ID of the matching patient is returned. If no
-     * match or possible match is found, a new patient with the specified data
-     * is created. If a possible match is found and the form has an entry
-     * "sureness" whose value can be parsed to true (by Boolean.parseBoolean()),
-     * a new patient is created. Otherwise, return null.
-     *
-     * @param tokenId    ID of a valid "addPatient" token.
-     * @param form       Input fields from the HTTP request.
-     * @param apiVersion The API version to use.
-     * @return A representation of the request and its result as an instance of
-     * {@link IDRequest}.
-     */
+  /**
+   * PID request. Looks for a patient with the specified data in the database. If a match is found,
+   * the ID of the matching patient is returned. If no match or possible match is found, a new
+   * patient with the specified data is created. If a possible match is found and the form has an
+   * entry "sureness" whose value can be parsed to true (by Boolean.parseBoolean()), a new patient
+   * is created. Otherwise, return null.
+   *
+   * @param tokenId    ID of a valid "addPatient" token.
+   * @param form       Input fields from the HTTP request.
+   * @param apiVersion The API version to use.
+   * @return A representation of the request and its result as an instance of {@link IDRequest}.
+   */
     public IDRequest createNewPatient(
-            String tokenId,
-            MultivaluedMap<String, String> form,
-            ApiVersion apiVersion) {
-        // create a token if started in debug mode
-        AddPatientToken t;
+        String tokenId,
+        MultivaluedMap<String, String> form,
+        ApiVersion apiVersion) {
+      // create a token if started in debug mode
+      AddPatientToken t;
 
-        Token tt = Servers.instance.getTokenByTid(tokenId);
-        // Try reading token from session.
-        if (tt == null) {
-            // If no token found and debug mode is on, create token, otherwise fail
-            if (Config.instance.debugIsOn()) {
-                Session s = getDebugSession();
-                try {
-                    s.setURI(new URI("debug"));
-                } catch (URISyntaxException e) {
-                    throw new Error();
-                }
+      Token tt = Servers.instance.getTokenByTid(tokenId);
+      // Try reading token from session.
+      if (tt == null) {
+        // If no token found and debug mode is on, create token, otherwise fail
+        if (Config.instance.debugIsOn()) {
+          Session s = getDebugSession();
+          try {
+            s.setURI(new URI("debug"));
+          } catch (URISyntaxException e) {
+            throw new Error();
+          }
 
-                t = new AddPatientToken();
-                Servers.instance.registerToken(s.getId(), t, "127.0.0.1");
-                tokenId = t.getId();
-            } else {
-                logger.error("No token with id " + tokenId + " found");
-                throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
-            }
-        } else { // correct token type?
-            if (!(tt instanceof AddPatientToken)) {
-                logger.error("Token " + tt.getId() + " is not of type 'addPatient' but '" + tt.getType() + "'");
-                throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
-            } else {
-                t = (AddPatientToken) tt;
-            }
+          t = new AddPatientToken();
+          Servers.instance.registerToken(s.getId(), t, "127.0.0.1");
+          tokenId = t.getId();
+        } else {
+          logger.error("No token with id " + tokenId + " found");
+          throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
+        }
+      } else { // correct token type?
+        if (!(tt instanceof AddPatientToken)) {
+          logger.error("Token " + tt.getId() + " is not of type 'addPatient' but '" + tt.getType() + "'");
+          throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
+        } else {
+          t = (AddPatientToken) tt;
+        }
+      }
+
+      MatchResult match = new MatchResult(MatchResultType.NON_MATCH, null, 0);
+      IDRequest request;
+
+      // synchronize on token
+      synchronized (t) {
+        /* Get token again and check if it still exist.
+         * This prevents the following race condition:
+         *  1. Thread A gets token t and enters synchronized block
+         *  2. Thread B also gets token t, now waits for A to exit the synchronized block
+         *  3. Thread A deletes t and exits synchronized block
+         *  4. Thread B enters synchronized block with invalid token
+         */
+
+        t = (AddPatientToken) Servers.instance.getTokenByTid(tokenId);
+
+        if (t == null) {
+          String infoLog = "Token with ID " + tokenId + " is invalid. It was invalidated by a "
+              + "concurrent request or the session timed out during this request.";
+          logger.info(infoLog);
+          throw new WebApplicationException(Response
+              .status(Status.UNAUTHORIZED)
+              .entity("Please supply a valid 'addPatient' token.")
+              .build());
+        }
+        logger.info("Handling ID Request with token " + t.getId());
+
+        // get fields transmitted from MDAT server
+        for (String key : t.getFields().keySet()) {
+          form.add(key, t.getFields().get(key));
         }
 
-        MatchResult match = new MatchResult(MatchResultType.NON_MATCH, null, 0);
-        IDRequest request;
-
-        // synchronize on token
-        synchronized (t) {
-            /* Get token again and check if it still exist.
-             * This prevents the following race condition:
-             *  1. Thread A gets token t and enters synchronized block
-             *  2. Thread B also gets token t, now waits for A to exit the synchronized block
-             *  3. Thread A deletes t and exits synchronized block
-             *  4. Thread B enters synchronized block with invalid token
-             */
-
-            t = (AddPatientToken) Servers.instance.getTokenByTid(tokenId);
-
-            if (t == null) {
-                String infoLog = "Token with ID " + tokenId + " is invalid. It was invalidated by a concurrent request or the session timed out during this request.";
-                logger.info(infoLog);
-                throw new WebApplicationException(Response
-                        .status(Status.UNAUTHORIZED)
-                        .entity("Please supply a valid 'addPatient' token.")
-                        .build());
-            }
-            logger.info("Handling ID Request with token " + t.getId());
-
-            // get fields transmitted from MDAT server
-            for (String key : t.getFields().keySet()) {
-                form.add(key, t.getFields().get(key));
-            }
-
-            // get externally generated ids transmitted from MDAT server
-            for (String key : t.getIds().keySet()) {
-                form.add(key, t.getIds().get(key));
-            }
-
-            // create patient from input form and normalize its fields
-            Patient inputPatient = createPatientFrom(form);
-            // find match with the given IDAT of the input patient
-            final Set<BlockingKey> bks = new HashSet<>();
-            match = findMatch(inputPatient, bks);
-
-            Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
-			String atChangeType; // The action taken depending on the match result, for Audit Trail logging
-
-            // If a list of ID types is given in token, return these types
-            Set<String> idTypes;
-            idTypes = t.getRequestedIdTypes();
-			if (idTypes.isEmpty()) { // otherwise use the default ID type
-                idTypes = new CopyOnWriteArraySet<String>();
-                idTypes.add(IDGeneratorFactory.instance.getDefaultIDType());
-            }
-
-            switch (match.getResultType()) {
-                case MATCH:
-                    assignedPatient = match.getBestMatchedPatient();
-                    for (String idType : idTypes)
-                        assignedPatient.getOriginal().createId(idType);
-                    assignedPatient.updateFrom(inputPatient);
-                    Persistor.instance.updatePatient(assignedPatient);
-                    // log token to separate concurrent request in the log file
-                    ID returnedId = assignedPatient.getOriginal().getId(idTypes.iterator().next());
-                    logger.info("Found match with ID " + returnedId.getIdString() + " for ID request " + t.getId());
-
-                    // Add optional fields if they are not already entered
-                    Map<String, Field<?>> fieldSet = new HashMap<String, Field<?>>(assignedPatient.getFields());
-                    Map<String, Field<?>> inputFieldSet = new HashMap<String, Field<?>>(assignedPatient.getInputFields());
-                    boolean updatePatient = false;
-
-                    for (String key : inputPatient.getFields().keySet()) {
-                        if (!assignedPatient.getFields().containsKey(key)) {
-                            updatePatient = true;
-                            fieldSet.put(key, Field.build(key, inputPatient.getFields().get(key).toString()));
-                            inputFieldSet.put(key, Field.build(key, inputPatient.getInputFields().get(key).toString()));
-                        }
-                    }
-
-                    if (updatePatient) {
-                        assignedPatient.setFields(fieldSet);
-                        assignedPatient.setInputFields(inputFieldSet);
-                        Persistor.instance.updatePatient(assignedPatient);
-                    }
-				    atChangeType = "match";
-                    break;
-
-                case NON_MATCH:
-                case POSSIBLE_MATCH:
-                    if (match.getResultType() == MatchResultType.POSSIBLE_MATCH
-                            && (form.getFirst("sureness") == null || !Boolean.parseBoolean(form.getFirst("sureness")))) {
-                        return new IDRequest(inputPatient.getInputFields(), idTypes, match, null, t);
-                    }
-
-                    // Generate internal IDs
-                    boolean eagerGeneration = Boolean
-                            .parseBoolean(Config.instance.getProperty("idgenerators.eagerGeneration"));
-                    Set<ID> newIds = eagerGeneration ? IDGeneratorFactory.instance.generateIds()
-                            : IDGeneratorFactory.instance.generateIds(idTypes);
-                    // add generated internal ids
-                    // Note: pNormalized already contain all externals ids
-                    newIds.forEach(inputPatient::addId);
-
-                    for (String idType : idTypes) {
-                        logger.info("Created new ID " + inputPatient.createId(idType).getIdString() + " for ID request " + t.getId());
-                    }
-                    if (match.getResultType() == MatchResultType.POSSIBLE_MATCH) {
-                        inputPatient.setTentative(true);
-                        logger.info("New ID " + inputPatient.getIds().iterator().next().getIdString() + " is tentative. Found possible match with ID " +
-                                match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
-                    }
-                    assignedPatient = inputPatient;
-                    atChangeType = match.getResultType() == MatchResultType.POSSIBLE_MATCH ?
-                            "tentative" : "create";
-                    break;
-
-                default:
-                    logger.error("Illegal match result: " + match.getResultType());
-                    throw new InternalErrorException();
-            }
-
-            logger.info("Weight of best match: " + match.getBestMatchedWeight());
-
-			// persist id request and new patient
-            request = new IDRequest(inputPatient.getInputFields(), idTypes, match, assignedPatient, t);
-			if (match.getResultType().equals(MatchResultType.MATCH)) {
-                Persistor.instance.addIdRequest(request);
-			} else {
-				Persistor.instance.addIdRequest(request, bks);
-			}
-
-			// audit trail entry
-            if (Config.instance.auditTrailIsOn()) {
-                for (ID id : assignedPatient.getIds()) {
-                    AuditTrail at = buildAuditTrailRecord(tokenId,
-                            id.getIdString(),
-                            id.getType(),
-                            atChangeType,
-                            null,
-                            request.getAssignedPatient().toString()
-                    );
-                    Persistor.instance.createAuditTrail(at);
-                }
-            }
+        // get externally generated ids transmitted from MDAT server
+        for (String key : t.getIds().keySet()) {
+          form.add(key, t.getIds().get(key));
         }
 
-        return request;
+        // create patient from input form and normalize its fields
+        Patient inputPatient = createPatientFrom(form);
+        // find match with the given IDAT of the input patient
+        final Set<BlockingKey> bks = new HashSet<>();
+        match = findMatch(inputPatient, bks);
+
+        Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
+        String atChangeType; // The action taken depending on the match result, for Audit Trail logging
+
+        // If a list of ID types is given in token, return these types
+        Set<String> idTypes;
+        idTypes = t.getRequestedIdTypes();
+        if (idTypes.isEmpty()) { // otherwise use the default ID type
+          idTypes = new CopyOnWriteArraySet<>();
+          idTypes.add(IDGeneratorFactory.instance.getDefaultIDType());
+        }
+
+        switch (match.getResultType()) {
+          case MATCH:
+            assignedPatient = match.getBestMatchedPatient();
+            for (String idType : idTypes) {
+              assignedPatient.getOriginal().createId(idType);
+            }
+            assignedPatient.updateFrom(inputPatient);
+            Persistor.instance.updatePatient(assignedPatient);
+            // log token to separate concurrent request in the log file
+            ID returnedId = assignedPatient.getOriginal().getId(idTypes.iterator().next());
+            logger.info("Found match with ID " + returnedId.getIdString() + " for ID request " + t.getId());
+
+            // Add optional fields if they are not already entered
+            Map<String, Field<?>> fieldSet = new HashMap<>(assignedPatient.getFields());
+            Map<String, Field<?>> inputFieldSet = new HashMap<>(assignedPatient.getInputFields());
+            boolean updatePatient = false;
+
+            for (String key : inputPatient.getFields().keySet()) {
+              if (!assignedPatient.getFields().containsKey(key)) {
+                updatePatient = true;
+                fieldSet.put(key, Field.build(key, inputPatient.getFields().get(key).toString()));
+                inputFieldSet.put(key, Field.build(key, inputPatient.getInputFields().get(key).toString()));
+              }
+            }
+
+            if (updatePatient) {
+              assignedPatient.setFields(fieldSet);
+              assignedPatient.setInputFields(inputFieldSet);
+              Persistor.instance.updatePatient(assignedPatient);
+            }
+            atChangeType = "match";
+            break;
+
+          case NON_MATCH:
+          case POSSIBLE_MATCH:
+            if (match.getResultType() == MatchResultType.POSSIBLE_MATCH
+                && (form.getFirst("sureness") == null || !Boolean .parseBoolean(form.getFirst("sureness")))) {
+              return new IDRequest(inputPatient.getInputFields(), idTypes, match, null, t);
+            }
+
+            // Generate internal IDs
+            boolean eagerGeneration = Boolean
+                .parseBoolean(Config.instance.getProperty("idgenerators.eagerGeneration"));
+            Set<ID> newIds = eagerGeneration ? IDGeneratorFactory.instance.generateIds()
+                : IDGeneratorFactory.instance.generateIds(idTypes);
+            // add generated internal ids
+            // Note: pNormalized already contain all externals ids
+            newIds.forEach(inputPatient::addId);
+
+            for (String idType : idTypes) {
+              logger.info("Created new ID " + inputPatient.createId(idType).getIdString() + " for ID request " + t.getId());
+            }
+            if (match.getResultType() == MatchResultType.POSSIBLE_MATCH) {
+              inputPatient.setTentative(true);
+              Patient bestMatchedPatient = match.getBestMatchedPatient();
+              // log tentative and possible match ids
+              newIds.stream()
+                  .filter(id -> bestMatchedPatient.getId(id.getType()) != null)
+                  .forEach(id -> logger.info("New ID " + id.getIdString() + " is tentative. Found "
+                      + "possible match with ID " + bestMatchedPatient.getId(id.getType()).getIdString()));
+            }
+            assignedPatient = inputPatient;
+            atChangeType = match.getResultType() == MatchResultType.POSSIBLE_MATCH ?
+                "tentative" : "create";
+            break;
+
+          default:
+            logger.error("Illegal match result: " + match.getResultType());
+            throw new InternalErrorException();
+        }
+
+        logger.info("Weight of best match: " + match.getBestMatchedWeight());
+
+        // persist id request and new patient
+        request = new IDRequest(inputPatient.getInputFields(), idTypes, match, assignedPatient, t);
+        if (match.getResultType().equals(MatchResultType.MATCH)) {
+          Persistor.instance.addIdRequest(request);
+        } else {
+          Persistor.instance.addIdRequest(request, bks);
+        }
+
+        // audit trail entry
+        if (Config.instance.auditTrailIsOn()) {
+          for (ID id : assignedPatient.getIds()) {
+            AuditTrail at = buildAuditTrailRecord(tokenId,
+                id.getIdString(),
+                id.getType(),
+                atChangeType,
+                null,
+                request.getAssignedPatient().toString()
+            );
+            Persistor.instance.createAuditTrail(at);
+          }
+        }
+      }
+
+      return request;
     }
 
     /**
