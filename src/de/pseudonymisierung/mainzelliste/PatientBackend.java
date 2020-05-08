@@ -232,6 +232,7 @@ public enum PatientBackend {
 				// Normalization, Transformation
 				pNormalized = Config.instance.getRecordTransformer().transform(p);
 				pNormalized.setInputFields(chars);
+				pNormalized.setIds(new HashSet<>(externalIds));
 
 				idatMatch = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
 				logger.debug("Best matching weight for IDAT matching: " + idatMatch.getBestMatchedWeight());
@@ -316,33 +317,13 @@ public enum PatientBackend {
 			{
 			case MATCH :
 				for (String idType : idTypes)
-					returnIds.add(match.getBestMatchedPatient().getOriginal().getId(idType));
+					returnIds.add(match.getBestMatchedPatient().getOriginal().createId(idType));
 
 				assignedPatient = match.getBestMatchedPatient();
 				assignedPatient.updateFrom(pNormalized);
 				Persistor.instance.updatePatient(assignedPatient);
 				// log token to separate concurrent request in the log file
 				logger.info("Found match with ID " + returnIds.get(0).getIdString() + " for ID request " + t.getId());
-
-				// Add optional fields if they are not already entered
-//				Map<String, String> newFieldValues = new HashMap<String, String>();
-				Map<String, Field<?>> fieldSet = new HashMap<String, Field<?>>(assignedPatient.getFields());
-				Map<String, Field<?>> inputFieldSet = new HashMap<String, Field<?>>(assignedPatient.getInputFields());
-				boolean updatePatient = false;
-
-				for (String key : pNormalized.getFields().keySet()) {
-					if (!assignedPatient.getFields().containsKey(key)) {
-						updatePatient = true;
-						fieldSet.put(key, Field.build(key, pNormalized.getFields().get(key).toString()));
-						inputFieldSet.put(key, Field.build(key, pNormalized.getInputFields().get(key).toString()));
-					}
-				}
-
-				if (updatePatient) {
-					assignedPatient.setFields(fieldSet);
-					assignedPatient.setInputFields(inputFieldSet);
-					Persistor.instance.updatePatient(assignedPatient);
-				}
 
 				break;
 
@@ -371,7 +352,7 @@ public enum PatientBackend {
 				pNormalized.setIds(newIds);
 
 				for (String idType : idTypes) {
-					ID thisID = pNormalized.getId(idType);
+					ID thisID = pNormalized.createId(idType);
 					returnIds.add(thisID);
 					logger.info("Created new ID " + thisID.getIdString() + " for ID request " + (t == null ? "(null)" : t.getId()));
 				}
@@ -381,7 +362,7 @@ public enum PatientBackend {
 					for (ID thisId : returnIds)
 						thisId.setTentative(true);
 					logger.info("New ID " + returnIds.get(0).getIdString() + " is tentative. Found possible match with ID " +
-							match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString());
+							match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString()); // TODO: Check what happpens if patient doesn´t have specific id
 				}
 				assignedPatient = pNormalized;
 				break;
