@@ -1,0 +1,218 @@
+{
+	"info": {
+		"_postman_id": "9b6d5e48-ddc9-4162-9d38-13984b25f21d",
+		"name": "mainzelliste_session_is_invalid",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NEW_SESSION - Sitzung anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"console.log(\"New Session\")",
+							"",
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Session created\"] = responseCode.code === 201;",
+							"tests[\"Body has sessionId\"] = responseBody.has(\"sessionId\");",
+							"tests[\"Body has uri\"] = responseBody.has(\"uri\");",
+							"",
+							"var sessionId = jsonBody.sessionId;",
+							"postman.clearGlobalVariable(\"sessionId\");",
+							"postman.setGlobalVariable(\"sessionId\", sessionId);",
+							"",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET_SESSION - Sitzung lesen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"console.log(\"GET Session\")",
+							"",
+							"tests[\"Session readable\"] = responseCode.code === 200;",
+							"tests[\"Body has sessionId\"] = responseBody.has(\"sessionId\");",
+							"tests[\"Body has uri\"] = responseBody.has(\"uri\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE_SESSION - Sitzung löschen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Session deleted\"] = responseCode.code === 204;",
+							"//Failure in Mainzelliste, even if session not exists, it responses with 204 "
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW TOKEN (editPatient) - Token anlegen (failure -> no Session-Id)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1971d437-c1ea-4197-8e5c-df4398006113",
+						"exec": [
+							"console.log(\"New TOKEN (editPatient) -> failling (no Session-ID)\");",
+							"",
+							"console.log(responseBody);",
+							"",
+							"",
+							"",
+							"tests[\"Session-ID unknown\"] = responseCode.code === 404;",
+							"tests[\"Checking Body\"] = responseBody == \"Session-ID \"+pm.globals.get(\"sessionId\")+ \" unknown.\";",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET_SESSION - Sitzung lesen -> fails not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "adb9f374-33ed-4e59-ae88-4848958a102d",
+						"exec": [
+							"console.log(\"GET Session\")",
+							"",
+							"",
+							"pm.test(\"Checking Response\", function(){",
+							"      pm.response.to.have.status(\"Not Found\");",
+							"      pm.response.to.have.body(\"No session with id \"+pm.variables.get(\"sessionId\"));",
+							"})",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
