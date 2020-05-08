@@ -1,0 +1,29 @@
+{
+	"id": "91fb03f8-640b-41ef-84f5-a826489e43dc",
+	"name": "Mainzelliste_Local",
+	"values": [
+		{
+			"key": "mainzellisteApiKey",
+			"value": "changeThisApiKey",
+			"enabled": true
+		},
+		{
+			"key": "mainzellisteApiVersion",
+			"value": "3.0",
+			"enabled": true
+		},
+		{
+			"key": "url",
+			"value": "mainzelliste:8080",
+			"enabled": true
+		},
+		{
+			"key": "idTypes",
+			"value": "pid",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2019-09-30T12:46:37.456Z",
+	"_postman_exported_using": "Postman/7.8.0"
+}

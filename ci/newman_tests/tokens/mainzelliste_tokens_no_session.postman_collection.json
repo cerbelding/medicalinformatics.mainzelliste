@@ -1,0 +1,693 @@
+{
+	"info": {
+		"_postman_id": "55114c8c-dcb5-4eba-9fcc-a75e2969260a",
+		"name": "mainzelliste_tokens_no_session",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "404 Not Found",
+			"item": [
+				{
+					"name": "NEW TOKEN (editPatient)  -> 404 Not Found",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d7d11444-86bd-4bbb-90ae-8c03c323fe68",
+								"exec": [
+									"console.log(\"New TOKEN (editPatient)\")",
+									"",
+									"",
+									"",
+									"pm.test('response must be valid and have a body', function() {",
+									"    pm.response.to.have.status(404);",
+									"    pm.response.to.have.body()",
+									"     ",
+									"    ",
+									"});",
+									"",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "mainzellisteApiKey",
+								"value": "{{mainzellisteApiKey}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "mainzellisteApiVersion",
+								"value": "{{mainzellisteApiVersion}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"type\": \"editPatient\",\r\n     \t\"data\": {\r\n     \t\t\"patientId\": {\r\n\t\t\t\t\"idType\":{{idTypes}}, \r\n\t\t\t\t\"idString\":{{idString}}\r\n\t\t\t}\r\n     \t}\r\n}"
+						},
+						"url": {
+							"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"sessions",
+								"{{sessionId}}",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "NEW_TOKEN (addPatient) -> 404 Not Found",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1ad769cd-bb92-4dd0-af67-a2284e9fc68e",
+								"exec": [
+									"console.log(\"New TOKEN (addPatient)\")",
+									"",
+									"",
+									"pm.test('response must be valid and have a body', function() {",
+									"    pm.response.to.have.status(404);",
+									"    pm.response.to.have.body()",
+									"     ",
+									"    ",
+									"});",
+									"",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "mainzellisteApiKey",
+								"value": "{{mainzellisteApiKey}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "mainzellisteApiVersion",
+								"value": "{{mainzellisteApiVersion}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+						},
+						"url": {
+							"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"sessions",
+								"{{sessionId}}",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "NEW_TOKEN (readPatient)  -> 404 Not Found",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "02d7079b-c12b-4349-9070-3eade0bee317",
+								"exec": [
+									"console.log(\"New TOKEN (readPatient)\")",
+									"",
+									"",
+									"",
+									"pm.test('response must be valid and have a body', function() {",
+									"    pm.response.to.have.status(404);",
+									"    pm.response.to.have.body()",
+									"     ",
+									"    ",
+									"});",
+									"",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "mainzellisteApiKey",
+								"value": "{{mainzellisteApiKey}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "mainzellisteApiVersion",
+								"value": "{{mainzellisteApiVersion}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t]\r\n \t}\r\n}"
+						},
+						"url": {
+							"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"sessions",
+								"{{sessionId}}",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "REQUEST TOKEN  -> 404 Not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c731e53e-c65d-401d-97cb-ca9e094eb981",
+						"exec": [
+							"console.log(\"Request Token\")",
+							"",
+							"pm.test('Token not found', function(){",
+							"    ",
+							"  pm.response.to.have.status(404)",
+							"})",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens/{{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens",
+						"{{tokenId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE TOKEN  -> 404 Not Found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "cc58f9ba-1262-45f6-8619-b4fe7dbdd669",
+						"exec": [
+							"console.log(\"DELETE Token\")",
+							"",
+							"",
+							"pm.test('Token not found', function(){",
+							"    ",
+							"  pm.response.to.have.status(404)",
+							"})",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens/{{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens",
+						"{{tokenId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW_SESSION - Sitzung anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9d6887cd-821d-4333-bba8-2e0c075022e8",
+						"exec": [
+							"console.log(\"New Session\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"sessionId\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check StatusCode\", function(){",
+							"    pm.response.to.have.status(\"Created\");",
+							"});",
+							"",
+							"pm.test(\"Check ResponseSchema\", function(){",
+							"     var jsonData = pm.response.json();",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW_TOKEN (addPatient) - Token anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1ad769cd-bb92-4dd0-af67-a2284e9fc68e",
+						"exec": [
+							"console.log(\"New TOKEN (addPatient)\")",
+							"var jsonBody;",
+							" pm.collectionVariables.unset(\"tokenId\");",
+							"",
+							"",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"id\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"type\":{",
+							"                \"type\": \"string\",",
+							"                \"pattern\": \"addPatient\"",
+							"            },",
+							"            \"data\": {",
+							"                \"type\": \"object\",",
+							"                 \"required\": [\"idTypes\"]",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"",
+							"",
+							"",
+							"pm.test('response must be valid and have a body', function() {",
+							"    pm.response.to.have.status(201);",
+							"    pm.response.to.be.withBody;",
+							"    pm.response.to.be.json; ",
+							"     ",
+							"    ",
+							"});",
+							"",
+							"pm.test(\"response have correct scheme\", function() {",
+							"    var localBody =  pm.response.json();",
+							"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+							"    jsonBody = localBody;",
+							"    ",
+							"});",
+							"",
+							"pm.test('response header have correct scheme', function(){",
+							"    pm.expect(pm.response.headers.has('Location')).to.be.true;",
+							"})",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"if(jsonBody){",
+							"    var tokenId = jsonBody.id;",
+							"    pm.collectionVariables.set(\"tokenId\",tokenId);",
+							"}",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "REQUEST TOKEN - Token abfragen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "b9d52f9b-a2e1-4372-bc82-8bf90cf78687",
+						"exec": [
+							"console.log(\"Request Token\")",
+							"",
+							"",
+							"pm.test('sucessful get token', function(){",
+							"    ",
+							"    pm.response.to.have.status(200);",
+							"})",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens/{{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens",
+						"{{tokenId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE TOKEN - Token löschen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e20a0871-8085-4bb6-8110-8f6bb71a3d3d",
+						"exec": [
+							"console.log(\"DELETE Token\")",
+							"",
+							"pm.test('sucessful delete token', function(){",
+							"    ",
+							"    pm.response.to.have.status(204);",
+							"})",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens/{{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens",
+						"{{tokenId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "REQUEST TOKEN  -> 404 Not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c731e53e-c65d-401d-97cb-ca9e094eb981",
+						"exec": [
+							"console.log(\"Request Token\")",
+							"",
+							"pm.test('Token not found', function(){",
+							"    ",
+							"  pm.response.to.have.status(404)",
+							"})",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens/{{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens",
+						"{{tokenId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE TOKEN - Token löschen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e20a0871-8085-4bb6-8110-8f6bb71a3d3d",
+						"exec": [
+							"console.log(\"DELETE Token\")",
+							"",
+							"pm.test('sucessful delete token', function(){",
+							"    ",
+							"    pm.response.to.have.status(204);",
+							"})",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens/{{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens",
+						"{{tokenId}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "45d3ca58-ec34-46ae-8e8b-befa7bcb05cc",
+				"type": "text/javascript",
+				"exec": [
+					"pm.collectionVariables.set(\"idString\", \"0007W0W9\");"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "44ea8dbe-007d-4bd2-b93c-e1e62c5f443d",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
