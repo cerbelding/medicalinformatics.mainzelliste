@@ -12,6 +12,10 @@ initConfigs(){
     && if [ -f newman_mainzelliste_configs/"${1##*/}".conf ]
       then
         echo "ci/newman_mainzelliste_configs/${1##*/}.conf exists"
+	if [ ! -d newman_mainzelliste_configs/active_config/ ]; then
+	    echo "creating directory newman_mainzelliste_configs/active_config/";
+            mkdir newman_mainzelliste_configs/active_config/;
+	fi
         cp newman_mainzelliste_configs/"${1##*/}".conf newman_mainzelliste_configs/active_config/mainzellisteConfig
     else
         echo "no ci/newman_mainzelliste_configs/${1##*/}.conf - use default config"
