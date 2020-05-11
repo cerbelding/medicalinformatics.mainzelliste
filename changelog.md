@@ -1,19 +1,11 @@
-### 1.8.0 - 2020-03-16
+### 1.8.0 - 2020-05-11
 #### Added
 - Example configuration files for docker: docker-compose.user.yml and docker-compose.dev.yml
 - SSL Configuration via reverse proxy in docker
-
-#### Changed
-- Port for remote debugging in docker container now always defaults to 1099
-- Updated references and contributor list
-
-### rc 1.8.0 - 2019-08-06
-
-New features:
-
 - Privacy-preserving record linkage using Bloom filter instead of plain text
 - Deployment via Docker (BETA)
 - Development via Docker (BETA)
+- Integrationtests with bitbucket-pipelines
 - Matching with external IDs and/or IDATs (identifying data)
 - Optional fields can now added or edited later
 - Editing of external generated IDs
@@ -22,12 +14,13 @@ New features:
 - ElasticIDGenerator - Create IDs with given ID length and vocabulary (formerly MasterIDGenerator)
 - Delete Patient via REST-API
 - Soundex-like-blocking - Many thanks to [Ziad Sehili](https://bitbucket.org/%7B087d1ddc-2490-4c54-a353-a5aaf2d0cfed%7D/) from the Leipzig University
-
-Bug fixes:
-
+#### Changed
+- Port for remote debugging in docker container now always defaults to 1099
+- Updated references and contributor list
+#### Fixed
 - Correction in token handling
 - Use correct NULL representation of JSONObject
-
+- Issues with multiple idtypes in same mainzelliste instance.
 ### 1.7.0
 
 This release introduces support for externally generated IDs. This feature introduces an incompatible API change; therefore the API version is bumped to 3.0. However, old API versions are still supported by means of the `mainzellisteApiVersion` header, i.e. this software release is fully backwards compatible. 
