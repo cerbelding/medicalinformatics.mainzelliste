@@ -1,23 +1,24 @@
-#Mainzeliste Tests
+# Mainzeliste Tests
 In order to guarantee the quality of the Mainzelliste, integration tests are provided to developers and testers.
 
-##Quickstart
+## Quickstart
 To test the Mainzelliste the following commands can be used.
-###Run all Tests
+
+### Run all Tests
 To execute all tests in the newman_tests folder execute following line:
 
 ```shell
 /executeAllTests.sh
 ```
 
-###Run one Test or several Subtests
+### Run one Test or several Subtests
 To execute a single test or subtests located in a root folder . e.g. to test specific changes execute following line:
 
 ```shell
 ./executeSubTests.sh <pathToFolderOrFile>
 ```
 
-###Create a Test Environment
+### Create a Test Environment
 To develop tests, a test environment can be created in which you can test your test cases. 
 
 If a new test environment is created which is not yet covered in the test cases, a new empty Postman Collection must be created.
@@ -28,11 +29,13 @@ To create a test environment execute following line:
 ```shell
 ./initTestEnvironment.sh <pathToFile>
 ```
-##How to write a Test
-###Best Practices
+
+## How to write a Test
+
+### Best Practices
 Every Testcase is an isolated Postman Collection with its own Mainzelliste configuration and Test data.
 
-###Writing new Testcases
+### Writing new Testcases
 1. Create Collection in a appropriated folder or subfolder of **newman_tests/**
     1. If necessary add custom config file otherwise the default config will be used
 1. Write Test case (e.g with the help of init test environment)
@@ -41,7 +44,8 @@ Every Testcase is an isolated Postman Collection with its own Mainzelliste confi
         1. Write new request
         2. Add the request to [request-Collection](./test_data/mainzelliste_z-test-requests_Collection.postman_collection.json)
 1. If necessary add custom data file otherwise the default data will be used
-##File structure
+
+## File structure
 [**/newman_tests/:**](./newman_tests)
 > All Testcases are stored here.
 
