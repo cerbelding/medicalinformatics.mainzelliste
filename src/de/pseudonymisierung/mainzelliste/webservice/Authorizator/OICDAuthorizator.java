@@ -25,36 +25,39 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice.Authorizator;
 
-import de.pseudonymisierung.mainzelliste.webservice.HttpsClient.*;
 import org.apache.log4j.Logger;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
-import javax.ws.rs.HttpMethod;
-import java.util.HashMap;
+
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Represents the OpenId Connect Authentication
  */
-public class OICDAuthorizator implements Authorizator{
+public class OICDAuthorizator implements Authorizator {
 
     private final Logger logger = Logger.getLogger(OICDAuthorizator.class);
-
     protected Set<String> subs;
     protected Set<String> roles;
 
 
-    public OICDAuthorizator( Set<String> subs, Set<String> roles){
+    public OICDAuthorizator(Set<String> subs, Set<String> roles) {
         this.subs = subs;
         this.roles = roles;
     }
 
-
-
-
     @Override
-    public boolean hasPermission(Map<String,String> claims) {
-        return subs.contains(claims.get("sub")) || roles.contains(claims.get("roles"));
+    public boolean isAuthenticated(Map<String, String> claims) {
+        boolean isAuthenticated = false;
+        for (Map.Entry<String, String> entry : claims.entrySet()) {
+            if(entry.getKey().equals("sub")){
+                isAuthenticated =  isAuthenticated || subs.contains(entry.getValue());
+            }
+            else if(entry.getKey().matches("role.*")){
+                isAuthenticated =  isAuthenticated || roles.contains(entry.getValue());
+            }
+        }
+
+         return isAuthenticated;
     }
+
 }

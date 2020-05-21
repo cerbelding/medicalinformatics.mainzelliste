@@ -6,8 +6,6 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import javax.ws.rs.HttpMethod;
-import java.util.HashMap;
-import java.util.Map;
 
 public class OICDService {
 
@@ -18,43 +16,16 @@ public class OICDService {
      * Return the UserInformation provided by the Userinfo endpoint from the openId Provider
      * @return Userinformation as JSONObject
      */
-    private static JSONObject getUserInformations(String accessToken, String userInfoEndpointUrl) {
-        JSONObject userInfo = new JSONObject();
-        if (userInfoEndpointUrl.isEmpty()) {
-            return userInfo;
-        } else {
+    public static JSONObject getIdTokenFromUserInfoEndpoint(String accessToken, String userInfoEndpointUrl) {
+        JSONObject idToken = new JSONObject();
+        if (!userInfoEndpointUrl.isEmpty()) {
             HttpHeadersImpl httpHeader = new HttpHeadersImpl(HttpMethod.GET);
             httpHeader.setAuthorization(HttpClientAuthorization.createBearerAuthentication(accessToken));
-            userInfo = new HttpsClient(userInfoEndpointUrl).request(httpHeader, new HttpUrlParameterBuilder());
-            return userInfo;
+            idToken = new HttpsClient(userInfoEndpointUrl).request(httpHeader, new HttpUrlParameterBuilder());
         }
+        return idToken;
     }
 
-
-    /**
-     * Returns the User Claims as a Map
-     * @param accessToken The acessToken of the User
-     * @param userInfoEndpointUrl  The url of authorization's servers userinfo_endpoint
-     * @return The sub, roles Claims of the User stored in a Map
-     */
-
-    public static Map<String, String> getUserClaims(String accessToken, String userInfoEndpointUrl){
-        JSONObject userInfo = getUserInformations(accessToken, userInfoEndpointUrl);
-        Map<String, String> userClaims = new HashMap<>();
-        String sub;
-        String roles;
-        try {
-            sub = userInfo.getString("sub");
-            roles = userInfo.getString("roles");
-            userClaims.put("roles", roles);
-            userClaims.put("sub", sub);
-        }
-        catch (JSONException e) {
-            userClaims.put("roles", "");
-            userClaims.put("sub", "");
-        }
-        return userClaims;
-    }
 
     /**
      * Retrieves the Userinfo endpoint Url from the OpenId Configuration

@@ -4,7 +4,7 @@ import org.apache.commons.net.util.Base64;
 import java.nio.charset.StandardCharsets;
 
 public class HttpClientAuthorization {
-    private String authorization;
+    private final String authorization;
 
 
     public HttpClientAuthorization(String authorization){

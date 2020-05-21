@@ -28,14 +28,16 @@ package de.pseudonymisierung.mainzelliste.webservice.Authorizator;
 import java.util.Map;
 
 /**
- * Represents the Server Authentication
+ * Represents the Authorization of a request
  */
 public interface Authorizator {
 
     /**
-     * Checks if the Server has permission for the requested ressource
-     * @return true id the Server has permission
+     * Checks if the requester could be authenticated
+     *
+     * @param claims the identification of the requester
+     * @return true if the requester could be authenticated, otherwise false
      */
-    boolean hasPermission(Map<String, String> tokens);
+    boolean isAuthenticated(Map<String, String> claims);
 
 }
