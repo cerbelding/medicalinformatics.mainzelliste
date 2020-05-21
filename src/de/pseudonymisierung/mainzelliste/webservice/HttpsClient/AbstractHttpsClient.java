@@ -1,7 +1,6 @@
 package de.pseudonymisierung.mainzelliste.webservice.HttpsClient;
 
 
-import de.pseudonymisierung.mainzelliste.OauthAuthenticator;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONObject;
 

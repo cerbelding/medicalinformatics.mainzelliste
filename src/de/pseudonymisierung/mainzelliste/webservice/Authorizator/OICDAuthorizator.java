@@ -23,17 +23,38 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste;
+package de.pseudonymisierung.mainzelliste.webservice.Authorizator;
+
+import de.pseudonymisierung.mainzelliste.webservice.HttpsClient.*;
+import org.apache.log4j.Logger;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+import javax.ws.rs.HttpMethod;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Represents the Server Authentication
+ * Represents the OpenId Connect Authentication
  */
-public interface Authenticator<T> {
+public class OICDAuthorizator implements Authorizator{
 
-    /**
-     * Checks if the Server has permission for the requested ressource
-     * @return true id the Server has permission
-     */
-    boolean hasPermission(T token);
+    private final Logger logger = Logger.getLogger(OICDAuthorizator.class);
 
+    protected Set<String> subs;
+    protected Set<String> roles;
+
+
+    public OICDAuthorizator( Set<String> subs, Set<String> roles){
+        this.subs = subs;
+        this.roles = roles;
+    }
+
+
+
+
+    @Override
+    public boolean hasPermission(Map<String,String> claims) {
+        return subs.contains(claims.get("sub")) || roles.contains(claims.get("roles"));
+    }
 }
