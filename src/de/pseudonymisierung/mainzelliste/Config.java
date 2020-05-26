@@ -156,7 +156,7 @@ public enum Config {
 			patternMatcher = pattern.matcher(propKey);
 			if (patternMatcher.find())
 			{
-				String fieldName = patternMatcher.group(1);
+				String fieldName = propKey.replace("field.", "").replace(".type", "");
 				String fieldClassStr = props.getProperty(propKey).trim();
 				try {
 					Class<? extends Field<?>> fieldClass;
