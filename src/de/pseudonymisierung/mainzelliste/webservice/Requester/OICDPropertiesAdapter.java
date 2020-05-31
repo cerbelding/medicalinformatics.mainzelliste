@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.webservice.User;
+package de.pseudonymisierung.mainzelliste.webservice.Requester;
 
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;

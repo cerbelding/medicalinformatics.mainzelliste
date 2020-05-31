@@ -1,6 +1,6 @@
 package de.pseudonymisierung.mainzelliste.webservice.HttpsClient;
 
-import de.pseudonymisierung.mainzelliste.webservice.Authorizator.OICDAuthorizator;
+import de.pseudonymisierung.mainzelliste.webservice.Authenticator.OICDAuthenticator;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -10,7 +10,7 @@ import javax.ws.rs.HttpMethod;
 public class OICDService {
 
     private static final String USERINFOENDPOINT = "userinfo_endpoint";
-    private static final Logger logger = Logger.getLogger(OICDAuthorizator.class);
+    private static final Logger logger = Logger.getLogger(OICDAuthenticator.class);
 
     /**
      * Return the UserInformation provided by the Userinfo endpoint from the openId Provider

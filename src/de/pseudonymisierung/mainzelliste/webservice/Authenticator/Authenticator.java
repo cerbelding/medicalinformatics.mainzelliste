@@ -23,14 +23,14 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.webservice.Authorizator;
+package de.pseudonymisierung.mainzelliste.webservice.Authenticator;
 
 import java.util.Map;
 
 /**
  * Represents the Authorization of a request
  */
-public interface Authorizator {
+public interface Authenticator {
 
     /**
      * Checks if the requester could be authenticated

@@ -23,7 +23,7 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.webservice.Authorizator;
+package de.pseudonymisierung.mainzelliste.webservice.Authenticator;
 
 import org.apache.log4j.Logger;
 
@@ -33,14 +33,14 @@ import java.util.Set;
 /**
  * Represents the OpenId Connect Authentication
  */
-public class OICDAuthorizator implements Authorizator {
+public class OICDAuthenticator implements Authenticator {
 
-    private final Logger logger = Logger.getLogger(OICDAuthorizator.class);
+    private final Logger logger = Logger.getLogger(OICDAuthenticator.class);
     protected Set<String> subs;
     protected Set<String> roles;
 
 
-    public OICDAuthorizator(Set<String> subs, Set<String> roles) {
+    public OICDAuthenticator(Set<String> subs, Set<String> roles) {
         this.subs = subs;
         this.roles = roles;
     }
@@ -56,7 +56,6 @@ public class OICDAuthorizator implements Authorizator {
                 isAuthenticated =  isAuthenticated || roles.contains(entry.getValue());
             }
         }
-
          return isAuthenticated;
     }
 

@@ -46,12 +46,17 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
+import de.pseudonymisierung.mainzelliste.webservice.Authenticator.Authenticator;
+import de.pseudonymisierung.mainzelliste.webservice.Authenticator.OICDAuthenticator;
+import de.pseudonymisierung.mainzelliste.webservice.Requester.Requester;
+import de.pseudonymisierung.mainzelliste.webservice.Requester.User;
+import de.pseudonymisierung.mainzelliste.webservice.Requester.UserList;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
-import org.apache.openjpa.lib.log.Log;
+
 
 /**
  * Keeps track of servers, i.e. each communication partner that is not a user.
@@ -66,13 +71,17 @@ public enum Servers {
 	/**
 	 * Represents one registered server.
 	 */
-	class Server {
+	class Server implements Requester {
 
+		String id;
 		String name;
 		/** The apiKey by which this server authenticates itself. */
 		String apiKey;
 		/** The permissions of this server. */
 		Set<String> permissions;
+
+		/**Authentication of a server */
+		Authenticator auth;
 		/** Remote IP addresses that are accepted for requests by this server. */
 		Set<String> allowedRemoteAdresses;
 		/**
@@ -80,16 +89,38 @@ public enum Servers {
 		 * server.
 		 */
 		List<SubnetUtils> allowedRemoteAdressRanges;
+
+		@Override
+		public Set<String> getPermissions() {
+			return this.permissions;
+		}
+
+		@Override
+		public boolean isAuthenticated(Map<String, String> authentication) {
+			return auth.isAuthenticated(authentication);
+		}
+
+		public String getId(){
+			return this.id;
+		}
+
+		@Override
+		public String getName() {
+			return this.name;
+		}
 	}
 
 	/** All registerd servers. */
 	private final Map<String, Server> servers = new HashMap<String, Server>();
+	/**All registerd users  */
+	private final UserList users = new UserList();
 	/** All currently active sessions, identified by their session ids. */
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
 	/** All currently valid tokens, identified by their token ids. */
 	private final Map<String, Token> tokensByTid = new HashMap<String, Token>();
 	/** All Remote IPs with valid tokens by token ids. */
 	private final Map<String, String> IPsByTid = new HashMap<String, String>();
+
 
 	/** Time of inactivity after which a session is invalidated. */
 	private final long sessionTimeout;
@@ -110,39 +141,11 @@ public enum Servers {
 	private Servers() {
 		// read Server configuration from mainzelliste.conf
 		Properties props = Config.instance.getProperties();
-		for (int i = 0; ; i++)
-		{
-			if (!props.containsKey("servers." + i + ".apiKey") ||
-				!props.containsKey("servers." + i + ".permissions"))
-				break;
+		createServers(props);
+		createUsers(props);
 
-			Server s = new Server();
-			s.name = "server" + i;
-			s.apiKey = props.getProperty("servers." + i + ".apiKey").trim();
-			
-			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
-			s.permissions = new HashSet<String>(Arrays.asList(permissions));
-
-			String allowedRemoteAdressesString = props.getProperty("servers." + i + ".allowedRemoteAdresses");
-			String allowedRemoteAdresses[] = (allowedRemoteAdressesString != null) ?  allowedRemoteAdressesString.split("[;,]") : new String[]{"127.0.0.1", "0:0:0:0:0:0:0:1"};
-			logger.info("No AllowedRemoteAddresses are specified for servers." + i + ". Allowing localhost as default.");
-			s.allowedRemoteAdressRanges = new LinkedList<SubnetUtils>();
-			s.allowedRemoteAdresses = new HashSet<String>();
-			for (String thisAddress : allowedRemoteAdresses) {
-				// Check whether this is an IP mask in CIDR notation
-				try {
-					SubnetUtils thisAddressRange = new SubnetUtils(thisAddress);
-					s.allowedRemoteAdressRanges.add(thisAddressRange);
-				} catch (IllegalArgumentException e) {
-					// If not, store as plain IP address
-					s.allowedRemoteAdresses.add(thisAddress);
-				}
-			}
-			servers.put(s.apiKey, s);
-		}
-			
-		if(servers.size() == 0) {
-			logger.error("No servers added. Is your config complete?");
+		if(servers.size() == 0 &&  users.size() == 0) {
+			logger.error("No servers or users added. Is your config complete?");
 		}
 
 		if (Config.instance.getProperty("debug") == "true")
@@ -178,6 +181,56 @@ public enum Servers {
 		// remember the timer instance to be able to shut it down
 		sessionsCleanupTimer = new Timer();
 		sessionsCleanupTimer.schedule(sessionsCleanupThread, new Date(), sessionCleanupInterval);
+	}
+
+	private void createServers(Properties props) {
+		for (int i = 0; ; i++)
+		{
+			if (!props.containsKey("servers." + i + ".apiKey") ||
+					!props.containsKey("servers." + i + ".permissions"))
+				break;
+
+			Server s = new Server();
+			s.name = "server" + i;
+			s.apiKey = props.getProperty("servers." + i + ".apiKey").trim();
+			s.id = s.apiKey;
+
+			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
+			s.permissions = new HashSet<String>(Arrays.asList(permissions));
+
+			String allowedRemoteAdressesString = props.getProperty("servers." + i + ".allowedRemoteAdresses");
+			String allowedRemoteAdresses[] = (allowedRemoteAdressesString != null) ?  allowedRemoteAdressesString.split("[;,]") : new String[]{"127.0.0.1", "0:0:0:0:0:0:0:1"};
+			logger.info("No AllowedRemoteAddresses are specified for servers." + i + ". Allowing localhost as default.");
+			s.allowedRemoteAdressRanges = new LinkedList<SubnetUtils>();
+			s.allowedRemoteAdresses = new HashSet<String>();
+			for (String thisAddress : allowedRemoteAdresses) {
+				// Check whether this is an IP mask in CIDR notation
+				try {
+					SubnetUtils thisAddressRange = new SubnetUtils(thisAddress);
+					s.allowedRemoteAdressRanges.add(thisAddressRange);
+				} catch (IllegalArgumentException e) {
+					// If not, store as plain IP address
+					s.allowedRemoteAdresses.add(thisAddress);
+				}
+			}
+			servers.put(s.apiKey, s);
+
+		}
+	}
+
+	private void createUsers(Properties props){
+		for (int i = 0; ; i++) {
+			if (!props.containsKey("users." + i + ".permissions") ||
+			!props.containsKey("users." + i + ".oauth.claims.sub") ||
+			!props.containsKey("users." + i + ".oauth.claims.roles"))
+				break;
+
+			String permissions[] = props.getProperty("user." + i + ".permissions").split("[;,]");
+			String subs[] = props.getProperty("servers." + i + ".oauth.claims.sub").split("[;,]");
+			String roles[] = props.getProperty("servers." + i + ".oauth.claims.roles").split("[;,]");
+			Authenticator oicdAuth = new OICDAuthenticator(new HashSet<>(Arrays.asList(subs)), new HashSet<>(Arrays.asList(roles)));
+			users.add(new User(new HashSet<String>(Arrays.asList(permissions)), oicdAuth));
+		}
 	}
 
 	/**
@@ -298,52 +351,83 @@ public enum Servers {
 		@SuppressWarnings("unchecked")
 		Set<String> perms = (Set<String>) req.getSession(true).getAttribute("permissions");
 
-		if(perms == null){ // Login
-			String apiKey = req.getHeader("mainzellisteApiKey");
-			if (apiKey == null) // Compatibility to pre 1.0 (needed by secuTrial interface)
-				apiKey = req.getHeader("mzidApiKey");
-			Server server = servers.get(apiKey);
-			
-			if(server == null){
-				logger.info("No server found with provided API key \"" + apiKey + "\"");
-				throw new WebApplicationException(Response
-						.status(Status.UNAUTHORIZED)
-						.entity("Please supply your API key in HTTP header field 'mainzellisteApiKey'.")
+		if(perms == null){
+
+			// Gets the http header information which are nnecessaryfor authenticate a server/ user
+			Map<AuthenticationEum, String> authenticationMap  = Authentication.getAuthenticationHeader(req);
+			Requester requester = null;
+			String idKey = "";
+
+			// If apy key AND access_token is provided throw error
+			if(authenticationMap.containsKey(AuthenticationEum.APIKEY) && authenticationMap.containsKey(AuthenticationEum.ACCESS_TOKEN)){
+					throw new WebApplicationException( Response.status(Status.BAD_REQUEST)
+						.entity("Please supply either Api key or an access token")
 						.build());
 			}
-		
-			if(!server.allowedRemoteAdresses.contains(req.getRemoteAddr())){
-				boolean addressInRange = false;
-				for (SubnetUtils thisAddressRange : server.allowedRemoteAdressRanges) {
-					try {
-						if (thisAddressRange.getInfo().isInRange(req.getRemoteAddr())) {
-							addressInRange = true;
+			// server logic
+			else if(authenticationMap.containsKey(AuthenticationEum.APIKEY)){
+				String apiKey = authenticationMap.get(AuthenticationEum.APIKEY);
+				Server server = servers.get(apiKey);
+				idKey = apiKey;
+
+				if(server != null && !server.allowedRemoteAdresses.contains(req.getRemoteAddr())){
+					boolean addressInRange = false;
+					for (SubnetUtils thisAddressRange : server.allowedRemoteAdressRanges) {
+						try {
+							if (thisAddressRange.getInfo().isInRange(req.getRemoteAddr())) {
+								addressInRange = true;
+								break;
+							}
+						} catch (IllegalArgumentException e) {
+							// Occurs if an IPv6 address was transmitted
+							logger.error("Could not parse IP address " + req.getRemoteAddr(), e);
 							break;
 						}
-					} catch (IllegalArgumentException e) {
-						// Occurs if an IPv6 address was transmitted
-						logger.error("Could not parse IP address " + req.getRemoteAddr(), e);
-						break;
+					}
+					if (!addressInRange) {
+						logger.info("IP address " + req.getRemoteAddr() +  " rejected");
+						throw new WebApplicationException(Response
+								.status(Status.UNAUTHORIZED)
+								.entity(String.format("Rejecting your IP address %s.", req.getRemoteAddr()))
+								.build());
 					}
 				}
-				if (!addressInRange) {
-					logger.info("IP address " + req.getRemoteAddr() +  " rejected");
-					throw new WebApplicationException(Response
-							.status(Status.UNAUTHORIZED)
-							.entity(String.format("Rejecting your IP address %s.", req.getRemoteAddr()))
+
+				requester = server;
+
+			}
+			// user logic
+			else if(authenticationMap.containsKey(AuthenticationEum.ACCESS_TOKEN)){
+				String accessToken = authenticationMap.get(AuthenticationEum.ACCESS_TOKEN);
+				requester = Servers.instance.getRequesterByAccessToken(accessToken);
+				// Access Token should not be display to the Requester
+				idKey = "****";
+				if(requester == null){
+					throw new WebApplicationException(Response.status(Status.UNAUTHORIZED)
+							.entity("Access token could not been validated")
 							.build());
 				}
 			}
 
-			perms = server.permissions;
+			if(requester == null){
+				logger.info("No server or user found with provided key \"" + idKey + "\"");
+				throw new WebApplicationException(Response
+						.status(Status.UNAUTHORIZED)
+						.entity("Please supply your API key in HTTP header field 'mainzellisteApiKey'. " +
+								"Or your access token in the HTTP header field Authorization")
+						.build());
+			}
+
+			perms = requester.getPermissions();
 
 			req.getSession().setAttribute("permissions", perms);
-			req.getSession().setAttribute("serverName", getServerNameForApiKey(apiKey));
+			req.getSession().setAttribute("serverName", requester.getName());
 
 
 			logger.info("Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(perms.toArray()) + ".");
 		}
-		
+
+		// Should be moved to refinedPermissions
 		if(!perms.contains(permission) && perms.stream().noneMatch(p -> p.matches(permission + ".*}"))){ // Check permission
 			logger.info("Access from " + req.getRemoteHost() + " is denied since they lack permission " + permission + ".");
 			throw new WebApplicationException(Response
@@ -589,6 +673,66 @@ public enum Servers {
 	public Set<String> getServerPermissionsForServerName(String serverName){
 		Server server = servers.get(getApiKeyForServerName(serverName));
 		return server.permissions;
+	}
+
+	/**
+	 * Return the requester which has the unique id, if no requester could be found it returns null
+	 * @param id the id of the requester
+	 * @return the requester which has the unique id
+	 */
+	public Requester getRequesterByID(String id){
+		if(servers.containsKey(id)){
+			return servers.get(id);
+		}
+		else if(users.containsKey(id)){
+			return users.getUserById(id);
+		}
+		else{
+			return null;
+		}
+	}
+
+	/**
+	 * Return the requester which is registered with the unique api key
+	 * @param apiKey the apiKey of the requester
+	 * @return the authenticated requester, otherwise null
+	 */
+	public Requester getRequesterByAPIKey(String apiKey){
+		if(servers.containsKey(apiKey)){
+			return servers.get(apiKey);
+		}
+		else{
+			return null;
+		}
+	}
+
+	/**
+	 * Return the requester which could be authenticated with the specific access token
+	 * @param accessToken the access token given by the requester
+	 * @return the authenticated requester, otherwise null
+	 */
+	public Requester getRequesterByAccessToken(String accessToken){
+		Requester requester = users.getUserByOICD(accessToken);
+		return requester;
+	}
+
+	public Requester getRequesterByName(String name){
+		User user =  users.getUserByName(name);
+		Server server = this.getServerByName(name);
+
+		if(server != null) return server;
+		if(user != null) return user;
+		return null;
+	}
+
+	public Server getServerByName(String serverName){
+		for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
+			Server server = entry.getValue();
+			if(serverName.equals(server.name)){
+				return server;
+			}
+		}
+		return  null;
 	}
 
 	public String getApiKeyForServerName(String serverName){

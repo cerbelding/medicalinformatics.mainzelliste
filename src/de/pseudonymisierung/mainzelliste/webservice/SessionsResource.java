@@ -27,6 +27,7 @@ package de.pseudonymisierung.mainzelliste.webservice;
 
 import java.net.URI;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -39,15 +40,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
 import de.pseudonymisierung.mainzelliste.*;
+import de.pseudonymisierung.mainzelliste.webservice.Requester.Requester;
 import de.pseudonymisierung.mainzelliste.webservice.commons.RefinedPermission;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
@@ -85,21 +83,40 @@ public class SessionsResource {
 	public synchronized Response newSession(@Context HttpServletRequest req) throws JSONException{
 		logger.info("Request to create session received by host " + req.getRemoteHost());
 
+		// TODOO REFACTOR
 		Servers.instance.checkPermission(req, "createSession");
 
 
 		Session s = null;
-		try {
-			String apiKey = req.getHeader("mainzellisteApiKey");
-			if (apiKey == null) // Compatibility to pre 1.0 (needed by secuTrial interface)
-				apiKey = req.getHeader("mzidApiKey");
+		Map<AuthenticationEum, String> authenticationMap = Authentication.getAuthenticationHeader(req);
 
-			String parentServerName = Servers.instance.getServerNameForApiKey(apiKey);
-
+		// Authenticate Requester (Server / User)
+		if(authenticationMap.containsKey(AuthenticationEum.APIKEY) && authenticationMap.containsKey(AuthenticationEum.ACCESS_TOKEN)){
+			return Response.status(Status.BAD_REQUEST)
+					.entity("Please supply either Api key or an access token")
+					.build();
+		}
+		else if(authenticationMap.containsKey(AuthenticationEum.APIKEY)){
+			String parentServerName = Servers.instance.getServerNameForApiKey(authenticationMap.get(AuthenticationEum.APIKEY));
 			s = Servers.instance.newSession(parentServerName);
-		} catch (Exception e) {
+
+		}
+		else if(authenticationMap.containsKey(AuthenticationEum.ACCESS_TOKEN)){
+			Requester requester = Servers.instance.getRequesterByAccessToken(authenticationMap.get(AuthenticationEum.ACCESS_TOKEN));
+			if(requester != null ){
+				s = Servers.instance.newSession(requester.getId());
+			}
+			else {
+				return Response.status(Status.UNAUTHORIZED)
+						.entity("access token could not been validate")
+						.build();
+			}
+		}
+		else {
 			s = Servers.instance.newSession("");
 		}
+
+
 
 		String sid = s.getId();
 		URI newUri = UriBuilder

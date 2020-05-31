@@ -1,16 +1,16 @@
-package de.pseudonymisierung.mainzelliste.webservice.Authorizator;
+package de.pseudonymisierung.mainzelliste.webservice.Authenticator;
 
 import org.apache.log4j.Logger;
 
 import java.util.Map;
 import java.util.Set;
 
-public class ApiKeyAuthorizator implements Authorizator {
+public class ApiKeyAuthenticator implements Authenticator {
 
     private final String apiKey;
-    private final Logger logger = Logger.getLogger(OICDAuthorizator.class);
+    private final Logger logger = Logger.getLogger(OICDAuthenticator.class);
 
-    public ApiKeyAuthorizator(String apiKey, Set<String> permissions) {
+    public ApiKeyAuthenticator(String apiKey, Set<String> permissions) {
         this.apiKey = apiKey;
     }
 
