@@ -372,6 +372,20 @@ public enum Persistor {
 		em.persist(id); //TODO: Fehlerbehandlung, falls PID schon existiert.
 		em.getTransaction().commit();
 	}
+
+
+	/**
+	 * Add an ID to the database. In cases where a new ID is created,
+	 * intended only for lazy id generation, when the patient already exists.
+	 *
+	 * @param id
+	 *            The ID to persist.
+	 */
+	public synchronized void addId(ID id) {
+		em.getTransaction().begin();
+		em.persist(id); //TODO: Fehlerbehandlung, falls PID schon existiert.
+		em.getTransaction().commit();
+	}
 	
 	/**
 	 * Add a collection of {@link BlockingKey}s to the database.
