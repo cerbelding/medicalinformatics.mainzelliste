@@ -1,0 +1,22 @@
+## This compose file provides a basic configuration for running mainzelliste as a developer.
+## To use this configuration copy its contents to docker-compose.override.yml.
+## You can refer to docker.md and docker-compose.user.yml for further configuration options.
+version: '3.1'
+services:
+  db:
+    ports:
+      - 5432:5432
+  mainzelliste:
+    build:
+      context: .
+  ## If you want to build the image behind a proxy, it is necessary to provide a proxy as build argument
+      # args:
+        # - http_proxy=http://<your-proxy-host>:<your-proxy-port>
+  ## To reach the mainzelliste outside of docker you will need to expose a port to your localhost
+    ports:
+      - 8080:8080
+  ## Some IDEs provide support for remote debugging java application. 
+  ## With this, it is possible to debug mainzelliste while running it inside a container:
+      - 1099:1099
+    environment:
+      - DEBUG=true

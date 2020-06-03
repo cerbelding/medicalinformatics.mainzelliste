@@ -14,7 +14,7 @@
 # Leading and trailing whitespaces in property values are not allowed and will be removed
 # after loading.
 
-# For a comprehensive documentation of configuration parameters see the configuration manual 
+# For a comprehensive documentation of configuration parameters see the configuration manual
 # ("Konfigurationshandbuch").
 
 # debug mode: If set to true, token handling is disabled (i.e. no tokens are necessary).
@@ -44,6 +44,11 @@ db.password = mainzelliste
 #log.filename = /var/log/tomcat6/mainzelliste.log
 #log.level = DEBUG
 
+#performance tuning soundex-like blocking
+
+#blocking.soundex.type = Soundex
+#blocking.soundex.fields = vorname, nachname
+
 # Field definitions
 #
 # Every input field must be defined here with field.{fieldname}.type = {fieldtype},
@@ -52,7 +57,7 @@ db.password = mainzelliste
 #
 # Every field defined here must either be contained in the input form 
 # WEB-INF/jsp/patientFormElements.jsp (with corresponding "name"-Tag) or
-# be provided in the createPatient Token 
+# be provided in the createPatient Token
 
 # In order to deactivate fields temporarily, it is sufficient to comment out the field definition.
 
@@ -64,6 +69,17 @@ field.geburtsmonat.type = IntegerField
 field.geburtsjahr.type = IntegerField
 field.plz.type = PlainTextField
 field.ort.type = PlainTextField
+
+# To store the data in hashed form (control numbers) use the type ControlNumberField
+
+# field.vorname.type = ControlNumberField
+# field.nachname.type = ControlNumberField
+# field.geburtsname.type = ControlNumberField
+# field.geburtstag.type = ControlNumberField
+# field.geburtsmonat.type = ControlNumberField
+# field.geburtsjahr.type = ControlNumberField
+# field.plz.type = ControlNumberField
+# field.ort.type = ControlNumberField
 
 
 # Server-side validation
@@ -133,6 +149,10 @@ field.geburtsjahr.comparator = BinaryFieldComparator
 field.plz.comparator = BinaryFieldComparator
 field.ort.comparator = NGramComparator
 
+# Use DiceField comparator instead of NGramComparator to apply EpilLink algorithm to hashed fields
+
+# field.vorname.comparator = DiceFieldComparator
+
 
 blockingFields.0 geburtstag, geburtsmonat
 blockingFields.0 geburtstag, geburtjahr
@@ -142,11 +162,13 @@ blockingFields.0 geburtsmonat, geburtsjahr
 
 # Matcher definition
 # Property matcher defines the class name of the matcher to use, which must be a subclass
-# of Matcher. Currently only EpilinkMatcher is supported.
+# of Matcher. Currently only EpilinkMatcher and NullMatcher are supported.
+# Null matcher is used to skip the step of record linkage
 matcher = EpilinkMatcher
+# matcher = NullMatcher
 
 # Config for Epilink Matcher
-# 
+#
 # matcher.epilink.{fieldname}.frequency: Defines the assumed mean frequency of values
 # for field {fieldname}. This corresponds to the u-probability in the Fellegi-Sunter-Model
 # and can be estimated by the reciprocal of the number of distinct values (i.e. the
@@ -156,9 +178,9 @@ matcher.epilink.nachname.frequency = 0.0000271
 matcher.epilink.geburtsname.frequency = 0.0000271
 
 # 1 / 30 (approximate average number of days in a month)
-matcher.epilink.geburtstag.frequency = 0.0333 
+matcher.epilink.geburtstag.frequency = 0.0333
 # 1 / 12
-matcher.epilink.geburtsmonat.frequency = 0.0833  
+matcher.epilink.geburtsmonat.frequency = 0.0833
 # example value: birth years for an age range of 35 years (40 - 75).
 matcher.epilink.geburtsjahr.frequency = 0.0286
 
@@ -167,7 +189,7 @@ matcher.epilink.ort.frequency = 0.01
 
 # matcher.epilink.{fieldname}.error_rate defines the assumed error_rate for
 # field {fieldname} (1 - m-probability)
-# 
+#
 # The supplied number stem from the evaluation of a German cancer registry
 matcher.epilink.vorname.errorRate = 0.01
 matcher.epilink.nachname.errorRate = 0.008
@@ -178,7 +200,7 @@ matcher.epilink.geburtsjahr.errorRate = 0.004
 matcher.epilink.plz.errorRate = 0.04
 matcher.epilink.ort.errorRate = 0.04
 
- 
+
 
 # matcher.epilink.threshold.match: Defines the minimum weight (in the interval [0,1])
 # for which a pair of records is considered a definite match.
@@ -188,7 +210,7 @@ matcher.epilink.ort.errorRate = 0.04
 # to matcher.epilink.threshold_match.
 #
 # Record pairs with a weight w with threshold_non_match <= w < threshold_match are
-# considered possible matches and lead to a tentative PID. 
+# considered possible matches and lead to a tentative PID.
 matcher.epilink.threshold_match = 0.95
 matcher.epilink.threshold_non_match = 0.6
 
@@ -205,7 +227,12 @@ matcher.epilink.threshold_non_match = 0.6
 idgenerators = pid, intid
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
-# idgenerators = pid, intid, extid
+# idgenerators = pid, intid, extid, elasticid
+
+# By default, IDs are generated once they are requested (lazy generation).
+# Set the following parameter to true if upon creating a patient, IDs of all
+# configured types should be created for this patient eagerly.
+idgenerators.eagerGeneration = false
 
 # Additional params for PIDGenerator (k1, k2, k3, rndwidth) are defined here.
 idgenerator.pid = PIDGenerator
@@ -216,6 +243,12 @@ idgenerator.pid.k3 = 3
 idgenerator.pid.rndwidth = 0
 
 idgenerator.intid = SimpleIDGenerator
+
+# ElasticIDGenerator is used for randomly generated id types with the flexible length and vocabulary
+# Additional params for ElasticIDGenerator are defined here.
+# idgenerator.elasticid = ElasticIDGenerator
+# idgenerator.elasticid.vocabulary = 23456789ACDEFGHJKMNPQURTUVWXYZ
+# idgenerator.elasticid.length = 7
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
 # idgenerator.extid = ExternalIDGenerator
@@ -241,11 +274,18 @@ result.printIdat = true
 # 
 # - showSessionIds: see own sessions via GET /sessions
 # - createSession: create session via POST /sessions
+# - manageSessionPatients: manage the set of patients related to a session 
+#	(operations on /sessions/{sessionid}/patients)
 # 
 # - createToken: create tokens -- in addition, permission "tt_x" is req'd, where x is one of these TOKEN TYPES:
 #   - tt_addPatient: allows to generate one (1) ID. Token is invalidated afterwards even if an existing ID was returned.
 #	- tt_readPatients: allows to read IDAT or pseudonyms of patients
 #   - tt_editPatient: allows to change identifying data of one (1) patient. Token is invalidated afterwards.
+#
+# readAllPatientIdTypes: allows to read all IdTypes of a patient
+# readAllPatientIds: allows to read all Ids of a patient
+#
+
 
 # A passphrase used for authentication
 servers.0.apiKey = 

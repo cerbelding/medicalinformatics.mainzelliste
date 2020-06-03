@@ -1,0 +1,22 @@
+image: python:3
+
+pipelines:
+  default:
+    - step:
+        script:
+          - pip3 install docker
+          - pip3 install docker-compose
+          - docker build -t newman_html_report -f ci/Dockerfile.newman ./ci
+          - ls -ll ./ci
+          - ls -ll ./ci/newman_mainzelliste_configs
+          - cd ci
+          - ./executeAllTests.sh
+          - cd ..
+          - mkdir -p newman/test-reports/junit/
+          - cp -a ci/test_results/. ./newman/test-reports/junit/
+          - ls -ll ./ci/test_results/
+          - ls -ll ./newman/test-reports/junit/
+        artifacts:
+          - ci/test_results/**
+options:
+  docker: true

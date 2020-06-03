@@ -3,24 +3,24 @@
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Affero General Public License as published by the Free 
+ * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License 
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Additional permission under GNU GPL version 3 section 7:
  *
- * If you modify this Program, or any covered work, by linking or combining it 
- * with Jersey (https://jersey.java.net) (or a modified version of that 
- * library), containing parts covered by the terms of the General Public 
- * License, version 2.0, the licensors of this Program grant you additional 
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Jersey (https://jersey.java.net) (or a modified version of that
+ * library), containing parts covered by the terms of the General Public
+ * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
 package de.pseudonymisierung.mainzelliste;
@@ -39,7 +39,7 @@ import de.pseudonymisierung.mainzelliste.matcher.DiceFieldComparator;
  * of n-grams of a given character string. This allows for error-tolerant,
  * privacy preserving record linkage according to the method of Schnell,
  * Bachteler and Reiher.
- * 
+ *
  * @see DiceFieldComparator
  */
 @Entity
@@ -48,10 +48,10 @@ public class HashedField extends Field<BitSet>{
 	/**	The value is encoded as a String to allow storage in a database. */
 	@Column(length = BloomFilterTransformer.hashLength)
 	protected String value;
-	
+
 	/**
 	 * Conversion of the String representation of a bit string to a BitSet.
-	 * 
+	 *
 	 * @param b
 	 *            String of the format [01]*
 	 * @return A BitSet with all bit i set for which b[i].equals("1").
@@ -75,10 +75,10 @@ public class HashedField extends Field<BitSet>{
 		}
 		return bs;
 	}
-	
+
 	/**
 	 * Conversion of a BitSet to a String representation.
-	 * 
+	 *
 	 * @param hash
 	 *            A BitSet
 	 * @return A String of length hash.size() where the i-th position is set to
@@ -111,39 +111,39 @@ public class HashedField extends Field<BitSet>{
 	public HashedField(BitSet b) {
 		this.value = BitSet2String(b);
 	}
-	
+
 	/** Create an instance from a String representation of a bit string.
-	 * 
-	 * @param b A String of the format [01]*. 
+	 *
+	 * @param b A String of the format [01]*.
 	 */
 	public HashedField(String b)
-	{		
+	{
 		this.value = b;
 	}
-	
+
 	@Override
 	public BitSet getValue() {
 		return String2BitSet(this.value);
 	}
-	
+
 	@Override
 	public String getValueJSON() {
 		return this.value;
 	}
-		
+
 	@Override
 	public void setValue(BitSet hash) {
 		this.value = BitSet2String(hash);
 	}
-	
+
 	@Override
 	public void setValue(String s) {
 		this.value = s;
 	}
-	
+
 	@Override
 	public HashedField clone()
-	{		
+	{
 		HashedField result = new HashedField(new String(this.value));
 		return result;
 	}

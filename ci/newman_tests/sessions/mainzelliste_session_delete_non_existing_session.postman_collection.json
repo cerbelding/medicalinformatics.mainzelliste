@@ -1,0 +1,298 @@
+{
+	"info": {
+		"_postman_id": "4dbfe2ca-4ef8-4789-acaf-09b1bbd02426",
+		"name": "mainzelliste_session_delete_non_existing_session",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NEW_SESSION - Sitzung anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9d6887cd-821d-4333-bba8-2e0c075022e8",
+						"exec": [
+							"console.log(\"New Session\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"sessionId\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check StatusCode\", function(){",
+							"    pm.response.to.have.status(\"Created\");",
+							"});",
+							"",
+							"pm.test(\"Check ResponseSchema\", function(){",
+							"     var jsonData = pm.response.json();",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET_SESSION - Sitzung lesen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9a14f98e-57a3-4290-995b-01ff305a7f71",
+						"exec": [
+							"console.log(\"GET Session\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"sessionId\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check ResponseCode\", function(){",
+							"     pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Check Response Schema\", function(){",
+							"    pm.expect(ajv.validate(schema,schema)).to.be.true;",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE_Non_Existing_SESSION - Sitzung löschen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "fc0a2231-c19e-4bec-a5c6-d63201f1fae7",
+						"exec": [
+							"",
+							"",
+							"pm.test(\"Check ResponseCode\", function(){",
+							"    pm.response.to.have.status(\"No Content\");",
+							"    ",
+							"",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}1",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET_SESSION - Sitzung lesen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9a14f98e-57a3-4290-995b-01ff305a7f71",
+						"exec": [
+							"console.log(\"GET Session\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"sessionId\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check ResponseCode\", function(){",
+							"     pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Check Response Schema\", function(){",
+							"    pm.expect(ajv.validate(schema,schema)).to.be.true;",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE_SESSION - Sitzung löschen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Session deleted\"] = responseCode.code === 204;",
+							"//Failure in Mainzelliste, even if session not exists, it responses with 204 "
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET_SESSION - Sitzung lesen -> fails not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "adb9f374-33ed-4e59-ae88-4848958a102d",
+						"exec": [
+							"console.log(\"GET Session\")",
+							"",
+							"",
+							"pm.test(\"Checking Response\", function(){",
+							"      pm.response.to.have.status(\"Not Found\");",
+							"      pm.response.to.have.body(\"No session with id \"+pm.variables.get(\"sessionId\"));",
+							"})",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"id": "ededb04c-fbc6-4e5b-9f79-69a6262e3bf8",
+			"key": "sessionId",
+			"value": "0bd985bf-e9cd-495f-9bc3-509af822aadc",
+			"type": "string"
+		}
+	],
+	"protocolProfileBehavior": {}
+}

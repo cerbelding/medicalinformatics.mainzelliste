@@ -1,0 +1,21 @@
+## This is a basic configuration of mainzelliste inside docker
+## Futher information about the image is available inside the docker.md file of this repository
+## Configuration examples are provided with docker-compose.dev.yml and docker-compose.user.yml
+version: "3.1"
+services:
+  db:
+    image: postgres:9.5-alpine
+    environment:
+      - POSTGRES_DB=mainzelliste
+      - POSTGRES_USER=mainzelliste
+      - POSTGRES_PASSWORD=PleasePutASafePasswordHere
+  mainzelliste:
+    image: medicalinformatics/mainzelliste:1.8-latest
+    ports:
+      - 8080:8080
+    environment:
+      - ML_REVERSEPROXY_FQDN=mainzelliste
+      - ML_DB_PASS=PleasePutASafePasswordHere
+      - ML_API_KEY=changeThisApiKey
+    depends_on:
+      - db

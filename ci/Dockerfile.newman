@@ -1,0 +1,8 @@
+FROM postman/newman:alpine
+
+RUN npm config set unsafe-perm true
+RUN npm install -g newman-reporter-htmlextra
+
+WORKDIR /etc/newman
+
+ENTRYPOINT ["newman"]

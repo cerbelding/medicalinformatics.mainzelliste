@@ -49,6 +49,7 @@ import org.apache.log4j.Logger;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import org.apache.openjpa.lib.log.Log;
 
 /**
  * Keeps track of servers, i.e. each communication partner that is not a user.
@@ -64,6 +65,8 @@ public enum Servers {
 	 * Represents one registered server.
 	 */
 	class Server {
+
+		String name;
 		/** The apiKey by which this server authenticates itself. */
 		String apiKey;
 		/** The permissions of this server. */
@@ -111,7 +114,8 @@ public enum Servers {
 				break;
 
 			Server s = new Server();
-			s.apiKey = props.getProperty("servers." + i + ".apiKey");
+			s.name = "server" + i;
+			s.apiKey = props.getProperty("servers." + i + ".apiKey").trim();
 			
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
 			s.permissions = new HashSet<String>(Arrays.asList(permissions));
@@ -132,6 +136,10 @@ public enum Servers {
 			servers.put(s.apiKey, s);
 		}
 			
+		if(servers.size() == 0) {
+			logger.error("No servers added. Is your config complete?");
+		}
+
 		if (Config.instance.getProperty("debug") == "true")
 		{
 			Token t = new Token("4223", "addPatient");
@@ -276,6 +284,7 @@ public enum Servers {
 	 * @param permission
 	 *            The permission to check, e.g. "addPatient".
 	 */
+	//TODO: This function is not only checking permissions. it's also adding the configured server permission to a session. The function should have another name and function should be separated.
 	public void checkPermission(HttpServletRequest req, String permission) {
 		@SuppressWarnings("unchecked")
 		Set<String> perms = (Set<String>) req.getSession(true).getAttribute("permissions");
@@ -287,7 +296,7 @@ public enum Servers {
 			Server server = servers.get(apiKey);
 			
 			if(server == null){
-				logger.info("No server found with provided API key " + apiKey);
+				logger.info("No server found with provided API key \"" + apiKey + "\"");
 				throw new WebApplicationException(Response
 						.status(Status.UNAUTHORIZED)
 						.entity("Please supply your API key in HTTP header field 'mainzellisteApiKey'.")
@@ -318,7 +327,11 @@ public enum Servers {
 			}
 
 			perms = server.permissions;
+
 			req.getSession().setAttribute("permissions", perms);
+			req.getSession().setAttribute("serverName", getServerNameForApiKey(apiKey));
+
+
 			logger.info("Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(perms.toArray()) + ".");
 		}
 		
@@ -530,4 +543,31 @@ public enum Servers {
 	public int getRequestMinorApiVersion(HttpServletRequest req) {
 		return this.getRequestApiVersion(req).minorVersion;
 	}
+
+	public String getServerNameForApiKey(String apiKey){
+		Server server = servers.get(apiKey);
+		return server.name;
+
+	}
+
+	public boolean hasServerPermission(String serverName, String permission){
+
+		Server server = servers.get(getApiKeyForServerName(serverName));
+		if(server.permissions.contains(permission)) {
+			return true;
+		}
+		return false;
+	}
+
+	public String getApiKeyForServerName(String serverName){
+
+		for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
+			if(serverName.equals(entry.getValue().name)){
+				return entry.getKey();
+			}
+		}
+
+		return "Server not found";
+	}
+
 }

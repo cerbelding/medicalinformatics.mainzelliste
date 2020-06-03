@@ -30,35 +30,20 @@ import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.List;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.NoResultException;
-import javax.persistence.Persistence;
-import javax.persistence.TypedQuery;
+import java.util.*;
+import javax.persistence.*;
 
+import de.pseudonymisierung.mainzelliste.*;
+import de.pseudonymisierung.mainzelliste.exceptions.IllegalUsedCharacterException;
 import org.apache.log4j.Logger;
 
 
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.Initializer;
-import de.pseudonymisierung.mainzelliste.ID;
-import de.pseudonymisierung.mainzelliste.IDGeneratorMemory;
-import de.pseudonymisierung.mainzelliste.IDRequest;
-import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Driver;
-import java.util.Enumeration;
-import javax.servlet.ServletContext;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -303,6 +288,20 @@ public enum Persistor {
 		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.		
 		em.getTransaction().commit();
 	}
+
+
+	/**
+	 * Add an ID to the database. In cases where a new ID is created,
+	 * intended only for lazy id generation, when the patient already exists.
+	 *
+	 * @param id
+	 *            The ID to persist.
+	 */
+	public synchronized void addId(ID id) {
+		em.getTransaction().begin();
+		em.persist(id); //TODO: Fehlerbehandlung, falls PID schon existiert.
+		em.getTransaction().commit();
+	}
 	
 	/**
 	 * Update the persisted properties of an ID generator (e.g. the counter from
@@ -373,13 +372,52 @@ public enum Persistor {
 		// Refreshes cached entity 
 		em.refresh(edited); 
 	}
-	
+
+
+	public synchronized  void deletePatient(ID id){
+        Set<ID> allPatientIDs = getAllPatientIDs(id);
+
+	    anonymizeIdRequests(id);
+        deletePatientIDAT(id);
+
+        for (ID specificPatientID : allPatientIDs){
+            deleteId(specificPatientID);
+        }
+
+    }
+
+    /**
+     * Remove a patient from the database, including duplicates.
+     * In addition, all patients that are either a duplicate of the given patient
+     * or those of which the patient is a duplicate are deleted. This includes transitive
+     * relations (duplicate of duplicate).
+     *
+     * @param id An ID of the patient to delete.
+     */
+    public synchronized void deletePatientWithDuplicates(ID id) {
+        /* The subgraph of duplicates is a tree whose root can be found by following
+         * the "original" link recursively. From there, determine all connected patients
+         * by breadth-first search.
+         */
+        List<Patient> allInstances = getPatientWithDuplicates(id);
+        if (allInstances == null)
+            return;
+
+        for (int i = 0; i < allInstances.size(); i++) {
+            deletePatient(allInstances.get(i).getId(id.getType()));
+
+        }
+
+    }
+
 	/**
 	 * Remove a patient from the database.
 	 * 
 	 * @param id An ID of the patient to persist.
 	 */
-	public synchronized void deletePatient(ID id) {
+	public synchronized void deletePatientIDAT(ID id) {
+        checkForSuspectSQLCharacters(id.getIdString());
+
 		em.getTransaction().begin();
 		TypedQuery<Patient> q = em.createQuery("SELECT p FROM Patient p JOIN p.ids id WHERE id.idString = :idString AND id.type = :idType", Patient.class);
 		q.setParameter("idString", id.getIdString());
@@ -389,7 +427,51 @@ public enum Persistor {
 			em.remove(p);
 		em.getTransaction().commit();
 	}
-	
+
+	public synchronized void deleteId (ID id) {
+        checkForSuspectSQLCharacters(id.getIdString());
+
+	    em.getTransaction().begin();
+	    Query query = em.createQuery("DELETE FROM ID id WHERE id.idString like :id").setParameter("id", id.getIdString());
+	    query.executeUpdate();
+	    em.getTransaction().commit();
+	}
+
+    private synchronized void anonymizeIdRequests(ID id){
+        em.getTransaction().begin();
+        try {
+            Patient patient = getPatient(id);
+            // Anonymize fields of all IDRequests that yielded this patient as result
+            TypedQuery<IDRequest> qIdRequest = em.createQuery("SELECT r FROM IDRequest r WHERE r.assignedPatient = :p", IDRequest.class);
+            qIdRequest.setParameter("p", patient);
+            for (IDRequest idRequest : qIdRequest.getResultList()) {
+                for (Field<?> f : idRequest.getInputFields().values()) {
+                    if (f instanceof PlainTextField)
+                        f.setValue("ANONYMIZED");
+                    else if (f instanceof IntegerField)
+                        f.setValue("0");
+                    else
+                        f.setValue("");
+                }
+            }
+            // Finally, remove the patient record
+            //em.remove(patient);
+            em.getTransaction().commit();
+        } catch (Throwable t) {
+            logger.error("Error while deleting patients", t);
+            em.getTransaction().rollback();
+            throw new InternalErrorException(t);
+        }
+
+    }
+
+    private synchronized Set<ID> getAllPatientIDs(ID id){
+
+        Patient patient = getPatient(id);
+        return patient.getIds();
+
+    }
+
 	/** Get patient with duplicates. Works like
 	 * {@link Persistor#getDuplicates(ID)}, but the requested patient is
 	 * included in the result.
@@ -405,7 +487,7 @@ public enum Persistor {
 		duplicates.add(p);
 		return duplicates;
 	}
-	
+
 	/** Get duplicates of a patient.
 	 * 
 	 * Returns a list of all patients that are marked as duplicates of the given
@@ -624,7 +706,6 @@ public enum Persistor {
 		if (Config.instance.getProperty("db.username") != null) connectionProps.put("user",  Config.instance.getProperty("db.username"));
 		if (Config.instance.getProperty("db.password") != null) connectionProps.put("password",  Config.instance.getProperty("db.password"));
 		String url = Config.instance.getProperty("db.url");
-
 		for(int count=0; true; count++) {
 			try {
 				Class.forName(Config.instance.getProperty("db.driver"));
@@ -670,4 +751,17 @@ public enum Persistor {
 		}
 		return identifierQuoteString + identifier + identifierQuoteString;
 	}
+
+    /**
+     * Utility function to prevent illegal use of SQL features
+     * @param checkValue
+     */
+
+	private void checkForSuspectSQLCharacters(String checkValue){
+	    if (checkValue.contains("%") || checkValue.contains(";")|| checkValue.contains("--")){
+	        logger.error("Found illegal character in " + checkValue);
+	        throw new IllegalUsedCharacterException();
+
+        }
+    }
 }
