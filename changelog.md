@@ -1,4 +1,4 @@
-### 1.8.0 - 2020-05-11
+### 1.8.0 - 2020-06-03
 #### Added
 - Example configuration files for docker: docker-compose.user.yml and docker-compose.dev.yml
 - SSL Configuration via reverse proxy in docker
