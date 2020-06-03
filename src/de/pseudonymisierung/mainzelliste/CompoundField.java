@@ -78,6 +78,15 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 		super(value);
 	}
 
+	/** Construct a CompoundField from a string passed as input to the Mainzelliste
+	 *
+	 * See {@link #setValueFromInputString(String)}
+	 * @param s json string representation
+	 */
+	public CompoundField(String s) {
+		setValueFromInputString(s);
+	}
+
 	/** Construct a CompoundField with the given number of components.
 	 *
 	 * @param size The number of components.
@@ -128,6 +137,35 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 				@SuppressWarnings("unchecked")
 				T thisField = (T) Class.forName(obj.getString("class")).newInstance();
 				thisField.setValue(obj.getString("value"));
+				this.value.add(thisField);
+			}
+		} catch (Exception e) {
+			Logger.getLogger(this.getClass()).error("Exception:", e);
+			throw new InternalErrorException();
+		}
+	}
+
+	/**
+	 * Set value from the string passed as input to the Mainzelliste. This string represents a JSON array
+	 * similar to the output of {@link #getValueJSON()}, but the field values are not the internally used string
+	 * representations of the fields but the input strings.
+	 * For most fields these string representations are the same, but e.g. for {@link HashedField} the input string is
+	 * a bitstring whereas internally a Base64 encoding is used.
+	 * @param s A JSON array of the input fields
+	 */
+	private void setValueFromInputString(String s) {
+		try {
+			JSONArray arr = new JSONArray(s);
+			this.value = new LinkedList<T>();
+			for (int fieldInd = 0; fieldInd < arr.length(); fieldInd++) {
+				JSONObject obj = arr.getJSONObject(fieldInd);
+				@SuppressWarnings("unchecked")
+				Class<? extends Field<?>> fieldClass = (Class<? extends Field<?>>)Class.forName(obj.getString("class"));
+				@SuppressWarnings("unchecked")
+				T thisField = (T)Field.build(
+								fieldClass,
+								obj.getString("value")
+				);
 				this.value.add(thisField);
 			}
 		} catch (Exception e) {

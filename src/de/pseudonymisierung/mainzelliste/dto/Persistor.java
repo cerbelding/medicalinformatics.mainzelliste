@@ -25,25 +25,24 @@
  */
 package de.pseudonymisierung.mainzelliste.dto;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import javax.persistence.*;
-
 import de.pseudonymisierung.mainzelliste.*;
+import de.pseudonymisierung.mainzelliste.blocker.BlockingKey;
+import de.pseudonymisierung.mainzelliste.blocker.BlockingMemory;
 import de.pseudonymisierung.mainzelliste.exceptions.IllegalUsedCharacterException;
-import org.apache.log4j.Logger;
-
-
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+import org.apache.log4j.Logger;
+import org.apache.maven.artifact.versioning.ComparableVersion;
+
+import javax.persistence.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Driver;
+import java.sql.*;
+import java.util.*;
+import java.util.Date;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -224,6 +223,40 @@ public enum Persistor {
 		// Entities are not detached, because the IDs are lazy-loaded
 		List<Patient> pl;
 		pl = this.em.createQuery("select p from Patient p", Patient.class).getResultList();
+		logger.debug("Retrieved " + pl.size() + " patients (all)");
+		return pl;
+	}
+
+	/**
+	 * Return a subset of the patients currently persisted in the patient list that
+	 * have at least one of the {@link BlockingKey}s
+	 * @param bks The blocking keys that the requested patients must have
+	 * @return Subset of the persisted patients
+	 */
+	public synchronized List<Patient> getPatients(Set<BlockingKey> bks) {
+		if (bks.isEmpty()) {
+			return getPatients();
+		}
+
+		final List<String> bkStrings = bks.stream()
+						.map(BlockingKey::getKey)
+						.collect(Collectors.toList());
+
+		final String query =
+						"SELECT p " +
+										"FROM Patient p " +
+										"WHERE p.patientJpaId IN ( " +
+										"SELECT b.patient.patientJpaId " +
+										"FROM BlockingKey b " +
+										"WHERE b.key IN :bks)";
+
+		final List<Patient> pl = this.em
+						.createQuery(query, Patient.class)
+						.setParameter("bks", bkStrings)
+						.getResultList();
+
+		logger.debug("Retrieved " + pl.size() + " patients");
+
 		return pl;
 	}
 
@@ -267,13 +300,41 @@ public enum Persistor {
 	 */
 	public synchronized List<Set<ID>> getAllIds() {
 		List<Patient> patients = this.getPatients();
-		List<Set<ID>> ret = new LinkedList<Set<ID>>();
+		List<Set<ID>> ret = new LinkedList<>();
 		for (Patient p : patients) {
 			Set<ID> thisPatientIds = p.getIds();
 			this.em.detach(thisPatientIds);
 			ret.add(thisPatientIds);
 		}
 		return ret;
+	}
+
+	/**
+	 * Returns a list of the IDs of a specific idType of all patients.
+	 *
+	 * @return A list where every item represents the IDs of one patient.
+	 */
+	public synchronized List<ID> getIdsWithType(String idType) {
+		EntityManager em = emf.createEntityManager();
+		TypedQuery<ID> query = em.createQuery("SELECT i from ID i where i.type='" + idType + "'", ID.class);
+		List<ID> result = query.getResultList();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * Returns a list of IDs of all patients, who own at least one ID with the given idType.
+	 *
+	 * @return A list where every item represents the IDs of one patient.
+	 */
+	public synchronized List<ID> getIdsOfPatientsWithIdType(String idType, String[] resultIdTypes ) {
+		String resultIdTypesStr = String.join(", ", resultIdTypes);
+		TypedQuery<ID> query = emf.createEntityManager().createQuery(
+				"select i from Patient p join p.ids i where i.type in ('" + resultIdTypesStr + "') and" +
+				" EXISTS (select someP from Patient someP join someP.ids somePid " +
+						"where someP = p and somePid.type = '"+ idType +"' )",
+				ID.class);
+		return query.getResultList();
 	}
 
 	/**
@@ -284,11 +345,20 @@ public enum Persistor {
 	 *            The ID request to persist.
 	 */
 	public synchronized void addIdRequest(IDRequest req) {
-		em.getTransaction().begin();
-		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.		
-		em.getTransaction().commit();
+		addIdRequest(req, Collections.emptyList());
 	}
 
+	/**
+	 * Add an ID request to the database and include a collection of {@link BlockingKey}s in the transaction
+	 * @param req The ID request to persist
+	 * @param blockingKeys The blocking keys to persist
+	 */
+	public synchronized void addIdRequest(IDRequest req, Collection<BlockingKey> blockingKeys) {
+		em.getTransaction().begin();
+		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.
+		IDGeneratorFactory.instance.getGeneratorMemories().forEach(em::merge);
+		em.getTransaction().commit();
+	}
 
 	/**
 	 * Add an ID to the database. In cases where a new ID is created,
@@ -302,7 +372,85 @@ public enum Persistor {
 		em.persist(id); //TODO: Fehlerbehandlung, falls PID schon existiert.
 		em.getTransaction().commit();
 	}
-	
+
+	/**
+	 * Add a collection of {@link BlockingKey}s to the database.
+	 * @param blockingKeys The blocking keys to persist
+	 */
+	public synchronized void addBlockingKeys(Collection<BlockingKey> blockingKeys) {
+		em.getTransaction().begin();
+		blockingKeys.forEach(em::persist);
+		em.getTransaction().commit();
+	}
+
+	/**
+	 * Get all {@link BlockingKey}s from the database.
+	 * @return The blocking keys persisted in the database.
+	 */
+	public synchronized Collection<BlockingKey> getBlockingKeys() {
+		final List<BlockingKey> bks = this.em.createQuery("SELECT b FROM BlockingKey b", BlockingKey.class)
+						.getResultList();
+		return bks;
+	}
+
+	/**
+	 * Get the {@link BlockingKey}s for a collection of patients from the database.
+	 * @return The blocking keys persisted in the database.
+	 */
+	public synchronized Collection<BlockingKey> getBlockingKeys(Collection<Patient> patients) {
+		if (patients.isEmpty()) return Collections.emptyList();
+
+		final List<Integer> patientIds = patients.stream()
+						.map(Patient::getPatientJpaId)
+						.collect(Collectors.toList());
+
+		final List<BlockingKey> bks = this.em.createQuery("SELECT b FROM BlockingKey b" +
+						" WHERE b.patient.patientJpaId IN :ids", BlockingKey.class)
+						.setParameter("ids", patientIds)
+						.getResultList();
+		return bks;
+	}
+
+	/**
+	 * Remove a collection of {@link BlockingKey}s from the database.
+	 * @param blockingKeys The blocking keys to remove from the database
+	 */
+	public synchronized void removeBlockingKeys(Collection<BlockingKey> blockingKeys) {
+		em.getTransaction().begin();
+		blockingKeys.forEach(em::remove);
+		em.getTransaction().commit();
+	}
+
+	/**
+	 * Update an already persisted {@link BlockingMemory} in the database
+	 * @param mem The blocking memory to update
+	 */
+	public synchronized void updateBlockingMemory(BlockingMemory mem) {
+		em.getTransaction().begin();
+		em.merge(mem);
+		em.getTransaction().commit();
+	}
+
+	/**
+	 * Get all {@link BlockingMemory}s from the database.
+	 * @return The blocking memories persisted in the database.
+	 */
+	public synchronized List<BlockingMemory> getBlockingMemories() {
+		final List<BlockingMemory> bms = this.em.createQuery("SELECT b FROM BlockingMemory b", BlockingMemory.class)
+						.getResultList();
+		return bms;
+	}
+
+	/**
+	 * Remove a collection of {@link BlockingMemory}s from the database.
+	 * @param blockingMemories The blocking memories to remove from the database
+	 */
+	public synchronized void removeBlockingMemories(Collection<BlockingMemory> blockingMemories) {
+		em.getTransaction().begin();
+		blockingMemories.forEach(em::remove);
+		em.getTransaction().commit();
+	}
+
 	/**
 	 * Update the persisted properties of an ID generator (e.g. the counter from
 	 * which PIDs are generated).
@@ -366,6 +514,9 @@ public enum Persistor {
 	 *            The patient to persist.
 	 */
 	public synchronized void updatePatient(Patient p) {
+		// Update blocking keys
+		Config.instance.getBlockingKeyExtractors().updateBlockingKeys(Collections.singletonList(p));
+
 		em.getTransaction().begin();
 		Patient edited = em.merge(p);
 		em.getTransaction().commit();
@@ -374,16 +525,16 @@ public enum Persistor {
 	}
 
 
-	public synchronized  void deletePatient(ID id){
+	public synchronized Patient deletePatient(ID id){
         Set<ID> allPatientIDs = getAllPatientIDs(id);
 
 	    anonymizeIdRequests(id);
-        deletePatientIDAT(id);
+        Patient deletedPatient = deletePatientIDAT(id);
 
         for (ID specificPatientID : allPatientIDs){
             deleteId(specificPatientID);
         }
-
+        return deletedPatient;
     }
 
     /**
@@ -393,29 +544,25 @@ public enum Persistor {
      * relations (duplicate of duplicate).
      *
      * @param id An ID of the patient to delete.
+	 * @return deleted patients
      */
-    public synchronized void deletePatientWithDuplicates(ID id) {
+    public synchronized List<Patient> deletePatientWithDuplicates(ID id) {
         /* The subgraph of duplicates is a tree whose root can be found by following
          * the "original" link recursively. From there, determine all connected patients
          * by breadth-first search.
          */
         List<Patient> allInstances = getPatientWithDuplicates(id);
-        if (allInstances == null)
-            return;
-
-        for (int i = 0; i < allInstances.size(); i++) {
-            deletePatient(allInstances.get(i).getId(id.getType()));
-
-        }
-
+		allInstances.forEach( p -> p.getId(id.getType()));
+        return allInstances;
     }
 
 	/**
 	 * Remove a patient from the database.
 	 * 
 	 * @param id An ID of the patient to persist.
+	 * @return deleted patient
 	 */
-	public synchronized void deletePatientIDAT(ID id) {
+	public synchronized Patient deletePatientIDAT(ID id) {
         checkForSuspectSQLCharacters(id.getIdString());
 
 		em.getTransaction().begin();
@@ -423,9 +570,12 @@ public enum Persistor {
 		q.setParameter("idString", id.getIdString());
 		q.setParameter("idType", id.getType());
 		Patient p = q.getSingleResult();
-		if (p != null)
+		if (p != null) {
+			Collections.singletonList(p).forEach(em::remove);
 			em.remove(p);
+		}
 		em.getTransaction().commit();
+		return p;
 	}
 
 	public synchronized void deleteId (ID id) {
@@ -471,6 +621,88 @@ public enum Persistor {
         return patient.getIds();
 
     }
+
+	/**
+	 * return id request count
+	 * @return id request count
+	 */
+	public long getIDRequestCount(Date startDate, Date endDate) {
+		EntityManager em = emf.createEntityManager();
+		String whereClause = "";
+		if(startDate != null || endDate != null) {
+			whereClause = " where";
+		}
+		String startDateClause = "";
+		if(startDate != null) {
+			startDateClause = " r.timestamp >= : startDate";
+		}
+		String endDateClause = "";
+		if(endDate != null) {
+			endDateClause = (startDateClause.isEmpty()? "" : " and")+ " r.timestamp <= : endDate";
+		}
+
+		TypedQuery<Long> typedQuery = em.createQuery("select COUNT(r) from IDRequest r" + whereClause + startDateClause + endDateClause, Long.class);
+
+		if(!startDateClause.isEmpty()) {
+			typedQuery.setParameter("startDate", startDate, TemporalType.TIMESTAMP);
+		}
+		if(!endDateClause.isEmpty()) {
+			typedQuery.setParameter("endDate", endDate, TemporalType.TIMESTAMP);
+		}
+		long result = typedQuery.getSingleResult();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * return patient count
+	 * @return patient count
+	 */
+	public long getPatientCount() {
+		EntityManager em = emf.createEntityManager();
+		long result = em.createQuery("select COUNT(p) from Patient p", Long.class).getSingleResult();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * return tentative patient count
+	 * @return patient count
+	 */
+	public long getTentativePatientCount() {
+		EntityManager em = emf.createEntityManager();
+		long result = em.createQuery("select COUNT(i) from ID i where i.tentative = true", Long.class).getSingleResult();
+		em.close();
+		return result;
+	}
+
+	/**
+	 * Persist the given AuditTrail instance.
+	 *
+	 * @param at The audit trail record built by the caller.
+	 */
+	public synchronized void createAuditTrail(AuditTrail at) {
+		em.getTransaction().begin();
+		em.persist(at);
+		em.getTransaction().commit();
+		em.refresh(at);
+	}
+
+	public synchronized List<AuditTrail> getAuditTrail(String idString, String idType) {
+		EntityManager em = emf.createEntityManager();
+		TypedQuery<AuditTrail> q = em.createQuery("SELECT a FROM AuditTrail a WHERE a.idValue = :idString AND a.idType = :idType", AuditTrail.class);
+		q.setParameter("idString", idString);
+		q.setParameter("idType", idType);
+		List<AuditTrail> result = q.getResultList();
+
+		if (result.isEmpty()) {
+			em.close();
+			return null;
+		}
+
+		em.close();
+		return result;
+	}
 
 	/** Get patient with duplicates. Works like
 	 * {@link Persistor#getDuplicates(ID)}, but the requested patient is
@@ -597,7 +829,49 @@ public enum Persistor {
 			
 			em.getTransaction().commit();
 		} // End of update 1.1 -> 1.3.1
-		
+
+		if (isSchemaVersionUpdate(fromVersion, "1.9.0")) { // < 1.9
+			logger.info("Updating database schema for version 1.9...");
+			em.getTransaction().begin();
+			// Read HashedFields from the database and change the value type from Bitstring to base64 encoding
+			// This improves the parsing performance and reduces the space requirements.
+			List<HashedField> hashedFields = em.createQuery("SELECT f from HashedField f", HashedField.class)
+							.getResultList();
+			for (HashedField hashedField : hashedFields) {
+				hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString()));
+				em.persist(hashedField);
+			}
+			// Read all Patients and change the HashedField type in the fieldsStrings from BitString to base64
+			List<Patient> patients = getPatients();
+			for (Patient patient : patients) {
+				Collection<Field<?>> fields = new ArrayList<>(patient.getFields().values());
+				fields.addAll(patient.getInputFields().values());
+				fields.stream()
+								.flatMap(f -> {
+									// Unwrap Fields that are subfields of a CompoundField
+									if (f instanceof CompoundField<?>) {
+										@SuppressWarnings("unchecked")
+										final List<Field<?>> subFields = ((CompoundField) f).getValue();
+										return subFields.stream();
+									} else {
+										return Stream.of(f);
+									}
+								})
+								.filter(f -> f instanceof HashedField)
+								.map(f -> (HashedField)f)
+								.forEach(hashedField -> hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString())));
+				// Replace fields and thereby update the fieldsString
+				patient.setFields(patient.getFields());
+				patient.setInputFields(patient.getInputFields());
+				em.merge(patient);
+			}
+			// Update schema version
+			this.setSchemaVersion("1.9.0", em);
+			fromVersion = "1.9.0";
+			em.getTransaction().commit();
+		} // End of update < 1.9
+
+
 		// Update schema version to release version, even if no changes are necessary
 		em.getTransaction().begin();
 		this.setSchemaVersion(Config.instance.getVersion(), em);
@@ -649,7 +923,18 @@ public enum Persistor {
 		em.createNativeQuery("UPDATE mainzelliste_properties SET " + quoteIdentifier("value") + "='" + toVersion + 
 				"' WHERE property='version'").executeUpdate(); 
 	}
-	
+
+	/**
+	 * Check if toVersion is higher than fromVersion.
+	 * @param fromVersion The previous version string
+	 * @param toVersion The new version string
+	 * @return true if version was updated
+	 */
+	private boolean isSchemaVersionUpdate(String fromVersion, String toVersion) {
+		ComparableVersion fv = new ComparableVersion(fromVersion);
+		return 0 > fv.compareTo(new ComparableVersion(toVersion));
+	}
+
 	/**
 	 * Create mainzelliste_properties if not exists. Check if JPA schema was
 	 * initialized. If no, set version to current, otherwise, it is assumed that

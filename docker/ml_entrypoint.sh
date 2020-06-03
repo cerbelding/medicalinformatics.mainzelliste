@@ -39,16 +39,24 @@ if [ -z "$ML_REVERSEPROXY_PORT" ]; then
 	esac
 fi
 
-for VAR in $MAND_VARS; do
-	if [ -z "${!VAR}" ]; then
-		MISSING_VARS+="$VAR "
-	fi
-done
+echo "Check if template config or /run/secrets/mainzellisteConfig is used."
 
-if [ -n "$MISSING_VARS" ]; then
-	echo "Error: Mandatory variables not defined (see documentation): $MISSING_VARS"
-	exit 1
+if [ -f "/run/secrets/mainzellisteConfig" ]; then
+    echo "Config file /run/secrets/mainzellisteConfig is used. No mandatory variables necessary."
+else
+    echo "Template config is used."
+    for VAR in $MAND_VARS; do
+        if [ -z "${!VAR}" ]; then
+            MISSING_VARS+="$VAR "
+        fi
+    done
+
+    if [ -n "$MISSING_VARS" ]; then
+        echo "Error: Mandatory variables not defined (see documentation): $MISSING_VARS"
+        exit 1
+    fi
 fi
+
 
 MISSING_FILES=""
 

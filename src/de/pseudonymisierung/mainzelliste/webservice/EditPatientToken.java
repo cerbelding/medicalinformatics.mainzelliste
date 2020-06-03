@@ -46,6 +46,17 @@ import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 public class EditPatientToken extends Token {
 
 	/**
+	 * Create Token with type "editPatient"
+	 */
+	public EditPatientToken(){
+		this(1);
+	}
+
+	public EditPatientToken(int allowedUses) {
+		super("editPatient", allowedUses);
+	}
+
+	/**
 	 * ID of the patient that can be edited with this token.
 	 */
 	private ID patientId;

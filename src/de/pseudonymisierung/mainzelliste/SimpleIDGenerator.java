@@ -28,6 +28,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import java.util.Optional;
 import java.util.Properties;
 
 
@@ -60,7 +61,6 @@ public class SimpleIDGenerator implements IDGenerator<IntegerID> {
 		IntegerID newID = new IntegerID(Integer.toString(this.counter + 1), idType);
 		this.counter++;
 		this.mem.set("counter", Integer.toString(this.counter));
-		this.mem.commit();
 		return newID;
 	}
 
@@ -97,4 +97,8 @@ public class SimpleIDGenerator implements IDGenerator<IntegerID> {
 	@Override
 	public boolean isExternal() { return false; }
 
+	@Override
+	public Optional<IDGeneratorMemory> getMemory() {
+		return Optional.of(mem);
+	}
 }

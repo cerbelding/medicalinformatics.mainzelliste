@@ -44,6 +44,7 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 import org.apache.log4j.Logger;
 
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
 
@@ -91,6 +92,10 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 		this.counter = Integer.parseInt(memCounter);
 
 		this.idType = idType;
+		// initialize default configuration
+		this.idLength = 5;
+		this.vocabulary = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
+		this.prefix = idType.toUpperCase();
 		// initialize default configuration
 		this.idLength = 5;
 		this.vocabulary = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
@@ -143,7 +148,6 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 
 		this.counter++;
 		mem.set("counter", Integer.toString(this.counter));
-		mem.commit();
 
 		return new ElasticID(id, idType);
 	}
@@ -178,4 +182,9 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 
 	@Override
 	public boolean isExternal() { return false; }
+
+	@Override
+	public Optional<IDGeneratorMemory> getMemory() {
+		return Optional.of(mem);
+	}
 }

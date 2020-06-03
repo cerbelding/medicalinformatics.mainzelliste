@@ -25,37 +25,21 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Locale;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.Properties;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-
+import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.matcher.Matcher;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import de.pseudonymisierung.mainzelliste.matcher.*;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
@@ -83,14 +67,21 @@ public enum Config {
 
 	/** The record transformer matching the configured field transformations. */
 	private RecordTransformer recordTransformer;
+
 	/** The configured matcher */
 	private Matcher matcher;
+
+	/** The configured blockingkey extractors */
+	private BlockingKeyExtractors blockingKeyExtractors;
 
 	/** Logging instance */
 	private Logger logger = Logger.getLogger(Config.class);
 
 	/** Allowed origins for Cross Domain Resource Sharing. */
 	private Set<String> allowedOrigins;
+
+	/** Allowed headers for Cross Domain Resource Sharing */
+	private Set<String> allowedHeaders;
 
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
@@ -131,7 +122,10 @@ public enum Config {
 				}
 			}
 
-			logger.info("Config read successfully");
+
+            addSubConfigurationPropertiesToProps();
+
+            logger.info("Config read successfully");
 			logger.debug(props);
 
 		} catch (IOException e)	{
@@ -178,22 +172,84 @@ public enum Config {
 			}
 		}
 
+		// Parse blockingkey extractors after the matcher as the blocking may depend on the matcher config
+		this.blockingKeyExtractors = new BlockingKeyExtractors(props);
+
 		// Read allowed origins for cross domain resource sharing (CORS)
-		allowedOrigins = new HashSet<String>();
+		allowedOrigins = new HashSet<>();
 		String allowedOriginsString = props.getProperty("servers.allowedOrigins");
 		if (allowedOriginsString != null)
 			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split(";")));
+
+		allowedHeaders = new HashSet<>();
+		String allowedHeadersString = props.getProperty("servers.allowedHeaders");
+		if (allowedHeadersString != null)
+			allowedHeaders.addAll(Arrays.asList(allowedHeadersString.trim().split(";")));
 
 		// Read version number provided by pom.xml
 		version = readVersion();
 	}
 
-	/**
+    /**
+     * Reads subConfiguration.{n}.uri(s) and adds the values to Config.props
+     *
+     */
+    private void addSubConfigurationPropertiesToProps() {
+        //
+        // add custom configuration values
+
+		// get custom config attributes
+		List<String> subConfigurations = props.stringPropertyNames().stream().filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
+				.map(k -> Integer.parseInt(k.split("\\.")[1])).sorted()
+				.map(d -> "subConfiguration." + d + ".uri")
+				.collect(Collectors.toList());
+
+
+        for (String attribute : subConfigurations) {
+            // read custom configuration properties from url
+            Properties subConfigurationProperties;
+            try {
+                URL subConfigurationURL = new URL(props.getProperty(attribute).trim());
+                subConfigurationProperties = readConfigFromUrl(subConfigurationURL);
+                logger.info("Sub configuration file " + attribute + " = " + subConfigurationURL + " has been read in.");
+            }  catch (MalformedURLException e) {
+                logger.fatal("Custom configuration file '" + attribute +
+                        "' could not be read from provided URL " + attribute, e);
+                throw new Error(e);
+            } catch (IOException e) {
+                logger.fatal("Error reading custom configuration file '" + attribute +
+                        "'. Please configure according to installation manual.", e);
+                throw new Error(e);
+            }
+
+            // merge configuration files
+            for (String currentKey : subConfigurationProperties.stringPropertyNames()) {
+                if(props.containsKey(currentKey) && !subConfigurationProperties.getProperty(currentKey).trim()
+                        .equals(props.getProperty(currentKey).trim())) {
+                    String msg = "Sub configuration tries to override main config or former sub config values. This is not allowed. Property key: " + currentKey +
+                            ", custom configuration file: " + attribute;
+                    logger.fatal(msg);
+                    throw new Error(msg);
+                }
+            }
+            props.putAll(subConfigurationProperties);
+        }
+    }
+
+    /**
 	 * Get the {@link RecordTransformer} instance configured for this instance.
 	 * @return The {@link RecordTransformer} instance configured for this instance.
 	 */
 	public RecordTransformer getRecordTransformer() {
 		return recordTransformer;
+	}
+
+	/**
+	 * Get the {@link BlockingKeyExtractors} instance configured for this instance.
+	 * @return The {@link BlockingKeyExtractors} instance configured for this instance.
+	 */
+	public BlockingKeyExtractors getBlockingKeyExtractors() {
+		return this.blockingKeyExtractors;
 	}
 
 	/**
@@ -281,6 +337,16 @@ public enum Config {
 	}
 
 	/**
+	 * Checks whether this instance has audit trailing enabled by the administrator.
+	 *
+	 * @return true if audit trail is enabled.
+	 */
+	public boolean auditTrailIsOn() {
+		String audittrail = this.props.getProperty("gcp.audittrail");
+		return (audittrail != null && audittrail.equals("true"));
+	}
+
+	/**
 	 * Checks whether the given origin is allowed. Used to check the origin in
 	 * Cross Domain Resource Sharing.
 	 *
@@ -290,6 +356,14 @@ public enum Config {
 	 */
 	public boolean originAllowed(String origin) {
 		return this.allowedOrigins.contains(origin);
+	}
+
+	/**
+	 * Returns the allowed Headers to set on Cross Domain Resource Sharing
+	 * @return list of headers set in config servers.allowedHeaders
+	 */
+	public String getAllowedHeaders() {
+		return String.join(",", this.allowedHeaders);
 	}
 
 	/**
@@ -352,8 +426,35 @@ public enum Config {
 				configInputStream = new FileInputStream(configPath);
 			else return null;
 		}
+		return readConfigFromInputStream(configInputStream);
+	}
 
-		Reader reader = new InputStreamReader(configInputStream, "UTF-8");
+	/**
+	 * Read configuration from the given URL.
+	 *
+	 * @param url
+	 *            url of the configuration file.
+	 * @return The configuration as a Properties object
+	 * @throws IOException
+	 *             If an I/O error occurs while reading the configuration file.
+	 */
+	private Properties readConfigFromUrl(URL url) throws IOException {
+		try (BufferedInputStream in = new BufferedInputStream(url.openStream()) ) {
+			return readConfigFromInputStream(in);
+		}
+	}
+
+	/**
+	 * Read configuration from the given input stream.
+	 *
+	 * @param configInputStream
+	 *            input stream of the configuration file.
+	 * @return The configuration as a Properties object
+	 * @throws IOException
+	 *             If an I/O error occurs while reading the configuration file.
+	 */
+	private Properties readConfigFromInputStream(InputStream configInputStream) throws IOException {
+		Reader reader = new InputStreamReader(configInputStream, StandardCharsets.UTF_8);
 		Properties props = new Properties();
 		props.load(reader);
 		// trim property values

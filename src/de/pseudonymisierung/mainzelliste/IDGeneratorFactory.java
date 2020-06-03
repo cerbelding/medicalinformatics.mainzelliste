@@ -30,8 +30,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
@@ -179,6 +181,18 @@ public enum IDGeneratorFactory {
 				ids.add(this.generators.get(idType).getNext());
 		}
 		return ids;
+	}
+
+	/**
+	 * Get all {@link IDGeneratorMemory}s
+	 * @return A set of id generator memories
+	 */
+	public Set<IDGeneratorMemory> getGeneratorMemories() {
+		return this.generators.values().stream()
+						.map(IDGenerator::getMemory)
+						.filter(Optional::isPresent)
+						.map(Optional::get)
+						.collect(Collectors.toSet());
 	}
 
 	/**

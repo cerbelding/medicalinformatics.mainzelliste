@@ -1,53 +1,29 @@
 package de.pseudonymisierung.mainzelliste;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import javax.net.ssl.SSLContext;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.stream.Collectors;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.log4j.Logger;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
-
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
+import de.pseudonymisierung.mainzelliste.blocker.BlockingKey;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+import de.pseudonymisierung.mainzelliste.matcher.Matcher;
+import de.pseudonymisierung.mainzelliste.matcher.NullMatcher;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.log4j.Logger;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
 
 /**
@@ -68,433 +44,264 @@ public enum PatientBackend {
 	/**
 	 * Creates an instance. Invoked on first access to {@link PatientBackend#instance}.
 	 */
-	private PatientBackend() {
-		try {
+	PatientBackend() {
+    }
 
-			SSLContextBuilder builder = new SSLContextBuilder();
-			SSLContext sslCtx;
+    /**
+     * Session to be used when in debug mode.
+     */
+    private Session debugSession = null;
 
-			if ("true".equals(Config.instance.getProperty("callback.allowSelfsigned"))) {
-				builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-				sslCtx = builder.build();
+  /**
+   * PID request. Looks for a patient with the specified data in the database. If a match is found,
+   * the ID of the matching patient is returned. If no match or possible match is found, a new
+   * patient with the specified data is created. If a possible match is found and the form has an
+   * entry "sureness" whose value can be parsed to true (by Boolean.parseBoolean()), a new patient
+   * is created. Otherwise, return null.
+   *
+   * @param tokenId    ID of a valid "addPatient" token.
+   * @param form       Input fields from the HTTP request.
+   * @param apiVersion The API version to use.
+   * @return A representation of the request and its result as an instance of {@link IDRequest}.
+   */
+    public IDRequest createNewPatient(
+        String tokenId,
+        MultivaluedMap<String, String> form,
+        ApiVersion apiVersion) {
+      // create a token if started in debug mode
+      AddPatientToken t;
 
-			} else {
-				sslCtx = SSLContexts.createSystemDefault();
-			}
+      Token tt = Servers.instance.getTokenByTid(tokenId);
+      // Try reading token from session.
+      if (tt == null) {
+        // If no token found and debug mode is on, create token, otherwise fail
+        if (Config.instance.debugIsOn()) {
+          Session s = getDebugSession();
+          try {
+            s.setURI(new URI("debug"));
+          } catch (URISyntaxException e) {
+            throw new Error();
+          }
 
-			sslsf = new SSLConnectionSocketFactory(sslCtx, new String[] { "TLSv1", "TLSv1.1", "TLSv1.2" }, null,
-					SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+          t = new AddPatientToken();
+          Servers.instance.registerToken(s.getId(), t, "127.0.0.1");
+          tokenId = t.getId();
+        } else {
+          logger.error("No token with id " + tokenId + " found");
+          throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
+        }
+      } else { // correct token type?
+        if (!(tt instanceof AddPatientToken)) {
+          logger.error("Token " + tt.getId() + " is not of type 'addPatient' but '" + tt.getType() + "'");
+          throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
+        } else {
+          t = (AddPatientToken) tt;
+        }
+      }
 
-		} catch (NoSuchAlgorithmException ex) {
-			Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
-		} catch (KeyStoreException ex) {
-			Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
-		} catch (KeyManagementException ex) {
-			Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
-		}
-	}
+      MatchResult match = new MatchResult(MatchResultType.NON_MATCH, null, 0);
+      IDRequest request;
 
-	/**
-	 * Session to be used when in debug mode.
-	 */
-	private Session debugSession = null;
+      // synchronize on token
+      synchronized (t) {
+        /* Get token again and check if it still exist.
+         * This prevents the following race condition:
+         *  1. Thread A gets token t and enters synchronized block
+         *  2. Thread B also gets token t, now waits for A to exit the synchronized block
+         *  3. Thread A deletes t and exits synchronized block
+         *  4. Thread B enters synchronized block with invalid token
+         */
 
-	/**
-	 * PID request. Looks for a patient with the specified data in the database.
-	 * If a match is found, the ID of the matching patient is returned. If no
-	 * match or possible match is found, a new patient with the specified data
-	 * is created. If a possible match is found and the form has an entry
-	 * "sureness" whose value can be parsed to true (by Boolean.parseBoolean()),
-	 * a new patient is created. Otherwise, return null.
-	 *
-	 * @param tokenId
-	 *            ID of a valid "addPatient" token.
-	 * @param form
-	 *            Input fields from the HTTP request.
-	 * @param apiVersion
-	 *            The API version to use.
-	 * @return A representation of the request and its result as an instance of
-	 *         {@link IDRequest}.
-	 */
-	public IDRequest createNewPatient(
-			String tokenId,
-			MultivaluedMap<String, String> form,
-			ApiVersion apiVersion) {
+        t = (AddPatientToken) Servers.instance.getTokenByTid(tokenId);
 
-		HashMap<String, Object> ret = new HashMap<String, Object>();
-		// create a token if started in debug mode
-		AddPatientToken t;
+        if (t == null) {
+          String infoLog = "Token with ID " + tokenId + " is invalid. It was invalidated by a "
+              + "concurrent request or the session timed out during this request.";
+          logger.info(infoLog);
+          throw new WebApplicationException(Response
+              .status(Status.UNAUTHORIZED)
+              .entity("Please supply a valid 'addPatient' token.")
+              .build());
+        }
+        logger.info("Handling ID Request with token " + t.getId());
 
-		Token tt = Servers.instance.getTokenByTid(tokenId);
-		// Try reading token from session.
-		if (tt == null) {
-			// If no token found and debug mode is on, create token, otherwise fail
-			if (Config.instance.debugIsOn())
-			{
-				Session s = getDebugSession();
-				try {
-					s.setURI(new URI("debug"));
-				} catch (URISyntaxException e) {
-					throw new Error();
-				}
+        // get fields transmitted from MDAT server
+        for (String key : t.getFields().keySet()) {
+          form.add(key, t.getFields().get(key));
+        }
 
-				t = new AddPatientToken(null);
-				Servers.instance.registerToken(s.getId(), t);
-				tokenId = t.getId();
-			} else {
-				logger.error("No token with id " + tokenId + " found");
-				throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
-			}
-		} else { // correct token type?
-			if (!(tt instanceof AddPatientToken)) {
-				logger.error("Token " + tt.getId() + " is not of type 'addPatient' but '" + tt.getType() + "'");
-				throw new InvalidTokenException("Please supply a valid 'addPatient' token.", Status.UNAUTHORIZED);
-			} else {
-				t = (AddPatientToken) tt;
-			}
-		}
+        // get externally generated ids transmitted from MDAT server
+        for (String key : t.getIds().keySet()) {
+          form.add(key, t.getIds().get(key));
+        }
 
-		List<ID> returnIds = new LinkedList<ID>();
-		MatchResult match = new MatchResult(MatchResultType.NON_MATCH, null, 0);
-		IDRequest request;
+        // create patient from input form and normalize its fields
+        Patient inputPatient = createPatientFrom(form);
+        // find match with the given IDAT of the input patient
+        final Set<BlockingKey> bks = new HashSet<>();
+        match = findMatch(inputPatient, bks);
 
-		// synchronize on token
-		synchronized (t) {
-			/* Get token again and check if it still exist.
-			 * This prevents the following race condition:
-			 *  1. Thread A gets token t and enters synchronized block
-			 *  2. Thread B also gets token t, now waits for A to exit the synchronized block
-			 *  3. Thread A deletes t and exits synchronized block
-			 *  4. Thread B enters synchronized block with invalid token
-			 */
+        Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
+        String atChangeType; // The action taken depending on the match result, for Audit Trail logging
 
-			t = (AddPatientToken) Servers.instance.getTokenByTid(tokenId);
+        // If a list of ID types is given in token, return these types
+        Set<String> idTypes;
+        idTypes = t.getRequestedIdTypes();
+        if (idTypes.isEmpty()) { // otherwise use the default ID type
+          idTypes = new CopyOnWriteArraySet<>();
+          idTypes.add(IDGeneratorFactory.instance.getDefaultIDType());
+        }
 
-			if(t == null){
-				String infoLog = "Token with ID " + tokenId + " is invalid. It was invalidated by a concurrent request or the session timed out during this request.";
-				logger.info(infoLog);
-				throw new WebApplicationException(Response
-					.status(Status.UNAUTHORIZED)
-					.entity("Please supply a valid 'addPatient' token.")
-					.build());
-			}
-			logger.info("Handling ID Request with token " + t.getId());
-			Patient p = new Patient();
-			Patient pNormalized = new Patient();
-			Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
+        switch (match.getResultType()) {
+          case MATCH:
+            assignedPatient = match.getBestMatchedPatient();
+            for (String idType : idTypes) {
+              assignedPatient.getOriginal().createId(idType);
+            }
+            assignedPatient.updateFrom(inputPatient);
+            Persistor.instance.updatePatient(assignedPatient);
+            // log token to separate concurrent request in the log file
+            ID returnedId = assignedPatient.getOriginal().getId(idTypes.iterator().next());
+            logger.info("Found match with ID " + returnedId.getIdString() + " for ID request " + t.getId());
 
-			// get fields transmitted from MDAT server
-			for (String key : t.getFields().keySet())
-			{
-				form.add(key, t.getFields().get(key));
-			}
+            // Add optional fields if they are not already entered
+            Map<String, Field<?>> fieldSet = new HashMap<>(assignedPatient.getFields());
+            Map<String, Field<?>> inputFieldSet = new HashMap<>(assignedPatient.getInputFields());
+            boolean updatePatient = false;
 
-			// get externally generated ids transmitted from MDAT server
-			for (String key : t.getIds().keySet())
-			{
-				form.add(key, t.getIds().get(key));
-			}
+            for (String key : inputPatient.getFields().keySet()) {
+              if (!assignedPatient.getFields().containsKey(key)) {
+                updatePatient = true;
+                fieldSet.put(key, Field.build(key, inputPatient.getFields().get(key).toString()));
+                inputFieldSet.put(key, Field.build(key, inputPatient.getInputFields().get(key).toString()));
+              }
+            }
 
-			List<ID> externalIds = IDGeneratorFactory.instance.getExternalIdTypes().stream()
-					.map(idType -> form.containsKey(idType)
-							? IDGeneratorFactory.instance.buildId(idType, form.getFirst(idType))
-							: null)
-					.filter(id -> id != null).collect(Collectors.toList());
-			pNormalized.setIds(new HashSet<>(externalIds));
+            if (updatePatient) {
+              assignedPatient.setFields(fieldSet);
+              assignedPatient.setInputFields(inputFieldSet);
+              Persistor.instance.updatePatient(assignedPatient);
+            }
+            atChangeType = "match";
+            break;
 
-			boolean hasIdat = form.keySet().containsAll(Validator.instance.getRequiredFields());
-			boolean hasExternalId = !externalIds.isEmpty();
-			
-			if (!hasIdat && !hasExternalId) {
-				throw new WebApplicationException(Response.status(Status.BAD_REQUEST)
-						.entity("Neither complete IDAT nor an external ID has been given as input!").build());
-			}
-			
-			final Patient idMatch;
-			MatchResult idatMatch = null;
-			
-			if (hasIdat) {
-				Validator.instance.validateForm(form, true);
+          case NON_MATCH:
+          case POSSIBLE_MATCH:
+            if (match.getResultType() == MatchResultType.POSSIBLE_MATCH
+                && (form.getFirst("sureness") == null || !Boolean .parseBoolean(form.getFirst("sureness")))) {
+              return new IDRequest(inputPatient.getInputFields(), idTypes, match, null, t);
+            }
 
-				for(String s: Config.instance.getFieldKeys()){
-					if (form.containsKey(s)) {
-						try {
-							chars.put(s, Field.build(s, form.getFirst(s)));
-						} catch (WebApplicationException we) {
-							logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
-							throw we;
-						}
-					}
-				}
+            // Generate internal IDs
+            boolean eagerGeneration = Boolean
+                .parseBoolean(Config.instance.getProperty("idgenerators.eagerGeneration"));
+            Set<ID> newIds = eagerGeneration ? IDGeneratorFactory.instance.generateIds()
+                : IDGeneratorFactory.instance.generateIds(idTypes);
+            // add generated internal ids
+            // Note: pNormalized already contain all externals ids
+            newIds.forEach(inputPatient::addId);
 
-				p.setFields(chars);
+            for (String idType : idTypes) {
+              logger.info("Created new ID " + inputPatient.createId(idType).getIdString() + " for ID request " + t.getId());
+            }
+            if (match.getResultType() == MatchResultType.POSSIBLE_MATCH) {
+              inputPatient.setTentative(true);
+              Patient bestMatchedPatient = match.getBestMatchedPatient();
+              // log tentative and possible match ids
+              newIds.stream()
+                  .filter(id -> bestMatchedPatient.getId(id.getType()) != null)
+                  .forEach(id -> logger.info("New ID " + id.getIdString() + " is tentative. Found "
+                      + "possible match with ID " + bestMatchedPatient.getId(id.getType()).getIdString()));
+            }
+            assignedPatient = inputPatient;
+            atChangeType = match.getResultType() == MatchResultType.POSSIBLE_MATCH ?
+                "tentative" : "create";
+            break;
 
-				// Normalization, Transformation
-				pNormalized = Config.instance.getRecordTransformer().transform(p);
-				pNormalized.setInputFields(chars);
-				pNormalized.setIds(new HashSet<>(externalIds));
+          default:
+            logger.error("Illegal match result: " + match.getResultType());
+            throw new InternalErrorException();
+        }
 
-				idatMatch = Config.instance.getMatcher().match(pNormalized, Persistor.instance.getPatients());
-				logger.debug("Best matching weight for IDAT matching: " + idatMatch.getBestMatchedWeight());
-			}
-			if (hasExternalId) {
-				// Find matches with all given external IDs
-				Set<Patient> idMatches = externalIds.stream().map(id -> Persistor.instance.getPatient(id))
-						.filter(patient -> patient != null).collect(Collectors.toSet());
-				if (idMatches.size() > 1) // Found multiple patients with matching external ID
-					throw new WebApplicationException(Response.status(Status.CONFLICT)
-							.entity("Multiple patients found with the given external IDs!").build());
-				
-				if (idMatches.size() == 0) { // No patient with matching external ID
-					if (hasIdat && idatMatch != null && idatMatch.getResultType() == MatchResultType.MATCH) {
-						// No match with ID, but with IDAT.
-						// Check that no conflicting external ID exists
-						MatchResult finalIdatMatch = idatMatch; // Make final copy for using in stream
-						boolean conflict = !externalIds.stream().allMatch(id -> {
-							ID idOfMatch = finalIdatMatch.getBestMatchedPatient().getId(id.getType());
-							return (idOfMatch == null || id.getIdString().equals(idOfMatch.getIdString()));
-						});
-						
-						if (conflict) {
-							throw new WebApplicationException(
-									Response.status(Status.CONFLICT)
-									.entity("Found existing patient with matching IDAT but conflicting external ID(s).")
-									.build());
-						}
-						
-						// TODO: Felder / IDs aktualisieren -> auslagern in eigene Methode
-						match = idatMatch;
-					} else { // No id match, no IDAT match
-						match = new MatchResult(MatchResultType.NON_MATCH,null, 0);
-					}
-				}
-				
-				if (idMatches.size() == 1) { // Found patient with matching external ID
-					idMatch = idMatches.iterator().next();
-					//boolean idMatchHasIdat = idMatch.getFields().keySet().containsAll(Validator.instance.getRequiredFields());
-					boolean idMatchHasIdat = Validator.instance.getRequiredFields().stream().allMatch(f -> 
-					idMatch.getFields().containsKey(f) && !idMatch.getFields().get(f).isEmpty());
-					// Check if IDAT of input and match (if present) matches
-					if (hasIdat && idMatchHasIdat) {
-						MatchResult matchWithIdMatch = Config.instance.getMatcher().match(pNormalized, Arrays.asList(idMatch));
-						if (matchWithIdMatch.getResultType() != MatchResultType.MATCH) {
-							throw new WebApplicationException(
-									Response.status(Status.CONFLICT)
-									.entity("Found existing patient with matching external ID but conflicting IDAT!")
-									.build());							
-						}
-					}
-					// If an IDAT match exists, check if it is the same patient
-					if (idatMatch != null && (idatMatch.getResultType() == MatchResultType.MATCH 
-							) &&
-							!idatMatch.getBestMatchedPatient().equals(idMatch)) {
-								throw new WebApplicationException(
-										Response.status(Status.CONFLICT)
-										.entity("External ID and IDAT match with different patients, respectively!")
-										.build());																
-							}
+        logger.info("Weight of best match: " + match.getBestMatchedWeight());
 
-					// TODO: Felder / IDs aktualisieren
-					match = new MatchResult(MatchResultType.MATCH, idMatch, 1.0);
-				} else {
-				    idMatch = null;
-				}
-			} else {
-				match = idatMatch;
-			} 
-				
-			Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
+        // persist id request and new patient
+        request = new IDRequest(inputPatient.getInputFields(), idTypes, match, assignedPatient, t);
+        if (match.getResultType().equals(MatchResultType.MATCH)) {
+          Persistor.instance.addIdRequest(request);
+        } else {
+          Persistor.instance.addIdRequest(request, bks);
+        }
 
-			// If a list of ID types is given in token, return these types
-			Set<String> idTypes;
-			idTypes = t.getRequestedIdTypes();
-			if (idTypes.size() == 0) { // otherwise use the default ID type
-				idTypes = new CopyOnWriteArraySet<String>();
-				idTypes.add(IDGeneratorFactory.instance.getDefaultIDType());
-			}
+        // audit trail entry
+        if (Config.instance.auditTrailIsOn()) {
+          for (ID id : assignedPatient.getIds()) {
+            AuditTrail at = buildAuditTrailRecord(tokenId,
+                id.getIdString(),
+                id.getType(),
+                atChangeType,
+                null,
+                request.getAssignedPatient().toString()
+            );
+            Persistor.instance.createAuditTrail(at);
+          }
+        }
+      }
 
-			switch (match.getResultType())
-			{
-			case MATCH :
-				for (String idType : idTypes)
-					returnIds.add(match.getBestMatchedPatient().getOriginal().createId(idType));
+      return request;
+    }
 
-				assignedPatient = match.getBestMatchedPatient();
-				assignedPatient.updateFrom(pNormalized);
-				Persistor.instance.updatePatient(assignedPatient);
-				// log token to separate concurrent request in the log file
-				logger.info("Found match with ID " + returnIds.get(0).getIdString() + " for ID request " + t.getId());
+    /**
+     * Set fields of a patient to new values.
+     *
+     * @param patientId      ID of the patient to edit.
+     * @param newFieldValues Field values to set. Fields that do not appear as map keys are
+     *                       left as they are. In order to delete a field value, provide an
+     *                       empty string. All values are processed by field transformation
+     *                       as defined in the configuration file.
+     */
+	public void editPatient(ID patientId, Map<String, String> newFieldValues, String tokenId) {
+        // Check that provided ID is valid
+        if (patientId == null) {
+            // Calling methods should provide a legal id, therefore log an error if id is null
+            logger.error("editPatient called with null id.");
+            throw new InternalErrorException("An internal error occured: editPatients called with null. Please contact the administrator.");
+        }
+        Patient pToEdit = Persistor.instance.getPatient(patientId);
+        if (pToEdit == null) {
+            logger.info("Request to edit patient with unknown ID " + patientId.toString());
+            throw new InvalidIDException("No patient found with ID " + patientId.toString());
+        }
 
-				break;
+        // validate input
+        Validator.instance.validateForm(newFieldValues, false);
+        // read input fields from form
+        Patient pInput = new Patient();
+        Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
 
-			case NON_MATCH :
-			case POSSIBLE_MATCH :
-				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH
-				&& (form.getFirst("sureness") == null || !Boolean.parseBoolean(form.getFirst("sureness")))) {
-					return new IDRequest(p.getFields(), idTypes, match, null, t);
-				}
+        for (String fieldName : Config.instance.getFieldKeys()) {
+            // If a field is not in the map, keep the old value
+            if (!newFieldValues.containsKey(fieldName))
+                chars.put(fieldName, pToEdit.getInputFields().get(fieldName));
+            else {
+                chars.put(fieldName, Field.build(fieldName, newFieldValues.get(fieldName)));
+            }
+        }
 
-				// Generate internal IDs
-				boolean eagerGeneration = Boolean
-						.parseBoolean(Config.instance.getProperty("idgenerators.eagerGeneration"));
-				Set<ID> newIds = eagerGeneration ? IDGeneratorFactory.instance.generateIds()
-						: IDGeneratorFactory.instance.generateIds(idTypes);
-				
-				// Import external IDs
-				// TODO Integrieren in Matchbehandlung
-				for (String extIDType : IDGeneratorFactory.instance.getExternalIdTypes()) {
-					String extIDString = form.getFirst(extIDType);
-					if (extIDString != null) {
-						ID extId = IDGeneratorFactory.instance.buildId(extIDType, extIDString);
-						newIds.add(extId);
-					}
-				}
-				pNormalized.setIds(newIds);
+        pInput.setFields(chars);
 
-				for (String idType : idTypes) {
-					ID thisID = pNormalized.createId(idType);
-					returnIds.add(thisID);
-					logger.info("Created new ID " + thisID.getIdString() + " for ID request " + (t == null ? "(null)" : t.getId()));
-				}
-				if (match.getResultType() == MatchResultType.POSSIBLE_MATCH)
-				{
-					pNormalized.setTentative(true);
-					for (ID thisId : returnIds)
-						thisId.setTentative(true);
-					logger.info("New ID " + returnIds.get(0).getIdString() + " is tentative. Found possible match with ID " +
-							match.getBestMatchedPatient().getId(IDGeneratorFactory.instance.getDefaultIDType()).getIdString()); // TODO: Check what happpens if patient doesn´t have specific id
-				}
-				assignedPatient = pNormalized;
-				break;
+        // transform input fields
+        Patient pNormalized = Config.instance.getRecordTransformer().transform(pInput);
+        // set input fields
+        pNormalized.setInputFields(chars);
+		// Save existing patient as string for audit trail
+		String pOld = pToEdit.toString();
 
-			default :
-				logger.error("Illegal match result: " + match.getResultType());
-				throw new InternalErrorException();
-			}
+        // assign changed fields to patient in database, persist
+        pToEdit.setFields(pNormalized.getFields());
+        pToEdit.setInputFields(pNormalized.getInputFields());
 
-			logger.info("Weight of best match: " + match.getBestMatchedWeight());
-
-			request = new IDRequest(p.getFields(), idTypes, match, assignedPatient, t);
-
-			ret.put("request", request);
-
-			Persistor.instance.addIdRequest(request);
-
-			if(t != null && ! Config.instance.debugIsOn())
-				Servers.instance.deleteToken(t.getId());
-		}
-		// Callback request
-		String callback = t.getDataItemString("callback");
-		if (callback != null && callback.length() > 0)
-		{
-			try {
-				logger.debug("Sending request to callback " + callback);
-
-				JSONObject reqBody = new JSONObject();
-
-				if (apiVersion.majorVersion >= 2) {
-					// Collect ids for Callback object
-					JSONArray idsJson = new JSONArray();
-
-					for (ID thisID : returnIds) {
-						idsJson.put(thisID.toJSON());
-					}
-
-					reqBody.put("tokenId", t.getId())
-					.put("ids", idsJson);
-
-				} else {  // API version 1.0
-					if (returnIds.size() > 1) {
-						throw new WebApplicationException(
-								Response.status(Status.BAD_REQUEST)
-								.entity("Selected API version 1.0 permits only one ID in callback, " +
-										"but several were requested. Set mainzellisteApiVersion to a " +
-										"value >= 2.0 or request only one ID type in token.")
-										.build());
-					}
-					reqBody.put("tokenId", t.getId())
-						.put("id", returnIds.get(0).getIdString());
-				}
-
-				HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-				HttpPost callbackReq = new HttpPost(callback);
-				callbackReq.setHeader("Content-Type", MediaType.APPLICATION_JSON);
-				callbackReq.setHeader("User-Agent", Config.instance.getUserAgentString());
-				StringEntity reqEntity = new StringEntity(reqBody.toString());
-				reqEntity.setContentType("application/json");
-				callbackReq.setEntity(reqEntity);
-				HttpResponse response = httpClient.execute(callbackReq);
-				StatusLine sline = response.getStatusLine();
-				// Accept callback if OK, CREATED or ACCEPTED is returned
-				if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
-					logger.error("Received invalid status form mdat callback: " + response.getStatusLine());
-					throw new InternalErrorException("Request to callback failed!");
-				}
-				// TODO: Server-Antwort auslesen
-
-			} catch (JSONException e) {
-				logger.error("Internal serializitaion error: ", e);
-				throw new InternalErrorException("Internal serializitaion error!");
-			} catch (IOException e) {
-				logger.error("Internal error building the request: ", e);
-				throw new InternalErrorException("Internal error building the request!");
-			}
-		}
-		return request;
-	}
-
-	/**
-	 * Set fields of a patient to new values.
-	 *
-	 * @param patientId
-	 *            ID of the patient to edit.
-	 * @param newFieldValues
-	 *            Field values to set. Fields that do not appear as map keys are
-	 *            left as they are. In order to delete a field value, provide an
-	 *            empty string. All values are processed by field transformation
-	 *            as defined in the configuration file.
-	 */
-	public void editPatient(ID patientId, Map<String, String> newFieldValues) {
-		// Check that provided ID is valid
-		if (patientId == null) {
-			// Calling methods should provide a legal id, therefore log an error if id is null
-			logger.error("editPatient called with null id.");
-			throw new InternalErrorException("An internal error occured: editPatients called with null. Please contact the administrator.");
-		}
-		Patient pToEdit = Persistor.instance.getPatient(patientId);
-		if (pToEdit == null)
-		{
-			logger.info("Request to edit patient with unknown ID " + patientId.toString());
-			throw new InvalidIDException("No patient found with ID " + patientId.toString());
-		}
-
-		// validate input
-		Validator.instance.validateForm(newFieldValues, false);
-		// read input fields from form
-		Patient pInput = new Patient();
-		Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
-
-		for (String fieldName : Config.instance.getFieldKeys()) {
-			// If a field is not in the map, keep the old value
-			if (!newFieldValues.containsKey(fieldName))
-				chars.put(fieldName, pToEdit.getInputFields().get(fieldName));
-			else {
-				chars.put(fieldName, Field.build(fieldName, newFieldValues.get(fieldName)));
-			}
-		}
-
-		pInput.setFields(chars);
-
-		// transform input fields
-		Patient pNormalized = Config.instance.getRecordTransformer().transform(pInput);
-		// set input fields
-		pNormalized.setInputFields(chars);
-
-		// assign changed fields to patient in database, persist
-		pToEdit.setFields(pNormalized.getFields());
-		pToEdit.setInputFields(pNormalized.getInputFields());
-
-		for (String idType : IDGeneratorFactory.instance.getExternalIdTypes()) {
+        for (String idType : IDGeneratorFactory.instance.getExternalIdTypes()) {
             if (newFieldValues.containsKey(idType)) {
                 // check if this external id is already in use
                 ID extId = IDGeneratorFactory.instance.buildId(idType, newFieldValues.get(idType));
@@ -525,17 +332,199 @@ public enum PatientBackend {
                         pToEdit.setIds(newIds);
                     }
                     if (!extId.getIdString().trim().isEmpty()) {
-						pToEdit.addId(extId);
-					}
-                    else {
-                    	Persistor.instance.deleteId(extId);
-					}
+                        pToEdit.addId(extId);
+                    } else {
+                        Persistor.instance.deleteId(extId);
+                    }
                 }
             }
+        }
+
+        // Save to database
+		if (Config.instance.auditTrailIsOn()) {
+			for (ID id : pToEdit.getIds()) {
+				//Prepare the audit trail record
+				AuditTrail at = buildAuditTrailRecord(tokenId,
+						id.getIdString(),
+						id.getType(),
+						"edit",
+						pOld,
+						pToEdit.toString());
+				//Persist patient and audit trail accordingly
+				Persistor.instance.createAuditTrail(at);
+			}
 		}
 
-		// Save to database
-		Persistor.instance.updatePatient(pToEdit);
+        Persistor.instance.updatePatient(pToEdit);
+    }
+
+    /**
+     * Check if the patient with the given idat exist
+     * @param inputFields idat
+     * @return best match patient with matching weight
+     */
+    public MatchResult findMatch(MultivaluedMap<String, String> inputFields) {
+        return findMatch(createPatientFrom(inputFields), Collections.emptySet());
+    }
+
+    private MatchResult findMatch(Patient inputPatient, Set<BlockingKey> bks) {
+        // input patient should contain only external Ids
+        Set<ID> externalIds = inputPatient.getIds();
+        // External Id matching
+        if (!externalIds.isEmpty()) {
+            // Find matches with all given external IDs
+            Set<Patient> idMatches = externalIds.stream().map(Persistor.instance::getPatient)
+                    .filter(Objects::nonNull).collect(Collectors.toSet());
+            if (idMatches.size() > 1) {// Found multiple patients with matching external ID
+                throw new WebApplicationException(Response.status(Status.CONFLICT)
+                        .entity("Multiple patients found with the given external IDs!").build());
+            } else if (idMatches.isEmpty()) { // No patient with matching external ID
+                MatchResult idatMatchResult = findMatchWithIdat(inputPatient, bks);
+                if (idatMatchResult != null && idatMatchResult.getResultType() == MatchResultType.MATCH) {
+                    // No match with ID, but with IDAT.
+                    // Check that no conflicting external ID exists
+                    boolean conflict = !externalIds.stream().allMatch(id -> {
+                        ID idOfMatch = idatMatchResult.getBestMatchedPatient().getId(id.getType());
+                        return (idOfMatch == null || id.getIdString().equals(idOfMatch.getIdString()));
+                    });
+
+                    if (conflict) {
+                        throw new WebApplicationException(
+                                Response.status(Status.CONFLICT)
+                                        .entity("Found existing patient with matching IDAT but conflicting external ID(s).")
+                                        .build());
+                    }
+
+                    return idatMatchResult;
+                } else { // No id match, no IDAT match
+                    return new MatchResult(MatchResultType.NON_MATCH, null, 0);
+                }
+            } else { // idMatches.size() == 1 : Found patient with matching external ID
+                final Patient idMatch = idMatches.iterator().next();
+                boolean idMatchHasIdat = Validator.instance.getRequiredFields().stream().allMatch(f ->
+                        idMatch.getFields().containsKey(f) && !idMatch.getFields().get(f).isEmpty());
+                // Check if IDAT of input and match (if present) matches
+                if (!inputPatient.getFields().isEmpty() && idMatchHasIdat) {
+                    MatchResult matchWithIdMatch = Config.instance.getMatcher().match(inputPatient, Collections.singletonList(idMatch));
+                    if (matchWithIdMatch.getResultType() != MatchResultType.MATCH) {
+                        logger.debug("Best matching weight on ID Matching: " + matchWithIdMatch.getBestMatchedWeight());
+                        throw new WebApplicationException(
+                                Response.status(Status.CONFLICT)
+                                        .entity("Found existing patient with matching external ID but conflicting IDAT!")
+                                        .build());
+                    }
+                }
+                // If an IDAT match exists, check if it is the same patient
+                MatchResult idatMatchResult = findMatchWithIdat(inputPatient, bks);
+                if (idatMatchResult != null && idatMatchResult.getResultType() == MatchResultType.MATCH &&
+                        !idatMatchResult.getBestMatchedPatient().equals(idMatch)) {
+                    throw new WebApplicationException(
+                            Response.status(Status.CONFLICT)
+                                    .entity("External ID and IDAT match with different patients, respectively!")
+                                    .build());
+                }
+
+                return new MatchResult(MatchResultType.MATCH, idMatch, 1.0);
+            }
+        } else if (inputPatient.getFields().isEmpty()) {
+            throw new WebApplicationException(Response.status(Status.BAD_REQUEST)
+                    .entity("Neither complete IDAT nor an external ID has been given as input!").build());
+        }
+        return findMatchWithIdat(inputPatient, bks);
+    }
+
+    private MatchResult findMatchWithIdat(Patient inputPatient, Set<BlockingKey> bks) {
+        MatchResult result = null;
+        if (!inputPatient.getFields().isEmpty()) {
+            // Blocking key extraction
+            bks.addAll(Config.instance.getBlockingKeyExtractors().extract(inputPatient));
+
+            // Matching
+            final Matcher matcher = Config.instance.getMatcher();
+            List<Patient> candidatePatients;
+            if (matcher instanceof NullMatcher) {
+                candidatePatients = new ArrayList<>();
+            } else {
+                candidatePatients = Persistor.instance.getPatients(bks);
+            }
+            result = matcher.match(inputPatient, candidatePatients);
+            logger.debug("Best matching weight for IDAT matching: " + result.getBestMatchedWeight());
+        }
+        return result;
+    }
+
+    private Patient createPatientFrom(MultivaluedMap<String, String> forms) {
+        // create external Id list
+        List<ID> externalIds = IDGeneratorFactory.instance.getExternalIdTypes().stream()
+                .filter(forms::containsKey)
+                .map(idType -> IDGeneratorFactory.instance.buildId(idType, forms.getFirst(idType)))
+                .collect(Collectors.toList());
+
+        // check if required fields are available
+        if (forms.keySet().containsAll(Validator.instance.getRequiredFields())) {
+            Validator.instance.validateForm(forms, false);
+
+            // normalize and transform fields of the new patient
+            Map<String, Field<?>> inputFields = mapMapWithConfigFields(forms);
+            Patient inputPatient =  Config.instance.getRecordTransformer()
+                    .transform(new Patient(new HashSet<>(externalIds), inputFields));
+            inputPatient.setInputFields(inputFields);
+            return inputPatient;
+        } else {
+            return new Patient(new HashSet<>(externalIds), null);
+        }
+    }
+
+	public List<ID> getIdsWithType(String idType) {
+		try {
+			return Persistor.instance.getIdsWithType(idType);
+		} catch (RuntimeException e) {
+			logger.fatal( "Persistence provider error. Can't get ids. Cause: " +  e.getMessage());
+			throw new InternalErrorException("An internal error occured: Please contact the administrator.");
+		}
+	}
+
+	public List<ID> getIdsOfPatientWithIdType(String idType, String[] resultIdTypes) {
+		try {
+			return Persistor.instance.getIdsOfPatientsWithIdType(idType, resultIdTypes);
+		} catch (RuntimeException e) {
+			logger.fatal( "Persistence provider error. Can't get ids. Cause: " +  e.getMessage());
+			throw new InternalErrorException("An internal error occured: Please contact the administrator.");
+		}
+	}
+
+	public AuditTrail buildAuditTrailRecord(String tokenId, String idString, String idType, String changeType, String oldRecord, String newRecord) {
+		// Get token for this action, its ID has allready been checked by the caller's parent
+		Token t = Servers.instance.getTokenByTid(tokenId);
+
+		// Get remote IP for this token
+		String remoteIP = Servers.instance.getRemoteIpByTid(tokenId);
+		if (remoteIP == null) {
+			String infoLog = "Remote IP for Token with ID " + tokenId + " could not be determined. Token was invalidated by a concurrent request or the session timed out during this request.";
+			logger.info(infoLog);
+			throw new WebApplicationException(Response
+					.status(Status.BAD_REQUEST)
+					.entity("Please supply a valid 'editPatient' token.")
+					.build());
+		}
+		//Build audit trail record, debug aware to prevent NPE and keep audit trail consistent
+		AuditTrail at = new AuditTrail( new Date(),
+				idString,
+				idType,
+				(Config.instance.debugIsOn()) ? "debug" : t.getDataItemMap("auditTrail")
+						.get("username")
+						.toString(),
+				(Config.instance.debugIsOn()) ? "debug" : t.getDataItemMap("auditTrail")
+						.get("remoteSystem")
+						.toString(),
+				remoteIP,
+				changeType,
+				(Config.instance.debugIsOn()) ? "debug" : t.getDataItemMap("auditTrail")
+						.get("reasonForChange")
+						.toString(),
+				oldRecord,
+				newRecord);
+		return at;
 	}
 
 	/**
@@ -545,8 +534,24 @@ public enum PatientBackend {
 	private Session getDebugSession() {
 		if (debugSession == null
 				|| Servers.instance.getSession(debugSession.getId()) == null) {
-			debugSession = Servers.instance.newSession();
+			debugSession = Servers.instance.newSession("");
 		}
 		return debugSession;
+	}
+
+	private Map<String, Field<?>> mapMapWithConfigFields(MultivaluedMap<String, String> form) {
+		Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
+		//Compare Fields from Config with requested Fields a
+		for(String s: Config.instance.getFieldKeys()){
+			if (form.containsKey(s)) {
+				try {
+					chars.put(s, Field.build(s, form.getFirst(s)));
+				} catch (WebApplicationException we) {
+					logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
+					throw we;
+				}
+			}
+		}
+		return chars;
 	}
 }

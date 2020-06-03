@@ -30,9 +30,11 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.codehaus.jettison.json.JSONObject;
@@ -41,6 +43,9 @@ import org.codehaus.jettison.json.JSONObject;
  * Realization of {@link AbstractParam} for getting tokens by their JSON representation.
  */
 public class TokenParam extends AbstractParam<Token> {
+
+	/** The logging instance. */
+	private static Logger logger = Logger.getLogger(TokenParam.class);
 
 	/**
 	 * Create an instance from a JSON string.
@@ -58,16 +63,22 @@ public class TokenParam extends AbstractParam<Token> {
 		try {
 			JSONObject jsob = new JSONObject(param);
 			String tokenType = jsob.optString("type");
+			int allowedUses = 0;
+			try {
+				if(!jsob.optString("allowedUses").equals("")){
+					allowedUses = Integer.parseInt(jsob.optString("allowedUses"));
+				}
+			} catch (NumberFormatException nfe){
+				logger.info("Invalid value \"" + jsob.optString("allowedUses") + "\" for allowedUses parameter at token creation");
+				throw new WebApplicationException(Response.status(400).entity("The parameter allowedUses has an invalid format").header(HttpHeaders.CONTENT_TYPE, "text/plain").build());
+			}
 			Token t;
 			if (tokenType.equals("addPatient"))
-				t = new AddPatientToken();
+				t = (allowedUses == 0) ? new AddPatientToken() : new AddPatientToken(allowedUses);
 			else if (tokenType.equals("editPatient"))
-				t = new EditPatientToken();
+				t = (allowedUses == 0) ? new EditPatientToken() : new EditPatientToken(allowedUses);
 			else
-				t = new Token();
-			if(!("".equals(jsob.optString("id"))))
-				t.setId(jsob.getString("id"));
-			t.setType(jsob.getString("type"));
+				t = (allowedUses == 0) ? new Token(tokenType) : new Token(tokenType, allowedUses);
 			HashMap<String, Object> data = new ObjectMapper().readValue (jsob.getString("data"), new TypeReference<HashMap<String, Object>>() {});
 
 			// compatibility fix: "idtypes" -> "idTypes"

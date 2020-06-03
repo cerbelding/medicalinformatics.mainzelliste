@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -109,4 +110,12 @@ public interface IDGenerator<I extends ID> {
 	 * generated IDs.
 	 */
 	public boolean isExternal();
+
+	/**
+	 * Get the {@link IDGeneratorMemory} if it exists.
+	 * This method could have a default implementation with Optional.empty(),
+	 * but it does not to prevent developers from forgetting to override it.
+	 * @return Optional of id generator memory
+	 */
+	Optional<IDGeneratorMemory> getMemory();
 }

@@ -32,6 +32,8 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Response.Status;
 
+import de.pseudonymisierung.mainzelliste.Servers;
+import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -43,6 +45,7 @@ import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
+import javax.ws.rs.core.Response;
 
 /**
  * A temporary "ticket" to realize authorization and/or access to a resource.
@@ -67,26 +70,48 @@ public class Token {
 	private String parentSessionId;
 
 	private String parentServerName;
+
+	/** This is the amount of uses set at the creation of a Token. Defaults to 1 */
+	private int allowedUses;
+
+	/** The remaining amount of uses allowed for the token */
+	private int remainingUses;
+
 	/**
 	 * Create emtpy instance. Used internally only.
 	 */
 	Token() {
+	    this.id = UUID.randomUUID().toString();
+	    this.allowedUses = 1;
+	    this.remainingUses = 1;
 	}
 
 	/**
-	 * Create token with the given id and type. Initializes empty container for
-	 * token data. Performs no checking if the given token id is unique and if
-	 * the provided token type is known.
-	 *
-	 * @param tid
-	 *            The token id.
+	 * Create token with the type. Initializes empty container for
+	 * token data. Performs no checking if the provided token type is known.
+	 * The token is allowed to be used one time.
 	 * @param type
 	 *            The token type.
 	 */
-	public Token(String tid, String type) {
-		this.id = tid;
+	public Token(String type) {
+	    this(type, 1);
+	}
+
+	/**
+	 * Create Token with given type and amount of uses. Initializes empty container for
+	 * token data. Performs no checking if the provided token type is known.
+	 * @param type
+	 * 				The token type
+	 * @param allowedUses
+	 * 				The amount of uses allowed for this Token.
+	 * 			 	This defaults to 1 and it is not possible to set lower than 1
+	 */
+	public Token(String type, int allowedUses){
+		this.id = UUID.randomUUID().toString();
 		this.type = type;
-		this.data = new HashMap<String, Object>();
+		this.data = new HashMap<>();
+		this.allowedUses = Math.max(allowedUses, 1);
+		this.remainingUses = Math.max(allowedUses, 1);
 	}
 
 	/**
@@ -108,10 +133,14 @@ public class Token {
 			this.checkReadPatients();
 		else if (this.type.equals("editPatient"))
 			this.checkEditPatient(apiVersion);
-		else if (this.type.equals("deletePatient"));
+		else if (this.type.equals("deletePatient")); // TODO: checkDeletePatient
+		else if (this.type.equals("checkMatch")); // TODO: checkCheckMatch
 		else
 			throw new InvalidTokenException("Token type " + this.type
 					+ " unknown!");
+		if (Config.instance.auditTrailIsOn()) {
+			this.checkAuditTrail();
+		}
 	}
 
 	/**
@@ -181,6 +210,7 @@ public class Token {
 	 * @param type
 	 *            The new token type.
 	 */
+	@Deprecated
 	public void setType(String type) {
 		this.type = type;
 	}
@@ -309,20 +339,11 @@ public class Token {
 
 		// Check callback URL
 		String callback = this.getDataItemString("callback");
-		if (callback != null && !callback.equals("")) {
-			if (!Pattern.matches(
-					Config.instance.getProperty("callback.allowedFormat"),
-					callback)) {
-				throw new InvalidTokenException("Callback address " + callback
-						+ " does not conform to allowed format!");
-			}
-			try {
-				@SuppressWarnings("unused")
-				URI callbackURI = new URI(callback);
-			} catch (URISyntaxException e) {
-				throw new InvalidTokenException("Callback address " + callback
-						+ " is not a valid URI!");
-			}
+		if (callback != null && !callback.equals("") && Servers.instance.hasServerPermission(getParentServerName(), "callback"))
+			MainzellisteCallbackUtil.checkCallbackUrl(callback);
+		String redirect = this.getDataItemString("redirect");
+		if (redirect != null && !redirect.equals("") && Servers.instance.hasServerPermission(getParentServerName(), "redirect")){
+			// @Florian paste code here
 		}
 
 		// Check redirect URL
@@ -400,12 +421,17 @@ public class Token {
 			}
 			checkIdType(idType);
 
-			if (!Persistor.instance.patientExists(idType, idString)) {
+			if (!Persistor.instance.patientExists(idType, idString) && !idString.equals("*")) {
 				throw new InvalidTokenException(
 						"No patient found with provided " + idType + " '"
 								+ idString + "'!");
 			}
 		}
+
+		// Check callback URL
+		String callback = this.getDataItemString("callback");
+		if (callback != null && !callback.equals(""))
+			MainzellisteCallbackUtil.checkCallbackUrl(callback);
 
 		// Check fields
 		checkResultFields();
@@ -419,10 +445,10 @@ public class Token {
 		Set<String> fieldList = Config.instance.getFieldKeys();
 		try {
 			List<?> fields = this.getDataItemList("resultFields");
-			
+
 			if (fields == null)
 				return; // Allow omitting resultFields (same semantics as providing empty array).
-			
+
 			for (Object thisField : fields) {
 				if (!fieldList.contains(thisField.toString()))
 					throw new InvalidTokenException("Field '" + thisField
@@ -445,7 +471,7 @@ public class Token {
 
 			if (resultIdTypes == null)
 				return; // Allow omitting resultIds (same semantics as providing empty array).
-			
+
 			for (Object thisIdType : resultIdTypes) {
 				if (!definedIdTypes.contains(thisIdType.toString()))
 					throw new InvalidTokenException("ID type '" + thisIdType
@@ -545,7 +571,7 @@ public class Token {
 		JSONObject ret = new JSONObject();
 		try {
 			if (apiVersion.majorVersion >= 2) {
-				ret.put("id", this.id).put("type", this.type);
+				ret.put("id", this.id).put("type", this.type).put("allowedUses", this.allowedUses).put("remainingUses", this.remainingUses);
 				ObjectMapper mapper = new ObjectMapper();
 				String dataString = mapper.writeValueAsString(data);
 				ret.put("data", new JSONObject(dataString));
@@ -561,7 +587,25 @@ public class Token {
 		}
 	}
 
-    public String getParentSessionId() {
+	/**
+	 * Reduces the remaining amount of uses for this {@link Token} by 1.
+	 * @return
+	 * 			the remaining amount of uses for this token
+	 */
+	public int decreaseRemainingUses(){
+		remainingUses = getRemainingUses() - 1;
+		return remainingUses;
+	}
+
+	public int getAllowedUses() {
+		return allowedUses;
+	}
+
+	public int getRemainingUses() {
+		return remainingUses;
+	}
+
+	public String getParentSessionId() {
         return parentSessionId;
     }
 
@@ -576,4 +620,35 @@ public class Token {
     public void setParentServerName(String parentServerName) {
         this.parentServerName = parentServerName;
     }
+
+	private void checkAuditTrail() {
+		if (!this.getData().containsKey("auditTrail"))
+			throw new InvalidTokenException("Invalid Token object, audtiTrail key is not specified", Response.Status.BAD_REQUEST);
+
+		// check format
+		Map<String,?> auditTrail;
+		try {
+			auditTrail = this.getDataItemMap("auditTrail");
+		} catch (ClassCastException e) {
+			throw new InvalidTokenException(
+					"Field 'auditTrail' has wrong format. Expected map of key/value pairs, received: "
+							+ this.getData().get("auditTrail"));
+		}
+
+		// check keys
+		if (   auditTrail == null ||
+				!auditTrail.keySet().contains("username") ||
+				!auditTrail.keySet().contains("remoteSystem") ||
+				!auditTrail.keySet().contains("reasonForChange"))
+			throw new InvalidTokenException(
+					"Field 'auditTrail' has wrong format. One or more keys are missing, received: "
+							+ this.getData().get("auditTrail"));
+
+		// check for null or missing values
+		if (    auditTrail.values().contains(null) || auditTrail.values().contains(""))
+			throw new InvalidTokenException(
+					"Field 'auditTrail' has wrong format. One or more values are missing, received: "
+							+ this.getData().get("auditTrail"));
+	}
+
 }

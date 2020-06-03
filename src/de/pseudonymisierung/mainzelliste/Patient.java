@@ -25,9 +25,8 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import de.pseudonymisierung.mainzelliste.dto.Persistor;
-
 import java.util.*;
+import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -71,11 +70,7 @@ public class Patient {
 		try {
 			JSONObject fieldsJson = new JSONObject();
 			for (String fieldName : fields.keySet()) {
-				JSONObject thisField = new JSONObject();
-				thisField.put("class", fields.get(fieldName).getClass()
-						.getName());
-				thisField.put("value", fields.get(fieldName).getValueJSON());
-				fieldsJson.put(fieldName, thisField);
+				fieldsJson.put(fieldName, fields.get(fieldName).toJSON());
 			}
 			return fieldsJson.toString();
 		} catch (JSONException e) {
@@ -83,37 +78,7 @@ public class Patient {
 			throw new InternalErrorException();
 		}
 	}
-
-	/**
-	 * map field name to soundex code
-	 */
-	@Transient
-	private Map<String, String> soundex;
-
-	public Map<String, String> getClusterIds()
-	{
-		return soundex;
-	}
-
-	/**
-	 * Set soundex codes for some fiels of the patient.
-	 */
-	public void setClusterIdByField(String[] fieldsNames)
-	{
-		soundex= new HashMap<String, String>();
-		for(String field : fieldsNames)
-		{
-			try
-			{
-				soundex.put(field, Soundex.computeSoundex(this.getInputFields().get(field).getValue().toString()));
-			}
-			catch (Exception e)
-			{
-				Logger.getLogger(Patient.class).error("Exception: ", e);
-				throw new InternalErrorException();
-			}
-		}
-	}
+	
 
 	/**
 	 * Creates a map of fields from its JSON representation. Used to read
@@ -134,7 +99,7 @@ public class Patient {
 				String fieldName = (String) it.next();
 				JSONObject thisFieldJson = fieldsJson.getJSONObject(fieldName);
 				String fieldClass = thisFieldJson.getString("class");
-				String fieldValue = thisFieldJson.getString("value");
+				String fieldValue = thisFieldJson.has("value") ? thisFieldJson.getString("value") : null;
 				Field<?> thisField = (Field<?>) Class.forName(fieldClass)
 						.newInstance();
 				thisField.setValue(fieldValue);
@@ -164,20 +129,26 @@ public class Patient {
 	 * @return The modified patient object on which the method is called.
 	 */
 	public Patient updateFrom(Patient from) {
-
+		// Put updated fields in new map
+		Map<String, Field<?>> newFields = new HashMap<String, Field<?>>();
 		for (String fieldName : from.getFields().keySet()) {
 			// If field is null or empty, update
 			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
-				this.fields.put(fieldName, from.getFields().get(fieldName));
+				newFields.put(fieldName, from.getFields().get(fieldName));
 				// otherwise leave old value
+			} else {
+				newFields.put(fieldName, this.fields.get(fieldName));
 			}
 		}
 
+		Map<String, Field<?>> newInputFields = new HashMap<String, Field<?>>();
 		for (String fieldName : from.getInputFields().keySet()) {
-			// If field is null or empty, update
-			if (!this.inputFields.containsKey(fieldName) || this.inputFields.get(fieldName).isEmpty()) {
-				this.inputFields.put(fieldName, from.getInputFields().get(fieldName));
+			// If field is not null or empty, update
+			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
+				newInputFields.put(fieldName, from.getInputFields().get(fieldName));
 				// otherwise leave old value
+			} else {
+				newInputFields.put(fieldName, this.inputFields.get(fieldName));
 			}
 		}
 
@@ -185,19 +156,23 @@ public class Patient {
 		for (ID thisId : from.getIds()) {
 			if (externalIdTypes.contains(thisId.getType())) {
 				String idType = thisId.getType();
-				ID currentId = this.getId(idType);
-				boolean isIdAdded = this.addExternalId(thisId);
-				if (!isIdAdded && !currentId.equals(thisId)) {
-					throw new ConflictingDataException(
-						String.format("ID of type $s should be updated with value %s but already has value %s",
-							idType, thisId.getIdString(), currentId.getIdString()));
+				ID myId = this.getId(idType);
+				if (myId == null) {
+					this.addId(thisId);
+				} else {
+					if (!myId.equals(thisId)) {
+						throw new ConflictingDataException(
+								String.format("ID of type %s should be updated with value %s but already has value %s",
+										idType, thisId.getIdString(), myId.getIdString()));
+					}
 				}
 			}
 		}
-
-		// update the fieldsString and inputFieldsString for database
-		this.fieldsString = fieldsToString(this.fields);
-		this.inputFieldsString = fieldsToString(this.inputFields);
+		// Set fields to updated map. This is more safe than setting fields
+		// direct
+		// because setFields does other stuff
+		this.setFields(newFields);
+		this.setInputFields(newInputFields);
 		return this;
 	}
 
@@ -287,13 +262,17 @@ public class Patient {
 	 *
 	 * @param ids
 	 *            A set of ID objects that identify the patient.
-	 * @param c
+	 * @param fields
 	 *            The fields of the patient. A map with field names as keys and
 	 *            the corresponding Field objects as values.
 	 */
-	public Patient(Set<ID> ids, Map<String, Field<?>> c) {
-		this.ids = ids;
-		this.setFields(c);
+	public Patient(Set<ID> ids, Map<String, Field<?>> fields) {
+		if(ids != null) {
+			this.ids = ids;
+		}
+		if(fields != null) {
+			this.setFields(fields);
+		}
 	}
 
 	/**
@@ -333,6 +312,7 @@ public class Patient {
 		if(!factory.isExternal()) {
 			ID newID = factory.getNext();
 			Persistor.instance.addId(newID);
+			factory.getMemory().ifPresent(IDGeneratorMemory::commit);
 			this.addId(newID);
 			return newID;
 		}
@@ -372,21 +352,6 @@ public class Patient {
 				return false;
 		}
 		ids.add(id);
-		return true;
-	}
-
-	/**
-	 * Adds an external Id to a patient. If not in database the external Id will be persisted.
-	 * @param externalId the {@link ID} to add
-	 * @return true if the id was added, false if the id was already attached to patient
-	 */
-	private boolean addExternalId(ID externalId) {
-		for (ID thisId : ids) {
-			if (thisId.getType().equals(externalId.getType()))
-				return false;
-		}
-		Persistor.instance.addId(externalId); //Needs to be persisted
-		ids.add(externalId);
 		return true;
 	}
 

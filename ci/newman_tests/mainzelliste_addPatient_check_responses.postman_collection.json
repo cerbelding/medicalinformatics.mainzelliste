@@ -54,7 +54,7 @@
 			"response": []
 		},
 		{
-			"name": "TOKEN_ADD_PATIENT_1",
+			"name": "TOKEN_ADD_PATIENT",
 			"event": [
 				{
 					"listen": "test",
@@ -94,7 +94,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}},\"externalId\"]\r\n    \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n\t\"allowedUses\": \"6\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}},\"externalId\"]\r\n    \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -215,63 +215,6 @@
 			"response": []
 		},
 		{
-			"name": "TOKEN_ADD_PATIENT_2",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
-						"exec": [
-							"var jsonBody = JSON.parse(responseBody);",
-							"console.log(jsonBody);",
-							"tests[\"Token created\"] = responseCode.code === 201;",
-							"tests[\"Body has id\"] = responseBody.has(\"id\");",
-							"tests[\"Type is addPatient\"] = jsonBody.type === \"addPatient\";",
-							"tests[\"Body has data\"] = responseBody.has(\"data\");",
-							"tests[\"Data has idTypes\"] = \"idTypes\" in jsonBody.data;",
-							"",
-							"var tokenId = jsonBody.id;",
-							"postman.setGlobalVariable(\"tokenId\", tokenId);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "mainzellisteApiKey",
-						"value": "{{mainzellisteApiKey}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "mainzellisteApiVersion",
-						"value": "{{mainzellisteApiVersion}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}},\"externalId\"]\r\n    \t}\r\n}"
-				},
-				"url": {
-					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"sessions",
-						"{{sessionId}}",
-						"tokens"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "IDAT_IDENTICAL_EXTERNALID_IDENTICAL",
 			"event": [
 				{
@@ -371,63 +314,6 @@
 							"key": "tokenId",
 							"value": "{{tokenId}}"
 						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "TOKEN_ADD_PATIENT_3",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
-						"exec": [
-							"var jsonBody = JSON.parse(responseBody);",
-							"console.log(jsonBody);",
-							"tests[\"Token created\"] = responseCode.code === 201;",
-							"tests[\"Body has id\"] = responseBody.has(\"id\");",
-							"tests[\"Type is addPatient\"] = jsonBody.type === \"addPatient\";",
-							"tests[\"Body has data\"] = responseBody.has(\"data\");",
-							"tests[\"Data has idTypes\"] = \"idTypes\" in jsonBody.data;",
-							"",
-							"var tokenId = jsonBody.id;",
-							"postman.setGlobalVariable(\"tokenId\", tokenId);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "mainzellisteApiKey",
-						"value": "{{mainzellisteApiKey}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "mainzellisteApiVersion",
-						"value": "{{mainzellisteApiVersion}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}},\"externalId\"]\r\n    \t}\r\n}"
-				},
-				"url": {
-					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"sessions",
-						"{{sessionId}}",
-						"tokens"
 					]
 				}
 			},
@@ -540,63 +426,6 @@
 			"response": []
 		},
 		{
-			"name": "TOKEN_ADD_PATIENT_4",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
-						"exec": [
-							"var jsonBody = JSON.parse(responseBody);",
-							"console.log(jsonBody);",
-							"tests[\"Token created\"] = responseCode.code === 201;",
-							"tests[\"Body has id\"] = responseBody.has(\"id\");",
-							"tests[\"Type is addPatient\"] = jsonBody.type === \"addPatient\";",
-							"tests[\"Body has data\"] = responseBody.has(\"data\");",
-							"tests[\"Data has idTypes\"] = \"idTypes\" in jsonBody.data;",
-							"",
-							"var tokenId = jsonBody.id;",
-							"postman.setGlobalVariable(\"tokenId\", tokenId);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "mainzellisteApiKey",
-						"value": "{{mainzellisteApiKey}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "mainzellisteApiVersion",
-						"value": "{{mainzellisteApiVersion}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}},\"externalId\"]\r\n    \t}\r\n}"
-				},
-				"url": {
-					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"sessions",
-						"{{sessionId}}",
-						"tokens"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "IDAT_IDENTICAL_EXTERNALID_OTHER",
 			"event": [
 				{
@@ -702,63 +531,6 @@
 			"response": []
 		},
 		{
-			"name": "TOKEN_ADD_PATIENT_5",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
-						"exec": [
-							"var jsonBody = JSON.parse(responseBody);",
-							"console.log(jsonBody);",
-							"tests[\"Token created\"] = responseCode.code === 201;",
-							"tests[\"Body has id\"] = responseBody.has(\"id\");",
-							"tests[\"Type is addPatient\"] = jsonBody.type === \"addPatient\";",
-							"tests[\"Body has data\"] = responseBody.has(\"data\");",
-							"tests[\"Data has idTypes\"] = \"idTypes\" in jsonBody.data;",
-							"",
-							"var tokenId = jsonBody.id;",
-							"postman.setGlobalVariable(\"tokenId\", tokenId);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "mainzellisteApiKey",
-						"value": "{{mainzellisteApiKey}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "mainzellisteApiVersion",
-						"value": "{{mainzellisteApiVersion}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}},\"externalId\"]\r\n    \t}\r\n}"
-				},
-				"url": {
-					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"sessions",
-						"{{sessionId}}",
-						"tokens"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "IDAT_OTHER_EXTERNALID_IDENTICAL",
 			"event": [
 				{
@@ -858,63 +630,6 @@
 							"key": "tokenId",
 							"value": "{{tokenId}}"
 						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "TOKEN_ADD_PATIENT_6",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
-						"exec": [
-							"var jsonBody = JSON.parse(responseBody);",
-							"console.log(jsonBody);",
-							"tests[\"Token created\"] = responseCode.code === 201;",
-							"tests[\"Body has id\"] = responseBody.has(\"id\");",
-							"tests[\"Type is addPatient\"] = jsonBody.type === \"addPatient\";",
-							"tests[\"Body has data\"] = responseBody.has(\"data\");",
-							"tests[\"Data has idTypes\"] = \"idTypes\" in jsonBody.data;",
-							"",
-							"var tokenId = jsonBody.id;",
-							"postman.setGlobalVariable(\"tokenId\", tokenId);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "mainzellisteApiKey",
-						"value": "{{mainzellisteApiKey}}"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "mainzellisteApiVersion",
-						"value": "{{mainzellisteApiVersion}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}},\"externalId\"]\r\n    \t}\r\n}"
-				},
-				"url": {
-					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"sessions",
-						"{{sessionId}}",
-						"tokens"
 					]
 				}
 			},
