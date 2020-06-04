@@ -157,62 +157,62 @@
 					"urlencoded": [
 						{
 							"key": "vorname",
-							"value": "{{vorname}}",
+							"value": "Max",
 							"type": "text"
 						},
 						{
 							"key": "nachname",
-							"value": "{{nachname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtsname",
-							"value": "{{geburtsname}}",
+							"value": "Mustermann",
 							"type": "text"
 						},
 						{
 							"key": "geburtstag",
-							"value": "{{geburtstag}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsmonat",
-							"value": "{{geburtsmonat}}",
+							"value": "01",
 							"type": "text"
 						},
 						{
 							"key": "geburtsjahr",
-							"value": "{{geburtsjahr}}",
+							"value": "2000",
 							"type": "text"
 						},
 						{
 							"key": "plz",
-							"value": "{{plz}}",
+							"value": "12345",
 							"type": "text"
 						},
 						{
 							"key": "ort",
-							"value": "{{ort}}",
+							"value": "Musterstadt",
 							"type": "text"
 						},
 						{
 							"key": "adresse.plz",
-							"value": "{{adresse.plz}}",
+							"value": "12345",
 							"type": "text"
 						},
 						{
 							"key": "adresse.stadt",
-							"value": "{{adresse.stadt}}",
+							"value": "Musterstadt",
 							"type": "text"
 						},
 						{
 							"key": "adresse.strasse",
-							"value": "{{adresse.strasse}}",
+							"value": "Musterstraße",
 							"type": "text"
 						},
 						{
 							"key": "adresse.hausnummer",
-							"value": "{{adresse.hausnummer}}",
+							"value": "01",
 							"type": "text"
 						}
 					],
@@ -467,18 +467,18 @@
 							"console.log(jsonBody);",
 							"",
 							"tests[\"patient found\"] = responseCode.code === 200;",
-							"tests[\"patient vorname matches\"] = jsonBody[0].fields.vorname === pm.variables.get(\"vorname\");",
-							"tests[\"patient nachname matches\"] = jsonBody[0].fields.nachname === pm.variables.get(\"nachname\");",
-							"tests[\"patient geburtsname matches\"] = jsonBody[0].fields.geburtsname === pm.variables.get(\"geburtsname\");",
-							"tests[\"patient geburtstag matches\"] = jsonBody[0].fields.geburtstag === pm.variables.get(\"geburtstag\");",
-							"tests[\"patient geburtsmonat matches\"] = jsonBody[0].fields.geburtsmonat == pm.variables.get(\"geburtsmonat\");",
-							"tests[\"patient geburtsjahr matches\"] = jsonBody[0].fields.geburtsjahr === pm.variables.get(\"geburtsjahr\");",
-							"tests[\"patient plz matches\"] = jsonBody[0].fields.plz === pm.variables.get(\"plz\");",
-							"tests[\"patient ort matches\"] = jsonBody[0].fields.ort === pm.variables.get(\"ort\");",
-							"tests[\"patient adresse.plz matches\"] = jsonBody[0].fields.adresse.plz === pm.variables.get(\"adresse.plz\");",
-							"tests[\"patient adresse.strasse matches\"] = jsonBody[0].fields.adresse.strasse === pm.variables.get(\"adresse.strasse\");",
-							"tests[\"patient adresse.hausnummer matches\"] = jsonBody[0].fields.adresse.hausnummer === pm.variables.get(\"adresse.hausnummer\");",
-							"tests[\"patient adresse.stadt matches\"] = jsonBody[0].fields.adresse.stadt === pm.variables.get(\"adresse.stadt\");"
+							"tests[\"patient vorname matches\"] = jsonBody[0].fields.vorname === \"Max\";",
+							"tests[\"patient nachname matches\"] = jsonBody[0].fields.nachname === \"Mustermann\";",
+							"tests[\"patient geburtsname matches\"] = jsonBody[0].fields.geburtsname === \"Mustermann\";",
+							"tests[\"patient geburtstag matches\"] = jsonBody[0].fields.geburtstag === 01;",
+							"tests[\"patient geburtsmonat matches\"] = jsonBody[0].fields.geburtsmonat == 01;",
+							"tests[\"patient geburtsjahr matches\"] = jsonBody[0].fields.geburtsjahr === 2000;",
+							"tests[\"patient plz matches\"] = jsonBody[0].fields.plz === 12345;",
+							"tests[\"patient ort matches\"] = jsonBody[0].fields.ort === \"Musterstadt\";",
+							"tests[\"patient adresse.plz matches\"] = jsonBody[0].fields.adresse.plz === \"12345\";",
+							"tests[\"patient adresse.strasse matches\"] = jsonBody[0].fields.adresse.strasse === \"Musterstraße\";",
+							"tests[\"patient adresse.hausnummer matches\"] = jsonBody[0].fields.adresse.hausnummer === \"01\";",
+							"tests[\"patient adresse.stadt matches\"] = jsonBody[0].fields.adresse.stadt === \"Musterstadt\";"
 						],
 						"type": "text/javascript"
 					}
