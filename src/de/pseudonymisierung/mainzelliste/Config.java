@@ -149,7 +149,7 @@ public enum Config {
 		}
 
 		// Read field types from configuration
-		Pattern pattern = Pattern.compile("field\\.(\\w+)\\.type");
+		Pattern pattern = Pattern.compile("field\\.(\\w+(?:\\.\\w+)*)\\.type");
 		java.util.regex.Matcher patternMatcher;
 		this.FieldTypes = new HashMap<String, Class<? extends Field<?>>>();
 		for (String propKey : props.stringPropertyNames()) {
