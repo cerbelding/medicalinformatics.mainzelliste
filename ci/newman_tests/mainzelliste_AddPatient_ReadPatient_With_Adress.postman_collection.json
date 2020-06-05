@@ -470,15 +470,15 @@
 							"tests[\"patient vorname matches\"] = jsonBody[0].fields.vorname === \"Max\";",
 							"tests[\"patient nachname matches\"] = jsonBody[0].fields.nachname === \"Mustermann\";",
 							"tests[\"patient geburtsname matches\"] = jsonBody[0].fields.geburtsname === \"Mustermann\";",
-							"tests[\"patient geburtstag matches\"] = jsonBody[0].fields.geburtstag === 01;",
+							"tests[\"patient geburtstag matches\"] = jsonBody[0].fields.geburtstag === \"01\";",
 							"tests[\"patient geburtsmonat matches\"] = jsonBody[0].fields.geburtsmonat == 01;",
-							"tests[\"patient geburtsjahr matches\"] = jsonBody[0].fields.geburtsjahr === 2000;",
-							"tests[\"patient plz matches\"] = jsonBody[0].fields.plz === 12345;",
+							"tests[\"patient geburtsjahr matches\"] = jsonBody[0].fields.geburtsjahr === \"2000\";",
+							"tests[\"patient plz matches\"] = jsonBody[0].fields.plz === \"12345\";",
 							"tests[\"patient ort matches\"] = jsonBody[0].fields.ort === \"Musterstadt\";",
-							"tests[\"patient adresse.plz matches\"] = jsonBody[0].fields.adresse.plz === \"12345\";",
-							"tests[\"patient adresse.strasse matches\"] = jsonBody[0].fields.adresse.strasse === \"Musterstraße\";",
-							"tests[\"patient adresse.hausnummer matches\"] = jsonBody[0].fields.adresse.hausnummer === \"01\";",
-							"tests[\"patient adresse.stadt matches\"] = jsonBody[0].fields.adresse.stadt === \"Musterstadt\";"
+							"tests[\"patient adresse.plz matches\"] = jsonBody[0].fields[\"adresse.plz\"] === \"12345\";",
+							"tests[\"patient adresse.strasse matches\"] = jsonBody[0].fields[\"adresse.strasse\"] === \"Musterstraße\";",
+							"tests[\"patient adresse.hausnummer matches\"] = jsonBody[0].fields[\"adresse.hausnummer\"] === \"01\";",
+							"tests[\"patient adresse.stadt matches\"] = jsonBody[0].fields[\"adresse.stadt\"] === \"Musterstadt\";"
 						],
 						"type": "text/javascript"
 					}
