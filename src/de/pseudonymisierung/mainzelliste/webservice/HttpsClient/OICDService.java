@@ -10,7 +10,8 @@ import javax.ws.rs.HttpMethod;
 public class OICDService {
 
     private static final String USERINFOENDPOINT = "userinfo_endpoint";
-    private static final Logger logger = Logger.getLogger(OICDAuthenticator.class);
+    private static final Logger logger = Logger.getLogger(OICDService.class);
+    private static final String userInfoEndpoint = "userinfo";
 
     /**
      * Return the UserInformation provided by the Userinfo endpoint from the openId Provider
@@ -32,13 +33,8 @@ public class OICDService {
      * @return the Url to the Userinfo endpoint
      */
     public static String getUserInfoEndPointURL(String iss){
-        try {
-            HttpHeadersImpl httpHeader = new HttpHeadersImpl(HttpMethod.GET);
-            JSONObject json = new HttpsClient(iss).request(httpHeader, new HttpUrlParameterBuilder());
-            return  json.getString(USERINFOENDPOINT);
-        } catch(JSONException e){
-            logger.error(e);
-            return "";
-        }
+
+        //return iss+ userInfoEndpoint;
+        return iss+ "/protocol/openid-connect/userinfo";
     }
 }

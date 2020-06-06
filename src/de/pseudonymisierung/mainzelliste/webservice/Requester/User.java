@@ -95,4 +95,13 @@ public class User implements Requester {
 
     }
 
+    @Override
+    public String toString() {
+        return "User{" +
+                "permissions=" + permissions +
+                ", authenticator=" + authenticator +
+                ", id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

@@ -32,4 +32,10 @@ public class HttpHeadersImpl implements HttpHeadersInterface {
     public Map<String, String> getHeaderParams() {
         return headerParams;
     }
+
+
+    @Override
+    public String toString() {
+        return " HTTP-Method: "+ this.requestMethod + " headers: " + headerParams.toString();
+    }
 }

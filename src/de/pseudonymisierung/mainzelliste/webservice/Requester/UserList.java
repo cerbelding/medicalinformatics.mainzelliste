@@ -16,7 +16,7 @@ import java.util.*;
 
 public class UserList {
     private final Map<String, User> userList;
-    private static final Logger logger = Logger.getLogger(OICDAuthenticator.class);
+    private static final Logger logger = Logger.getLogger(UserList.class);
 
 
     public UserList(){
@@ -64,11 +64,12 @@ public class UserList {
      * @throws IOException throws exception if jwt token does not match format
      */
     private Map<String,String> getIOCDIdToken(String accessToken) throws JSONException,IOException{
+        logger.debug("Try to decoe access token: "+accessToken);
         JSONObject jwtPayload = JWTDecoder.decode(accessToken);
         String iss = jwtPayload.getString("iss");
         String userInfoEndpointUrl = OICDService.getUserInfoEndPointURL(iss);
         JSONObject idToken = OICDService.getIdTokenFromUserInfoEndpoint(accessToken, userInfoEndpointUrl);
-        return OICDPropertiesAdapter.getMappedIdToken(idToken);
+        return  OICDPropertiesAdapter.getMappedIdToken(idToken);
     }
 
 
@@ -120,6 +121,8 @@ public class UserList {
             return new HashSet<>();
         }
     }
+
+
 
     /**
      * Return the User with the requested accessToken

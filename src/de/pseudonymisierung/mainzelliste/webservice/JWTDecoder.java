@@ -2,6 +2,8 @@ package de.pseudonymisierung.mainzelliste.webservice;
 
 
 
+import de.pseudonymisierung.mainzelliste.webservice.Authenticator.OICDAuthenticator;
+import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -9,9 +11,11 @@ import java.io.IOException;
 import java.util.Base64;
 
 public class JWTDecoder {
+    private static final Logger logger = Logger.getLogger(JWTDecoder.class);
 
     // Decode JWT encoded token
     public static JSONObject decode(String jwtToken) throws IOException, JSONException {
+
 
         String[] split_string = jwtToken.split("\\.");
         java.util.Base64.Decoder decoder = java.util.Base64.getUrlDecoder();
@@ -28,6 +32,7 @@ public class JWTDecoder {
 
         // parse payload to JSONObject
         JSONObject payLoad = new JSONObject(body);;
+        logger.debug("Decoded AccessToken: "+payLoad);
         return payLoad;
 
 

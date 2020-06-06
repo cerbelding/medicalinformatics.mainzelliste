@@ -229,7 +229,9 @@ public enum Servers {
 			String subs[] = props.getProperty("servers." + i + ".oauth.claims.sub").split("[;,]");
 			String roles[] = props.getProperty("servers." + i + ".oauth.claims.roles").split("[;,]");
 			Authenticator oicdAuth = new OICDAuthenticator(new HashSet<>(Arrays.asList(subs)), new HashSet<>(Arrays.asList(roles)));
-			users.add(new User(new HashSet<String>(Arrays.asList(permissions)), oicdAuth));
+			User user = new User(new HashSet<String>(Arrays.asList(permissions)), oicdAuth);
+			logger.info("new User: " +user.toString());
+			users.add(user);
 		}
 	}
 

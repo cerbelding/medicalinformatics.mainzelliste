@@ -5,12 +5,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Map;
 
 public class HttpUrlParameterBuilder implements HttpUrlParametersInterface {
-        Map<String, String>  urlParams;
+        private final Map<String, String>  urlParams;
 
         public HttpUrlParameterBuilder(){
+            urlParams = new HashMap<>();
 
         }
         public HttpUrlParameterBuilder(Map<String, String> urlParams){
