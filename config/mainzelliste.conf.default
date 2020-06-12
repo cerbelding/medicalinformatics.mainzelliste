@@ -94,6 +94,7 @@ field.geburtsmonat.type = IntegerField
 field.geburtsjahr.type = IntegerField
 field.plz.type = PlainTextField
 field.ort.type = PlainTextField
+field.versicherungsnummer.type = PlainTextField
 
 # To store the data in hashed form (control numbers) use the type ControlNumberField
 
