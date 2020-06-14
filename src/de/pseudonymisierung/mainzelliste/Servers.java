@@ -221,16 +221,18 @@ public enum Servers {
 	private void createUsers(Properties props){
 		for (int i = 0; ; i++) {
 			if (!props.containsKey("users." + i + ".permissions") ||
-			!props.containsKey("users." + i + ".oauth.claims.sub") ||
-			!props.containsKey("users." + i + ".oauth.claims.roles"))
+			!props.containsKey("users." + i + ".oauth.claims.subs"))
 				break;
 
-			String permissions[] = props.getProperty("user." + i + ".permissions").split("[;,]");
-			String subs[] = props.getProperty("servers." + i + ".oauth.claims.sub").split("[;,]");
-			String roles[] = props.getProperty("servers." + i + ".oauth.claims.roles").split("[;,]");
+			String permissions[] = props.getProperty("users." + i + ".permissions").split("[;,]");
+			String subs[] = props.getProperty("users." + i + ".oauth.claims.subs").split("[;,]");
+			String roles[] = new String[0];
+
+			if(props.containsKey("users." + i + ".oauth.claims.roles")){
+				roles = props.getProperty("users." + i + ".oauth.claims.roles").split("[;,]");
+			}
 			Authenticator oicdAuth = new OICDAuthenticator(new HashSet<>(Arrays.asList(subs)), new HashSet<>(Arrays.asList(roles)));
 			User user = new User(new HashSet<String>(Arrays.asList(permissions)), oicdAuth);
-			logger.info("new User: " +user.toString());
 			users.add(user);
 		}
 	}

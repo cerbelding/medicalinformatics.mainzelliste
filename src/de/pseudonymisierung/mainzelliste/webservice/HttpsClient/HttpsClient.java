@@ -20,20 +20,19 @@ import java.util.Map;
  * Implement a HTTPsClient
  */
 
-public class HttpsClient extends AbstractHttpsClient<HttpHeadersInterface<Map<String,String>>, HttpUrlParametersInterface<String>, JSONObject> {
+public class HttpsClient implements HttpsClientInterface<HttpHeadersInterface<Map<String,String>>, HttpUrlParametersInterface<String>, JSONObject> {
     private static final Logger logger = Logger.getLogger(HttpsClient.class);
+    private Proxy proxy;
 
 
     /**
      * Constructor
-     * @param url The Url to send a request
      */
-    public HttpsClient(String url) {
-        super(url);
+    public HttpsClient() {
     }
 
-    public HttpsClient(String url, Proxy proxy) {
-        super(url, proxy);
+    public HttpsClient(Proxy proxy) {
+        this.proxy = proxy;
     }
 
 
@@ -46,17 +45,18 @@ public class HttpsClient extends AbstractHttpsClient<HttpHeadersInterface<Map<St
         return sb.toString();
     }
 
-// Only for testing
+    // Only for testing
     private static void disableSslVerification() {
-        try
-        {
+        try {
             // Create a trust manager that does not validate certificate chains
-            TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
+            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
                 public java.security.cert.X509Certificate[] getAcceptedIssuers() {
                     return null;
                 }
+
                 public void checkClientTrusted(X509Certificate[] certs, String authType) {
                 }
+
                 public void checkServerTrusted(X509Certificate[] certs, String authType) {
                 }
             }
@@ -84,60 +84,56 @@ public class HttpsClient extends AbstractHttpsClient<HttpHeadersInterface<Map<St
     }
 
     @Override
-    public JSONObject request(HttpHeadersInterface<Map<String,String>> httpHeadersImpl, HttpUrlParametersInterface<String> httpUrlParameterBuilder) {
-        logger.info("Disable ssl");
-        disableSslVerification();
-        logger.info("Try to request " + this.url + " with Http-header: "+ httpHeadersImpl.toString()+ " and url parameters "+ httpUrlParameterBuilder.toString() );
+    public JSONObject request(String urlPath, HttpHeadersInterface<Map<String, String>> httpHeadersImpl, HttpUrlParametersInterface<String> httpUrlParameterBuilder) throws IOException {
+        logger.info("Try to request " + urlPath + " with Http-header: " + httpHeadersImpl.toString() + " and url parameters " + httpUrlParameterBuilder.toString());
         JSONObject json = new JSONObject();
         HttpsURLConnection con = null;
         BufferedReader reader = null;
 
         try {
-            URL url = new URL(this.url);
+            URL url = new URL(urlPath);
             con = proxy != null ? (HttpsURLConnection) url.openConnection(proxy) : (HttpsURLConnection) url.openConnection();
             setHeader(con, httpHeadersImpl);
             setUrlParams(con, httpUrlParameterBuilder);
             con.setConnectTimeout(1000);
             con.connect();
             int code = con.getResponseCode();
-            logger.info("Response code: "+ code);
+            logger.info("Response code: " + code);
 
-            if(code>= 200 && code <= 300){
+            if (code >= 200 && code <= 300) {
                 reader = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-                logger.info("Read: "+ reader.toString());
+                logger.info("Read: " + reader.toString());
                 String jsonText = readAll(reader);
                 json = new JSONObject(jsonText);
             }
 
             con.disconnect();
-
+            return json;
 
         } catch (MalformedURLException e) {
             logger.error("Error to extrakt the URL");
             logger.error(e);
-            return json;
+            throw new IOException(e);
         } catch (IOException e) {
             logger.error("Error to open a Connection");
             logger.error(e);
-            return json;
+            throw new IOException(e);
         } catch (JSONException e) {
             logger.error("Error parsing JSON");
             logger.error(e);
-            return json;
+            throw new IOException(e);
         } finally {
-            if(reader != null){
+            if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException e) {
                     logger.error("Error closing BufferReader");
-
                 }
             }
-            if(con != null) {
+            if (con != null) {
                 con.disconnect();
             }
         }
-        return json;
     }
 
     private void setHeader(HttpsURLConnection con, HttpHeadersInterface<Map<String, String>> httpHeader) throws ProtocolException {
@@ -147,17 +143,12 @@ public class HttpsClient extends AbstractHttpsClient<HttpHeadersInterface<Map<St
         }
     }
 
-    private void setUrlParams(HttpsURLConnection con, HttpUrlParametersInterface<String> urlParameterBuilder) {
-        try {
+    private void setUrlParams(HttpsURLConnection con, HttpUrlParametersInterface<String> urlParameterBuilder) throws IOException {
         con.setDoOutput(true);
         DataOutputStream out = new DataOutputStream(con.getOutputStream());
         out.writeBytes(urlParameterBuilder.getParamsString());
         out.flush();
         out.close();
-        }
-        catch(IOException e){
 
-        }
     }
-
 }

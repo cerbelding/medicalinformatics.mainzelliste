@@ -79,6 +79,7 @@ public class UserList {
      * @param claims
      * @return
      */
+    @org.jetbrains.annotations.Nullable
     private User getaUserByAuthentication(Map<String,String> claims){
         for (Map.Entry<String, User> entry : userList.entrySet()) {
             User user = entry.getValue();
