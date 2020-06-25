@@ -1,3 +1,6 @@
+### 1.8.1 - 2020-06-25
+#### Fixed
+- stop retrying database connection if the login to DB failed (depending on database type)
 ### 1.8.0 - 2020-06-03
 #### Added
 - Example configuration files for docker: docker-compose.user.yml and docker-compose.dev.yml
