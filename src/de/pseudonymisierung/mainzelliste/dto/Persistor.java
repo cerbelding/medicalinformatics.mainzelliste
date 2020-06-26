@@ -702,6 +702,11 @@ public enum Persistor {
 	 * @return The JDBC connection.
 	 */
 	private Connection getJdbcConnection() {
+		// find database type
+		boolean isPostgres = Config.instance.getProperty("db.driver").equals("org.postgresql.Driver");
+		boolean isMysql = Config.instance.getProperty("db.driver").equals("com.mysql.jdbc.Driver");
+
+		logger.info("Connecting to database ...");
 		Properties connectionProps = new Properties();
 		if (Config.instance.getProperty("db.username") != null) connectionProps.put("user",  Config.instance.getProperty("db.username"));
 		if (Config.instance.getProperty("db.password") != null) connectionProps.put("password",  Config.instance.getProperty("db.password"));
@@ -714,11 +719,21 @@ public enum Persistor {
 				logger.fatal("Could not find database driver!", e);
 				throw new Error(e);
 			} catch (SQLException e) {
-				if (count < dbconnect_retry_count) {
-					logger.warn("SQL error while getting database connection; retrying.");
-				} else {
+				String sqlState = e.getSQLState();
+				if(e.getSQLState() != null) {
+					// evaluate sql error depending of the database type
+					if(isPostgres && sqlState.equals("3D000") || isMysql && e.getErrorCode() == 1044) {
+						logger.fatal("SQL error: access denied to DB. " + e.getMessage());
+						throw new Error(e);
+					} else if(isPostgres && sqlState.startsWith("28") || isMysql && e.getErrorCode() == 1045) {
+						logger.fatal("SQL error: invalid authorization specification. " + e.getMessage());
+						throw new Error(e);
+					}
+				} else if (count >= dbconnect_retry_count) {
 					logger.fatal("SQL error while getting database connection; giving up.", e);
 					throw new Error(e);
+				} else if (count == 1) {
+					logger.info("SQL error while getting database connection; retrying.");
 				}
 			}
 			try{
