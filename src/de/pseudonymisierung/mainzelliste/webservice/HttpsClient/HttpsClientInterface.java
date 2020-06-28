@@ -1,14 +1,14 @@
 package de.pseudonymisierung.mainzelliste.webservice.HttpsClient;
 
 import org.codehaus.jettison.json.JSONObject;
-
 import java.io.IOException;
+import java.util.Map;
 
 
-public interface HttpsClientInterface<Header extends HttpHeadersInterface, ResponseType extends JSONObject > {
+public interface HttpsClientInterface<Header extends HttpHeadersInterface<Map<String, String>>, ResponseType extends JSONObject > {
 
 
-    public  ResponseType  request(String url, Header header) throws IOException;
+    ResponseType  request(String url, Header header) throws IOException;
 
 
 }

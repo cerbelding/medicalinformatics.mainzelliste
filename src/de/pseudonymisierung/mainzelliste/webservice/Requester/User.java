@@ -1,10 +1,7 @@
 package de.pseudonymisierung.mainzelliste.webservice.Requester;
 
 import de.pseudonymisierung.mainzelliste.webservice.Authenticator.Authenticator;
-import de.pseudonymisierung.mainzelliste.webservice.Authenticator.OICDAuthenticator;
-import org.apache.log4j.Logger;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -14,7 +11,6 @@ import java.util.UUID;
  */
 public class User implements Requester {
 
-    private final Logger logger = Logger.getLogger(OICDAuthenticator.class);
     /** permissions of the user */
     protected Set<String> permissions;
     /** Authentication method of the user */
@@ -49,17 +45,13 @@ public class User implements Requester {
     /**
      * Checks if a user could be authenticated
      * @param claims the authorization properties from the user
-     * @return true is the user could be authenticated, otherwise falses
+     * @return true is the user could be authenticated, otherwise false
      */
     public boolean isAuthenticated(Map<String, String> claims) {
         return authenticator.isAuthenticated(claims);
     }
 
     @Override
-    /**
-     * Returns the id
-     * @return Returns the id
-     */
     public String getId() {
         return this.id;
     }
@@ -73,20 +65,6 @@ public class User implements Requester {
         return this.name;
     }
 
-    /**
-     * Checks if the user has permission to the requested resource
-     * @param claims the authorization properties from the user
-     * @param permission the permission resource the user is request to
-     * @return true is the user could be authenticated, otherwise false
-     */
-     public boolean hasPermission(Map<String, String> claims, String permission) {
-        if (authenticator.isAuthenticated(claims) && this.permissions.contains(permission)) {
-            return true;
-        } else {
-            logger.info("Permission of User rejected");
-            return false;
-        }
-    }
 
     /**
      * Return the permission from the User
@@ -97,12 +75,6 @@ public class User implements Requester {
     }
 
 
-
-    public Set<String> getPermissions(Map<String, String> authentication){
-        Set<String> permissions = authenticator.isAuthenticated(authentication) ?  getPermissions(): new HashSet<String>();
-        return permissions;
-
-    }
 
     @Override
     public String toString() {

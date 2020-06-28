@@ -1,6 +1,5 @@
 package de.pseudonymisierung.mainzelliste.webservice.HttpsClient;
 
-import java.util.Map;
 
 /**
  * An Interface for HTtpHeaders

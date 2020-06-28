@@ -15,7 +15,7 @@ import java.util.*;
  */
 
 public class UserList {
-    private final Map<String, User> userList;
+    private final Map<String, User> users;
     private static final Logger logger = Logger.getLogger(UserList.class);
 
 
@@ -23,15 +23,15 @@ public class UserList {
      * Creates a empty UserList
      */
     public UserList(){
-        this.userList = new HashMap<>();
+        this.users = new HashMap<>();
     }
 
     /**
      * Creates a List of all Users
-     * @param userList List of Users
+     * @param users List of Users
      */
-    public UserList(Map<String,User> userList){
-        this.userList = userList;
+    public UserList(Map<String,User> users){
+        this.users = users;
     }
 
 
@@ -40,7 +40,7 @@ public class UserList {
      * @param user User to be add
      */
     public void add(User user){
-        userList.put(user.id, user);
+        users.put(user.id, user);
     }
 
     /**
@@ -48,7 +48,7 @@ public class UserList {
      * @return The size of the User List
      */
     public int size(){
-        return userList.size();
+        return users.size();
     }
 
     /**
@@ -57,7 +57,7 @@ public class UserList {
      * @return true is a User exist, otherwise false
      */
     public boolean containsKey(String key){
-        return userList.containsKey(key);
+        return users.containsKey(key);
     }
 
     /**
@@ -66,7 +66,7 @@ public class UserList {
      * @return returns the user if the user exist, otherwise null
      */
     public User getUserById(String id){
-        return userList.get(id);
+        return users.get(id);
     }
 
     /**
@@ -75,7 +75,7 @@ public class UserList {
      * @return returns the user if it exist, otherwise null
      */
     public User getUserByName(String name){
-        for (Map.Entry<String, User> entry : userList.entrySet()) {
+        for (Map.Entry<String, User> entry : users.entrySet()) {
             User user = entry.getValue();
             if(user.getName().equals(name)){
                 return user;
@@ -104,55 +104,19 @@ public class UserList {
     }
 
 
-
     /**
      * Get the user if he could be authenticated, otherwise null
      * @param claims the claims of the user
      * @return The User if he could be authenticated otherwise null
      */
     private User getUserByAuthentication(Map<String,String> claims){
-        for (Map.Entry<String, User> entry : userList.entrySet()) {
+        for (Map.Entry<String, User> entry : users.entrySet()) {
             User user = entry.getValue();
             if(user.isAuthenticated(claims)) return user;
         }
         logger.info("User could not been authenticated");
         return null;
     }
-
-    /**
-     * Returns the permissions if the user could be authenticated, otherwise a empty Set
-     * @param claims the user identification claims
-     * @return if the user could be authenticated the permissions, otherwise a empty Set
-     */
-    private Set<String> getUserPermissions(Map<String,String> claims){
-
-        User user =  getUserByAuthentication(claims);
-        if(user != null){
-            return user.getPermissions();
-        }
-        else {
-            return new HashSet<>();
-        }
-    }
-
-
-    /**
-     * Checks if an user has permission for a requested resource
-     * @param accessToken the JWT encoed access token
-     * @return returns true if the user has permission, otherwise false (even if user is not found)
-     */
-    public Set<String> getOICDPermission(String accessToken){
-
-        try {
-            Map<String, String>  claims = getIOCDIdToken(accessToken);
-            return getUserPermissions(claims);
-
-        } catch (JSONException | IOException e) {
-            logger.error(e);
-            return new HashSet<>();
-        }
-    }
-
 
 
     /**

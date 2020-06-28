@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Represents the OpenId Connect Authentication
+ * Represents the OpenID Connect Authentication
  */
 public class OICDAuthenticator implements Authenticator {
 

@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Implementation of the HttpHeadersInterface
  */
-public class HttpHeadersImpl implements HttpHeadersInterface {
+public class HttpHeadersImpl implements HttpHeadersInterface<Map<String, String>> {
     private final Map<String, String> headerParams = new HashMap();
     private final String requestMethod;
 
