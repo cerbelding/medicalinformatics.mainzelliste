@@ -9,9 +9,10 @@ import java.io.IOException;
 
 public class OICDService {
 
-    private static final String USERINFOENDPOINT = "userinfo_endpoint";
+    private static final String USERINFOENDPOINTKEY = "userinfo_endpoint";
     private static final Logger logger = Logger.getLogger(OICDService.class);
     private static final String  METADATAURL = ".well-known/openid-configuration";
+    private static final String USERINFOENDPOINT = "userinfo";
 
     /**
      * Return the UserInformation provided by the Userinfo endpoint from the openId Provider
@@ -22,7 +23,9 @@ public class OICDService {
         if (!userInfoEndpointUrl.isEmpty()) {
             HttpHeadersImpl httpHeader = new HttpHeadersImpl(HttpMethod.GET);
             httpHeader.setAuthorization(HttpClientAuthorization.createBearerAuthentication(accessToken));
-            idToken = new HttpsClient().request(userInfoEndpointUrl, httpHeader, new HttpUrlParameterBuilder());
+            idToken = new HttpsClient().request(userInfoEndpointUrl, httpHeader);
+            logger.info("Userinfo: "  + idToken);
+
         }
         return idToken;
     }
@@ -32,10 +35,19 @@ public class OICDService {
      * Retrieves the Userinfo endpoint Url from the OpenId Configuration
      * @return the Url to the Userinfo endpoint
      */
-    public static String getUserInfoEndPointURL(String iss) throws JSONException, IOException {
+    public static String getUserInfoEndPointURL(String iss) throws IOException {
         HttpHeadersImpl httpHeader = new HttpHeadersImpl(HttpMethod.GET);
-        JSONObject metaData  = new HttpsClient().request(getSpecificUrl(iss,METADATAURL),httpHeader, new HttpUrlParameterBuilder());
-        return metaData.getString(USERINFOENDPOINT);
+        JSONObject metaData  = new HttpsClient().request(getSpecificUrl(iss,METADATAURL), httpHeader);
+        logger.debug("Metadata Response: "  + metaData.toString());
+        try{
+            return metaData.getString(USERINFOENDPOINTKEY);
+        }
+        catch(JSONException e){
+            logger.warn(e);
+            return getSpecificUrl(iss, USERINFOENDPOINT);
+
+        }
+
 
     }
 

@@ -113,7 +113,9 @@ public class SessionsResource {
 			}
 		}
 		else {
-			s = Servers.instance.newSession("");
+			return Response.status(Status.UNAUTHORIZED)
+					.entity("Please supply either Api key or an access token")
+					.build();
 		}
 
 

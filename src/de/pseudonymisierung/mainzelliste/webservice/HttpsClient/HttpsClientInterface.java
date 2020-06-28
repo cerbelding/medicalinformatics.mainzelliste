@@ -5,10 +5,10 @@ import org.codehaus.jettison.json.JSONObject;
 import java.io.IOException;
 
 
-public interface HttpsClientInterface<Header extends HttpHeadersInterface, URLParam extends HttpUrlParametersInterface, ResponseType extends JSONObject > {
+public interface HttpsClientInterface<Header extends HttpHeadersInterface, ResponseType extends JSONObject > {
 
 
-    public  ResponseType  request(String url, Header header, URLParam urlParam) throws IOException;
+    public  ResponseType  request(String url, Header header) throws IOException;
 
 
 }

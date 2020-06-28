@@ -18,6 +18,11 @@ public final class Authentication {
     private Authentication(){
     }
 
+    /**
+     * Parses the HTTP Header to its Authentication method
+     * @param req the HTTPServletRequest
+     * @return A Map whith the provided Authentiation methods
+     */
     public static Map<AuthenticationEum,String> getAuthenticationHeader(HttpServletRequest req){
         Map<AuthenticationEum,String> authenticationMap = new HashMap<>();
         try {
@@ -40,7 +45,12 @@ public final class Authentication {
         return  authenticationMap;
     }
 
-    public static Requester  authenticate(Map<AuthenticationEum, String> httpHeader){
+    /**
+     *
+     * @param httpHeader
+     * @return
+     */
+    public static Requester authenticate(Map<AuthenticationEum, String> httpHeader){
         if(httpHeader.containsKey(AuthenticationEum.APIKEY)){
             String apiKey = httpHeader.get(AuthenticationEum.APIKEY);
             Requester requester = Servers.instance.getRequesterByAPIKey(apiKey);

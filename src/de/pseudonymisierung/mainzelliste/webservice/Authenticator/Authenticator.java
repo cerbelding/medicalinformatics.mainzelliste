@@ -28,7 +28,7 @@ package de.pseudonymisierung.mainzelliste.webservice.Authenticator;
 import java.util.Map;
 
 /**
- * Represents the Authorization of a request
+ * Represents the Authentication of a request
  */
 public interface Authenticator {
 

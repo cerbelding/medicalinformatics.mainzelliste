@@ -5,6 +5,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import javax.net.ssl.*;
+import javax.ws.rs.HttpMethod;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -20,7 +21,7 @@ import java.util.Map;
  * Implement a HTTPsClient
  */
 
-public class HttpsClient implements HttpsClientInterface<HttpHeadersInterface<Map<String,String>>, HttpUrlParametersInterface<String>, JSONObject> {
+public class HttpsClient implements HttpsClientInterface<HttpHeadersInterface<Map<String,String>>, JSONObject> {
     private static final Logger logger = Logger.getLogger(HttpsClient.class);
     private Proxy proxy;
 
@@ -84,8 +85,8 @@ public class HttpsClient implements HttpsClientInterface<HttpHeadersInterface<Ma
     }
 
     @Override
-    public JSONObject request(String urlPath, HttpHeadersInterface<Map<String, String>> httpHeadersImpl, HttpUrlParametersInterface<String> httpUrlParameterBuilder) throws IOException {
-        logger.info("Try to request " + urlPath + " with Http-header: " + httpHeadersImpl.toString() + " and url parameters " + httpUrlParameterBuilder.toString());
+    public JSONObject request(String urlPath, HttpHeadersInterface<Map<String, String>> httpHeadersImpl) throws IOException {
+        logger.info("Try to request " + urlPath + " with Http-header: " + httpHeadersImpl.toString() + " and url parameters ");
         JSONObject json = new JSONObject();
         HttpsURLConnection con = null;
         BufferedReader reader = null;
@@ -94,8 +95,8 @@ public class HttpsClient implements HttpsClientInterface<HttpHeadersInterface<Ma
             URL url = new URL(urlPath);
             con = proxy != null ? (HttpsURLConnection) url.openConnection(proxy) : (HttpsURLConnection) url.openConnection();
             setHeader(con, httpHeadersImpl);
-            setUrlParams(con, httpUrlParameterBuilder);
             con.setConnectTimeout(1000);
+            logger.info(con.getRequestMethod());
             con.connect();
             int code = con.getResponseCode();
             logger.info("Response code: " + code);
@@ -137,18 +138,19 @@ public class HttpsClient implements HttpsClientInterface<HttpHeadersInterface<Ma
     }
 
     private void setHeader(HttpsURLConnection con, HttpHeadersInterface<Map<String, String>> httpHeader) throws ProtocolException {
-        con.setRequestMethod(httpHeader.getRequestMethod());
+        String httpMethod = httpHeader.getRequestMethod();
+        switch(httpMethod){
+            case HttpMethod.GET:
+                con.setDoInput(true);
+                break;
+            default:
+                con.setDoInput(true);
+                break;
+        }
+        //con.setRequestMethod(httpMethod);
         for (Map.Entry<String, String> entry : httpHeader.getHeaderParams().entrySet()) {
             con.setRequestProperty(entry.getKey(), entry.getValue());
         }
     }
 
-    private void setUrlParams(HttpsURLConnection con, HttpUrlParametersInterface<String> urlParameterBuilder) throws IOException {
-        con.setDoOutput(true);
-        DataOutputStream out = new DataOutputStream(con.getOutputStream());
-        out.writeBytes(urlParameterBuilder.getParamsString());
-        out.flush();
-        out.close();
-
-    }
 }

@@ -232,7 +232,7 @@ public enum Servers {
 				roles = props.getProperty("users." + i + ".oauth.claims.roles").split("[;,]");
 			}
 			Authenticator oicdAuth = new OICDAuthenticator(new HashSet<>(Arrays.asList(subs)), new HashSet<>(Arrays.asList(roles)));
-			User user = new User(new HashSet<String>(Arrays.asList(permissions)), oicdAuth);
+			User user = new User(new HashSet<>(Arrays.asList(permissions)), oicdAuth);
 			users.add(user);
 		}
 	}
@@ -720,6 +720,11 @@ public enum Servers {
 		return requester;
 	}
 
+	/**
+	 * Returns the Requester by his Name
+	 * @param name the name of the requester
+	 * @return the authenticated requester, otherwise null
+	 */
 	public Requester getRequesterByName(String name){
 		User user =  users.getUserByName(name);
 		Server server = this.getServerByName(name);

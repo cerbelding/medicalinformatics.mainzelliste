@@ -10,10 +10,19 @@ import org.codehaus.jettison.json.JSONObject;
 import java.io.IOException;
 import java.util.Base64;
 
+/**
+ * Decodes a JWT
+ */
 public class JWTDecoder {
     private static final Logger logger = Logger.getLogger(JWTDecoder.class);
 
-    // Decode JWT encoded token
+    /**
+     * Decodes the JWT
+     * @param jwtToken the JWT encoded token
+     * @return the payload as JSONObject
+     * @throws IOException if the JWT has wrong format
+     * @throws JSONException if the JWT could not been transformed to a JSONObject
+     */
     public static JSONObject decode(String jwtToken) throws IOException, JSONException {
 
 

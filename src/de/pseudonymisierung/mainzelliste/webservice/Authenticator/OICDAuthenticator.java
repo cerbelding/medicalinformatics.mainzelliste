@@ -39,7 +39,11 @@ public class OICDAuthenticator implements Authenticator {
     protected Set<String> subs;
     protected Set<String> roles;
 
-
+    /**
+     *  Creates a new OICDAuthenticator related to a User or a Server
+     * @param subs the registered subs
+     * @param roles the registered roles
+     */
     public OICDAuthenticator(Set<String> subs, Set<String> roles) {
         this.subs = subs;
         this.roles = roles;
@@ -55,6 +59,12 @@ public class OICDAuthenticator implements Authenticator {
             else if(entry.getKey().matches("role.*")){
                 isAuthenticated =  isAuthenticated || roles.contains(entry.getValue());
             }
+        }
+        if(isAuthenticated){
+            logger.info("Requester could be authenticated with claims: " + claims.toString());
+        }
+        else {
+            logger.info("Requester could not been authenticated");
         }
          return isAuthenticated;
     }

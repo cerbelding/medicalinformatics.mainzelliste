@@ -19,31 +19,61 @@ public class UserList {
     private static final Logger logger = Logger.getLogger(UserList.class);
 
 
+    /**
+     * Creates a empty UserList
+     */
     public UserList(){
         this.userList = new HashMap<>();
     }
 
+    /**
+     * Creates a List of all Users
+     * @param userList List of Users
+     */
     public UserList(Map<String,User> userList){
         this.userList = userList;
     }
 
 
+    /**
+     * Add User to User List
+     * @param user User to be add
+     */
     public void add(User user){
-
         userList.put(user.id, user);
     }
 
+    /**
+     * Get the size of the User List
+     * @return The size of the User List
+     */
     public int size(){
         return userList.size();
     }
+
+    /**
+     * Checks if a User contains in the List
+     * @param key The id of a User
+     * @return true is a User exist, otherwise false
+     */
     public boolean containsKey(String key){
         return userList.containsKey(key);
     }
 
+    /**
+     * Returns a User by his id
+     * @param id The id of the user
+     * @return returns the user if the user exist, otherwise null
+     */
     public User getUserById(String id){
         return userList.get(id);
     }
 
+    /**
+     * Returns a User by his name
+     * @param name the name of the User
+     * @return returns the user if it exist, otherwise null
+     */
     public User getUserByName(String name){
         for (Map.Entry<String, User> entry : userList.entrySet()) {
             User user = entry.getValue();
@@ -64,9 +94,10 @@ public class UserList {
      * @throws IOException throws exception if jwt token does not match format
      */
     private Map<String,String> getIOCDIdToken(String accessToken) throws JSONException,IOException{
-        logger.debug("Try to decoe access token: "+accessToken);
+        logger.debug("Try to decode access token: "+accessToken);
         JSONObject jwtPayload = JWTDecoder.decode(accessToken);
         String iss = jwtPayload.getString("iss");
+        logger.info("Issuer of the access token is: " + iss);
         String userInfoEndpointUrl = OICDService.getUserInfoEndPointURL(iss);
         JSONObject idToken = OICDService.getIdTokenFromUserInfoEndpoint(accessToken, userInfoEndpointUrl);
         return  OICDPropertiesAdapter.getMappedIdToken(idToken);
@@ -75,28 +106,27 @@ public class UserList {
 
 
     /**
-     *
-     * @param claims
-     * @return
+     * Get the user if he could be authenticated, otherwise null
+     * @param claims the claims of the user
+     * @return The User if he could be authenticated otherwise null
      */
-    @org.jetbrains.annotations.Nullable
-    private User getaUserByAuthentication(Map<String,String> claims){
+    private User getUserByAuthentication(Map<String,String> claims){
         for (Map.Entry<String, User> entry : userList.entrySet()) {
             User user = entry.getValue();
             if(user.isAuthenticated(claims)) return user;
         }
-        logger.warn("User could not been authenticated");
+        logger.info("User could not been authenticated");
         return null;
     }
 
     /**
-     * Searchs an user with the delivered identification claims
+     * Returns the permissions if the user could be authenticated, otherwise a empty Set
      * @param claims the user identification claims
-     * @return the permissions of the founded user
+     * @return if the user could be authenticated the permissions, otherwise a empty Set
      */
     private Set<String> getUserPermissions(Map<String,String> claims){
 
-        User user =  getaUserByAuthentication(claims);
+        User user =  getUserByAuthentication(claims);
         if(user != null){
             return user.getPermissions();
         }
@@ -134,7 +164,7 @@ public class UserList {
 
         try {
             Map<String, String>  claims = getIOCDIdToken(accessToken);
-            return getaUserByAuthentication(claims);
+            return getUserByAuthentication(claims);
 
         } catch (JSONException | IOException e) {
             logger.error(e);
