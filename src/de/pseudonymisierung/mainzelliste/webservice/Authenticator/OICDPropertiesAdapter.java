@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.webservice.Requester;
+package de.pseudonymisierung.mainzelliste.webservice.Authenticator;
 
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
@@ -21,8 +21,8 @@ public class OICDPropertiesAdapter {
         try {
             sub = idToken.getString("sub");
             userClaims.put("sub", sub);
-            //roles = idToken.getJSONArray("roles");
-            /*
+            /*roles = idToken.getJSONArray("roles");
+
             for(int roleIndex = 0; roleIndex < roles.length(); roleIndex++){
                 String role = roles.getString(roleIndex);
                 if(role != null){

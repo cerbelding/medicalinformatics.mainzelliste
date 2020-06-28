@@ -13,10 +13,7 @@ public class HttpHeadersImpl implements HttpHeadersInterface {
 
     public HttpHeadersImpl(String requestMethod){
         this.requestMethod = requestMethod;
-        //connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-        //connection.setRequestProperty("charset", "utf-8");
-        //headerParams.put("charset", "utf-8")
-       // headerParams.put("charset", "utf-8");
+
     }
 
     public void setHeaders(Map<String, String> headers){

@@ -1,6 +1,6 @@
 package de.pseudonymisierung.mainzelliste.webservice.Requester;
 
-import de.pseudonymisierung.mainzelliste.webservice.Authenticator.OICDAuthenticator;
+import de.pseudonymisierung.mainzelliste.webservice.Authenticator.OICDPropertiesAdapter;
 import de.pseudonymisierung.mainzelliste.webservice.HttpsClient.OICDService;
 import de.pseudonymisierung.mainzelliste.webservice.JWTDecoder;
 import org.apache.log4j.Logger;

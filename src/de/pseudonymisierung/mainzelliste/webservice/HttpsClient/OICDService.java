@@ -3,7 +3,6 @@ package de.pseudonymisierung.mainzelliste.webservice.HttpsClient;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-
 import javax.ws.rs.HttpMethod;
 import java.io.IOException;
 
