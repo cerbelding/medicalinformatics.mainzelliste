@@ -547,13 +547,13 @@ public enum Persistor {
 	 * @return deleted patients
      */
     public synchronized List<Patient> deletePatientWithDuplicates(ID id) {
-        /* The subgraph of duplicates is a tree whose root can be found by following
-         * the "original" link recursively. From there, determine all connected patients
-         * by breadth-first search.
-         */
-        List<Patient> allInstances = getPatientWithDuplicates(id);
-		allInstances.forEach( p -> p.getId(id.getType()));
-        return allInstances;
+			/* The subgraph of duplicates is a tree whose root can be found by following
+			 * the "original" link recursively. From there, determine all connected patients
+			 * by breadth-first search.
+			 */
+			return getPatientWithDuplicates(id).stream()
+					.filter(p -> deletePatient(p.getId(id.getType())) != null)
+					.collect(Collectors.toList());
     }
 
 	/**
