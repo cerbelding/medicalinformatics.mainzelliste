@@ -474,7 +474,7 @@ public enum PatientBackend {
 		Patient pInput = new Patient();
 		Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
 
-		for (String fieldName : Config.instance.getFieldKeys()) {
+		for (String fieldName : pToEdit.getFields().keySet()) {
 			// If a field is not in the map, keep the old value
 			if (!newFieldValues.containsKey(fieldName))
 				chars.put(fieldName, pToEdit.getInputFields().get(fieldName));

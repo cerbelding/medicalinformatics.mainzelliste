@@ -25,8 +25,8 @@ public class ControlNumberField extends HashedField {
     }
 
     public ControlNumberField() {
-        this.keyId = null;
-        this.value = null;
+        this.keyId = "";
+        this.value = "";
     }
 
 
@@ -69,15 +69,15 @@ public class ControlNumberField extends HashedField {
     @Override
     public void setValue(String s) {
         if (s == null || s.equals("")) {
-            this.keyId = null;
-            this.value = null;
+            this.keyId = "";
+            this.value = "";
             return;
         }
         // FIXME throws-Klausel zu Field.setValue hinzufügen und Exception werfen
         try {
             JSONObject o = new JSONObject(s);
-            this.keyId = o.has("keyId") ? o.getString("keyId") : null;
-            this.value = o.has("value") ? o.getString("value") : null;
+            this.keyId = o.has("keyId") ? o.getString("keyId") : "";
+            this.value = o.has("value") ? o.getString("value") : "";
         } catch (JSONException e) {
             throw new Error("Error while parsing JSON string " + s);
         }
