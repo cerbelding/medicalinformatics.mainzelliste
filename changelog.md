@@ -1,6 +1,7 @@
-### 1.8.1 - 2020-06-25
+### 1.8.1 - 2020-07-02
 #### Fixed
-- stop retrying database connection if the login to DB failed (depending on database type)
+- Editing any fields of a Patient with an empty control number leads to error message
+- Stop retrying database connection if the login to DB failed
 ### 1.8.0 - 2020-06-03
 #### Added
 - Example configuration files for docker: docker-compose.user.yml and docker-compose.dev.yml
@@ -23,7 +24,7 @@
 #### Fixed
 - Correction in token handling
 - Use correct NULL representation of JSONObject
-- Issues with multiple idtypes in same mainzelliste instance.
+- Issues with multiple idtypes in same mainzelliste instance
 ### 1.7.0
 
 This release introduces support for externally generated IDs. This feature introduces an incompatible API change; therefore the API version is bumped to 3.0. However, old API versions are still supported by means of the `mainzellisteApiVersion` header, i.e. this software release is fully backwards compatible. 
