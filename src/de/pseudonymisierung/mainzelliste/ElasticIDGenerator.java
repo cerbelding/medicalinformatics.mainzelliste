@@ -96,6 +96,10 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 		this.idLength = 5;
 		this.vocabulary = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
 		this.prefix = idType.toUpperCase();
+		// initialize default configuration
+		this.idLength = 5;
+		this.vocabulary = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
+		this.prefix = idType;
 		try {
 			if (props.containsKey("length"))
 				this.idLength = Integer.parseInt(props.getProperty("length"));
@@ -117,7 +121,7 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	 */
 	private String createPIDString(int counter) {
 
-		Random randomGenerator = new Random(counter);
+		Random randomGenerator = new Random();
 		StringBuilder stringBuilder = new StringBuilder();
 
 		if(prefix != null){
