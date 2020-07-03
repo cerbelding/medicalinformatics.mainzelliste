@@ -5,6 +5,7 @@ OVERRIDE_FILE="";
 if [ -f "../docker-compose.override.yml" ]; then
   OVERRIDE_FILE="-f ../docker-compose.override.yml";
 fi;
+EXIST_CODE=0;
 
 initConfigs(){
 
@@ -37,7 +38,8 @@ executeNewmanTest(){
     && docker-compose -f ../docker-compose.newman.yml $OVERRIDE_FILE run \
     --service-ports newman run -d \
     test_data/${NEWMANDATA} -n 1 -e newman_environment_variables/newman_environmentVariables.json "${1}" \
-    --reporters="cli,htmlextra,junit" --reporter-htmlextra-export=test_results/"${1##*/}.html" --reporter-junit-export=test_results/"${1##*/}.xml" \
+    --reporters="cli,htmlextra,junit" --reporter-htmlextra-export=test_results/"${1##*/}.html" --reporter-junit-export=test_results/"${1##*/}.xml"; \
+    EXIST_CODE=$(( $EXIST_CODE || $? )) \
     || docker-compose down  \
     && docker-compose down;
 

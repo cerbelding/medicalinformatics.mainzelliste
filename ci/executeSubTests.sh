@@ -9,6 +9,6 @@ if [ -n "$1" ]; then
     echo $FULLPATH
     iterateDirAndExecuteFunction  $FULLPATH executeNewmanTest
 else
-    echo "Error Code 2 Please subnmit a valid Path"
+    echo "Error Code 2 Please submit a valid Path"
 fi
 
