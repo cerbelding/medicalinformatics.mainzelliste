@@ -418,7 +418,7 @@
 							"tests[\"patient geburtstag matches\"] = jsonBody[0].fields.geburtstag === pm.variables.get(\"geburtstag\");",
 							"tests[\"patient geburtsmonat matches\"] = jsonBody[0].fields.geburtsmonat == pm.variables.get(\"geburtsmonat\");",
 							"tests[\"patient geburtsjahr matches\"] = jsonBody[0].fields.geburtsjahr === pm.variables.get(\"geburtsjahr\");",
-							"tests[\"patient plzCN matches\"] = jsonBody[0].fields.plzCN === \"ll\";",
+							"tests[\"patient plzCN matches\"] = jsonBody[0].fields.plzCN === \"\";",
 							"tests[\"patient ort matches\"] = jsonBody[0].fields.ort === \"Edit\";"
 						],
 						"type": "text/javascript"
