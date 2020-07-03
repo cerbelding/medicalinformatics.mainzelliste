@@ -142,6 +142,11 @@ public class HashedField extends Field<BitSet>{
 	}
 
 	@Override
+	public String toString() {
+		return value;
+	}
+
+	@Override
 	public HashedField clone()
 	{
 		HashedField result = new HashedField(new String(this.value));
