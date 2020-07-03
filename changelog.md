@@ -3,6 +3,10 @@
 - new CheckMatch endpoint: will retrieve the best match for the patient by using a Token of type "checkMatch"
 - new Validation endpoint: added endpoint for token validation with REST-API
 
+### 1.8.2 - 2020-07-03
+#### Fixed
+- JSON representation of an empty control number field must be a string instead of a JSON object
+
 ### 1.8.1 - 2020-07-02
 #### Fixed
 - Editing any fields of a Patient with an empty control number leads to error message
