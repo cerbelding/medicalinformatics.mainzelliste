@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "d6ff129f-7a8d-4e16-9faf-0c38304f5e95",
-		"name": "mainzelliste_oauth_sub_invalid_sub_not_exist",
+		"_postman_id": "49c84672-7390-4eeb-a354-6bb3a92566b6",
+		"name": "mainzelliste_oauth_invalid_sub_not_exist",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "c317b55f-9d91-4c00-aa65-c29303db20a0",
+						"id": "721e7d22-ec5f-4f99-aa30-20dc32aae2ee",
 						"exec": [
 							"console.log(\"Authentication\")",
 							"",
@@ -95,7 +95,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "b19b5125-aaab-4f25-9912-1799da41bcf0",
+						"id": "aa6baff4-a642-4f20-a862-4e9c988b4e7d",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -133,7 +133,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "d18ed037-4e5c-4cca-b989-2c39d4d25cae",
+						"id": "a63cc742-a3c5-4d7a-844f-ba7a9e1362f2",
 						"exec": [
 							""
 						],
@@ -191,7 +191,7 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "e220ec1f-4048-450b-b79f-4d432b2fcb3a",
+				"id": "010a001c-124d-47e3-a090-b57cb0b84cf3",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -201,7 +201,7 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "3bb6fd42-b8b1-4cc7-906d-cfab69ec5005",
+				"id": "9a7b5cee-f3e7-4975-bb3b-1a95200ac4f8",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -211,7 +211,7 @@
 	],
 	"variable": [
 		{
-			"id": "6ec6ae03-780b-49db-95e8-684f38a7e144",
+			"id": "dfaa477d-7a04-42f4-a365-e20d7abde254",
 			"key": "access_token",
 			"value": ""
 		}
