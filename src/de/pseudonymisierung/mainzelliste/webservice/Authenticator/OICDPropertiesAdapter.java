@@ -21,16 +21,15 @@ public class OICDPropertiesAdapter {
         try {
             sub = idToken.getString("sub");
             userClaims.put("sub", sub);
-            /*roles = idToken.getJSONArray("roles");
-
-            for(int roleIndex = 0; roleIndex < roles.length(); roleIndex++){
-                String role = roles.getString(roleIndex);
-                if(role != null){
-                    userClaims.put("role."+roleIndex,role);
+            if(idToken.has("http://mainzelliste.de/roles")){
+                roles = idToken.getJSONArray("http://mainzelliste.de/roles");
+                for(int roleIndex = 0; roleIndex < roles.length(); roleIndex++) {
+                    String role = roles.getString(roleIndex);
+                    if (role != null) {
+                        userClaims.put("role." + roleIndex, role);
+                    }
                 }
             }
-            */
-
         }
         catch (JSONException e) {
             logger.error("Error while ecoding IdToken: " +e);

@@ -1,0 +1,220 @@
+{
+	"info": {
+		"_postman_id": "d6ff129f-7a8d-4e16-9faf-0c38304f5e95",
+		"name": "mainzelliste_oauth_sub_invalid_sub_not_exist",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth0 Authentication",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c317b55f-9d91-4c00-aa65-c29303db20a0",
+						"exec": [
+							"console.log(\"Authentication\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"access_token\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"expires_in\": {",
+							"                \"type\": \"number\"",
+							"            },",
+							"             \"token_type\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"id_token\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"             \"scope\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check StatusCode\", function(){",
+							"    pm.response.to.have.status(\"OK\");",
+							"});",
+							"",
+							"pm.test(\"Check ResponseSchema\", function(){",
+							"     var jsonData = pm.response.json();",
+							"     console.log(jsonData.access_token)",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "response_type",
+						"value": "token",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"client_id\":\"CYYmWTcDvVNDbo8N5y1JbGti43AY8N0G\",\"client_secret\":\"mfwmbaHA-sbq-O-6VNyQfP_0ZWPXOTYGr5-zRMkUcLgZkE9u4c0bwVwVICaHIO6L\",\"audience\":\"audience\",\"grant_type\":\"password\",\n\"username\": \"mainzelliste@test.de\", \"password\": \",<U~,8gp\", \"scope\": \"openid\", \"response_type\": \"token\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://dev-ptsul9wq.eu.auth0.com/oauth/token",
+					"protocol": "https",
+					"host": [
+						"dev-ptsul9wq",
+						"eu",
+						"auth0",
+						"com"
+					],
+					"path": [
+						"oauth",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW_SESSION - Sitzung anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "b19b5125-aaab-4f25-9912-1799da41bcf0",
+						"exec": [
+							"console.log(\"New Session\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"sessionId\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check StatusCode\", function(){",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test(\"Check ResponseSchema\", function(){",
+							"      pm.expect(pm.response.text()).to.include(\"Access token could not been validated\")",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "d18ed037-4e5c-4cca-b989-2c39d4d25cae",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{access_token}}",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "Bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}",
+						"disabled": true
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "e220ec1f-4048-450b-b79f-4d432b2fcb3a",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "3bb6fd42-b8b1-4cc7-906d-cfab69ec5005",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "6ec6ae03-780b-49db-95e8-684f38a7e144",
+			"key": "access_token",
+			"value": ""
+		}
+	],
+	"protocolProfileBehavior": {}
+}

@@ -1,0 +1,222 @@
+{
+	"info": {
+		"_postman_id": "1dcee3ce-3e72-40a5-9619-4b15af73e2e5",
+		"name": "mainzelliste_oauth_role_valid_contains_only",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth0 Authentication",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1a93acc1-a545-4f4e-ac7d-8320d5660d4f",
+						"exec": [
+							"console.log(\"Authentication\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"access_token\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"expires_in\": {",
+							"                \"type\": \"number\"",
+							"            },",
+							"             \"token_type\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"id_token\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"             \"scope\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check StatusCode\", function(){",
+							"    pm.response.to.have.status(\"OK\");",
+							"});",
+							"",
+							"pm.test(\"Check ResponseSchema\", function(){",
+							"     var jsonData = pm.response.json();",
+							"     console.log(jsonData.access_token)",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "response_type",
+						"value": "token",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"client_id\":\"CYYmWTcDvVNDbo8N5y1JbGti43AY8N0G\",\"client_secret\":\"mfwmbaHA-sbq-O-6VNyQfP_0ZWPXOTYGr5-zRMkUcLgZkE9u4c0bwVwVICaHIO6L\",\"audience\":\"audience\",\"grant_type\":\"password\",\n\"username\": \"mainzelliste@test.de\", \"password\": \",<U~,8gp\", \"scope\": \"openid\", \"response_type\": \"token\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://dev-ptsul9wq.eu.auth0.com/oauth/token",
+					"protocol": "https",
+					"host": [
+						"dev-ptsul9wq",
+						"eu",
+						"auth0",
+						"com"
+					],
+					"path": [
+						"oauth",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW_SESSION - Sitzung anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ea7da34a-2357-4950-b72f-0424e7d8235c",
+						"exec": [
+							"console.log(\"New Session\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"sessionId\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check StatusCode\", function(){",
+							"    pm.response.to.have.status(\"Created\");",
+							"});",
+							"",
+							"pm.test(\"Check ResponseSchema\", function(){",
+							"     var jsonData = pm.response.json();",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "9624fe19-ebc8-4b57-8f6c-bfe7f7bdc2f8",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{access_token}}",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "Bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}",
+						"disabled": true
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "da3e4de8-ccb3-486c-8ca5-8df802184b94",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "c4ccd7c2-31e8-4651-b7eb-abd5c0ed571e",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "f6bc2bc5-9e4c-4f63-9098-6dd091a3b0a0",
+			"key": "access_token",
+			"value": ""
+		}
+	],
+	"protocolProfileBehavior": {}
+}
