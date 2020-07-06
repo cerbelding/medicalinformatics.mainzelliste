@@ -10,12 +10,14 @@ pipelines:
           - ls -ll ./ci
           - ls -ll ./ci/newman_mainzelliste_configs
           - cd ci
-          - ./executeAllTests.sh
+          - set +e
+          - ./executeAllTests.sh; RETURNED_CODE=$?
           - cd ..
           - mkdir -p newman/test-reports/junit/
           - cp -a ci/test_results/. ./newman/test-reports/junit/
           - ls -ll ./ci/test_results/
           - ls -ll ./newman/test-reports/junit/
+          - exit $RETURNED_CODE
         artifacts:
           - ci/test_results/**
 options:
