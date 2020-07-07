@@ -187,17 +187,17 @@ public enum Config {
 		allowedOrigins = new HashSet<>();
 		String allowedOriginsString = props.getProperty("servers.allowedOrigins");
 		if (allowedOriginsString != null)
-			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split(";")));
+			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split("[;,]")));
 
 		allowedHeaders = new HashSet<>();
 		String allowedHeadersString = props.getProperty("servers.allowedHeaders");
 		if (allowedHeadersString != null)
-			allowedHeaders.addAll(Arrays.asList(allowedHeadersString.trim().split(";")));
+			allowedHeaders.addAll(Arrays.asList(allowedHeadersString.trim().split("[;,]")));
 
 		allowedMethods = new HashSet<>();
 		String allowedMethodsString = props.getProperty("servers.allowedMethods");
 		if (allowedMethodsString != null)
-			allowedMethods.addAll(Arrays.asList(allowedMethodsString.trim().split(";")));
+			allowedMethods.addAll(Arrays.asList(allowedMethodsString.trim().split("[;,]")));
 
 		// Read version number provided by pom.xml
 		version = readVersion();
