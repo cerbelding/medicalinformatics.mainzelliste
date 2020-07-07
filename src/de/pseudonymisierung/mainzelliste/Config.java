@@ -190,12 +190,12 @@ public enum Config {
 			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split("[;,]")));
 
 		allowedHeaders = new HashSet<>();
-		String allowedHeadersString = props.getProperty("servers.allowedHeaders");
+		String allowedHeadersString = props.getProperty("servers.allowedHeaders","mainzellisteApiVersion,mainzellisteApiKey");
 		if (allowedHeadersString != null)
 			allowedHeaders.addAll(Arrays.asList(allowedHeadersString.trim().split("[;,]")));
 
 		allowedMethods = new HashSet<>();
-		String allowedMethodsString = props.getProperty("servers.allowedMethods");
+		String allowedMethodsString = props.getProperty("servers.allowedMethods", "OPTIONS,GET,POST");
 		if (allowedMethodsString != null)
 			allowedMethods.addAll(Arrays.asList(allowedMethodsString.trim().split("[;,]")));
 
@@ -309,7 +309,7 @@ public enum Config {
 
 	/**
 	 * Returns the configured allowed Headers for Cross Domain Resource Sharing
-	 * @return list of headers set in config servers.allowedHeaders
+	 * @return list of headers set in config servers.allowedHeaders, default is: "mainzellisteApiVersion,mainzellisteApiKey"
 	 */
 	public String getAllowedHeaders() {
 		return String.join(",", this.allowedHeaders);
@@ -317,7 +317,7 @@ public enum Config {
 
 	/**
 	 * Returns the configured allowed methods for Cross Domain Resource Sharing
-	 * @return list of headers set in config servers.allowedHeaders
+	 * @return list of headers set in config servers.allowedHeaders, default is: "OPTIONS,GET,POST"
 	 */
 	public String getAllowedMethods() {
 		return String.join(",", this.allowedMethods);
