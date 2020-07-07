@@ -94,6 +94,8 @@ public enum Config {
 
 	/** Allowed headers for Cross Domain Resource Sharing */
 	private Set<String> allowedHeaders;
+	/** Allowed methods for Cross Domain Resource Sharing */
+	private Set<String> allowedMethods;
 
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
@@ -191,6 +193,11 @@ public enum Config {
 		String allowedHeadersString = props.getProperty("servers.allowedHeaders");
 		if (allowedHeadersString != null)
 			allowedHeaders.addAll(Arrays.asList(allowedHeadersString.trim().split(";")));
+
+		allowedMethods = new HashSet<>();
+		String allowedMethodsString = props.getProperty("servers.allowedMethods");
+		if (allowedMethodsString != null)
+			allowedMethods.addAll(Arrays.asList(allowedMethodsString.trim().split(";")));
 
 		// Read version number provided by pom.xml
 		version = readVersion();
@@ -301,11 +308,19 @@ public enum Config {
 	}
 
 	/**
-	 * Returns the allowed Headers to set on Cross Domain Resource Sharing
+	 * Returns the configured allowed Headers for Cross Domain Resource Sharing
 	 * @return list of headers set in config servers.allowedHeaders
 	 */
 	public String getAllowedHeaders() {
 		return String.join(",", this.allowedHeaders);
+	}
+
+	/**
+	 * Returns the configured allowed methods for Cross Domain Resource Sharing
+	 * @return list of headers set in config servers.allowedHeaders
+	 */
+	public String getAllowedMethods() {
+		return String.join(",", this.allowedMethods);
 	}
 
 	/**

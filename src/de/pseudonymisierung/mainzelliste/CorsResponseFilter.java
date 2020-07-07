@@ -82,6 +82,10 @@ public class CorsResponseFilter implements Filter {
 					if(!allowedHeaders.equals("")){
 						httpResponse.addHeader("Access-Control-Allow-Headers", allowedHeaders);
 					}
+					String allowedMethods = Config.instance.getAllowedMethods();
+					if(!allowedHeaders.equals("")){
+						httpResponse.addHeader("Access-Control-Allow-Methods", allowedMethods);
+					}
 				} else {
 					logger.info("Rejecting cross domain request from origin " + origin);
 					// For illegal origin, cancel request with 403 Forbidden.
