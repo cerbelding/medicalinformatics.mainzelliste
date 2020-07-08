@@ -1,3 +1,7 @@
+### 1.8.3 - 2020-07-08
+#### Fixed
+- Fixed issues with edit patient, when Cross Origin Resource Sharing is active
+
 ### 1.8.2 - 2020-07-03
 #### Fixed
 - JSON representation of an empty control number field must be a string instead of a JSON object
@@ -6,6 +10,7 @@
 #### Fixed
 - Editing any fields of a Patient with an empty control number leads to error message
 - Stop retrying database connection if the login to DB failed
+
 ### 1.8.0 - 2020-06-03
 #### Added
 - Example configuration files for docker: docker-compose.user.yml and docker-compose.dev.yml
