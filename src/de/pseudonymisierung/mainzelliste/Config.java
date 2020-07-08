@@ -96,6 +96,8 @@ public enum Config {
 	private Set<String> allowedHeaders;
 	/** Allowed methods for Cross Domain Resource Sharing */
 	private Set<String> allowedMethods;
+	/** Allowed caching time for Cross Domain Resource Sharing Preflight Requests */
+	private int allowedMaxAge;
 
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
@@ -198,6 +200,18 @@ public enum Config {
 		String allowedMethodsString = props.getProperty("servers.allowedMethods", "OPTIONS,GET,POST");
 		if (allowedMethodsString != null)
 			allowedMethods.addAll(Arrays.asList(allowedMethodsString.trim().split("[;,]")));
+
+		try {
+			String allowedMaxAgeString = props.getProperty("servers.allowedMaxAge", "600");
+			allowedMaxAge = Integer.parseInt(allowedMaxAgeString);
+			if(allowedMaxAge < -1){
+				logger.warn("Changing allowed caching time for CORS preflight requests failed due to invalid format of servers.allowedMaxAge property. Falling back to default 600. The value can't be lower than -1.");
+				allowedMaxAge = 600;
+			}
+		} catch (NumberFormatException e){
+			logger.warn("Changing allowed caching time for CORS preflight requests failed due to invalid format of servers.allowedMaxAge property. Falling back to default 600. Please supply a numeric value and restart.");
+			allowedMaxAge = 600;
+		}
 
 		// Read version number provided by pom.xml
 		version = readVersion();
@@ -321,6 +335,14 @@ public enum Config {
 	 */
 	public String getAllowedMethods() {
 		return String.join(",", this.allowedMethods);
+	}
+
+	/**
+	 * Returns the configured allowed time CORS Preflight requests should be cached
+	 * @return list of headers set in config servers.allowedHeaders, default is: "600"
+	 */
+	public int getAllowedMaxAge() {
+		return this.allowedMaxAge;
 	}
 
 	/**

@@ -86,6 +86,7 @@ public class CorsResponseFilter implements Filter {
 					if(!allowedHeaders.equals("")){
 						httpResponse.addHeader("Access-Control-Allow-Methods", allowedMethods);
 					}
+					httpResponse.addHeader("Access-Control-Max-Age", String.valueOf(Config.instance.getAllowedMaxAge()));
 				} else {
 					logger.info("Rejecting cross domain request from origin " + origin);
 					// For illegal origin, cancel request with 403 Forbidden.

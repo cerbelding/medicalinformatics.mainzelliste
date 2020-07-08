@@ -308,6 +308,7 @@ servers.0.permissions = createSession;showSessionIds;createToken;tt_addPatient;t
 # Configuration for CORS Preflight configuration. Corresponding headers will be added to response on the preflight
 # servers.allowedHeaders = mainzellisteApiKey;mainzellisteApiVersion
 # servers.allowedMethods = OPTIONS;GET;POST
+# servers.allowedMaxAge = 600
 
 # Allowed Format of callback
 callback.allowedFormat = https://.*
