@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -202,12 +203,10 @@ public enum Config {
 			String allowedMaxAgeString = props.getProperty("servers.allowedMaxAge", "600");
 			allowedMaxAge = Integer.parseInt(allowedMaxAgeString);
 			if(allowedMaxAge < -1){
-				logger.warn("Changing allowed caching time for CORS preflight requests failed due to invalid format of servers.allowedMaxAge property. Falling back to default 600. The value can't be lower than -1.");
-				allowedMaxAge = 600;
+				throw new InvalidConfigurationException("The servers.allowedMaxAge parameter is in an unexpected format: " + allowedMaxAge + ". Expected number greater than -1");
 			}
 		} catch (NumberFormatException e){
-			logger.warn("Changing allowed caching time for CORS preflight requests failed due to invalid format of servers.allowedMaxAge property. Falling back to default 600. Please supply a numeric value and restart.");
-			allowedMaxAge = 600;
+			throw new InvalidConfigurationException("The servers.allowedMaxAge parameter is in an unexpected format: " + allowedMaxAge + ". Expected numeric value", e);
 		}
 
 		// Read version number provided by pom.xml
