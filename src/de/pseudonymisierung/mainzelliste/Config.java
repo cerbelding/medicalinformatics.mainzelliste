@@ -93,9 +93,9 @@ public enum Config {
 	private Set<String> allowedOrigins;
 
 	/** Allowed headers for Cross Domain Resource Sharing */
-	private Set<String> allowedHeaders;
+	private String allowedHeaders;
 	/** Allowed methods for Cross Domain Resource Sharing */
-	private Set<String> allowedMethods;
+	private String allowedMethods;
 	/** Allowed caching time for Cross Domain Resource Sharing Preflight Requests */
 	private int allowedMaxAge;
 
@@ -191,15 +191,12 @@ public enum Config {
 		if (allowedOriginsString != null)
 			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split("[;,]")));
 
-		allowedHeaders = new HashSet<>();
-		String allowedHeadersString = props.getProperty("servers.allowedHeaders","mainzellisteApiVersion,mainzellisteApiKey");
-		if (allowedHeadersString != null)
-			allowedHeaders.addAll(Arrays.asList(allowedHeadersString.trim().split("[;,]")));
-
-		allowedMethods = new HashSet<>();
-		String allowedMethodsString = props.getProperty("servers.allowedMethods", "OPTIONS,GET,POST");
-		if (allowedMethodsString != null)
-			allowedMethods.addAll(Arrays.asList(allowedMethodsString.trim().split("[;,]")));
+		allowedHeaders = props.getProperty("servers.allowedHeaders","mainzellisteApiVersion,mainzellisteApiKey")
+				.trim()
+				.replace(';', ',');
+		allowedMethods = props.getProperty("servers.allowedMethods", "OPTIONS,GET,POST")
+				.trim()
+				.replace(';', ',');
 
 		try {
 			String allowedMaxAgeString = props.getProperty("servers.allowedMaxAge", "600");
@@ -331,7 +328,7 @@ public enum Config {
 
 	/**
 	 * Returns the configured allowed methods for Cross Domain Resource Sharing
-	 * @return list of headers set in config servers.allowedHeaders, default is: "OPTIONS,GET,POST"
+	 * @return list of headers set in config servers.allowedMethods, default is: "OPTIONS,GET,POST"
 	 */
 	public String getAllowedMethods() {
 		return String.join(",", this.allowedMethods);
@@ -339,7 +336,7 @@ public enum Config {
 
 	/**
 	 * Returns the configured allowed time CORS Preflight requests should be cached
-	 * @return list of headers set in config servers.allowedHeaders, default is: "600"
+	 * @return list of headers set in config servers.allowedMaxAge, default is: "600"
 	 */
 	public int getAllowedMaxAge() {
 		return this.allowedMaxAge;
