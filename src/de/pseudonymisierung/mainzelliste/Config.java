@@ -27,19 +27,37 @@ package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.Properties;
+import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
@@ -81,7 +99,11 @@ public enum Config {
 	private Set<String> allowedOrigins;
 
 	/** Allowed headers for Cross Domain Resource Sharing */
-	private Set<String> allowedHeaders;
+	private String allowedHeaders;
+	/** Allowed methods for Cross Domain Resource Sharing */
+	private String allowedMethods;
+	/** Allowed caching time for Cross Domain Resource Sharing Preflight Requests */
+	private int allowedMaxAge;
 
 	/** some gui configurations */
 	private GUI guiConfig;
@@ -182,12 +204,24 @@ public enum Config {
 		allowedOrigins = new HashSet<>();
 		String allowedOriginsString = props.getProperty("servers.allowedOrigins");
 		if (allowedOriginsString != null)
-			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split(";")));
+			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split("[;,]")));
 
-		allowedHeaders = new HashSet<>();
-		String allowedHeadersString = props.getProperty("servers.allowedHeaders");
-		if (allowedHeadersString != null)
-			allowedHeaders.addAll(Arrays.asList(allowedHeadersString.trim().split(";")));
+		allowedHeaders = props.getProperty("servers.allowedHeaders","mainzellisteApiVersion,mainzellisteApiKey")
+				.trim()
+				.replace(';', ',');
+		allowedMethods = props.getProperty("servers.allowedMethods", "OPTIONS,GET,POST")
+				.trim()
+				.replace(';', ',');
+
+		try {
+			String allowedMaxAgeString = props.getProperty("servers.allowedMaxAge", "600");
+			allowedMaxAge = Integer.parseInt(allowedMaxAgeString);
+			if(allowedMaxAge < -1){
+				throw new InvalidConfigurationException("The servers.allowedMaxAge parameter is in an unexpected format: " + allowedMaxAge + ". Expected number greater than -1");
+			}
+		} catch (NumberFormatException e){
+			throw new InvalidConfigurationException("The servers.allowedMaxAge parameter is in an unexpected format: " + allowedMaxAge + ". Expected numeric value", e);
+		}
 
 		// Read version number provided by pom.xml
 		version = readVersion();
@@ -365,11 +399,27 @@ public enum Config {
 	}
 
 	/**
-	 * Returns the allowed Headers to set on Cross Domain Resource Sharing
-	 * @return list of headers set in config servers.allowedHeaders
+	 * Returns the configured allowed Headers for Cross Domain Resource Sharing
+	 * @return list of headers set in config servers.allowedHeaders, default is: "mainzellisteApiVersion,mainzellisteApiKey"
 	 */
 	public String getAllowedHeaders() {
 		return String.join(",", this.allowedHeaders);
+	}
+
+	/**
+	 * Returns the configured allowed methods for Cross Domain Resource Sharing
+	 * @return list of headers set in config servers.allowedMethods, default is: "OPTIONS,GET,POST"
+	 */
+	public String getAllowedMethods() {
+		return String.join(",", this.allowedMethods);
+	}
+
+	/**
+	 * Returns the configured allowed time CORS Preflight requests should be cached
+	 * @return list of headers set in config servers.allowedMaxAge, default is: "600"
+	 */
+	public int getAllowedMaxAge() {
+		return this.allowedMaxAge;
 	}
 
 	/**

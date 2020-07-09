@@ -3,6 +3,10 @@
 - new CheckMatch endpoint: will retrieve the best match for the patient by using a Token of type "checkMatch"
 - new Validation endpoint: added endpoint for token validation with REST-API
 
+### 1.8.3 - 2020-07-08
+#### Fixed
+- Fixed issues with edit patient, when Cross Origin Resource Sharing is active
+
 ### 1.8.2 - 2020-07-03
 #### Fixed
 - JSON representation of an empty control number field must be a string instead of a JSON object
