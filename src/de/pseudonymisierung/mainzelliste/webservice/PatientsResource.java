@@ -151,7 +151,9 @@ public class PatientsResource {
                         map.put("printIdat", true);
                     }
 
-                    map.put("ids", ids);
+                    JSONArray idsAsJson = new JSONArray();
+                    ids.forEach(id -> idsAsJson.put(id.toJSON()));
+                    map.put("ids", idsAsJson);
 
                     map.put("tentative", false);
                     // Only put true in map if one or more PID are tentative
@@ -199,18 +201,6 @@ public class PatientsResource {
                             map.put("redirectParams", redirect.getRedirectParams());
                             return Response.ok(new Viewable("/patientCreated.jsp", map)).build();
                         }
-                        // Remove query parameters and pass them to JSP. The redirect is put
-                        // into the "action" tag of a form and the parameters are passed as
-                        // hidden fields
-                        // TODO: generate for frontend
-                        // URI redirectURI = new URI(redirectURITempl.createURI(templateVarMap));
-                        // String showResult = Config.instance.getProperty("result.show");
-                        // if (showResult != null && !Boolean.parseBoolean(showResult)) {
-                        //     return Response.status(Status.SEE_OTHER).location(redirectURI).build();
-                        // }
-                        // MultivaluedMap<String, String> queryParams = UriComponent.decodeQuery(redirectURI, true);
-                        // map.put("redirect", redirectURI);
-                        // map.put("redirectParams", queryParams);
                     }
 
                     return Response.ok(new Viewable("/patientCreated.jsp", map)).build();
@@ -303,12 +293,9 @@ public class PatientsResource {
 				URI newUri = context.getBaseUriBuilder()
 						.path(PatientsResource.class)
 						.path("/{idtype}/{idvalue}")
-						.build(thisID.getType(), thisID.getIdString());
+						.build(thisID.getType(), thisID.getEncryptedIdStringFirst());
 	
-				ret.put(new JSONObject()
-					.put("idType", thisID.getType())
-					.put("idString", thisID.getIdString())
-					.put("tentative", thisID.isTentative())
+				ret.put(thisID.toJSON()
 					.put("uri", newUri));
 			}
 					
@@ -338,7 +325,7 @@ public class PatientsResource {
 					.build(newId.getType(), newId.getIdString());
 			
 			JSONObject ret = new JSONObject()
-					.put("newId", newId.getIdString())
+					.put("newId", newId.getEncryptedIdStringFirst())
 					.put("tentative", newId.isTentative())
 					.put("uri", newUri);
 
@@ -517,40 +504,39 @@ public class PatientsResource {
             return Response.ok().entity(ret).build();
     }
 
-    private Response readPatientWildCardSelect(Token token, List<?> requests) {
-        logger.info("Request all Ids for a idtype");
-        String idType;
+  private Response readPatientWildCardSelect(Token token, List<?> requests) {
+    logger.info("Request all Ids for a idtype");
 
-        if (token.getDataItemList("resultFields") != null) {
-            throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
-        }
-
-        //validate resultIds
-        List<String> resultIds = (List<String>)token.getDataItemList("resultIds");
-        if (resultIds == null || resultIds.isEmpty()) {
-            throw new InvalidTokenException("Please provide a resultIds in token data!");
-        }else if (resultIds.size() > 1) {
-            throw new NotImplementedException("It's only possible to request one IdType as wildcard select.");
-        }
-
-        Map<String, String> thisSearchId = (Map<String, String>) requests.get(0);
-        idType = thisSearchId.get("idType");
-        logger.info("idType:" + idType);
-
-        //search id and resultId is the same
-        if (resultIds.contains(idType) && resultIds.size() == 1) {
-            List<ID> selectedIDs = PatientBackend.instance.getIdsWithType(idType);
-            return Response.ok().entity(selectedIDs).build();
-        }
-
-        if (!resultIds.contains(idType)) {
-            List<ID> returnIds = PatientBackend.instance.getIdsOfPatientWithIdType(idType,
-                    resultIds.toArray(new String[0]));
-            return Response.ok().entity(returnIds).build();
-        }
-
-        return null;
+    if (token.getDataItemList("resultFields") != null) {
+      throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
     }
+
+    //validate resultIds
+    List<String> resultIds = (List<String>) token.getDataItemList("resultIds");
+    if (resultIds == null || resultIds.isEmpty()) {
+      throw new InvalidTokenException("Please provide a resultIds in token data!");
+    } else if (resultIds.size() > 1) {
+      throw new NotImplementedException(
+          "It's only possible to request one IdType as wildcard select.");
+    }
+
+    String searchIdType = ((Map<String, String>) requests.get(0)).get("idType");
+    logger.info("idType:" + searchIdType);
+
+    // find patient ids
+    List<ID> foundIDs;
+    if (resultIds.contains(searchIdType)) {
+      foundIDs = PatientBackend.instance.getIdsWithType(searchIdType);
+    } else {
+      foundIDs = PatientBackend.instance.getIdsOfPatientWithIdType(searchIdType,
+          resultIds.toArray(new String[0]));
+    }
+
+    // create response
+    JSONArray idsAsjson = new JSONArray();
+    foundIDs.forEach(id -> idsAsjson.put(id.toJSON()));
+    return Response.ok().entity(idsAsjson).build();
+  }
 
     private JSONArray getAllIdTypesOfPatient(Patient patient) {
         return new JSONArray(patient.getIds().stream().map(i -> i.getType()).collect(Collectors.toList()));
@@ -648,7 +634,6 @@ public class PatientsResource {
                 if (redirect != null && redirect.length() > 0) {
                     UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
                     List<String> templateVariables = redirectURITempl.getTemplateVariables();
-                    List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
                     if (templateVariables.contains("tokenId")) {
                         return new RedirectBuilder().setTokenId(token.getId()).setTemplateURI(redirectURITempl).build()
                                 .execute();
@@ -816,7 +801,7 @@ public class PatientsResource {
         //TODO: IMPORTANT ADD PERMISSION CONCEPT. send only "permitted" IDs
         if(matchResult.getBestMatchedPatient()!=null){
             for (ID id: matchResult.getBestMatchedPatient().getIds()) {
-                jsonPatientObject.put(id.getType(), id.getIdString());
+                jsonPatientObject.put(id.getType(), id.getEncryptedIdStringFirst());
             }
         }
 
