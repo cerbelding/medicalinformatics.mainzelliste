@@ -26,9 +26,13 @@
 package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
+import de.pseudonymisierung.mainzelliste.crypto.CryptoUtil;
+import de.pseudonymisierung.mainzelliste.crypto.Encryption;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
+import java.security.Key;
+import java.security.spec.InvalidKeySpecException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -74,6 +78,12 @@ public enum Config {
 
 	/** The configured blockingkey extractors */
 	private BlockingKeyExtractors blockingKeyExtractors;
+
+	/** The configured cryptographic key */
+	private final Map<String, Key> cryptographicKeys = new HashMap<>();
+
+	/** The configured encryption */
+	private final Map<String, Encryption> encryptionMap = new HashMap<>();
 
 	/** Logging instance */
 	private Logger logger = Logger.getLogger(Config.class);
@@ -129,11 +139,9 @@ public enum Config {
 					throw new Error("Configuration file could not be found at any default location");
 				}
 			}
+			addSubConfigurationPropertiesToProps();
 
-
-            addSubConfigurationPropertiesToProps();
-
-            logger.info("Config read successfully");
+			logger.info("Config read successfully");
 			logger.debug(props);
 
 		} catch (IOException e)	{
@@ -206,6 +214,55 @@ public enum Config {
 			throw new InvalidConfigurationException("The servers.allowedMaxAge parameter is in an unexpected format: " + allowedMaxAge + ". Expected numeric value", e);
 		}
 
+		// Read cryptographic key
+		getVariableSubProperties("crypto.key").forEach((v, p) -> {
+			try {
+				cryptographicKeys
+						.put(v, CryptoUtil.readKey(p.getProperty("type"),
+								readFileFromURL(p.getProperty("uri").trim())));
+			} catch (IOException | InvalidKeySpecException e) {
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.key." + v + ".uri", p.getProperty("uri"), e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			} catch (IllegalArgumentException e) {
+				// unsupported key type
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.key." + v + ".type", p.getProperty("type"), e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			} catch (UnsupportedOperationException e) {
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.key." + v + ".*", "Instantiation of a cryptographic key failed", e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			}
+		});
+
+		// Read encryption
+		getVariableSubProperties("crypto.encryption").forEach((v, p) -> {
+			try {
+				encryptionMap
+						.put(v, CryptoUtil.createEncryption(p.getProperty("type"),
+								cryptographicKeys.get(p.getProperty("key"))));
+			} catch (InvalidKeySpecException e) {
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.encryption." + v + ".key", p.getProperty("key"), e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			} catch (IllegalArgumentException e) { // unsupported encryption type
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.encryption." + v + ".type", p.getProperty("type"), e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			} catch (UnsupportedOperationException e) {
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.encryption." + v + ".*", "Instantiation of a encryption failed", e);
+				logger.fatal(exception.getMessage(), e);
+				throw exception;
+			}
+		});
+
 		// Read version number provided by pom.xml
 		version = readVersion();
 
@@ -218,9 +275,6 @@ public enum Config {
      *
      */
     private void addSubConfigurationPropertiesToProps() {
-        //
-        // add custom configuration values
-
 		// get custom config attributes
 		List<String> subConfigurations = props.stringPropertyNames().stream().filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
 				.map(k -> Integer.parseInt(k.split("\\.")[1])).sorted()
@@ -646,6 +700,10 @@ public enum Config {
 		}
 	}
 
+	public Encryption getEncryption(String encryptionName) {
+		return encryptionMap.get(encryptionName);
+	}
+
 	public static class GUI {
 		/** url of control number generator */
 		public final String cngUrl;
@@ -658,6 +716,58 @@ public enum Config {
 			this.cngUrl = Optional.ofNullable((String)properties.get("gui.cng.url")).orElse("");
 			this.cgnApiKey = Optional.ofNullable((String)properties.get("gui.cng.apiKey")).orElse("");
 			this.mlApiVersion = Optional.ofNullable((String)properties.get("gui.ml.apiVersion")).orElse("");
+		}
+	}
+
+	// HELPERS
+
+	/**
+	 * transform a configuration entry in the following format : <br>
+	 * 	{@code prefix.<variable>.<propertyKey> = <propertyValue>} <br>
+	 * in a map with {@code <variable>} as key and the given suffix {@code <propertyKey>} together
+	 * with the value {@code <propertyValue>} in property list as value.
+	 * @param prefix configuration key prefix
+	 * @return a map with variable name as key and its properties as value
+	 */
+	private Map<String, Properties> getVariableSubProperties(String prefix) {
+		Map<String, Properties> childrenPropertiesMap = new HashMap<>();
+		// property key should look like this : prefix.<var>.suffix
+		props.stringPropertyNames()
+				.stream()
+				.filter(k -> Pattern.matches("^" + prefix + "\\.\\w+\\..+", k.trim()))
+				.forEach(k -> {
+					String subKey = k.substring(prefix.length() + 1); // remove prefix from key
+					childrenPropertiesMap.compute(
+							subKey.split("\\.")[0], // get "<var>" @see example above
+							(newK, newProperties) -> addProperty(
+									newProperties,
+									subKey.substring(newK.length() + 1), // get "suffix" @see example above
+									props.getProperty(k)));         // get property value
+				});
+		return childrenPropertiesMap;
+	}
+
+	private Properties addProperty(Properties properties, String key, String value) {
+		if(properties == null) {
+			properties = new Properties();
+		}
+		properties.setProperty(key, value);
+		return properties;
+	}
+
+	/**
+	 * read file from the given url
+	 * @param fileURL url of the file (e.g. file:///etc/keys/private.der)
+	 * @return byte array
+	 */
+	private byte[] readFileFromURL(String fileURL) throws IOException {
+		try (InputStream inputStream = new URL(fileURL).openStream() ) {
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			byte[] buffer = new byte[0xFFFF];
+			for (int len = inputStream.read(buffer); len != -1; len = inputStream.read(buffer)) {
+				outputStream.write(buffer, 0, len);
+			}
+			return outputStream.toByteArray();
 		}
 	}
 }

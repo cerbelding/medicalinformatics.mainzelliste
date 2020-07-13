@@ -25,6 +25,8 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.crypto.Encryption;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,6 +37,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -61,6 +64,9 @@ public enum IDGeneratorFactory {
 	private String[] idTypes;
 
 	private HashSet<String> extIdTypes;
+
+	/** Map of export encryption, with respective ID types as keys. */
+	private final Map<String, Encryption> exportEncryptions = new HashMap<>();
 
 	/** The logging instance */
 	private Logger logger = Logger.getLogger(this.getClass());
@@ -109,6 +115,7 @@ public enum IDGeneratorFactory {
 					 */
 					mem = Persistor.instance.getIDGeneratorMemory(thisIdType);
 				}
+
 				// Get properties for this ID generator
 				Properties thisIdProps = new Properties();
 				for (Object key : propIt.keyIterator()) {
@@ -116,6 +123,22 @@ public enum IDGeneratorFactory {
 						thisIdProps.put(key, propIt.getProperty((String)key, ""));
 					}
 				}
+
+				// init export encryption
+				String exportEncryption = StringUtils
+						.trimToEmpty((String) thisIdProps.get("exportEncryption"));
+				if (!exportEncryption.isEmpty()) {
+					if (Config.instance.getEncryption(exportEncryption) != null) {
+						exportEncryptions.put(thisIdType, Config.instance.getEncryption(exportEncryption));
+					} else {
+						InvalidConfigurationException exception = new InvalidConfigurationException(
+								"idgenerator." + thisIdType + ".exportEncryption",
+								"the given export encryption not configured");
+						logger.error(exception.getMessage());
+						throw exception;
+					}
+				}
+
 				thisGenerator.init(mem, thisIdType, thisIdProps);
 				temp.put(thisIdType, thisGenerator);
 			} catch (ClassNotFoundException e) {
@@ -222,6 +245,15 @@ public enum IDGeneratorFactory {
 	 */
 	public String getDefaultIDType() {
 		return this.idTypes[0];
+	}
+
+	/**
+	 * Get export id encryption
+	 *
+	 * @return null if no such entry is found
+	 */
+	public Encryption getExportEncryption(String idType) {
+		return this.exportEncryptions.get(idType);
 	}
 
 	public ID idFromJSON(JSONObject json) throws JSONException, InvalidIDException {
