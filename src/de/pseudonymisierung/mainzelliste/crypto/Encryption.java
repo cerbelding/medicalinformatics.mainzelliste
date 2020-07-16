@@ -23,31 +23,11 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.exceptions;
+package de.pseudonymisierung.mainzelliste.crypto;
 
-import org.apache.commons.lang.StringUtils;
+import java.security.GeneralSecurityException;
 
-public class InvalidConfigurationException extends RuntimeException {
+public interface Encryption {
 
-  public InvalidConfigurationException(String errorMessage, Throwable err) {
-    super(errorMessage, err);
-  }
-
-  public InvalidConfigurationException(String errorMessage) {
-    super(errorMessage);
-  }
-
-  public InvalidConfigurationException(String configurationKey, String errorMessage) {
-    this(buildMessage(configurationKey, errorMessage));
-  }
-
-  public InvalidConfigurationException(String configurationKey, String errorMessage,
-      Throwable err) {
-    this(buildMessage(configurationKey, errorMessage), err);
-  }
-
-  private static String buildMessage(String configurationKey, String errorMessage) {
-    return StringUtils.isBlank(configurationKey) ? errorMessage :
-        String.format("Invalid configuration '%s': %s", configurationKey, errorMessage);
-  }
+  String encrypt(String input) throws GeneralSecurityException;
 }

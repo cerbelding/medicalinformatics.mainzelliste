@@ -50,7 +50,7 @@ public class RedirectBuilder {
     public RedirectBuilder setMappedIdTypesdAndIds(List<String> idTypes, Patient patient) {
         Map<String, String> mappedIdTypesAndIds = new HashMap<>();
         for (String idType : idTypes) {
-            mappedIdTypesAndIds.put(idType, patient.getId(idType).getIdString());
+            mappedIdTypesAndIds.put(idType, patient.getId(idType).getEncryptedIdStringFirst());
         }
         this.mappedIdTypesdAndIds = mappedIdTypesAndIds;
         return this;

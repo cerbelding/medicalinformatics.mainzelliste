@@ -23,31 +23,40 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.exceptions;
+package de.pseudonymisierung.mainzelliste.crypto;
 
-import org.apache.commons.lang.StringUtils;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.PublicKey;
+import javax.crypto.Cipher;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.log4j.Logger;
 
-public class InvalidConfigurationException extends RuntimeException {
+public class JCEAsymmetricEncryption implements Encryption {
 
-  public InvalidConfigurationException(String errorMessage, Throwable err) {
-    super(errorMessage, err);
+  private final Logger logger = Logger.getLogger(JCEAsymmetricEncryption.class);
+
+  private final Cipher cipher;
+
+  public JCEAsymmetricEncryption(PublicKey publicKey) throws GeneralSecurityException {
+    cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+    cipher.init(Cipher.ENCRYPT_MODE, publicKey);
   }
 
-  public InvalidConfigurationException(String errorMessage) {
-    super(errorMessage);
-  }
-
-  public InvalidConfigurationException(String configurationKey, String errorMessage) {
-    this(buildMessage(configurationKey, errorMessage));
-  }
-
-  public InvalidConfigurationException(String configurationKey, String errorMessage,
-      Throwable err) {
-    this(buildMessage(configurationKey, errorMessage), err);
-  }
-
-  private static String buildMessage(String configurationKey, String errorMessage) {
-    return StringUtils.isBlank(configurationKey) ? errorMessage :
-        String.format("Invalid configuration '%s': %s", configurationKey, errorMessage);
+  /**
+   * return base 64 cipher text
+   *
+   * @param input plain text
+   * @return resulting base 64 text
+   */
+  @Override
+  public String encrypt(String input) throws GeneralSecurityException {
+    try {
+      byte[] cipherData = cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
+      return Base64.encodeBase64URLSafeString(cipherData);
+    } catch (GeneralSecurityException e) {
+      logger.error("encryption with public rsa key failed", e);
+      throw e;
+    }
   }
 }

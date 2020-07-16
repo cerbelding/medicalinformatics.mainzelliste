@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "0cb76c2b-e95d-45ce-959f-af702c936085",
+		"_postman_id": "03e6c741-3d1e-41e2-904d-81fd8b80d1ca",
 		"name": "mainzelliste_AddPatient_ReadPatient",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -24,7 +24,8 @@
 							"postman.setGlobalVariable(\"sessionId\", sessionId);",
 							"",
 							""
-						]
+						],
+						"id": "2382f7da-f67f-4e68-b6e3-54249ec86f86"
 					}
 				}
 			],
@@ -58,7 +59,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
+						"id": "2bfee1a3-88bb-4371-a0ce-223a48dd3f52",
 						"exec": [
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
@@ -93,7 +94,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}, \"exportId\"]\r\n    \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -115,7 +116,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "c5cd62d4-b1d6-45ce-9c09-548a3700d0e8",
+						"id": "273c821f-1bef-4d1b-8cbc-1935cb7af675",
 						"exec": [
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
@@ -125,8 +126,14 @@
 							"tests[\"Element has tentative\"] = \"tentative\" in jsonBody[0];",
 							"tests[\"Element has uri\"] = \"uri\" in jsonBody[0];",
 							"",
+							"tests[\"is exportId created?\"] = jsonBody[1].idType === \"exportId\";",
+							"tests[\"is exportId encrypted?\"] = jsonBody[1].idString.length > 30;",
+							"tests[\"is exportId in uri encrypted?\"] = jsonBody[1].uri.match(/\\/([^/]+)$/)[1].length > 30;",
+							"",
 							"postman.setGlobalVariable(\"idType\", \"pid\")",
-							"postman.setGlobalVariable(\"idString\", jsonBody[0].idString);"
+							"postman.setGlobalVariable(\"idString\", jsonBody[0].idString);",
+							"pm.variables.set(\"exportId\", jsonBody[1]);",
+							""
 						],
 						"type": "text/javascript"
 					}
@@ -229,7 +236,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
+						"id": "ec4e8efe-b671-4110-99d1-79ca1a0821b2",
 						"exec": [
 							"tests[\"Bad Request\"] = responseCode.code === 400;"
 						],
@@ -277,7 +284,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
+						"id": "83dd9b7a-bd7e-4ab8-be63-fd00cd004fab",
 						"exec": [
 							"tests[\"Bad Request\"] = responseCode.code === 400;"
 						],
@@ -339,7 +346,8 @@
 							"",
 							"",
 							""
-						]
+						],
+						"id": "aca125dd-868d-4666-af51-072bfb812ed7"
 					}
 				}
 			],
@@ -377,7 +385,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "9c1c997e-e520-4f26-8467-7aaf2b1d900f",
+						"id": "9d5d548f-8b81-4681-b925-ceef1c34205b",
 						"exec": [
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
@@ -411,7 +419,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultFields\": [\"vorname\", \"nachname\", \"geburtsname\", \"geburtstag\", \"geburtsmonat\", \"geburtsjahr\", \"plz\", \"ort\"]\r\n \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultFields\": [\"vorname\", \"nachname\", \"geburtsname\", \"geburtstag\", \"geburtsmonat\", \"geburtsjahr\", \"plz\", \"ort\"],\r\n\t\t\"resultIds\":[\"exportId\"]\r\n \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -433,7 +441,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "7bd5d1bd-3d45-4962-bab5-21c604dc7674",
+						"id": "35a3d468-ed45-43bb-a4ce-94b919fe40ea",
 						"exec": [
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
@@ -446,7 +454,10 @@
 							"tests[\"patient geburtsmonat matches\"] = jsonBody[0].fields.geburtsmonat == pm.variables.get(\"geburtsmonat\");",
 							"tests[\"patient geburtsjahr matches\"] = jsonBody[0].fields.geburtsjahr === pm.variables.get(\"geburtsjahr\");",
 							"tests[\"patient plz matches\"] = jsonBody[0].fields.plz === pm.variables.get(\"plz\");",
-							"tests[\"patient ort matches\"] = jsonBody[0].fields.ort === pm.variables.get(\"ort\");"
+							"tests[\"patient ort matches\"] = jsonBody[0].fields.ort === pm.variables.get(\"ort\");",
+							"",
+							"tests[\"patient exportId type matches\"] = jsonBody[0].ids[0].idType === pm.variables.get(\"exportId\").idType;",
+							"tests[\"is exportId encrypted?\"] = jsonBody[0].ids[0].idString.length > 30;"
 						],
 						"type": "text/javascript"
 					}

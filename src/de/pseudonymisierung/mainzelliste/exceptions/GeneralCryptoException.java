@@ -25,29 +25,24 @@
  */
 package de.pseudonymisierung.mainzelliste.exceptions;
 
-import org.apache.commons.lang.StringUtils;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
-public class InvalidConfigurationException extends RuntimeException {
+/**
+ * Signals that a cryptographic operation failed.
+ */
+public class GeneralCryptoException extends WebApplicationException {
 
-  public InvalidConfigurationException(String errorMessage, Throwable err) {
-    super(errorMessage, err);
-  }
+  private static final long serialVersionUID = -1L;
 
-  public InvalidConfigurationException(String errorMessage) {
-    super(errorMessage);
-  }
-
-  public InvalidConfigurationException(String configurationKey, String errorMessage) {
-    this(buildMessage(configurationKey, errorMessage));
-  }
-
-  public InvalidConfigurationException(String configurationKey, String errorMessage,
-      Throwable err) {
-    this(buildMessage(configurationKey, errorMessage), err);
-  }
-
-  private static String buildMessage(String configurationKey, String errorMessage) {
-    return StringUtils.isBlank(configurationKey) ? errorMessage :
-        String.format("Invalid configuration '%s': %s", configurationKey, errorMessage);
+  /**
+   * Create an instance with the given error message.
+   *
+   * @param message The error message.
+   */
+  public GeneralCryptoException(String message, Exception cause) {
+    super(cause, Response.status(Status.BAD_REQUEST)
+        .entity("Failed cryptographic operation: " + message).build());
   }
 }
