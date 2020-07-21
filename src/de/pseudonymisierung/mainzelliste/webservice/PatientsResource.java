@@ -524,18 +524,30 @@ public class PatientsResource {
     logger.info("idType:" + searchIdType);
 
     // find patient ids
-    List<ID> foundIDs;
+    List<ID> foundIds;
     if (resultIds.contains(searchIdType)) {
-      foundIDs = PatientBackend.instance.getIdsWithType(searchIdType);
+      foundIds = PatientBackend.instance.getIdsWithType(searchIdType);
     } else {
-      foundIDs = PatientBackend.instance.getIdsOfPatientWithIdType(searchIdType,
+      foundIds = PatientBackend.instance.getIdsOfPatientWithIdType(searchIdType,
           resultIds.toArray(new String[0]));
     }
 
-    // create response
-    JSONArray idsAsjson = new JSONArray();
-    foundIDs.forEach(id -> idsAsjson.put(id.toJSON()));
-    return Response.ok().entity(idsAsjson).build();
+    // serialize result to json
+    JSONArray resultJson = new JSONArray();
+    for (ID id : foundIds) {
+      JSONObject foundPatientJson = new JSONObject();
+      JSONArray idsJson = new JSONArray();
+      idsJson.put(id.toJSON());
+      try {
+        foundPatientJson.put("ids", idsJson);
+      } catch (JSONException e) {
+        logger.error("Couldn't put JSONArray in a JSONObject ", e);
+        e.printStackTrace();
+        throw new InvalidJSONException("Couldn't serialize search result to JSON");
+      }
+      resultJson.put(foundPatientJson);
+    }
+    return Response.ok().entity(resultJson).build();
   }
 
     private JSONArray getAllIdTypesOfPatient(Patient patient) {

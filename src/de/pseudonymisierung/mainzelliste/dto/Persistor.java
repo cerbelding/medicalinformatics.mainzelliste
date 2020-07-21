@@ -1014,7 +1014,8 @@ public enum Persistor {
 						logger.fatal("SQL error: invalid authorization specification. " + e.getMessage());
 						throw new Error(e);
 					}
-				} else if (count >= dbconnect_retry_count) {
+				}
+				if (count >= dbconnect_retry_count) {
 					logger.fatal("SQL error while getting database connection; giving up.", e);
 					throw new Error(e);
 				} else if (count == 1) {
