@@ -517,40 +517,51 @@ public class PatientsResource {
             return Response.ok().entity(ret).build();
     }
 
-    private Response readPatientWildCardSelect(Token token, List<?> requests) {
-        logger.info("Request all Ids for a idtype");
-        String idType;
+  private Response readPatientWildCardSelect(Token token, List<?> requests) {
+    logger.info("Request all Ids for a idtype");
 
-        if (token.getDataItemList("resultFields") != null) {
-            throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
-        }
-
-        //validate resultIds
-        List<String> resultIds = (List<String>)token.getDataItemList("resultIds");
-        if (resultIds == null || resultIds.isEmpty()) {
-            throw new InvalidTokenException("Please provide a resultIds in token data!");
-        }else if (resultIds.size() > 1) {
-            throw new NotImplementedException("It's only possible to request one IdType as wildcard select.");
-        }
-
-        Map<String, String> thisSearchId = (Map<String, String>) requests.get(0);
-        idType = thisSearchId.get("idType");
-        logger.info("idType:" + idType);
-
-        //search id and resultId is the same
-        if (resultIds.contains(idType) && resultIds.size() == 1) {
-            List<ID> selectedIDs = PatientBackend.instance.getIdsWithType(idType);
-            return Response.ok().entity(selectedIDs).build();
-        }
-
-        if (!resultIds.contains(idType)) {
-            List<ID> returnIds = PatientBackend.instance.getIdsOfPatientWithIdType(idType,
-                    resultIds.toArray(new String[0]));
-            return Response.ok().entity(returnIds).build();
-        }
-
-        return null;
+    if (token.getDataItemList("resultFields") != null) {
+      throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
     }
+
+    //validate resultIds
+    List<String> resultIds = (List<String>) token.getDataItemList("resultIds");
+    if (resultIds == null || resultIds.isEmpty()) {
+      throw new InvalidTokenException("Please provide a resultIds in token data!");
+    } else if (resultIds.size() > 1) {
+      throw new NotImplementedException(
+          "It's only possible to request one IdType as wildcard select.");
+    }
+
+    String searchIdType = ((Map<String, String>) requests.get(0)).get("idType");
+    logger.info("idType:" + searchIdType);
+
+    // find patient ids
+    List<ID> foundIds;
+    if (resultIds.contains(searchIdType)) {
+      foundIds = PatientBackend.instance.getIdsWithType(searchIdType);
+    } else {
+      foundIds = PatientBackend.instance.getIdsOfPatientWithIdType(searchIdType,
+          resultIds.toArray(new String[0]));
+    }
+
+    // serialize result to json
+    JSONArray resultJson = new JSONArray();
+    for (ID id : foundIds) {
+      JSONObject foundPatientJson = new JSONObject();
+      JSONArray idsJson = new JSONArray();
+      idsJson.put(id.toJSON());
+      try {
+        foundPatientJson.put("ids", idsJson);
+      } catch (JSONException e) {
+        logger.error("Couldn't put JSONArray in a JSONObject ", e);
+        e.printStackTrace();
+        throw new InvalidJSONException("Couldn't serialize search result to JSON");
+      }
+      resultJson.put(foundPatientJson);
+    }
+    return Response.ok().entity(resultJson).build();
+  }
 
     private JSONArray getAllIdTypesOfPatient(Patient patient) {
         return new JSONArray(patient.getIds().stream().map(i -> i.getType()).collect(Collectors.toList()));
