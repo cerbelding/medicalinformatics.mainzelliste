@@ -91,7 +91,6 @@ public class Initializer implements ServletContextListener {
 		}
 
 		Config c = Config.instance;
-		log4jSetup();
 		Persistor p = Persistor.instance;
 		IDGeneratorFactory idgf = IDGeneratorFactory.instance;
 		Servers s = Servers.instance;
@@ -106,43 +105,6 @@ public class Initializer implements ServletContextListener {
 		java.util.logging.Logger webComponentLogger = java.util.logging.Logger.getLogger(WebComponent.class.getName());
 		webComponentLogger.setLevel(Level.SEVERE);
 		logger.info("#####Startup succeeded. Ready to take requests.");
-	}
-
-	/**
-	 * Initializes logging. If a log file is configured, all logging is redirected to the file.
-	 * Otherwise, logging goes to console.
-	 */
-	private void log4jSetup() {
-		Logger root = Logger.getRootLogger();
-		root.setLevel(Config.instance.getLogLevel());
-		String logFileName = Config.instance.getProperty("log.filename");
-		if (logFileName == null) {
-			root.info("Using default logging output.");
-		} else {
-			PatternLayout layout = new PatternLayout("%d %p %t %c - %m%n");
-			try {
-				FileAppender app;
-				app = new FileAppender(layout, logFileName);
-				app.setName("MainzellisteFileAppender");
-
-				// In production mode, avoid spamming the servlet container's
-				// logfile.
-				if (!Config.instance.debugIsOn()) {
-					root.warn("Redirecting mainzelliste log to " + logFileName
-							+ ".");
-					root.removeAllAppenders();
-				}
-
-				root.addAppender(app);
-				root.info("Logger setup to log on level "
-						+ Config.instance.getLogLevel() + " to " + logFileName);
-			} catch (IOException e) {
-				root.fatal("Unable to log to " + logFileName + ": "
-						+ e.getMessage());
-				return;
-			}
-		}
-		root.info("#####BEGIN Mainzelliste LOG SESSION");
 	}
 
 	/**

@@ -70,7 +70,12 @@
             <version>${version.log4j}</version>
             <scope>compile</scope>
         </dependency>
-
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>apache-log4j-extras</artifactId>
+        <version>${version.log4j}</version>
+        <scope>compile</scope>
+      </dependency>
         <!-- Rest -->
         <dependency>
             <groupId>com.sun.jersey</groupId>
