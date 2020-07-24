@@ -48,7 +48,7 @@ import org.codehaus.jettison.json.JSONObject;
 @Entity
 public class HashedField extends Field<BitSet> {
 
-	/**	The bit array is stored as the base64 encoded binary representation of the {@link BitSet}. */
+	/**	The value is encoded as a String to allow storage in a database. */
 	@Column(length = BloomFilterTransformer.hashLength)
 	protected String value;
 
@@ -127,7 +127,7 @@ public class HashedField extends Field<BitSet> {
 	 * Create an empty instance.
 	 */
 	public HashedField() {
-		this.value = null;
+		this.value = "";
 	}
 
 	/**
@@ -135,7 +135,7 @@ public class HashedField extends Field<BitSet> {
 	 * @param b A BitSet.
 	 */
 	public HashedField(BitSet b) {
-		setValue(b);
+		this.value = bitSetToBitString(b);
 	}
 
 	/**
@@ -144,13 +144,13 @@ public class HashedField extends Field<BitSet> {
 	 */
 	public HashedField(String s) {
 		this.bitSet = bitStringToBitSet(s);
-		this.value = bitSetToBase64(bitSet);
+		this.value = s;
 	}
 
 	@Override
 	public BitSet getValue() {
 		if (bitSet == null && this.value != null) {
-			bitSet = base64ToBitSet(this.value);
+			bitSet = bitStringToBitSet(this.value);
 		}
 		return bitSet;
 	}
@@ -163,7 +163,7 @@ public class HashedField extends Field<BitSet> {
 	@Override
 	public void setValue(BitSet b) {
 		this.bitSet = b;
-		this.value = b == null ? null : bitSetToBase64(b);
+		this.value = b == null ? null : bitSetToBitString(b);
 	}
 
 	/**
@@ -176,7 +176,7 @@ public class HashedField extends Field<BitSet> {
 	@Override
 	public void setValue(String s) {
 		this.value = s;
-		this.bitSet = s == null ? null : base64ToBitSet(s);
+		this.bitSet = s == null ? null : bitStringToBitSet(s);
 	}
 
 	@Override
