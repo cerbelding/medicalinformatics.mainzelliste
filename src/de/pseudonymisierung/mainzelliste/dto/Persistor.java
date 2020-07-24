@@ -358,6 +358,8 @@ public enum Persistor {
 		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.
 		IDGeneratorFactory.instance.getGeneratorMemories().forEach(em::merge);
 		em.getTransaction().commit();
+		// Persist blocking keys
+		Config.instance.getBlockingKeyExtractors().updateBlockingKeys(Collections.singletonList(req.getAssignedPatient()));
 	}
 
 	/**
