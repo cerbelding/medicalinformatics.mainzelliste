@@ -27,16 +27,20 @@ package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.crypto.Encryption;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
+import de.pseudonymisierung.mainzelliste.util.ConfigUtils;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
@@ -67,6 +71,9 @@ public enum IDGeneratorFactory {
 
 	/** Map of export encryption, with respective ID types as keys. */
 	private final Map<String, Encryption> exportEncryptions = new HashMap<>();
+
+	/** the configured eager generation flag */
+	private final boolean eagerGenerationOn;
 
 	/** The logging instance */
 	private Logger logger = Logger.getLogger(this.getClass());
@@ -131,16 +138,31 @@ public enum IDGeneratorFactory {
 					if (Config.instance.getEncryption(exportEncryption) != null) {
 						exportEncryptions.put(thisIdType, Config.instance.getEncryption(exportEncryption));
 					} else {
-						InvalidConfigurationException exception = new InvalidConfigurationException(
+						throw new InvalidConfigurationException(
 								"idgenerator." + thisIdType + ".exportEncryption",
 								"the given export encryption not configured");
-						logger.error(exception.getMessage());
-						throw exception;
 					}
 				}
 
-				thisGenerator.init(mem, thisIdType, thisIdProps);
+				// read the configured ID types with which the current generator will create the ID
+				String eagerConfigValue = StringUtils.trimToEmpty((String) thisIdProps.get("eager"));
+				String[] eagerGenRelatedIdTypes =
+						eagerConfigValue.isEmpty() ? new String[0] : eagerConfigValue.split("\\s*,\\s*");
+				//validate configuration
+				List<String> notFoundIdTypes = Stream.of(eagerGenRelatedIdTypes)
+						.filter(i -> !i.trim().equals("*"))
+						.filter(i -> Stream.of(idTypes).noneMatch(i::equals))
+						.collect(Collectors.toList());
+				if (!notFoundIdTypes.isEmpty()) {
+					throw new InvalidConfigurationException(
+							"idgenerator." + thisIdType + ".eager",
+							"following id types : " + String.join(", ", notFoundIdTypes) + " not configured");
+				}
+				thisGenerator.init(mem, thisIdType, eagerGenRelatedIdTypes, thisIdProps);
 				temp.put(thisIdType, thisGenerator);
+			} catch (InvalidConfigurationException e) {
+				logger.error(e.getMessage());
+				throw e;
 			} catch (ClassNotFoundException e) {
 				logger.fatal("Unknown ID generator " + thisIdGenerator + " for id type " + thisIdType);
 				throw new Error(e);
@@ -158,6 +180,15 @@ public enum IDGeneratorFactory {
 				extIdTypes.add(idType);
 		}
 
+		// read the configured eager generation flag
+		try {
+			this.eagerGenerationOn = ConfigUtils
+					.readValue(props, "idgenerators.eagerGeneration", false);
+		} catch (InvalidConfigurationException e) {
+			logger.error(e.getMessage());
+			throw e;
+		}
+
 		logger.info("ID generators have initialized successfully.");
 	}
 
@@ -171,6 +202,17 @@ public enum IDGeneratorFactory {
 	 */
 	public IDGenerator<? extends ID> getFactory(String idType) {
 		return generators.get(idType);
+	}
+
+	/**
+	 * Returns a map of IDGenerators for internal ID type
+	 *
+	 * @return a map of IDGenerators for internal ID type.
+	 */
+	public Map<String, IDGenerator<? extends ID>> getNonExternalIdGenerators() {
+		return generators.entrySet().stream()
+				.filter(e -> !e.getValue().isExternal())
+				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 	}
 
 	/**
@@ -254,6 +296,15 @@ public enum IDGeneratorFactory {
 	 */
 	public Encryption getExportEncryption(String idType) {
 		return this.exportEncryptions.get(idType);
+	}
+
+	/**
+	 * return whether IDs of all configured types should be created for a given patient eagerly
+	 *
+	 * @return true if eager generation of patient IDs is enabled
+	 */
+	public boolean isEagerGenerationOn() {
+		return this.eagerGenerationOn;
 	}
 
 	public ID idFromJSON(JSONObject json) throws JSONException, InvalidIDException {

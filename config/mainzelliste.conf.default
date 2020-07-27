@@ -313,8 +313,14 @@ idgenerators = pid, intid
 
 # By default, IDs are generated once they are requested (lazy generation).
 # Set the following parameter to true if upon creating a patient, IDs of all
-# configured types should be created for this patient eagerly.
+# configured types should be created for this patient eagerly. This will also override any existing
+# configurations that may have been made in individual "idgenerator" of specific type!
 idgenerators.eagerGeneration = false
+
+# list of ID types with which this generator will generate the ID eagerly
+#idgenerator.{identifier}.eager = {identifier}, {identifier}, {identifier}
+# ID will be generated, if any of the configured IDs of the same patient are created
+#idgenerator.{identifier}.eager = *
 
 # Additional params for PIDGenerator (k1, k2, k3, rndwidth) are defined here.
 idgenerator.pid = PIDGenerator
