@@ -25,16 +25,15 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
+import de.pseudonymisierung.mainzelliste.matcher.DiceFieldComparator;
 import java.util.Base64;
 import java.util.BitSet;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
-
-import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
-import de.pseudonymisierung.mainzelliste.matcher.DiceFieldComparator;
-import org.codehaus.jettison.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
+import org.codehaus.jettison.json.JSONException;
 
 /**
  * Hashed fields for error-tolerant matching. The value of a hashed field
@@ -48,7 +47,7 @@ import org.codehaus.jettison.json.JSONObject;
 @Entity
 public class HashedField extends Field<BitSet> {
 
-	/**	The value is encoded as a String to allow storage in a database. */
+	/**	The bit array is stored as the base64 encoded binary representation of the {@link BitSet}. */
 	@Column(length = BloomFilterTransformer.hashLength)
 	protected String value;
 
@@ -56,11 +55,7 @@ public class HashedField extends Field<BitSet> {
 	@Transient
 	private BitSet bitSet;
 
-	/** Base64 decoder instance */
-	private static Base64.Decoder b64Decoder = Base64.getDecoder();
-
-	/** Base64 encoder instance */
-	private static Base64.Encoder b64Encoder = Base64.getEncoder();
+	// Helpers
 
 	/**
 	 * Conversion of the Base64 encoded binary representation of a BitSet to a BitSet.
@@ -70,7 +65,7 @@ public class HashedField extends Field<BitSet> {
 	 * @return A BitSet
 	 */
 	public static BitSet base64ToBitSet(String b64) {
-		return BitSet.valueOf(b64Decoder.decode(b64));
+		return BitSet.valueOf(Base64.getDecoder().decode(b64));
 	}
 
 	/**
@@ -79,7 +74,7 @@ public class HashedField extends Field<BitSet> {
 	 * @return Base64 String
 	 */
 	public static String bitSetToBase64(BitSet bs) {
-		return b64Encoder.encodeToString(bs.toByteArray());
+		return Base64.getEncoder().encodeToString(bs.toByteArray());
 	}
 
 	/**
@@ -89,7 +84,7 @@ public class HashedField extends Field<BitSet> {
 	 * @return A BitSet with all bit i set for which b[i].equals("1").
 	 */
 	public static BitSet bitStringToBitSet(String b) {
-		if (b == null)
+		if (StringUtils.isBlank(b))
 			return null;
 		BitSet bs = new BitSet(b.length());
 		for (int i = 0; i < b.length(); i++) {
@@ -99,7 +94,9 @@ public class HashedField extends Field<BitSet> {
 				case '0' :
 					break;
 				default : // illegal value
-					return null;
+					throw new IllegalArgumentException(
+							"Failed to parse bit string '" + b + "'. Character " + b.charAt(i) + " at " + i
+									+ " isn't bit.");
 			}
 		}
 		return bs;
@@ -127,6 +124,7 @@ public class HashedField extends Field<BitSet> {
 	 * Create an empty instance.
 	 */
 	public HashedField() {
+		this.bitSet = null;
 		this.value = "";
 	}
 
@@ -135,7 +133,7 @@ public class HashedField extends Field<BitSet> {
 	 * @param b A BitSet.
 	 */
 	public HashedField(BitSet b) {
-		this.value = bitSetToBitString(b);
+		setValue(b);
 	}
 
 	/**
@@ -143,27 +141,23 @@ public class HashedField extends Field<BitSet> {
 	 * @param s String of the format [01]*
 	 */
 	public HashedField(String s) {
-		this.bitSet = bitStringToBitSet(s);
-		this.value = s;
+		this(bitStringToBitSet(s));
 	}
 
 	@Override
 	public BitSet getValue() {
-		if (bitSet == null && this.value != null) {
-			bitSet = bitStringToBitSet(this.value);
-		}
-		return bitSet;
+		return this.bitSet;
 	}
 
 	@Override
-	public Object getValueJSON() {
-		return this.value== null ? JSONObject.NULL : this.value;
+	public Object getValueJSON() throws JSONException {
+		return this.value == null ? "" : this.value;
 	}
 
 	@Override
 	public void setValue(BitSet b) {
 		this.bitSet = b;
-		this.value = b == null ? null : bitSetToBitString(b);
+		this.value = b == null ? "" : bitSetToBase64(b);
 	}
 
 	/**
@@ -175,15 +169,14 @@ public class HashedField extends Field<BitSet> {
 	 */
 	@Override
 	public void setValue(String s) {
-		this.value = s;
-		this.bitSet = s == null ? null : bitStringToBitSet(s);
+		this.value = StringUtils.trimToEmpty(s);
+		this.bitSet = value.isEmpty() ? null : base64ToBitSet(s);
 	}
 
-	@Override
-	public boolean isEmpty() {
-		return this.getValue() == null || this.getValue().isEmpty();
-	}
-
+	/**
+	 * Return the binary representation ob BitSet
+	 * @return
+	 */
 	@Override
 	public String toString() {
 		return value;
