@@ -57,7 +57,8 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
 	* @param props Properties of the Generator
 	*/
     @Override
-    public void init(IDGeneratorMemory mem, String idType, Properties props) {
+		public void init(IDGeneratorMemory mem, String idType, String[] eagerGenRelatedIdTypes,
+				Properties props) {
         this.idType = idType;
     }
 
@@ -122,6 +123,11 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
     @Override
 	public boolean isExternal() {
 		 return true; 
+	}
+
+	@Override
+	public boolean isEagerGenerationOn(String idType) {
+		return false;
 	}
 
 	@Override

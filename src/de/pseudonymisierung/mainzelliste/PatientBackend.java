@@ -159,29 +159,11 @@ public enum PatientBackend {
               assignedPatient.getOriginal().createId(idType);
             }
             assignedPatient.updateFrom(inputPatient);
-            Persistor.instance.updatePatient(assignedPatient);
+
             // log token to separate concurrent request in the log file
             ID returnedId = assignedPatient.getOriginal().getId(idTypes.iterator().next());
             logger.info("Found match with ID " + returnedId.getIdString() + " for ID request " + t.getId());
 
-            // Add optional fields if they are not already entered
-            Map<String, Field<?>> fieldSet = new HashMap<>(assignedPatient.getFields());
-            Map<String, Field<?>> inputFieldSet = new HashMap<>(assignedPatient.getInputFields());
-            boolean updatePatient = false;
-
-            for (String key : inputPatient.getFields().keySet()) {
-              if (!assignedPatient.getFields().containsKey(key)) {
-                updatePatient = true;
-                fieldSet.put(key, Field.build(key, inputPatient.getFields().get(key).toString()));
-                inputFieldSet.put(key, Field.build(key, inputPatient.getInputFields().get(key).toString()));
-              }
-            }
-
-            if (updatePatient) {
-              assignedPatient.setFields(fieldSet);
-              assignedPatient.setInputFields(inputFieldSet);
-              Persistor.instance.updatePatient(assignedPatient);
-            }
             atChangeType = "match";
             break;
 
@@ -193,13 +175,12 @@ public enum PatientBackend {
             }
 
             // Generate internal IDs
-            boolean eagerGeneration = Boolean
-                .parseBoolean(Config.instance.getProperty("idgenerators.eagerGeneration"));
-            Set<ID> newIds = eagerGeneration ? IDGeneratorFactory.instance.generateIds()
-                : IDGeneratorFactory.instance.generateIds(idTypes);
-            // add generated internal ids
-            // Note: pNormalized already contain all externals ids
-            newIds.forEach(inputPatient::addId);
+            // Note: inputPatient already contain all externals ids
+            if(IDGeneratorFactory.instance.isEagerGenerationOn()) {
+              IDGeneratorFactory.instance.generateIds().forEach(inputPatient::addId);
+            } else {
+              idTypes.forEach(inputPatient::createId);
+            }
 
             for (String idType : idTypes) {
               logger.info("Created new ID " + inputPatient.createId(idType).getIdString() + " for ID request " + t.getId());
@@ -208,7 +189,7 @@ public enum PatientBackend {
               inputPatient.setTentative(true);
               Patient bestMatchedPatient = match.getBestMatchedPatient();
               // log tentative and possible match ids
-              newIds.stream()
+              inputPatient.getIds().stream()
                   .filter(id -> bestMatchedPatient.getId(id.getType()) != null)
                   .forEach(id -> logger.info("New ID " + id.getIdString() + " is tentative. Found "
                       + "possible match with ID " + bestMatchedPatient.getId(id.getType()).getIdString()));

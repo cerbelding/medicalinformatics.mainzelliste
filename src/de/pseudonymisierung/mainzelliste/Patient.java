@@ -26,7 +26,6 @@
 package de.pseudonymisierung.mainzelliste;
 
 import java.util.*;
-import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -300,24 +299,33 @@ public class Patient {
 	 */
 	public ID createId(String type) {
 		ID thisId = getId(type);
-		if (thisId != null)
+		if (thisId != null) {
 			return thisId;
+		}
+
 		// ID of requested type was not found and is not external -> generate new ID
 		IDGenerator<? extends ID> factory = IDGeneratorFactory.instance.getFactory(type);
-
 		if (factory == null) {
 			throw new InvalidIDException("ID type " + type + " not defined!");
-		}
-		
-		if(!factory.isExternal()) {
-			ID newID = factory.getNext();
-			Persistor.instance.addId(newID);
-			factory.getMemory().ifPresent(IDGeneratorMemory::commit);
-			this.addId(newID);
-			return newID;
+		} else if (factory.isExternal()) {
+			return null;
 		}
 
-		return null;
+		ID newID = generateId(factory);
+		// generate ids eagerly
+		if (!IDGeneratorFactory.instance.isEagerGenerationOn()) {
+			IDGeneratorFactory.instance.getNonExternalIdGenerators().entrySet().stream()
+					.filter(e -> e.getValue().isEagerGenerationOn(type))
+					.filter(e -> getId(e.getKey()) == null)
+					.forEach(e -> this.generateId(e.getValue()));
+		}
+		return newID;
+	}
+
+	private ID generateId(IDGenerator<? extends ID> factory) {
+		ID newID = factory.getNext();
+		ids.add(newID);
+		return newID;
 	}
 
 	/**
