@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug" strict="true" name="XMLConfigTest"
+               packages="org.apache.logging.log4j.test">
+  <Properties>
+    <Property name="filename">logs/mainzelliste.log</Property>
+  </Properties>
+  <Appenders>
+    <Appender type="Console" name="Console">
+      <Layout type="PatternLayout" pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+    </Appender>
+    <Appender type="File" name="File" fileName="${filename}">
+      <Layout type="PatternLayout" pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+    </Appender>
+  </Appenders>
+  <Logger name="de.pseudonymisierung.mainzelliste" level="error" additivity="false">
+    <AppenderRef ref="File"/>
+  </Logger>
+  <Logger name="de.pseudonymisierung.mainzelliste" level="warn" additivity="false">
+    <AppenderRef ref="File"/>
+  </Logger>
+  <Loggers>
+    <Logger name="de.pseudonymisierung.mainzelliste" level="debug" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Logger name="de.pseudonymisierung.mainzelliste" level="info" additivity="false">
+      <AppenderRef ref="File"/>
+    </Logger>
+
+
+  </Loggers>
+
+</Configuration>
