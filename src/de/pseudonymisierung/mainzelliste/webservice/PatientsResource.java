@@ -520,7 +520,7 @@ public class PatientsResource {
   private Response readPatientWildCardSelect(Token token, List<?> requests) {
     logger.info("Request all Ids for a idtype");
 
-    if (token.getDataItemList("resultFields") != null) {
+    if (token.getDataItemList("resultFields") != null && !token.getDataItemList("resultFields").isEmpty() ) {
       throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
     }
 
