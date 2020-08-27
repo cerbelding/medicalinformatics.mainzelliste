@@ -27,7 +27,7 @@ public class ControlNumberField extends HashedField {
      */
     @Override
     public ControlNumberField clone() {
-        return new ControlNumberField(this.keyId, (BitSet) this.getValue().clone());
+        return new ControlNumberField(this.keyId, isEmpty() ? null : (BitSet) this.getValue().clone());
     }
 
     public ControlNumberField() {
