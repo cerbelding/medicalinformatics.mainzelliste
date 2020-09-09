@@ -6,7 +6,7 @@
 
     <groupId>de.pseudonymisierung.mainzelliste</groupId>
     <artifactId>mainzelliste</artifactId>
-    <version>${maven.build.timestamp}-${buildNumber}</version>
+    <version>1.10-SNAPSHOT-${buildNumber}-${maven.build.timestamp}</version>
     <packaging>war</packaging>
 
   <scm>
@@ -225,7 +225,7 @@
       </plugin>
         </plugins>
 
-        <!-- EingefÃ¼gt um "Plugin execution not covered by lifecycle configuration" zu beheben -->
+        <!-- Eingefügt um "Plugin execution not covered by lifecycle configuration" zu beheben -->
 
         <pluginManagement>
           <plugins>
