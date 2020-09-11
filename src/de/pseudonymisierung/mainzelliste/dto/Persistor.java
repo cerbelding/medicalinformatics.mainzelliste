@@ -831,6 +831,18 @@ public enum Persistor {
 			
 			em.getTransaction().commit();
 		} // End of update 1.1 -> 1.3.1
+    if (isSchemaVersionUpdate(fromVersion, "1.9.0")) {
+			em.getTransaction().begin();
+
+			em.createNativeQuery("ALTER TABLE audit_trail ALTER COLUMN oldvalue TYPE text").executeUpdate();
+			em.createNativeQuery("ALTER TABLE audit_trail ALTER COLUMN newvalue TYPE text").executeUpdate();
+
+			// Update schema version. Corresponds to Mainzelliste version, therefore the gap
+			this.setSchemaVersion("1.9.0", em);
+			fromVersion = "1.9.0";
+
+			em.getTransaction().commit();
+		}
 
 		// compress "hashed" field and hashed" input field from bit string to base64
 		// note: the compression was disabled in 1.9-RC5 and 1.9-RC6
