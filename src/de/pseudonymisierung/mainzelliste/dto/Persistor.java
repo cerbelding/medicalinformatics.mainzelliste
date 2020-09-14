@@ -832,7 +832,10 @@ public enum Persistor {
 			em.getTransaction().commit();
 		} // End of update 1.1 -> 1.3.1
 
-		if (isSchemaVersionUpdate(fromVersion, "1.9-alpha")) { // < 1.9
+		// compress "hashed" field and hashed" input field from bit string to base64
+		// note: the compression was disabled in 1.9-RC5 and 1.9-RC6
+		if (isSchemaVersionUpdate(fromVersion, "1.9-alpha") || fromVersion.equals("1.9-RC5")
+				|| fromVersion.equals("1.9-RC6")) { // < 1.9
 			logger.info("Updating database schema for version 1.9...");
 			em.getTransaction().begin();
 			// Read HashedFields from the database and change the value type from Bitstring to base64 encoding
