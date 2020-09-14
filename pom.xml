@@ -6,12 +6,17 @@
 
     <groupId>de.pseudonymisierung.mainzelliste</groupId>
     <artifactId>mainzelliste</artifactId>
-    <version>1.10-SNAPSHOT</version>
+    <version>1.10-SNAPSHOT-${buildNumber}-${maven.build.timestamp}</version>
     <packaging>war</packaging>
+
+  <scm>
+    <connection>scm:git:https://bitbucket.org/medicalinformatics/mainzelliste.git</connection>
+  </scm>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.build.timestamp.format>yyyyMMdd_HHmmss</maven.build.timestamp.format>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -156,6 +161,24 @@
                     </execution>
                 </executions>
             </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>buildnumber-maven-plugin</artifactId>
+            <version>1.4</version>
+            <executions>
+              <execution>
+                <phase>validate</phase>
+                <goals>
+                  <goal>create</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <doCheck>false</doCheck>
+              <doUpdate>false</doUpdate>
+              <shortRevisionLength>10</shortRevisionLength>
+            </configuration>
+          </plugin>
       <plugin>
         <groupId>org.apache.openjpa</groupId>
         <artifactId>openjpa-maven-plugin</artifactId>
@@ -202,7 +225,7 @@
       </plugin>
         </plugins>
 
-        <!-- EingefÃ¼gt um "Plugin execution not covered by lifecycle configuration" zu beheben -->
+        <!-- Eingefügt um "Plugin execution not covered by lifecycle configuration" zu beheben -->
 
         <pluginManagement>
           <plugins>
