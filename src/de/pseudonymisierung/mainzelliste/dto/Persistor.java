@@ -832,6 +832,42 @@ public enum Persistor {
 			em.getTransaction().commit();
 		} // End of update 1.1 -> 1.3.1
 
+		// compress "hashed" field and hashed" input field from bit string to base64
+		// note: the compression was disabled in 1.9-RC5 and 1.9-RC6
+		if (isSchemaVersionUpdate(fromVersion, "1.9-alpha") || fromVersion.equals("1.9-RC5")
+				|| fromVersion.equals("1.9-RC6")) { // < 1.9
+			logger.info("Updating database schema for version 1.9...");
+			em.getTransaction().begin();
+			// Read HashedFields from the database and change the value type from Bitstring to base64 encoding
+			// This improves the parsing performance and reduces the space requirements.
+			List<HashedField> hashedFields = em.createQuery("SELECT f from HashedField f", HashedField.class)
+							.getResultList();
+			for (HashedField hashedField : hashedFields) {
+				hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString()));
+				em.persist(hashedField);
+			}
+			// Read all Patients and change the HashedField type in the fieldsStrings from BitString to base64
+			List<Patient> patients = getPatients();
+			for (Patient patient : patients) {
+				Collection<Field<?>> fields = new ArrayList<>(patient.getFields().values());
+				fields.addAll(patient.getInputFields().values());
+				fields.stream()
+								.flatMap(f -> (f instanceof CompoundField<?>) ? ((CompoundField<?>) f).getValue().stream() : Stream.of(f))
+								.filter(f -> f instanceof HashedField)
+								.map(f -> (HashedField)f)
+								.filter(f -> !f.isEmpty())
+								.forEach(hashedField -> hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString())));
+				// Replace fields and thereby update the fieldsString
+				patient.setFields(patient.getFields());
+				patient.setInputFields(patient.getInputFields());
+				em.merge(patient);
+			}
+			// Update schema version
+			this.setSchemaVersion("1.9-alpha", em);
+			fromVersion = "1.9-alpha";
+			em.getTransaction().commit();
+		} // End of update < 1.9
+
 		// Update schema version to release version, even if no changes are necessary
 		em.getTransaction().begin();
 		this.setSchemaVersion(Config.instance.getVersion(), em);

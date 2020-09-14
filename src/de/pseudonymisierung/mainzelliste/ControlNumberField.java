@@ -1,9 +1,11 @@
 package de.pseudonymisierung.mainzelliste;
 
+import java.util.BitSet;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
-
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -16,19 +18,22 @@ public class ControlNumberField extends HashedField {
      */
     private String keyId;
 
+    public static final String JSON_KEY_ID = "keyId";
+
+    public static final String JSON_VALUE = "value";
+
     /* (non-Javadoc)
      * @see de.pseudonymisierung.mainzelliste.HashedField#clone()
      */
     @Override
     public ControlNumberField clone() {
-        return new ControlNumberField(this.keyId, this.value);
+        return new ControlNumberField(this.keyId, isEmpty() ? null : (BitSet) this.getValue().clone());
     }
 
     public ControlNumberField() {
+        super();
         this.keyId = "";
-        this.value = "";
     }
-
 
     /**
      * @return the keyId
@@ -37,50 +42,22 @@ public class ControlNumberField extends HashedField {
         return keyId;
     }
 
-    /**
-     * @param keyId the keyId to set
-     */
-    protected void setKeyId(String keyId) {
+    private ControlNumberField(String keyId, BitSet bitSet) {
+        super(bitSet);
         this.keyId = keyId;
     }
 
-    public ControlNumberField(String keyId, String value) {
-        super(value);
-        this.keyId = keyId;
-    }
-
-    public ControlNumberField(String json) throws JSONException {
-        super();
-        try {
-            this.setValue(json);
-        } catch (Throwable t) {
-            throw new JSONException(t);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see de.pseudonymisierung.mainzelliste.Field#isEmpty()
-     */
-    @Override
-    public boolean isEmpty() {
-        return (this.value == null || this.value.equals(""));
+    public ControlNumberField(String json) {
+        Pair<String, String> jsonData = parseJSONString(json);
+        this.keyId = jsonData.getKey();
+        super.setValue(bitStringToBitSet(jsonData.getValue()));
     }
 
     @Override
-    public void setValue(String s) {
-        if (s == null || s.equals("")) {
-            this.keyId = "";
-            this.value = "";
-            return;
-        }
-        // FIXME throws-Klausel zu Field.setValue hinzufügen und Exception werfen
-        try {
-            JSONObject o = new JSONObject(s);
-            this.keyId = o.has("keyId") ? o.getString("keyId") : "";
-            this.value = o.has("value") ? o.getString("value") : "";
-        } catch (JSONException e) {
-            throw new Error("Error while parsing JSON string " + s);
-        }
+    public void setValue(String json) {
+        Pair<String, String> jsonData = parseJSONString(json);
+        this.keyId = jsonData.getKey();
+        super.setValue(jsonData.getValue());
     }
 
     @Override
@@ -94,14 +71,23 @@ public class ControlNumberField extends HashedField {
     }
 
     @Override
-    public String getValueJSON() {
+    public String getValueJSON() throws JSONException {
+        JSONObject o = new JSONObject();
+        o.put(JSON_KEY_ID, this.keyId);
+        o.put(JSON_VALUE, super.getValueJSON());
+        return o.toString();
+    }
+
+    private Pair<String, String> parseJSONString(String json) {
+        if (StringUtils.isBlank(json)) {
+            return Pair.of("","");
+        }
         try {
-            JSONObject o = new JSONObject();
-            o.put("keyId", this.keyId);
-            o.put("value", this.value);
-            return o.toString();
+            JSONObject jsonObject = new JSONObject(json);
+            return Pair.of(jsonObject.has(JSON_KEY_ID) ? jsonObject.getString(JSON_KEY_ID) : "",
+                jsonObject.has(JSON_VALUE) ? jsonObject.getString(JSON_VALUE) : "");
         } catch (JSONException e) {
-            throw new Error(e);
+            throw new IllegalArgumentException("Invalid JSON representation " + json, e);
         }
     }
 }
