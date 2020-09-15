@@ -111,7 +111,6 @@ public enum Config {
 	 */
 	@SuppressWarnings("unchecked")
 	Config() throws InternalErrorException {
-		props = new Properties();
 		try {
 			// try to read config from general config path for all components
 			props = readConfigFromEnv("CONFIG_DIRS");
@@ -281,17 +280,18 @@ public enum Config {
 	}
 
 	/**
-	 * Attempts to read config from path specified in an environment variable
-	 *
+	 * Attempts to read config from path specified in an environment variable.
+	 * @param env The name of the environment variable. Different paths should be separated by "::"
+	 * @return The configuration as a Properties object or null if the given
+	 *         file was not found.
 	 */
 	public Properties readConfigFromEnv(String env) {
-		Properties props = new Properties();
+		Properties props = null;
 
 		if (System.getenv(env) != null) {
 			String ConfigDirsAsString = System.getenv(env);
 			String[] ConfigDirs =  ConfigDirsAsString.split("::");
 			int i = 0;
-			props = null;
 			while (props == null && i < ConfigDirs.length) {
 				File configFile = new File (ConfigDirs[i], "mainzelliste.conf");
 				logger.info("Try to read configuration from path " + configFile.getAbsolutePath() + "...");
