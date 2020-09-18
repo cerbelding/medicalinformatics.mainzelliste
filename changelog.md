@@ -1,3 +1,20 @@
+### 1.9-RC8 - 2020-09-14
+#### Fixed
+- 500 Error caused by audit_trail feature if large requests where made with a ReadToken (Result > 255 Signs)
+
+### 1.9-RC7 - 2020-09-14
+#### Fixed
+- compression of an empty "hashed" field from bit string to base64 cause a NullPointerException
+- database update of earlier versions with the compression of hashed fields to base64 doesn't work properly
+
+### 1.9-RC6 - 2020-08-21
+#### Fixed
+- ignore empty "resultFields" in ReadPatientToken
+
+### 1.9-RC5 - 2020-07-24
+#### Fixed
+- disable compression of hashedFiled from bit string to base64
+
 ### 1.9-RC1 - 2020-06-03
 #### Added
 - new CheckMatch endpoint: will retrieve the best match for the patient by using a Token of type "checkMatch"

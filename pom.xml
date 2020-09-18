@@ -32,6 +32,7 @@
         <version.httpclient>4.5.11</version.httpclient>
         <version.commons.net>3.6</version.commons.net>
         <version.maven-artifact>3.6.3</version.maven-artifact>
+        <version.org.testng>7.3.0</version.org.testng>
     </properties>
 
     <dependencies>
@@ -121,6 +122,13 @@
             <version>${version.maven-artifact}</version>
         </dependency>
 
+      <!-- Test -->
+        <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>${version.org.testng}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -225,7 +233,7 @@
       </plugin>
         </plugins>
 
-        <!-- Eingefügt um "Plugin execution not covered by lifecycle configuration" zu beheben -->
+        <!-- EingefÃ¼gt um "Plugin execution not covered by lifecycle configuration" zu beheben -->
 
         <pluginManagement>
           <plugins>
