@@ -1,3 +1,6 @@
+### Unreleased
+#### Feature
+- Added environment variable MAINZELLISTE_CONFIG_DIRS to set a list of directories the mainzelliste should search for it's config file
 ### 1.9-RC1 - 2020-06-03
 #### Added
 - new CheckMatch endpoint: will retrieve the best match for the patient by using a Token of type "checkMatch"
