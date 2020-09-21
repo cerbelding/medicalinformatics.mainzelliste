@@ -113,12 +113,7 @@ public enum Config {
 	Config() throws InternalErrorException {
 		try {
 			// try to read config from general config path for all components
-			props = readConfigFromEnv("CONFIG_DIRS");
-
-			if (props == null) {
-				// try to read config from general config path for identity management
-				props = readConfigFromEnv("IDM_CONFIG_DIRS");
-			}
+			props = readConfigFromEnv("MAINZELLISTE_CONFIG_DIRS");
 
 			if (props == null) {
 				// Check if path to configuration file is given in context descriptor
