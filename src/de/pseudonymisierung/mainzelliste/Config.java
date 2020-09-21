@@ -284,18 +284,19 @@ public enum Config {
 		Properties props = null;
 
 		if (System.getenv(env) != null) {
-			String ConfigDirsAsString = System.getenv(env);
-			String[] ConfigDirs =  ConfigDirsAsString.split("::");
-			int i = 0;
-			while (props == null && i < ConfigDirs.length) {
-				File configFile = new File (ConfigDirs[i], "mainzelliste.conf");
+			String configDirsAsString = System.getenv(env);
+			String[] configDirs =  configDirsAsString.split("::");
+			for (String configDir : configDirs) {
+				File configFile = new File (configDir, "mainzelliste.conf");
 				logger.info("Try to read configuration from path " + configFile.getAbsolutePath() + "...");
 				try {
 					props = readConfigFromFile(configFile.getAbsolutePath());
-					i++;
 				} catch (IOException e)	{
 					logger.fatal("Error reading configuration file. Please configure according to installation manual.", e);
 					throw new Error(e);
+				}
+				if (props != null) {
+					break;
 				}
 			}
 
