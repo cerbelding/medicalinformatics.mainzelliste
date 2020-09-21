@@ -111,32 +111,36 @@ public enum Config {
 	 */
 	@SuppressWarnings("unchecked")
 	Config() throws InternalErrorException {
-		props = new Properties();
 		try {
-			// Check if path to configuration file is given in context descriptor
-			ServletContext context = Initializer.getServletContext();
-			String configPath = context.getInitParameter("de.pseudonymisierung.mainzelliste.ConfigurationFile");
+			// try to read config from general config path for all components
+			props = readConfigFromEnv("MAINZELLISTE_CONFIG_DIRS");
 
-			// try to read config from configured path
-			if (configPath != null) {
-				logger.info("Reading config from path " + configPath + "...");
-				props = readConfigFromFile(configPath);
-				if (props == null) {
-					throw new Error("Configuration file could not be read from provided location " + configPath);
-				}
-			} else {
-				// otherwise, try default locations
-				logger.info("No configuration file configured. Try to read from default locations...");
-				for (String defaultConfigPath : defaultConfigPaths) {
-					logger.info("Try to read configuration from default location " + defaultConfigPath);
-					props = readConfigFromFile(defaultConfigPath);
-					if (props != null) {
-						logger.info("Found configuration file at default location " + defaultConfigPath);
-						break;
+			if (props == null) {
+				// Check if path to configuration file is given in context descriptor
+				ServletContext context = Initializer.getServletContext();
+				String configPath = context.getInitParameter("de.pseudonymisierung.mainzelliste.ConfigurationFile");
+
+				// try to read config from configured path
+				if (configPath != null) {
+					logger.info("Reading config from path " + configPath + "...");
+					props = readConfigFromFile(configPath);
+					if (props == null) {
+						throw new Error("Configuration file could not be read from provided location " + configPath);
 					}
-				}
-				if (props == null) {
-					throw new Error("Configuration file could not be found at any default location");
+				} else {
+					// otherwise, try default locations
+					logger.info("No configuration file configured. Try to read from default locations...");
+					for (String defaultConfigPath : defaultConfigPaths) {
+						logger.info("Try to read configuration from default location " + defaultConfigPath);
+						props = readConfigFromFile(defaultConfigPath);
+						if (props != null) {
+							logger.info("Found configuration file at default location " + defaultConfigPath);
+							break;
+						}
+					}
+					if (props == null) {
+						throw new Error("Configuration file could not be found at any default location");
+					}
 				}
 			}
 			addSubConfigurationPropertiesToProps();
@@ -270,7 +274,37 @@ public enum Config {
 		this.guiConfig = new GUI(props);
 	}
 
-    /**
+	/**
+	 * Attempts to read config from path specified in an environment variable.
+	 * @param env The name of the environment variable. Different paths should be separated by "::"
+	 * @return The configuration as a Properties object or null if the given
+	 *         file was not found.
+	 */
+	public Properties readConfigFromEnv(String env) {
+		Properties props = null;
+
+		if (System.getenv(env) != null) {
+			String configDirsAsString = System.getenv(env);
+			String[] configDirs =  configDirsAsString.split("::");
+			for (String configDir : configDirs) {
+				File configFile = new File (configDir, "mainzelliste.conf");
+				logger.info("Try to read configuration from path " + configFile.getAbsolutePath() + "...");
+				try {
+					props = readConfigFromFile(configFile.getAbsolutePath());
+				} catch (IOException e)	{
+					logger.fatal("Error reading configuration file. Please configure according to installation manual.", e);
+					throw new Error(e);
+				}
+				if (props != null) {
+					break;
+				}
+			}
+
+		}
+		return props;
+	}
+
+	/**
      * Reads subConfiguration.{n}.uri(s) and adds the values to Config.props
      *
      */

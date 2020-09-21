@@ -1,3 +1,7 @@
+### Unreleased
+#### Feature
+- Added environment variable MAINZELLISTE_CONFIG_DIRS to set a list of directories the mainzelliste should search for it's config file
+
 ### 1.9-RC8 - 2020-09-14
 #### Fixed
 - 500 Error caused by audit_trail feature if large requests where made with a ReadToken (Result > 255 Signs)
