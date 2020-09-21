@@ -6,12 +6,17 @@
 
     <groupId>de.pseudonymisierung.mainzelliste</groupId>
     <artifactId>mainzelliste</artifactId>
-    <version>1.10-SNAPSHOT</version>
+    <version>1.10-SNAPSHOT-${buildNumber}-${maven.build.timestamp}</version>
     <packaging>war</packaging>
+
+  <scm>
+    <connection>scm:git:https://bitbucket.org/medicalinformatics/mainzelliste.git</connection>
+  </scm>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.build.timestamp.format>yyyyMMdd_HHmmss</maven.build.timestamp.format>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -27,6 +32,7 @@
         <version.httpclient>4.5.11</version.httpclient>
         <version.commons.net>3.6</version.commons.net>
         <version.maven-artifact>3.6.3</version.maven-artifact>
+        <version.org.testng>7.3.0</version.org.testng>
     </properties>
 
     <dependencies>
@@ -116,6 +122,13 @@
             <version>${version.maven-artifact}</version>
         </dependency>
 
+      <!-- Test -->
+        <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>${version.org.testng}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -156,6 +169,24 @@
                     </execution>
                 </executions>
             </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>buildnumber-maven-plugin</artifactId>
+            <version>1.4</version>
+            <executions>
+              <execution>
+                <phase>validate</phase>
+                <goals>
+                  <goal>create</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <doCheck>false</doCheck>
+              <doUpdate>false</doUpdate>
+              <shortRevisionLength>10</shortRevisionLength>
+            </configuration>
+          </plugin>
       <plugin>
         <groupId>org.apache.openjpa</groupId>
         <artifactId>openjpa-maven-plugin</artifactId>
