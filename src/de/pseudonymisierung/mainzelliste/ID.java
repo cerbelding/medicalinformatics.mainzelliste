@@ -204,7 +204,7 @@ public abstract class ID {
 	public String getEncryptedIdStringFirst() {
 		Encryption encryption = IDGeneratorFactory.instance.getExportEncryption(getType());
 		try {
-			return encryption != null ? encryption.encrypt(getIdString()) : getIdString();
+			return encryption != null ? encryption.encryptToBase64String(getIdString()) : getIdString();
 		} catch (GeneralSecurityException e) {
 			throw new GeneralCryptoException(
 					"Encryption of ID[type:" + getType() + "," + idString.length() + " failed", e);

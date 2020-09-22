@@ -29,5 +29,19 @@ import java.security.GeneralSecurityException;
 
 public interface Encryption {
 
-  String encrypt(String input) throws GeneralSecurityException;
+  /**
+   * return cipher text
+   *
+   * @param plaintext plain text
+   * @return cipher text
+   */
+  byte[] encrypt(String plaintext) throws GeneralSecurityException;
+
+  /**
+   * return a URL-safe base 64 cipher text
+   *
+   * @param plaintext plain text
+   * @return resulting a URL-safe base 64 text
+   */
+  String encryptToBase64String(String plaintext) throws GeneralSecurityException;
 }
