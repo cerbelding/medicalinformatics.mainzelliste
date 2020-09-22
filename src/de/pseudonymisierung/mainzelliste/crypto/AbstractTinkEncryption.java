@@ -25,17 +25,15 @@
  */
 package de.pseudonymisierung.mainzelliste.crypto;
 
-public enum EncryptionType {
-  /**
-   * JCE encryption with ECB/OAEPWithSHA-1AndMGF1Padding
-   */
-  RSA,
+import com.google.crypto.tink.KeysetHandle;
+import java.security.GeneralSecurityException;
 
-  /**
-   * Hybrid encryption with Tink (ECIES with AEAD and HKDF).
-   * The plaintext is encrypted with a new generated symmetric key and the asymmetric public key is
-   * used to encrypt the symmetric key only.
-   * ciphertext = symmetric ciphertext + encrypted symmetric key.
-   */
-  TINK_HYBRID
+public abstract class AbstractTinkEncryption<P> implements Encryption {
+
+  protected final P primitive;
+
+  protected AbstractTinkEncryption(KeysetHandle keysetHandle, Class<P> primitiveClass)
+      throws GeneralSecurityException {
+    this.primitive = keysetHandle.getPrimitive(primitiveClass);
+  }
 }

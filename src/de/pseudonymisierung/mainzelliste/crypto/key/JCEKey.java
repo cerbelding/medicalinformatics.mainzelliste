@@ -23,19 +23,20 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.crypto;
+package de.pseudonymisierung.mainzelliste.crypto.key;
 
-public enum EncryptionType {
-  /**
-   * JCE encryption with ECB/OAEPWithSHA-1AndMGF1Padding
-   */
-  RSA,
+import java.security.Key;
 
-  /**
-   * Hybrid encryption with Tink (ECIES with AEAD and HKDF).
-   * The plaintext is encrypted with a new generated symmetric key and the asymmetric public key is
-   * used to encrypt the symmetric key only.
-   * ciphertext = symmetric ciphertext + encrypted symmetric key.
-   */
-  TINK_HYBRID
+public class JCEKey implements CryptoKey {
+
+  private final Key key;
+
+  public JCEKey(Key key) {
+    this.key = key;
+  }
+
+  @Override
+  public Key getKey() {
+    return key;
+  }
 }

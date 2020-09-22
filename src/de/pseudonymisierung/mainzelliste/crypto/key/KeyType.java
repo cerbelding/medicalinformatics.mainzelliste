@@ -26,5 +26,13 @@
 package de.pseudonymisierung.mainzelliste.crypto.key;
 
 public enum KeyType {
-  RSA_PUBLIC
+  /**
+   * A binary encoded (DER) rsa public key.
+   */
+  RSA_PUBLIC,
+
+  /**
+   * Tink KeySet in json format
+   */
+  TINK_KEYSET
 }

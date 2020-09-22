@@ -1,6 +1,8 @@
 ### Unreleased
 #### Feature
 - Added environment variable MAINZELLISTE_CONFIG_DIRS to set a list of directories the mainzelliste should search for it's config file
+- Support encryption with JCE API and Tink library
+- Generated ID can be configured to be always encrypted before exposing it to the outside via the REST API
 
 ### 1.9-RC8 - 2020-09-14
 #### Fixed
