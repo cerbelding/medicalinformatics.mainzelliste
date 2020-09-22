@@ -28,23 +28,42 @@ package de.pseudonymisierung.mainzelliste;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
 import de.pseudonymisierung.mainzelliste.crypto.CryptoUtil;
 import de.pseudonymisierung.mainzelliste.crypto.Encryption;
+import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
-import java.security.Key;
-import java.security.spec.InvalidKeySpecException;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
@@ -80,7 +99,7 @@ public enum Config {
 	private BlockingKeyExtractors blockingKeyExtractors;
 
 	/** The configured cryptographic key */
-	private final Map<String, Key> cryptographicKeys = new HashMap<>();
+	private final Map<String, CryptoKey> cryptographicKeys = new HashMap<>();
 
 	/** The configured encryption */
 	private final Map<String, Encryption> encryptionMap = new HashMap<>();
@@ -221,10 +240,9 @@ public enum Config {
 		// Read cryptographic key
 		getVariableSubProperties("crypto.key").forEach((v, p) -> {
 			try {
-				cryptographicKeys
-						.put(v, CryptoUtil.readKey(p.getProperty("type"),
-								readFileFromURL(p.getProperty("uri").trim())));
-			} catch (IOException | InvalidKeySpecException e) {
+				cryptographicKeys.put(v, CryptoUtil.readKey(p.getProperty("type"),
+						readFileFromURL(p.getProperty("uri").trim())));
+			} catch (IOException e) {
 				InvalidConfigurationException exception = new InvalidConfigurationException(
 						"crypto.key." + v + ".uri", p.getProperty("uri"), e);
 				logger.error(exception.getMessage(), e);
@@ -246,9 +264,8 @@ public enum Config {
 		// Read encryption
 		getVariableSubProperties("crypto.encryption").forEach((v, p) -> {
 			try {
-				encryptionMap
-						.put(v, CryptoUtil.createEncryption(p.getProperty("type"),
-								cryptographicKeys.get(p.getProperty("key"))));
+				encryptionMap.put(v, CryptoUtil.createEncryption(p.getProperty("type"),
+						cryptographicKeys.get(p.getProperty("key"))));
 			} catch (InvalidKeySpecException e) {
 				InvalidConfigurationException exception = new InvalidConfigurationException(
 						"crypto.encryption." + v + ".key", p.getProperty("key"), e);
