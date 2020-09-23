@@ -458,8 +458,9 @@ callback.allowSelfsigned = false
 # the keys can be referenced by their name in other configuration definitions
 # (@see crypto.encryption.<encryptionName>.key)
 
-# possible values : RSA_PUBLIC
+# configure the type of the encryption key (possible values : RSA_PUBLIC, TINK_KEYSET)
 # - RSA_PUBLIC : a binary encoded (DER) rsa public key.
+# - TINK_KEYSET : Tink KeySet in json format
 #crypto.key.exportIdPublicKey.type = RSA_PUBLIC
 
 # only file uri are supported
@@ -475,6 +476,9 @@ callback.allowSelfsigned = false
 # @see crypto.key.<keyName>.type and crypto.key.<keyName>.uri
 #crypto.encryption.exportIdEncryption.key = exportIdPublicKey
 
-# possible values : RSA
+# configure the type of the encryption (possible values : RSA, TINK_HYBRID)
 # - RSA : JCE encryption with ECB/OAEPWithSHA-1AndMGF1Padding
+# - TINK_HYBRID : hybrid encryption with Tink (ECIES with AEAD and HKDF). The plaintext is
+#   encrypted with a new generated symmetric key and the asymmetric public key is used to encrypt
+#   the symmetric key only. resulting ciphertext = symmetric ciphertext + encrypted symmetric key.
 #crypto.encryption.exportIdEncryption.type = RSA

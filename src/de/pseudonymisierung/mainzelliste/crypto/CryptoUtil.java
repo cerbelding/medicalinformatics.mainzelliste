@@ -25,8 +25,15 @@
  */
 package de.pseudonymisierung.mainzelliste.crypto;
 
+import com.google.crypto.tink.CleartextKeysetHandle;
+import com.google.crypto.tink.JsonKeysetReader;
+import com.google.crypto.tink.KeysetHandle;
+import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
+import de.pseudonymisierung.mainzelliste.crypto.key.JCEKey;
+import de.pseudonymisierung.mainzelliste.crypto.key.KeyType;
+import de.pseudonymisierung.mainzelliste.crypto.key.TinkKeySet;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -35,35 +42,49 @@ import java.security.spec.X509EncodedKeySpec;
 
 public class CryptoUtil {
 
-  private enum KeyType {RSA_PUBLIC}
-
-  private enum EncryptionType {RSA}
-
-  public static Encryption createEncryption(String encryptionType, Key key)
-      throws InvalidKeySpecException {
-    if (EncryptionType.valueOf(encryptionType.trim()) == EncryptionType.RSA) {
-      if (!(key instanceof PublicKey)) {
-        throw new InvalidKeySpecException("the given key "
-            + key.getClass() + " should be an instance of " + PublicKey.class.getName());
-      }
-      try {
-        return new JCEAsymmetricEncryption((PublicKey) key);
-      } catch (GeneralSecurityException e) {
-        throw new UnsupportedOperationException("can't create JCE encryption instance", e);
-      }
-    }
-    throw new IllegalArgumentException("the given type " + encryptionType + " not supported yet");
+  private CryptoUtil() {
+    throw new IllegalStateException("Utility class");
   }
 
-  public static Key readKey(String keyType, byte[] encodedKey) throws InvalidKeySpecException {
+  public static Encryption createEncryption(String encryptionType, CryptoKey wrappedKey)
+      throws InvalidKeySpecException {
+    try {
+      switch (EncryptionType.valueOf(encryptionType.trim())) {
+        case RSA:
+          PublicKey publicKey = wrappedKey.getKey(PublicKey.class);
+          return new JCEAsymmetricEncryption(publicKey);
+        case TINK_HYBRID:
+          KeysetHandle keysetHandle = wrappedKey.getKey(KeysetHandle.class);
+          return new TinkHybridEncryption(keysetHandle);
+      }
+    } catch (IllegalArgumentException e) {
+      throw new InvalidKeySpecException("The given crypto key '" +
+          wrappedKey.getKey().getClass().getSimpleName() + "' and the encryption type '" +
+          encryptionType + "' are incompatible ");
+    } catch (GeneralSecurityException e) {
+      throw new UnsupportedOperationException(
+          "can't create " + encryptionType + " encryption instance", e);
+    }
+    throw new IllegalArgumentException(
+        "the given encryption type " + encryptionType + " not supported yet");
+  }
+
+  public static CryptoKey readKey(String keyType, byte[] encodedKey) {
     if (KeyType.valueOf(keyType.trim()) == KeyType.RSA_PUBLIC) {
       try {
-        return KeyFactory.getInstance("RSA")
+        PublicKey key = KeyFactory.getInstance("RSA")
             .generatePublic(new X509EncodedKeySpec(encodedKey));
-      } catch (NoSuchAlgorithmException e) {
+        return new JCEKey(key);
+      } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+        throw new UnsupportedOperationException(e);
+      }
+    } else if (KeyType.valueOf(keyType.trim()) == KeyType.TINK_KEYSET) {
+      try {
+        return new TinkKeySet(CleartextKeysetHandle.read(JsonKeysetReader.withBytes(encodedKey)));
+      } catch (GeneralSecurityException | IOException e) {
         throw new UnsupportedOperationException(e);
       }
     }
-    throw new IllegalArgumentException("the given type " + keyType + " not supported yet");
+    throw new IllegalArgumentException("the given key type " + keyType + " not supported yet");
   }
 }

@@ -25,23 +25,17 @@
  */
 package de.pseudonymisierung.mainzelliste.crypto;
 
-import java.security.GeneralSecurityException;
-
-public interface Encryption {
+public enum EncryptionType {
+  /**
+   * JCE encryption with ECB/OAEPWithSHA-1AndMGF1Padding
+   */
+  RSA,
 
   /**
-   * return cipher text
-   *
-   * @param plaintext plain text
-   * @return cipher text
+   * Hybrid encryption with Tink (ECIES with AEAD and HKDF).
+   * The plaintext is encrypted with a new generated symmetric key and the asymmetric public key is
+   * used to encrypt the symmetric key only.
+   * ciphertext = symmetric ciphertext + encrypted symmetric key.
    */
-  byte[] encrypt(String plaintext) throws GeneralSecurityException;
-
-  /**
-   * return a URL-safe base 64 cipher text
-   *
-   * @param plaintext plain text
-   * @return resulting a URL-safe base 64 text
-   */
-  String encryptToBase64String(String plaintext) throws GeneralSecurityException;
+  TINK_HYBRID
 }

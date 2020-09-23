@@ -32,6 +32,7 @@
         <version.httpclient>4.5.11</version.httpclient>
         <version.commons.net>3.6</version.commons.net>
         <version.maven-artifact>3.6.3</version.maven-artifact>
+        <version.tink>1.4.0</version.tink>
         <version.org.testng>7.3.0</version.org.testng>
     </properties>
 
@@ -76,6 +77,14 @@
             <artifactId>log4j</artifactId>
             <version>${version.log4j}</version>
             <scope>compile</scope>
+        </dependency>
+
+        <!-- cryptography -->
+        <dependency>
+          <groupId>com.google.crypto.tink</groupId>
+          <artifactId>tink</artifactId>
+          <version>${version.tink}</version>
+          <scope>compile</scope>
         </dependency>
 
         <!-- Rest -->
@@ -124,9 +133,9 @@
 
       <!-- Test -->
         <dependency>
-        <groupId>org.testng</groupId>
-        <artifactId>testng</artifactId>
-        <version>${version.org.testng}</version>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${version.org.testng}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

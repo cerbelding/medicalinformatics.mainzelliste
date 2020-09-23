@@ -25,23 +25,15 @@
  */
 package de.pseudonymisierung.mainzelliste.crypto;
 
+import com.google.crypto.tink.KeysetHandle;
 import java.security.GeneralSecurityException;
 
-public interface Encryption {
+public abstract class AbstractTinkEncryption<P> implements Encryption {
 
-  /**
-   * return cipher text
-   *
-   * @param plaintext plain text
-   * @return cipher text
-   */
-  byte[] encrypt(String plaintext) throws GeneralSecurityException;
+  protected final P primitive;
 
-  /**
-   * return a URL-safe base 64 cipher text
-   *
-   * @param plaintext plain text
-   * @return resulting a URL-safe base 64 text
-   */
-  String encryptToBase64String(String plaintext) throws GeneralSecurityException;
+  protected AbstractTinkEncryption(KeysetHandle keysetHandle, Class<P> primitiveClass)
+      throws GeneralSecurityException {
+    this.primitive = keysetHandle.getPrimitive(primitiveClass);
+  }
 }

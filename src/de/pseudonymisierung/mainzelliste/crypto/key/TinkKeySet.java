@@ -23,25 +23,20 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.crypto;
+package de.pseudonymisierung.mainzelliste.crypto.key;
 
-import java.security.GeneralSecurityException;
+import com.google.crypto.tink.KeysetHandle;
 
-public interface Encryption {
+public class TinkKeySet implements CryptoKey {
 
-  /**
-   * return cipher text
-   *
-   * @param plaintext plain text
-   * @return cipher text
-   */
-  byte[] encrypt(String plaintext) throws GeneralSecurityException;
+  private final KeysetHandle keysetHandle;
 
-  /**
-   * return a URL-safe base 64 cipher text
-   *
-   * @param plaintext plain text
-   * @return resulting a URL-safe base 64 text
-   */
-  String encryptToBase64String(String plaintext) throws GeneralSecurityException;
+  public TinkKeySet(KeysetHandle keysetHandle) {
+    this.keysetHandle = keysetHandle;
+  }
+
+  @Override
+  public KeysetHandle getKey() {
+    return keysetHandle;
+  }
 }

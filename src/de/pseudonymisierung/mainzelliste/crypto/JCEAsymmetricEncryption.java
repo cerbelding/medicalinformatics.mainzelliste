@@ -30,11 +30,8 @@ import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import javax.crypto.Cipher;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.log4j.Logger;
 
 public class JCEAsymmetricEncryption implements Encryption {
-
-  private final Logger logger = Logger.getLogger(JCEAsymmetricEncryption.class);
 
   private final Cipher cipher;
 
@@ -43,20 +40,13 @@ public class JCEAsymmetricEncryption implements Encryption {
     cipher.init(Cipher.ENCRYPT_MODE, publicKey);
   }
 
-  /**
-   * return base 64 cipher text
-   *
-   * @param input plain text
-   * @return resulting base 64 text
-   */
   @Override
-  public String encrypt(String input) throws GeneralSecurityException {
-    try {
-      byte[] cipherData = cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
-      return Base64.encodeBase64URLSafeString(cipherData);
-    } catch (GeneralSecurityException e) {
-      logger.error("encryption with public rsa key failed", e);
-      throw e;
-    }
+  public byte[] encrypt(String plaintext) throws GeneralSecurityException {
+    return cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+  }
+
+  @Override
+  public String encryptToBase64String(String plaintext) throws GeneralSecurityException {
+    return Base64.encodeBase64URLSafeString(encrypt(plaintext));
   }
 }

@@ -23,25 +23,18 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.crypto;
+package de.pseudonymisierung.mainzelliste.crypto.key;
 
-import java.security.GeneralSecurityException;
+public interface CryptoKey {
 
-public interface Encryption {
+  Object getKey();
 
-  /**
-   * return cipher text
-   *
-   * @param plaintext plain text
-   * @return cipher text
-   */
-  byte[] encrypt(String plaintext) throws GeneralSecurityException;
-
-  /**
-   * return a URL-safe base 64 cipher text
-   *
-   * @param plaintext plain text
-   * @return resulting a URL-safe base 64 text
-   */
-  String encryptToBase64String(String plaintext) throws GeneralSecurityException;
+  default <K> K getKey(Class<K> keyClass) {
+    try {
+      return keyClass.cast(getKey());
+    } catch (ClassCastException e) {
+      throw new IllegalArgumentException(
+          "the given key class " + keyClass + " should be an instance of " + keyClass.getName());
+    }
+  }
 }

@@ -23,25 +23,16 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.crypto;
+package de.pseudonymisierung.mainzelliste.crypto.key;
 
-import java.security.GeneralSecurityException;
-
-public interface Encryption {
+public enum KeyType {
+  /**
+   * A binary encoded (DER) rsa public key.
+   */
+  RSA_PUBLIC,
 
   /**
-   * return cipher text
-   *
-   * @param plaintext plain text
-   * @return cipher text
+   * Tink KeySet in json format
    */
-  byte[] encrypt(String plaintext) throws GeneralSecurityException;
-
-  /**
-   * return a URL-safe base 64 cipher text
-   *
-   * @param plaintext plain text
-   * @return resulting a URL-safe base 64 text
-   */
-  String encryptToBase64String(String plaintext) throws GeneralSecurityException;
+  TINK_KEYSET
 }
