@@ -25,8 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.io.File;
-import java.io.IOException;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
@@ -41,13 +40,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy;
 import org.apache.logging.log4j.core.appender.rolling.TimeBasedTriggeringPolicy;
-import org.apache.logging.log4j.core.appender.rolling.TriggeringPolicy;
 import org.apache.logging.log4j.core.config.*;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-
-
 
 /**
  * Context listener.
@@ -147,7 +142,7 @@ public class Initializer implements ServletContextListener {
 			logger.info(fileDir+ "," + fileName);
 			LoggerContext lc = (LoggerContext) LogManager.getContext(false);
 			Configuration config  = lc.getConfiguration();
-			PatternLayout patternLayout = PatternLayout.newBuilder().withPattern("%d %p %t %c - %m%n").build();
+			PatternLayout patternLayout = PatternLayout.newBuilder().withPattern("%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n").build();
 			TimeBasedTriggeringPolicy timebasedPoolicy =  TimeBasedTriggeringPolicy.newBuilder().build();
 
 			RollingFileAppender rollingFileAppender = RollingFileAppender.newBuilder().withFileName(logFileName)
