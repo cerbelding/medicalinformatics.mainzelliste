@@ -38,7 +38,11 @@ public class DeleteTokenFilter implements ContainerResponseFilter {
         switch (request.getMethod().toUpperCase()){
             case "GET":
             case "PUT":
-                return requestPath.split("/tokenId/")[1];
+                if(requestPath.contains("/tokenId/")) {
+                    return requestPath.split("/tokenId/")[1];
+                } else {
+                    return request.getQueryParameters().getFirst("tokenId");
+                }
             case "POST":
                 if(requestPath.contains("checkMatch"))
                     return requestPath.split("checkMatch/")[1];
