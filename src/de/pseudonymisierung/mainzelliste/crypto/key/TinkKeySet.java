@@ -25,14 +25,22 @@
  */
 package de.pseudonymisierung.mainzelliste.crypto.key;
 
+import com.google.crypto.tink.CleartextKeysetHandle;
+import com.google.crypto.tink.JsonKeysetReader;
 import com.google.crypto.tink.KeysetHandle;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 public class TinkKeySet implements CryptoKey {
 
   private final KeysetHandle keysetHandle;
 
-  public TinkKeySet(KeysetHandle keysetHandle) {
-    this.keysetHandle = keysetHandle;
+  public TinkKeySet(byte[] encodedKey) {
+    try {
+      this.keysetHandle = CleartextKeysetHandle.read(JsonKeysetReader.withBytes(encodedKey));
+    } catch (GeneralSecurityException | IOException e) {
+      throw new UnsupportedOperationException(e);
+    }
   }
 
   @Override

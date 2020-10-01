@@ -25,20 +25,13 @@
  */
 package de.pseudonymisierung.mainzelliste.crypto;
 
-import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.JsonKeysetReader;
 import com.google.crypto.tink.KeysetHandle;
 import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
 import de.pseudonymisierung.mainzelliste.crypto.key.JCEKey;
 import de.pseudonymisierung.mainzelliste.crypto.key.KeyType;
 import de.pseudonymisierung.mainzelliste.crypto.key.TinkKeySet;
-import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 
 public class CryptoUtil {
 
@@ -51,11 +44,9 @@ public class CryptoUtil {
     try {
       switch (EncryptionType.valueOf(encryptionType.trim())) {
         case RSA:
-          PublicKey publicKey = wrappedKey.getKey(PublicKey.class);
-          return new JCEAsymmetricEncryption(publicKey);
+          return new JCEAsymmetricEncryption(wrappedKey);
         case TINK_HYBRID:
-          KeysetHandle keysetHandle = wrappedKey.getKey(KeysetHandle.class);
-          return new TinkHybridEncryption(keysetHandle);
+          return new TinkHybridEncryption(wrappedKey.getKey(KeysetHandle.class));
       }
     } catch (IllegalArgumentException e) {
       throw new InvalidKeySpecException("The given crypto key '" +
@@ -71,19 +62,9 @@ public class CryptoUtil {
 
   public static CryptoKey readKey(String keyType, byte[] encodedKey) {
     if (KeyType.valueOf(keyType.trim()) == KeyType.RSA_PUBLIC) {
-      try {
-        PublicKey key = KeyFactory.getInstance("RSA")
-            .generatePublic(new X509EncodedKeySpec(encodedKey));
-        return new JCEKey(key);
-      } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-        throw new UnsupportedOperationException(e);
-      }
+      return new JCEKey(encodedKey);
     } else if (KeyType.valueOf(keyType.trim()) == KeyType.TINK_KEYSET) {
-      try {
-        return new TinkKeySet(CleartextKeysetHandle.read(JsonKeysetReader.withBytes(encodedKey)));
-      } catch (GeneralSecurityException | IOException e) {
-        throw new UnsupportedOperationException(e);
-      }
+      return new TinkKeySet(encodedKey);
     }
     throw new IllegalArgumentException("the given key type " + keyType + " not supported yet");
   }

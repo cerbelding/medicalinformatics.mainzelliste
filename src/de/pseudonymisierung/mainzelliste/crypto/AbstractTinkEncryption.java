@@ -26,11 +26,17 @@
 package de.pseudonymisierung.mainzelliste.crypto;
 
 import com.google.crypto.tink.KeysetHandle;
+import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
 import java.security.GeneralSecurityException;
 
 public abstract class AbstractTinkEncryption<P> implements Encryption {
 
   protected final P primitive;
+
+  protected AbstractTinkEncryption(CryptoKey key, Class<P> primitiveClass)
+      throws GeneralSecurityException {
+    this(key.getKey(KeysetHandle.class), primitiveClass);
+  }
 
   protected AbstractTinkEncryption(KeysetHandle keysetHandle, Class<P> primitiveClass)
       throws GeneralSecurityException {
