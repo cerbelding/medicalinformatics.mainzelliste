@@ -28,6 +28,7 @@ package de.pseudonymisierung.mainzelliste.crypto;
 import com.google.crypto.tink.HybridEncrypt;
 import com.google.crypto.tink.KeysetHandle;
 import com.google.crypto.tink.hybrid.HybridConfig;
+import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -48,7 +49,12 @@ public class TinkHybridEncryption extends AbstractTinkEncryption<HybridEncrypt> 
     }
   }
 
-  protected TinkHybridEncryption(KeysetHandle keysetHandle)
+  public TinkHybridEncryption(CryptoKey key)
+      throws GeneralSecurityException {
+    super(key, HybridEncrypt.class);
+  }
+
+  public TinkHybridEncryption(KeysetHandle keysetHandle)
       throws GeneralSecurityException {
     super(keysetHandle, HybridEncrypt.class);
   }

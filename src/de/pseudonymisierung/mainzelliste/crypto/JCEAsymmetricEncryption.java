@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste.crypto;
 
+import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
@@ -34,6 +35,10 @@ import org.apache.commons.codec.binary.Base64;
 public class JCEAsymmetricEncryption implements Encryption {
 
   private final Cipher cipher;
+
+  public JCEAsymmetricEncryption(CryptoKey key) throws GeneralSecurityException {
+    this(key.getKey(PublicKey.class));
+  }
 
   public JCEAsymmetricEncryption(PublicKey publicKey) throws GeneralSecurityException {
     cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");

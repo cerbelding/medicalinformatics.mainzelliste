@@ -26,13 +26,22 @@
 package de.pseudonymisierung.mainzelliste.crypto.key;
 
 import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 
 public class JCEKey implements CryptoKey {
 
   private final Key key;
 
-  public JCEKey(Key key) {
-    this.key = key;
+  public JCEKey(byte[] encodedKey) {
+    try {
+      this.key = KeyFactory.getInstance("RSA")
+          .generatePublic(new X509EncodedKeySpec(encodedKey));
+    } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+      throw new UnsupportedOperationException(e);
+    }
   }
 
   @Override
