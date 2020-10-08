@@ -25,37 +25,29 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.logging.Level;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-
-
-
 import com.sun.jersey.spi.container.servlet.WebComponent;
-
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.ConsoleAppender;
-import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.appender.RollingFileAppender;
+import org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy;
+import org.apache.logging.log4j.core.appender.rolling.TimeBasedTriggeringPolicy;
+import org.apache.logging.log4j.core.appender.rolling.TriggeringPolicy;
 import org.apache.logging.log4j.core.config.*;
-import org.apache.logging.log4j.core.config.builder.api.*;
-import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
-import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
-import org.apache.logging.log4j.core.config.plugins.PluginConfiguration;
-import org.apache.logging.log4j.core.config.plugins.PluginElement;
-import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import sun.rmi.runtime.Log;
+
+
 
 /**
  * Context listener.
@@ -149,13 +141,24 @@ public class Initializer implements ServletContextListener {
 		if (logFileName == null) {
 			logger.info("Using default logging output.");
 		} else {
+			Path filePath = Paths.get(logFileName);
+			String fileDir = filePath.getParent().toString();
+			String fileName = filePath.getFileName().toString();
+			logger.info(fileDir+ "," + fileName);
 			LoggerContext lc = (LoggerContext) LogManager.getContext(false);
 			Configuration config  = lc.getConfiguration();
 			PatternLayout patternLayout = PatternLayout.newBuilder().withPattern("%d %p %t %c - %m%n").build();
-			FileAppender fa = FileAppender.newBuilder().setName("MainzellisteFileAppender").withAppend(false).withFileName(logFileName)
+			TimeBasedTriggeringPolicy timebasedPoolicy =  TimeBasedTriggeringPolicy.newBuilder().build();
+
+			RollingFileAppender rollingFileAppender = RollingFileAppender.newBuilder().withFileName(logFileName)
+					.withFilePattern(fileDir+ "/%d{yyyy-MM}/%d{yyyy-MM-dd}-"+fileName)
+					.setName("MainzellisteFileAppender")
 					.setLayout(patternLayout)
-					.setConfiguration(lc.getConfiguration()).build();
-			fa.start();
+					.setConfiguration(config)
+					.withPolicy(timebasedPoolicy)
+					.build();
+
+			rollingFileAppender.start();
 
 			if (!Config.instance.debugIsOn()) {
 				logger.warn("Redirecting mainzelliste log to " + logFileName + ".");
@@ -163,11 +166,12 @@ public class Initializer implements ServletContextListener {
 						.forEach((appenderKey, appenderValue) -> loggerValue.removeAppender(appenderValue.getName())));
 
 			}
-			lc.getConfiguration().addAppender(fa);
-			lc.getRootLogger().addAppender(lc.getConfiguration().getAppender(fa.getName()));
+			lc.getConfiguration().addAppender(rollingFileAppender);
+			lc.getRootLogger().addAppender(lc.getConfiguration().getAppender(rollingFileAppender.getName()));
 			lc.updateLoggers();
 			logger.info("Logger setup to log on level "
 					+ Config.instance.getLogLevel() + " to " + logFileName);
+
 		}
 	}
 
