@@ -1,32 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="debug" strict="true" name="XMLConfigTest"
-               packages="org.apache.logging.log4j.test">
+<Configuration status="trace" monitorInterval="30">
   <Properties>
-    <Property name="filename">logs/mainzelliste.log</Property>
+    <Property name="logDirTomcat">logs/</Property>
+    <Property name="fileBaseName">mainzelliste</Property>
+    <Property name="fileNameSuffix">.log</Property>
   </Properties>
   <Appenders>
-    <Appender type="Console" name="Console">
-      <Layout type="PatternLayout" pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
-    </Appender>
-    <Appender type="File" name="File" fileName="${filename}">
-      <Layout type="PatternLayout" pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
-    </Appender>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
+    </Console>
+    <RollingFile name="RollingFileTomcat" fileName="${logDirTomcat}${fileBaseName}${fileNameSuffix}"
+                 filePattern="${logDir}$${date:yyyy-MM}/${fileBaseName}-%d{yyyy-MM-dd}-%i${fileNameSuffix}">
+      <PatternLayout>
+        <Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</Pattern>
+      </PatternLayout>
+      <Policies>
+        <TimeBasedTriggeringPolicy/>
+      </Policies>
+    </RollingFile>
   </Appenders>
-  <Logger name="de.pseudonymisierung.mainzelliste" level="error" additivity="false">
-    <AppenderRef ref="File"/>
-  </Logger>
-  <Logger name="de.pseudonymisierung.mainzelliste" level="warn" additivity="false">
-    <AppenderRef ref="File"/>
-  </Logger>
   <Loggers>
-    <Logger name="de.pseudonymisierung.mainzelliste" level="debug" additivity="false">
+  <Root level="debug">
+    <AppenderRef ref="Console"/>
+    <AppenderRef ref="RollingFileTomcat"/>
+  </Root>
+    <Logger name="FATAL">
       <AppenderRef ref="Console"/>
     </Logger>
-    <Logger name="de.pseudonymisierung.mainzelliste" level="info" additivity="false">
-      <AppenderRef ref="File"/>
-    </Logger>
-
-
   </Loggers>
-
 </Configuration>
