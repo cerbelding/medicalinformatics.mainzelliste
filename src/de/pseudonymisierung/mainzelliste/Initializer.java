@@ -33,13 +33,13 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
+
 
 import com.sun.jersey.spi.container.servlet.WebComponent;
 
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Context listener.
@@ -79,7 +79,7 @@ public class Initializer implements ServletContextListener {
 	 */
 	@SuppressWarnings("unused")
 	private void initialize() {
-		Logger logger = Logger.getLogger(Initializer.class);
+		Logger logger = LogManager.getLogger(Initializer.class);
 		logger.info("#####Initializing...");
 
 		// Output effective config to logfile.
@@ -113,7 +113,7 @@ public class Initializer implements ServletContextListener {
 	 * automatically leading to memory leaks on context shutdowns.
 	 */
 	private void shutdown() {
-		Logger logger = Logger.getLogger(Initializer.class);
+		Logger logger = LogManager.getLogger(Initializer.class);
 		logger.info("#####Shutting down...");
 
 		// sut down persistor

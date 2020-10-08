@@ -36,8 +36,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import org.apache.log4j.Logger;
 
 /**
  * Adds header "Access-Control-Allow-Origin" for Cross-origin resource sharing
@@ -51,7 +52,7 @@ import org.apache.log4j.Logger;
 public class CorsResponseFilter implements Filter {
 
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Not used in this implementation.

@@ -42,9 +42,11 @@ package de.pseudonymisierung.mainzelliste;
 import java.util.Properties;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+
 
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Here go all the mathematics involved in generating, checking and correcting
@@ -101,7 +103,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	static char sigma[] = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
 
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Empty constructor. Needed by IDGeneratorFactory in order to instantiate

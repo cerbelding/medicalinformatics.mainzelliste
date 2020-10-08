@@ -35,7 +35,7 @@ import javax.persistence.*;
 
 import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.exceptions.IllegalUsedCharacterException;
-import org.apache.log4j.Logger;
+
 
 
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
@@ -44,6 +44,8 @@ import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Driver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -60,7 +62,7 @@ public enum Persistor {
 	private EntityManager em;
 	
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 	
 	/** String with which database identifers are quoted. */
 	private String identifierQuoteString = null;
@@ -110,7 +112,7 @@ public enum Persistor {
 		// Check database connection
 		getPatients();
 		
-		Logger.getLogger(Persistor.class).info("Persistence has initialized successfully.");
+		LogManager.getLogger(Persistor.class).info("Persistence has initialized successfully.");
 	}
 
 	/**
