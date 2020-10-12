@@ -29,12 +29,14 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.log4j.Logger;
+
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -60,7 +62,7 @@ public enum PatientBackend {
 	instance;
 
 	/** The logging instance */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/** The TLS context depending on the configuration parameters */
 	private SSLConnectionSocketFactory sslsf;
@@ -86,11 +88,11 @@ public enum PatientBackend {
 					SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 
 		} catch (NoSuchAlgorithmException ex) {
-			Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+			LogManager.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
 		} catch (KeyStoreException ex) {
-			Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+			LogManager.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
 		} catch (KeyManagementException ex) {
-			Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+			LogManager.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
 		}
 	}
 

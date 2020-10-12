@@ -45,10 +45,12 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.commons.net.util.SubnetUtils;
-import org.apache.log4j.Logger;
+
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.openjpa.lib.log.Log;
 
 /**
@@ -97,7 +99,7 @@ public enum Servers {
 	private final Timer sessionsCleanupTimer;
 
 	/** The loggging instance. */
-	Logger logger = Logger.getLogger(Servers.class);
+	Logger logger = LogManager.getLogger(Servers.class);
 
 	/**
 	 * Creates the singleton instance. Reads configuration properties and

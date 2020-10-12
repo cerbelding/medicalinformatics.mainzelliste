@@ -25,21 +25,24 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.io.IOException;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.logging.Level;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
 import com.sun.jersey.spi.container.servlet.WebComponent;
-
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.RollingFileAppender;
+import org.apache.logging.log4j.core.appender.rolling.TimeBasedTriggeringPolicy;
+import org.apache.logging.log4j.core.config.*;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 
 /**
  * Context listener.
@@ -79,7 +82,7 @@ public class Initializer implements ServletContextListener {
 	 */
 	@SuppressWarnings("unused")
 	private void initialize() {
-		Logger logger = Logger.getLogger(Initializer.class);
+		Logger logger = LogManager.getLogger(Initializer.class);
 		logger.info("#####Initializing...");
 
 		// Output effective config to logfile.
@@ -91,7 +94,7 @@ public class Initializer implements ServletContextListener {
 		}
 
 		Config c = Config.instance;
-		log4jSetup();
+		log4j2Setup();
 		Persistor p = Persistor.instance;
 		IDGeneratorFactory idgf = IDGeneratorFactory.instance;
 		Servers s = Servers.instance;
@@ -109,49 +112,12 @@ public class Initializer implements ServletContextListener {
 	}
 
 	/**
-	 * Initializes logging. If a log file is configured, all logging is redirected to the file.
-	 * Otherwise, logging goes to console.
-	 */
-	private void log4jSetup() {
-		Logger root = Logger.getRootLogger();
-		root.setLevel(Config.instance.getLogLevel());
-		String logFileName = Config.instance.getProperty("log.filename");
-		if (logFileName == null) {
-			root.info("Using default logging output.");
-		} else {
-			PatternLayout layout = new PatternLayout("%d %p %t %c - %m%n");
-			try {
-				FileAppender app;
-				app = new FileAppender(layout, logFileName);
-				app.setName("MainzellisteFileAppender");
-
-				// In production mode, avoid spamming the servlet container's
-				// logfile.
-				if (!Config.instance.debugIsOn()) {
-					root.warn("Redirecting mainzelliste log to " + logFileName
-							+ ".");
-					root.removeAllAppenders();
-				}
-
-				root.addAppender(app);
-				root.info("Logger setup to log on level "
-						+ Config.instance.getLogLevel() + " to " + logFileName);
-			} catch (IOException e) {
-				root.fatal("Unable to log to " + logFileName + ": "
-						+ e.getMessage());
-				return;
-			}
-		}
-		root.info("#####BEGIN Mainzelliste LOG SESSION");
-	}
-
-	/**
 	 * Shutdown method. Gets called when this web application is about to shutdown. It calls the showdown methods of the
 	 * Persistor- and the Server-class. This is mainly used to release resources that would not be released
 	 * automatically leading to memory leaks on context shutdowns.
 	 */
 	private void shutdown() {
-		Logger logger = Logger.getLogger(Initializer.class);
+		Logger logger = LogManager.getLogger(Initializer.class);
 		logger.info("#####Shutting down...");
 
 		// sut down persistor
@@ -162,6 +128,48 @@ public class Initializer implements ServletContextListener {
 
 		logger.info("#####Shut down complete.");
 	}
+
+
+	private void log4j2Setup () {
+		Logger logger = LogManager.getLogger(Initializer.class);
+		String logFileName = Config.instance.getProperty("log.filename");
+		if (logFileName == null) {
+			logger.info("Using default logging output.");
+		} else {
+			Path filePath = Paths.get(logFileName);
+			String fileDir = filePath.getParent().toString();
+			String fileName = filePath.getFileName().toString();
+			logger.info(fileDir+ "," + fileName);
+			LoggerContext lc = (LoggerContext) LogManager.getContext(false);
+			Configuration config  = lc.getConfiguration();
+			PatternLayout patternLayout = PatternLayout.newBuilder().withPattern("%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n").build();
+			TimeBasedTriggeringPolicy timebasedPolicy =  TimeBasedTriggeringPolicy.newBuilder().build();
+
+			RollingFileAppender rollingFileAppender = RollingFileAppender.newBuilder().withFileName(logFileName)
+					.withFilePattern(fileDir+ "/%d{yyyy-MM}/%d{yyyy-MM-dd}-"+fileName)
+					.setName("MainzellisteFileAppender")
+					.setLayout(patternLayout)
+					.setConfiguration(config)
+					.withPolicy(timebasedPolicy)
+					.build();
+
+			rollingFileAppender.start();
+
+			if (!Config.instance.debugIsOn()) {
+				logger.warn("Redirecting mainzelliste log to " + logFileName + ".");
+				config.getLoggers().forEach((loggerKey, loggerValue) -> loggerValue.getAppenders()
+						.forEach((appenderKey, appenderValue) -> loggerValue.removeAppender(appenderValue.getName())));
+
+			}
+			lc.getConfiguration().addAppender(rollingFileAppender);
+			lc.getRootLogger().addAppender(lc.getConfiguration().getAppender(rollingFileAppender.getName()));
+			lc.updateLoggers();
+			logger.info("Logger setup to log on level "
+					+ Config.instance.getLogLevel() + " to " + logFileName);
+
+		}
+	}
+
 
 	/**
 	 * Gets the injected ServletContext.

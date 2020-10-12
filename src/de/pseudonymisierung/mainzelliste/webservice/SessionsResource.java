@@ -47,7 +47,9 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -72,7 +74,7 @@ import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 public class SessionsResource {
 
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Create a new session.
