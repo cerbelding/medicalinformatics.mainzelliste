@@ -33,11 +33,12 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class TinkHybridEncryption extends AbstractTinkEncryption<HybridEncrypt> {
 
-  private static final Logger logger = Logger.getLogger(TinkHybridEncryption.class);
+  private static final Logger logger = LogManager.getLogger(TinkHybridEncryption.class);
 
   static {
     try {
