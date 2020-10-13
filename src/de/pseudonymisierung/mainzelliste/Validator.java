@@ -40,11 +40,13 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import javax.ws.rs.core.MultivaluedMap;
-import org.apache.log4j.Logger;
+
 
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.ValidatorException;
 import java.text.ParsePosition;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Form validation. Validation checks are stored in a Properties object passed
@@ -74,7 +76,7 @@ public enum Validator {
 	/** For every entry in {@link #formats}, the date format string. */
 	private List<String> dateFormat = new LinkedList<String>();
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Initalize the singleton. Reads validation properties from the

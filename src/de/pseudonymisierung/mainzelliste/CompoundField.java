@@ -35,7 +35,8 @@ import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -140,7 +141,7 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 				this.value.add(thisField);
 			}
 		} catch (Exception e) {
-			Logger.getLogger(this.getClass()).error("Exception:", e);
+			LogManager.getLogger(this.getClass()).error("Exception:", e);
 			throw new InternalErrorException();
 		}
 	}

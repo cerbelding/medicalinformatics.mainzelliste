@@ -56,8 +56,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
@@ -93,7 +95,7 @@ public enum Config {
 	private BlockingKeyExtractors blockingKeyExtractors;
 
 	/** Logging instance */
-	private Logger logger = Logger.getLogger(Config.class);
+	private Logger logger = LogManager.getLogger(Config.class);
 
 	/** Allowed origins for Cross Domain Resource Sharing. */
 	private Set<String> allowedOrigins;

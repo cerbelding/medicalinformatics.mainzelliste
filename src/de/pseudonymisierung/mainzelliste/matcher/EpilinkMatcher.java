@@ -40,7 +40,7 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import org.apache.log4j.Logger;
+
 
 
 import de.pseudonymisierung.mainzelliste.Field;
@@ -48,6 +48,8 @@ import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.Validator;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Performs record linkage by using the algorithm of Epilink et al. This is a
@@ -123,7 +125,7 @@ public class EpilinkMatcher implements Matcher {
 	private Set<String> nonExchangeFields;
 
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
+	private Logger logger = LogManager.getLogger(EpilinkMatcher.class);
 
 	@Override
 	public void initialize(Properties props) throws InternalErrorException

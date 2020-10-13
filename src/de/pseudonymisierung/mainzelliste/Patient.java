@@ -40,7 +40,8 @@ import javax.persistence.PostLoad;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -74,11 +75,11 @@ public class Patient {
 			}
 			return fieldsJson.toString();
 		} catch (JSONException e) {
-			Logger.getLogger(Patient.class).error("Exception: ", e);
+			LogManager.getLogger(Patient.class).error("Exception: ", e);
 			throw new InternalErrorException();
 		}
 	}
-	
+
 
 	/**
 	 * Creates a map of fields from its JSON representation. Used to read
@@ -112,10 +113,10 @@ public class Patient {
 							+ e.getMessage(), e);
 			throw new InternalErrorException();
 		} catch (Exception e) {
-			Logger logger = Logger.getLogger(Patient.class);
+			Logger logger = LogManager.getLogger(Patient.class);
 			logger.error("Exception while parsing patient fields from string: "
 					+ fieldsJsonString);
-			Logger.getLogger(Patient.class)
+			LogManager.getLogger(Patient.class)
 					.error("Cause: " + e.getMessage(), e);
 			throw new InternalErrorException();
 		}
@@ -234,7 +235,7 @@ public class Patient {
 	/** The logging instance. */
 	@Transient
 	@JsonIgnore
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * The patient of which this patient is a duplicate of. If p.original is not

@@ -48,7 +48,7 @@ import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+
 
 import com.sun.jersey.api.view.Viewable;
 
@@ -67,6 +67,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * HTML pages (rendered via JSP) to be accessed by a human user
@@ -77,7 +79,7 @@ import java.util.List;
 public class HTMLResource {
 
 	/** The logging instance. */
-	Logger logger = Logger.getLogger(HTMLResource.class);
+	Logger logger = LogManager.getLogger(HTMLResource.class);
 
 	/**
 	 * Get the form for entering a new patient.

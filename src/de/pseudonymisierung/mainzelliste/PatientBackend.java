@@ -13,6 +13,7 @@ import de.pseudonymisierung.mainzelliste.matcher.NullMatcher;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import javax.ws.rs.WebApplicationException;
@@ -36,7 +37,7 @@ public enum PatientBackend {
 	instance;
 
 	/** The logging instance */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/** The TLS context depending on the configuration parameters */
 	private SSLConnectionSocketFactory sslsf;
