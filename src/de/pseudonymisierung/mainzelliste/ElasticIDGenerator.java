@@ -42,13 +42,15 @@ package de.pseudonymisierung.mainzelliste;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
+
 import java.util.Arrays;
 import java.util.List;
-import org.apache.log4j.Logger;
 
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This generator creates IDs from a vocabulary that can be set with cofnig
@@ -78,7 +80,7 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	private char vocabulary[] = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
 
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Empty constructor. Needed by IDGeneratorFactory in order to instantiate

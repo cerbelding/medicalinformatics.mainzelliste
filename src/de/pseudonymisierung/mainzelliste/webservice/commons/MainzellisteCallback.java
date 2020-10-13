@@ -16,7 +16,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -39,7 +40,7 @@ public class MainzellisteCallback {
     /**
      * The logging instance
      */
-    private Logger logger = Logger.getLogger(this.getClass());
+    private Logger logger = LogManager.getLogger(this.getClass());
 
     /**
      * The TLS context depending on the configuration parameters
@@ -95,7 +96,7 @@ public class MainzellisteCallback {
                     SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
-            Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+            LogManager.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
         }
     }
 

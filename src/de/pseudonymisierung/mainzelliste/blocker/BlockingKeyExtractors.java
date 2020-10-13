@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Wrapper for all used {@link BlockingKeyExtractor}s.
@@ -26,7 +27,7 @@ public class BlockingKeyExtractors {
 	private List<BlockingKeyExtractor> blockingKeyExtractors;
 
 	/** The logging instance */
-	static Logger logger = Logger.getLogger(BlockingKeyExtractors.class);
+	static Logger logger = LogManager.getLogger(BlockingKeyExtractors.class);
 
 	/**
 	 * Initialize from the configuration properties

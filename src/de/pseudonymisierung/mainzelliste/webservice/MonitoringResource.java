@@ -30,7 +30,6 @@ import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.ValidatorException;
 import de.pseudonymisierung.mainzelliste.service.MonitoringService;
-import org.apache.log4j.Logger;
 
 import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;

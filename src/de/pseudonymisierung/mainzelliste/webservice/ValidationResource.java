@@ -2,17 +2,18 @@ package de.pseudonymisierung.mainzelliste.webservice;
 
 import de.pseudonymisierung.mainzelliste.Servers;
 import org.apache.http.HttpStatus;
-import org.apache.log4j.Logger;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @Path("/validate")
 public class ValidationResource {
 
-    private static Logger logger = Logger.getLogger(ValidationResource.class);
+    private static Logger logger = LogManager.getLogger(ValidationResource.class);
 
     @GET
     @Path("/token")

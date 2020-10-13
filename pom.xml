@@ -23,7 +23,7 @@
 
         <version.servlet>4.0.1</version.servlet>
         <version.commons.codec>1.14</version.commons.codec>
-        <version.log4j>1.2.17</version.log4j>
+        <version.log4j>2.13.3</version.log4j>
         <version.jersey>1.19.4</version.jersey>
         <version.openjpa>2.4.3</version.openjpa>
         <version.commons-dbcp>1.4</version.commons-dbcp>
@@ -72,12 +72,24 @@
         </dependency>
 
         <!-- Logging -->
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>${version.log4j}</version>
-            <scope>compile</scope>
-        </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${version.log4j}</version>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>${version.log4j}</version>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-web</artifactId>
+        <version>${version.log4j}</version>
+        <scope>compile</scope>
+      </dependency>
 
         <!-- cryptography -->
         <dependency>

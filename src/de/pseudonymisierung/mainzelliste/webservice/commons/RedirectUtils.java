@@ -1,16 +1,16 @@
 package de.pseudonymisierung.mainzelliste.webservice.commons;
 
 import de.pseudonymisierung.mainzelliste.webservice.Token;
-import org.apache.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class RedirectUtils {
 
 
-    private static Logger logger = Logger.getLogger(RedirectUtils.class);
+    private static Logger logger = LogManager.getLogger(RedirectUtils.class);
 
     public static List<String> getRequestedIDsTypeFromToken(Token token) {
         logger.info("getRequestedIDsTypeFromToken");

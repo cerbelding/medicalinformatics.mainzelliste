@@ -49,7 +49,8 @@ import de.pseudonymisierung.mainzelliste.webservice.commons.RedirectUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -73,7 +74,7 @@ public class PatientsResource {
     /**
      * The logging instance.
      */
-    private Logger logger = Logger.getLogger(PatientsResource.class);
+    private Logger logger = LogManager.getLogger(PatientsResource.class);
 
     /**
      * Get a list of patients.
