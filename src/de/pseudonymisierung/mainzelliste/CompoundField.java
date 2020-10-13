@@ -170,7 +170,7 @@ public class CompoundField<T extends Field<?>> extends Field<List<T>> {
 				this.value.add(thisField);
 			}
 		} catch (Exception e) {
-			Logger.getLogger(this.getClass()).error("Exception:", e);
+			LogManager.getLogger(this.getClass()).error("Exception:", e);
 			throw new InternalErrorException();
 		}
 	}

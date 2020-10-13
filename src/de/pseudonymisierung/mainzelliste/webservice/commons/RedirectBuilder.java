@@ -4,19 +4,19 @@ import com.sun.jersey.api.uri.UriTemplate;
 import de.pseudonymisierung.mainzelliste.IDRequest;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import org.apache.log4j.Logger;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 public class RedirectBuilder {
 
-    private Logger logger = Logger.getLogger(RedirectBuilder.class);
+    private Logger logger = LogManager.getLogger(RedirectBuilder.class);
 
     private Map<String, String> tokenId;
     private Map<String, String> mappedIdTypesdAndIds;

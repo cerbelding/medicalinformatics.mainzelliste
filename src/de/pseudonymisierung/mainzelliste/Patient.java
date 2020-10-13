@@ -108,7 +108,7 @@ public class Patient {
 			}
 			return fields;
 		} catch (JSONException e) {
-			Logger.getLogger(Patient.class).error(
+			LogManager.getLogger(Patient.class).error(
 					"JSON error while parsing patient fields: "
 							+ e.getMessage(), e);
 			throw new InternalErrorException();

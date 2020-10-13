@@ -32,7 +32,6 @@ import de.pseudonymisierung.mainzelliste.exceptions.IllegalUsedCharacterExceptio
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
-import org.apache.log4j.Logger;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import javax.persistence.*;

@@ -1,18 +1,17 @@
 package de.pseudonymisierung.mainzelliste.webservice.commons;
 
-import com.sun.jersey.api.uri.UriTemplate;
-import org.apache.log4j.Logger;
 import com.sun.jersey.api.uri.UriComponent;
-
-
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import com.sun.jersey.api.uri.UriTemplate;
 import java.net.URI;
 import java.util.Map;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Redirect {
 
-    private Logger logger = Logger.getLogger(Redirect.class);
+    private Logger logger = LogManager.getLogger(Redirect.class);
 
 
     private Map<String, String> tokenId;

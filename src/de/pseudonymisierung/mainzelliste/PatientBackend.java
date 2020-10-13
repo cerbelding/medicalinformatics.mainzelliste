@@ -13,8 +13,6 @@ import de.pseudonymisierung.mainzelliste.matcher.NullMatcher;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
@@ -25,6 +23,8 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 /**

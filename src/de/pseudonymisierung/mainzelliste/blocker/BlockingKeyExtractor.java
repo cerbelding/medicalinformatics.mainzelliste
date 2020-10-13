@@ -7,8 +7,6 @@ import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.matcher.EpilinkMatcher;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
-import org.apache.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,6 +19,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A BlockingKeyExtractor generates one or more {@link BlockingKey}s from fields of a {@link Patient}
@@ -59,7 +59,7 @@ public abstract class BlockingKeyExtractor {
 	/**
 	 * Logger instance
 	 */
-	protected Logger logger = Logger.getLogger(this.getClass());
+	protected Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Construct a blockingkey extractor
