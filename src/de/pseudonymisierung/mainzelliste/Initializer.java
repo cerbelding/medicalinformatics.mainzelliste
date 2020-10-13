@@ -142,7 +142,7 @@ public class Initializer implements ServletContextListener {
 			logger.info(fileDir+ "," + fileName);
 			LoggerContext lc = (LoggerContext) LogManager.getContext(false);
 			Configuration config  = lc.getConfiguration();
-			PatternLayout patternLayout = PatternLayout.newBuilder().withPattern("%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n").build();
+			PatternLayout patternLayout = PatternLayout.newBuilder().withPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %logger{36} - %msg%n").build();
 			TimeBasedTriggeringPolicy timebasedPolicy =  TimeBasedTriggeringPolicy.newBuilder().build();
 
 			RollingFileAppender rollingFileAppender = RollingFileAppender.newBuilder().withFileName(logFileName)

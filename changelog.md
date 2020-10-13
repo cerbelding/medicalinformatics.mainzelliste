@@ -1,3 +1,7 @@
+### 1.8.5 - 2020-10-13
+#### Fixed
+- Upgrade to log4j2
+
 ### 1.8.4 - 2020-07-21
 #### Fixed
 - Fixed endless loop on startup if database is not available
