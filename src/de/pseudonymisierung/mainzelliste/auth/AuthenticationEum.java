@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste;
+package de.pseudonymisierung.mainzelliste.auth;
 
 /**
  * An Enum of the provided Authentication methods
@@ -13,7 +13,7 @@ public enum AuthenticationEum {
         this.authentication = authString;
     }
 
-    public String getAuthentication() {
-        return authentication;
+    public String getAuthenticationName() {
+        return this.authentication;
     }
 }

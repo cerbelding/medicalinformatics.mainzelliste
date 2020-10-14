@@ -23,7 +23,7 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.webservice.Authenticator;
+package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
 import java.util.Map;
 

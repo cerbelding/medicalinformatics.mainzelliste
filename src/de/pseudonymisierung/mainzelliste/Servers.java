@@ -25,6 +25,10 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.auth.Authentication;
+import de.pseudonymisierung.mainzelliste.auth.AuthenticationEum;
+import de.pseudonymisierung.mainzelliste.auth.authenticator.ApiKeyAuthenticator;
+import de.pseudonymisierung.mainzelliste.auth.requester.UserGroup;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -46,11 +50,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
-import de.pseudonymisierung.mainzelliste.webservice.Authenticator.Authenticator;
-import de.pseudonymisierung.mainzelliste.webservice.Authenticator.OICDAuthenticator;
-import de.pseudonymisierung.mainzelliste.webservice.Requester.Requester;
-import de.pseudonymisierung.mainzelliste.webservice.Requester.User;
-import de.pseudonymisierung.mainzelliste.webservice.Requester.UserList;
+import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
+import de.pseudonymisierung.mainzelliste.auth.authenticator.OICDAuthenticator;
+import de.pseudonymisierung.mainzelliste.auth.requester.Requester;
+import de.pseudonymisierung.mainzelliste.auth.requester.UserList;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 
@@ -71,7 +74,7 @@ public enum Servers {
 	/**
 	 * Represents one registered server.
 	 */
-	class Server implements Requester {
+	class Server extends Requester {
 
 		String id;
 		String name;
@@ -90,24 +93,6 @@ public enum Servers {
 		 */
 		List<SubnetUtils> allowedRemoteAdressRanges;
 
-		@Override
-		public Set<String> getPermissions() {
-			return this.permissions;
-		}
-
-		@Override
-		public boolean isAuthenticated(Map<String, String> authentication) {
-			return auth.isAuthenticated(authentication);
-		}
-
-		public String getId(){
-			return this.id;
-		}
-
-		@Override
-		public String getName() {
-			return this.name;
-		}
 	}
 
 	/** All registerd servers. */
@@ -194,6 +179,8 @@ public enum Servers {
 			s.name = "server" + i;
 			s.apiKey = props.getProperty("servers." + i + ".apiKey").trim();
 			s.id = s.apiKey;
+			s.auth = new ApiKeyAuthenticator(s.apiKey);
+
 
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
 			s.permissions = new HashSet<String>(Arrays.asList(permissions));
@@ -235,8 +222,8 @@ public enum Servers {
 				subs = props.getProperty("users." + i + ".oauth.claims.subs").split("[;,]");
 			}
 			Authenticator oicdAuth = new OICDAuthenticator(new HashSet<>(Arrays.asList(subs)), new HashSet<>(Arrays.asList(roles)));
-			User user = new User(new HashSet<>(Arrays.asList(permissions)), oicdAuth);
-			users.add(user);
+			UserGroup userGroup = new UserGroup(new HashSet<>(Arrays.asList(permissions)), oicdAuth);
+			users.add(userGroup);
 		}
 	}
 
@@ -729,11 +716,11 @@ public enum Servers {
 	 * @return the authenticated requester, otherwise null
 	 */
 	public Requester getRequesterByName(String name){
-		User user =  users.getUserByName(name);
+		UserGroup userGroup =  users.getUserByName(name);
 		Server server = this.getServerByName(name);
 
 		if(server != null) return server;
-		if(user != null) return user;
+		if(userGroup != null) return userGroup;
 		return null;
 	}
 
