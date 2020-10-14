@@ -25,6 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
+import de.pseudonymisierung.mainzelliste.auth.Authentication;
+import de.pseudonymisierung.mainzelliste.auth.AuthenticationEum;
+import de.pseudonymisierung.mainzelliste.auth.requester.Requester;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Map;
@@ -45,7 +48,7 @@ import javax.ws.rs.core.Response.Status;
 
 import com.sun.jersey.spi.resource.Singleton;
 import de.pseudonymisierung.mainzelliste.*;
-import de.pseudonymisierung.mainzelliste.webservice.Requester.Requester;
+
 import de.pseudonymisierung.mainzelliste.webservice.commons.RefinedPermission;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;

@@ -13,7 +13,6 @@ public class HttpClientAuthorization {
 
   public HttpClientAuthorization(String authorization) {
     this.authorization = authorization;
-
   }
 
   public String toString() {
@@ -28,7 +27,6 @@ public class HttpClientAuthorization {
    */
   public static HttpClientAuthorization createBearerAuthentication(String bearerToken) {
     return new HttpClientAuthorization("Bearer " + bearerToken);
-
   }
 
   /**

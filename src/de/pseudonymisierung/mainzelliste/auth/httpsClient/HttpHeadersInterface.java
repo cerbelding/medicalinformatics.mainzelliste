@@ -9,6 +9,6 @@ public interface HttpHeadersInterface<ReturnType> {
   // HTTP RequestMethod
   String getRequestMethod();
 
-  // Returns the Headerparameters
+  // Returns the Header-Parameters
   ReturnType getHeaderParams();
 }

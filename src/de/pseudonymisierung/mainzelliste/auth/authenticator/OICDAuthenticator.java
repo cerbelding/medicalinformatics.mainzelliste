@@ -35,38 +35,37 @@ import java.util.Set;
  */
 public class OICDAuthenticator implements Authenticator {
 
-    private final Logger logger = Logger.getLogger(OICDAuthenticator.class);
-    protected Set<String> subs;
-    protected Set<String> roles;
+  private final Logger logger = Logger.getLogger(OICDAuthenticator.class);
+  protected Set<String> subs;
+  protected Set<String> roles;
 
-    /**
-     *  Creates a new OICDAuthenticator related to a User or a Server
-     * @param subs the registered subs
-     * @param roles the registered roles
-     */
-    public OICDAuthenticator(Set<String> subs, Set<String> roles) {
-        this.subs = subs;
-        this.roles = roles;
-    }
+  /**
+   * Creates a new OICDAuthenticator related to a User or a Server
+   *
+   * @param subs  the registered subs
+   * @param roles the registered roles
+   */
+  public OICDAuthenticator(Set<String> subs, Set<String> roles) {
+    this.subs = subs;
+    this.roles = roles;
+  }
 
-    @Override
-    public boolean isAuthenticated(Map<String, String> claims) {
-        boolean isAuthenticated = false;
-        for (Map.Entry<String, String> entry : claims.entrySet()) {
-            if(entry.getKey().equals("sub")){
-                isAuthenticated =  isAuthenticated || subs.contains(entry.getValue());
-            }
-            else if(entry.getKey().matches("role.*")){
-                isAuthenticated =  isAuthenticated || roles.contains(entry.getValue());
-            }
-        }
-        if(isAuthenticated){
-            logger.info("Requester could be authenticated with claims: " + claims.toString());
-        }
-        else {
-            logger.info("Requester could not been authenticated");
-        }
-         return isAuthenticated;
+  @Override
+  public boolean isAuthenticated(Map<String, String> claims) {
+    boolean isAuthenticated = false;
+    for (Map.Entry<String, String> entry : claims.entrySet()) {
+      if (entry.getKey().equals("sub")) {
+        isAuthenticated = isAuthenticated || subs.contains(entry.getValue());
+      } else if (entry.getKey().matches("role.*")) {
+        isAuthenticated = isAuthenticated || roles.contains(entry.getValue());
+      }
     }
+    if (isAuthenticated) {
+      logger.info("Requester could be authenticated with claims: " + claims.toString());
+    } else {
+      logger.info("Requester could not been authenticated");
+    }
+    return isAuthenticated;
+  }
 
 }

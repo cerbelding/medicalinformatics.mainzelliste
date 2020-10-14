@@ -7,10 +7,13 @@ public enum HttpHeaderEnum {
 
   private String httpHeader;
 
-  HttpHeaderEnum(String httpHeaderString){ this.httpHeader = httpHeaderString;}
+  HttpHeaderEnum(String httpHeaderString) {
+    this.httpHeader = httpHeaderString;
+  }
 
-  public String getHttpHeaderKey(){return this.httpHeader;}
-
+  public String getHttpHeaderKey() {
+    return this.httpHeader;
+  }
 
 
 }

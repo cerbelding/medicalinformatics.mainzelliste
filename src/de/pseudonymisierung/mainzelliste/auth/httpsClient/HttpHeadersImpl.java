@@ -14,7 +14,6 @@ public class HttpHeadersImpl implements HttpHeadersInterface<Map<String, String>
 
   public HttpHeadersImpl(String requestMethod) {
     this.requestMethod = requestMethod;
-
   }
 
   public void setHeaders(Map<String, String> headers) {

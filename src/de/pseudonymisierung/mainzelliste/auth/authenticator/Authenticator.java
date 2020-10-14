@@ -32,12 +32,12 @@ import java.util.Map;
  */
 public interface Authenticator {
 
-    /**
-     * Checks if the requester could be authenticated
-     *
-     * @param claims the identification of the requester
-     * @return true if the requester could be authenticated, otherwise false
-     */
-    boolean isAuthenticated(Map<String, String> claims);
+  /**
+   * Checks if the requester could be authenticated
+   *
+   * @param claims the identification of the requester
+   * @return true if the requester could be authenticated, otherwise false
+   */
+  boolean isAuthenticated(Map<String, String> claims);
 
 }
