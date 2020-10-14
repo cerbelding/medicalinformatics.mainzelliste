@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.auth.httpsClient;
+package de.pseudonymisierung.mainzelliste.httpsClient;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.util.HashMap;

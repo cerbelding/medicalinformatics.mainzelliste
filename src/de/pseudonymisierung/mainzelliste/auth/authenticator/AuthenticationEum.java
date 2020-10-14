@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.auth;
+package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
 /**
  * An Enum of the provided Authentication methods

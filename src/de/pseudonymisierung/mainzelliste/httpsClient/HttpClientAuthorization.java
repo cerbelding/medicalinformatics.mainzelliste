@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.auth.httpsClient;
+package de.pseudonymisierung.mainzelliste.httpsClient;
 
 import org.apache.commons.net.util.Base64;
 import java.nio.charset.StandardCharsets;

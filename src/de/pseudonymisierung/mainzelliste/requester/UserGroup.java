@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.auth.requester;
+package de.pseudonymisierung.mainzelliste.requester;
 
 import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
 import java.util.Set;
@@ -12,12 +12,12 @@ public class UserGroup extends Requester {
   /**
    * Creates a new User, with his permissions and authentication method, creates a random ID
    *
-   * @param permission    List of the permissions
+   * @param permissions    List of the permissions
    * @param authenticator Authentication method of the User
    */
-  public UserGroup(Set<String> permission,
+  public UserGroup(Set<String> permissions,
       Authenticator authenticator) {
-    super(permission, authenticator);
+    super(permissions, authenticator);
   }
 
   @Override

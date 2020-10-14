@@ -1,14 +1,13 @@
-package de.pseudonymisierung.mainzelliste.webservice;
+package de.pseudonymisierung.mainzelliste.auth.oicd;
 
 
 
-import de.pseudonymisierung.mainzelliste.webservice.Authenticator.OICDAuthenticator;
+
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Base64;
 
 /**
  * Decodes a JWT

@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.auth.httpsClient;
+package de.pseudonymisierung.mainzelliste.httpsClient;
 
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;

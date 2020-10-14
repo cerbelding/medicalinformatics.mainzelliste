@@ -1,12 +1,12 @@
 package de.pseudonymisierung.mainzelliste.auth;
 
 import de.pseudonymisierung.mainzelliste.Servers;
-import de.pseudonymisierung.mainzelliste.auth.httpsClient.HttpHeaderEnum;
-import de.pseudonymisierung.mainzelliste.auth.requester.Requester;
+import de.pseudonymisierung.mainzelliste.auth.authenticator.AuthenticationEum;
+import de.pseudonymisierung.mainzelliste.httpsClient.HttpHeaderEnum;
+import de.pseudonymisierung.mainzelliste.requester.Requester;
 import org.apache.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.HttpHeaders;
 import java.util.HashMap;
 import java.util.Map;
 

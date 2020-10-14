@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.auth.requester;
+package de.pseudonymisierung.mainzelliste.requester;
 
 import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
 import java.util.Map;
@@ -25,11 +25,11 @@ public abstract class Requester {
   /**
    * Creates a new Requester, with his permissions and authentication method, creates a random ID
    *
-   * @param permission    List of the permissions
+   * @param permissions    List of the permissions
    * @param authenticator Authentication method of the User
    */
-  public Requester(Set<String> permission, Authenticator authenticator) {
-    this.permissions = permission;
+  public Requester(Set<String> permissions, Authenticator authenticator) {
+    this.permissions = permissions;
     this.authenticator = authenticator;
     this.id = UUID.randomUUID().toString();
     this.name = id;

@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.auth.httpsClient;
+package de.pseudonymisierung.mainzelliste.httpsClient;
 
 
 /**

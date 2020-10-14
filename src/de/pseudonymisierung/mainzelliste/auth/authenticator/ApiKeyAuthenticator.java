@@ -1,6 +1,5 @@
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
-import de.pseudonymisierung.mainzelliste.auth.AuthenticationEum;
 import org.apache.log4j.Logger;
 
 import java.util.Map;
