@@ -26,9 +26,12 @@
 package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.auth.Authentication;
-import de.pseudonymisierung.mainzelliste.auth.AuthenticationEum;
+
 import de.pseudonymisierung.mainzelliste.auth.authenticator.ApiKeyAuthenticator;
-import de.pseudonymisierung.mainzelliste.auth.requester.UserGroup;
+import de.pseudonymisierung.mainzelliste.auth.authenticator.AuthenticationEum;
+import de.pseudonymisierung.mainzelliste.requester.Requester;
+import de.pseudonymisierung.mainzelliste.requester.UserGroup;
+import de.pseudonymisierung.mainzelliste.requester.UserList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -52,8 +55,6 @@ import javax.ws.rs.core.Response.Status;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.OICDAuthenticator;
-import de.pseudonymisierung.mainzelliste.auth.requester.Requester;
-import de.pseudonymisierung.mainzelliste.auth.requester.UserList;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 
