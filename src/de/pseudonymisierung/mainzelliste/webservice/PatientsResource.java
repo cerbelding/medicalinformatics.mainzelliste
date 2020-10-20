@@ -28,7 +28,6 @@ package de.pseudonymisierung.mainzelliste.webservice;
 import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.spi.resource.Singleton;
-
 import de.pseudonymisierung.mainzelliste.AuditTrail;
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
@@ -39,13 +38,49 @@ import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
-import de.pseudonymisierung.mainzelliste.exceptions.*;
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidJSONException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
+import de.pseudonymisierung.mainzelliste.exceptions.NoParentServerNameException;
+import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
+import de.pseudonymisierung.mainzelliste.exceptions.UnauthorizedException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallback;
 import de.pseudonymisierung.mainzelliste.webservice.commons.Redirect;
 import de.pseudonymisierung.mainzelliste.webservice.commons.RedirectBuilder;
 import de.pseudonymisierung.mainzelliste.webservice.commons.RedirectUtils;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -54,16 +89,6 @@ import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import javax.ws.rs.core.Response.Status;
-import java.io.IOException;
-import java.net.URI;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /**
  * Resource-based access to patients.
@@ -361,162 +386,163 @@ public class PatientsResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientsToken(@PathParam("tokenId") String tokenId, @Context HttpServletRequest request) {
-        logger.debug("@GET getPatientsToken");
-        logger.info("Received request to get patient with token " + tokenId);
-        // Check if token exists and has the right type.
-        // Validity of token is checked upon creation
-        Token token = Servers.instance.getTokenByTid(tokenId);
-        if (token == null) {
-            logger.info("No token with id " + tokenId + " found");
-            throw new InvalidTokenException("Please supply a valid 'readPatients' token.", Status.UNAUTHORIZED);
+      logger.debug("@GET getPatientsToken");
+      logger.info("Received request to get patient with token " + tokenId);
+      // Check if token exists and has the right type.
+      // Validity of token is checked upon creation
+      Token token = Servers.instance.getTokenByTid(tokenId);
+      if (token == null) {
+        logger.info("No token with id " + tokenId + " found");
+        throw new InvalidTokenException("Please supply a valid 'readPatients' token.", Status.UNAUTHORIZED);
+      }
+
+      token.checkTokenType("readPatients");
+      // Check if token is valid against server permissions
+      List<?> requests = token.getDataItemList("searchIds");
+
+      //TODO: Validate permissions
+      if (requests.size() > 0 && ((LinkedHashMap) requests.get(0)).containsValue("*")) {
+        return readPatientWildCardSelect(token, requests);
+      } else {
+        return readPatientIndividualSelect(token, requests, request);
+      }
+    }
+
+  private Response readPatientIndividualSelect(Token token, List<?> requests, HttpServletRequest request) {
+    JSONArray ret = new JSONArray();
+    ArrayList<Patient> patientList = new ArrayList<>();
+    for (Object item : requests) {
+      JSONObject thisPatient = new JSONObject();
+      @SuppressWarnings("unchecked")
+      Map<String, String> thisSearchId = (Map<String, String>) item;
+      String idType = thisSearchId.get("idType");
+      String idString = thisSearchId.get("idString");
+      ID id = IDGeneratorFactory.instance.buildId(idType, idString);
+      Patient patient = Persistor.instance.getPatient(id);
+      if (token.hasDataItem("resultFields")) {
+        // get fields for output
+        Map<String, String> outputFields = new HashMap<>();
+        @SuppressWarnings("unchecked")
+        List<String> fieldNames = (List<String>) token.getDataItemList("resultFields");
+        for (String thisFieldName : fieldNames) {
+          outputFields.put(thisFieldName, patient.getInputFields().get(thisFieldName).toString());
         }
+        try {
+          thisPatient.put("fields", outputFields);
+        } catch (JSONException e) {
+          logger.error("Error while transforming patient fields into JSON", e);
+          throw new InternalErrorException("Error while transforming patient fields into JSON");
+        }
+      }
 
-        token.checkTokenType("readPatients");
-        // Check if token is valid against server permissions
-            List<?> requests = token.getDataItemList("searchIds");
+      if (Boolean.TRUE.equals(token.getData().get("readAllPatientIds"))) {
 
-        //TODO: Validate permissions
-        if (requests.size() > 0 && ((LinkedHashMap) requests.get(0)).containsValue("*")) {
-            return readPatientWildCardSelect(token, requests);
+        if (token.getParentServerName() == null) {
+          throw new NoParentServerNameException();
+        } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds")) {
+          try {
+            thisPatient.put("ids", getAllIDsOfPatient(patient));
+
+          } catch (JSONException e) {
+            logger.error("Error while transforming patient ids into JSON", e);
+            throw new InternalErrorException("Error while transforming patient ids into JSON");
+          }
         } else {
-            return readPatientIndividualSelect(token, requests, request);
+          logger.info("Server has no readAllPatientIds permission");
+          throw new UnauthorizedException("Server has no readAllPatientIds permission");
         }
+
+      } else if (token.hasDataItem("resultIds")) {
+        try {
+          @SuppressWarnings("unchecked")
+          List<String> idTypes = (List<String>) token.getDataItemList("resultIds");
+          List<JSONObject> returnIds = new LinkedList<>();
+          for (String thisIdType : idTypes) {
+            ID returnId = patient.getId(thisIdType);
+            if (returnId != null) {
+              returnIds.add(returnId.toJSON());
+            }
+          }
+          thisPatient.put("ids", returnIds);
+        } catch (JSONException e) {
+          logger.error("Error while transforming patient ids into JSON", e);
+          throw new InternalErrorException("Error while transforming patient ids into JSON");
+        }
+      }
+      if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
+
+        if (token.getParentServerName() == null) {
+          throw new NoParentServerNameException();
+        } else if (Servers.instance.hasServerPermission(token.getParentServerName(),
+            "readAllPatientIdTypes")) {
+          try {
+            thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
+          } catch (JSONException e) {
+            logger.error("Error while transforming ID types into JSON", e);
+            throw new InternalErrorException("Error while transforming ID types into JSON");
+          }
+        } else {
+          logger.info("Server has no resultAllIds permission");
+          throw new UnauthorizedException("Server has no readAllPatientIdTypes permission");
+        }
+      }
+
+      //Write audit trail
+      if (Config.instance.auditTrailIsOn()) {
+        AuditTrail at = PatientBackend.instance.buildAuditTrailRecord(token.getId(),
+            idString,
+            idType,
+            "read",
+            thisPatient.toString(),
+            null);
+        Persistor.instance.createAuditTrail(at);
+      }
+
+      ret.put(thisPatient);
+      patientList.add(patient);
+
     }
 
-    private Response readPatientIndividualSelect(Token token, List<?> requests, HttpServletRequest request) {
-            JSONArray ret = new JSONArray();
-            ArrayList<Patient> patientList = new ArrayList<>();
-            for (Object item : requests) {
-                JSONObject thisPatient = new JSONObject();
-                String idType;
-                String idString;
-                @SuppressWarnings("unchecked")
-                Map<String, String> thisSearchId = (Map<String, String>) item;
-                idType = thisSearchId.get("idType");
-                idString = thisSearchId.get("idString");
-                ID id = IDGeneratorFactory.instance.buildId(idType, idString);
-                Patient patient = Persistor.instance.getPatient(id);
-                if (token.hasDataItem("resultFields")) {
-                    // get fields for output
-                    Map<String, String> outputFields = new HashMap<String, String>();
-                    @SuppressWarnings("unchecked")
-                    List<String> fieldNames = (List<String>) token.getDataItemList("resultFields");
-                    for (String thisFieldName : fieldNames) {
-                        outputFields.put(thisFieldName, patient.getInputFields().get(thisFieldName).toString());
-                    }
-                    try {
-                        thisPatient.put("fields", outputFields);
-                    } catch (JSONException e) {
-                        logger.error("Error while transforming patient fields into JSON", e);
-                        throw new InternalErrorException("Error while transforming patient fields into JSON");
-                    }
-                }
-
-                if (Boolean.TRUE.equals(token.getData().get("readAllPatientIds"))) {
-
-                    if (token.getParentServerName() == null) {
-                        throw new NoParentServerNameException();
-                    } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds")) {
-                        try {
-                            thisPatient.put("ids", getAllIDsOfPatient(patient));
-
-                        } catch (JSONException e) {
-                            logger.error("Error while transforming patient ids into JSON", e);
-                            throw new InternalErrorException("Error while transforming patient ids into JSON");
-                        }
-                    } else {
-                        logger.info("Server has no readAllPatientIds permission");
-                        throw new UnauthorizedException("Server has no readAllPatientIds permission");
-                    }
-
-                } else if (token.hasDataItem("resultIds")) {
-                    try {
-                        @SuppressWarnings("unchecked")
-                        List<String> idTypes = (List<String>) token.getDataItemList("resultIds");
-                        List<JSONObject> returnIds = new LinkedList<JSONObject>();
-                        for (String thisIdType : idTypes) {
-                            ID returnId = patient.getId(thisIdType);
-                            if (returnId != null)
-                                returnIds.add(returnId.toJSON());
-                        }
-                        thisPatient.put("ids", returnIds);
-                    } catch (JSONException e) {
-                        logger.error("Error while transforming patient ids into JSON", e);
-                        throw new InternalErrorException("Error while transforming patient ids into JSON");
-                    }
-                }
-                if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
-
-                    if (token.getParentServerName() == null) {
-                        throw new NoParentServerNameException();
-                    } else if (Servers.instance.hasServerPermission(token.getParentServerName(),
-                            "readAllPatientIdTypes")) {
-                        try {
-                            thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
-                        } catch (JSONException e) {
-                            logger.error("Error while transforming ID types into JSON", e);
-                            throw new InternalErrorException("Error while transforming ID types into JSON");
-                        }
-                    } else {
-                        logger.info("Server has no resultAllIds permission");
-                        throw new UnauthorizedException("Server has no readAllPatientIdTypes permission");
-                    }
-                }
-
-			//Write audit trail
-			if (Config.instance.auditTrailIsOn()) {
-				AuditTrail at = PatientBackend.instance.buildAuditTrailRecord(token.getId(),
-						idString,
-						idType,
-						"read",
-						thisPatient.toString(),
-						null);
-				Persistor.instance.createAuditTrail(at);
-			}
-
-                ret.put(thisPatient);
-                patientList.add(patient);
-
-            }
-
-            // Callback
-            String callback = token.getDataItemString("callback");
-            if (callback != null && callback.length() > 0
-                    && Servers.instance.hasServerPermission(token.getParentServerName(), "callback")) {
-                MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
-                try {
-                    mainzellisteCallback.url(callback).apiVersion(Servers.instance.getRequestApiVersion(request))
-                            .tokenId(token.getId()).addPatients(ret).build().execute();
-                } catch (IOException ioe) {
-                    logger.error("Error while sending callback to url " + callback, ioe);
-                    ioe.printStackTrace();
-                } catch (JSONException jsone) {
-                    logger.error("Couldn't serialize content for callback on url " + callback, jsone);
-                    jsone.printStackTrace();
-                }
-            }
-            String redirect = token.getDataItemString("redirect");
-            if (redirect != null && redirect.length() > 0
-                    && Servers.instance.hasServerPermission(token.getParentServerName(), "redirect")) {
-                UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
-                List<String> templateVariables = redirectURITempl.getTemplateVariables();
-
-                if (templateVariables.contains("tokenId")) {
-                    // TODO: send mapped list of requests?
-                    if (token.getDataItemList("searchIds").size() > 0 && patientList.size() > 0) {
-                        List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
-                        return new RedirectBuilder().setTokenId(token.getId())
-                                .setMappedIdTypesdAndIds(requestedIds, patientList.get(0)).setTemplateURI(redirectURITempl)
-                                .build().execute();
-                    }
-
-                } else {
-                    return Response.status(HttpStatus.SC_BAD_REQUEST)
-                            .entity("Couldn't generate redirect because request is not valid").build();
-                }
-            }
-            return Response.ok().entity(ret).build();
+    // Callback
+    String callback = token.getDataItemString("callback");
+    if (callback != null && callback.length() > 0
+        && Servers.instance.hasServerPermission(token.getParentServerName(), "callback")) {
+      MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
+      try {
+        mainzellisteCallback.url(callback)
+            .apiVersion(Servers.instance.getRequestApiVersion(request))
+            .tokenId(token.getId()).addPatients(ret).build().execute();
+      } catch (IOException ioe) {
+        logger.error("Error while sending callback to url " + callback, ioe);
+        ioe.printStackTrace();
+      } catch (JSONException jsone) {
+        logger.error("Couldn't serialize content for callback on url " + callback, jsone);
+        jsone.printStackTrace();
+      }
     }
+    String redirect = token.getDataItemString("redirect");
+    if (redirect != null && redirect.length() > 0
+        && Servers.instance.hasServerPermission(token.getParentServerName(), "redirect")) {
+      UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
+      List<String> templateVariables = redirectURITempl.getTemplateVariables();
+
+      if (templateVariables.contains("tokenId")) {
+        // TODO: send mapped list of requests?
+        if (token.getDataItemList("searchIds").size() > 0 && patientList.size() > 0) {
+          List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
+          return new RedirectBuilder().setTokenId(token.getId())
+              .setMappedIdTypesdAndIds(requestedIds, patientList.get(0))
+              .setTemplateURI(redirectURITempl)
+              .build().execute();
+        }
+
+      } else {
+        return Response.status(HttpStatus.SC_BAD_REQUEST)
+            .entity("Couldn't generate redirect because request is not valid").build();
+      }
+    }
+    return Response.ok().entity(ret).build();
+  }
 
   private Response readPatientWildCardSelect(Token token, List<?> requests) {
     logger.info("Request all Ids for a idtype");
