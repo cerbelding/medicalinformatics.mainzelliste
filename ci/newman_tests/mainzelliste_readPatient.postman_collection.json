@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "bb673b4f-b0a5-4ba0-a56a-ea1f0ead68ca",
-		"name": "mainzelliste_getAllPatiens_with_idType",
+		"_postman_id": "6ae67318-0892-487f-822b-4de756458ac4",
+		"name": "mainzelliste_readPatient",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "23b571ea-c530-478c-ad38-3814c4a7b569",
+						"id": "6663ff91-bf02-4b92-9594-8efa36017e3d",
 						"exec": [
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
@@ -30,7 +30,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "7bee63fc-cb7d-42a2-a3c5-4f132bccda07",
+						"id": "fedbcdae-0c49-4ed8-bc0f-4788ead04dc9",
 						"exec": [
 							"pm.collectionVariables.set('currentPatientIndex', 0);",
 							"pm.collectionVariables.unset('patients');"
@@ -69,7 +69,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "786ab89a-cec0-469b-87ea-8daeb030c7b0",
+						"id": "ba47360e-fc18-4d11-ab00-ed7ea33bab80",
 						"exec": [
 							"var jsonBody = pm.response.json();",
 							"console.log(jsonBody);",
@@ -117,7 +117,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "82708d91-86d3-4aca-912b-ea0983fe8c56",
+						"id": "014b6406-fff2-43c8-94a6-d326ff512ea5",
 						"exec": [
 							"pm.collectionVariables.unset(\"tokenId\");\r",
 							"\r",
@@ -179,7 +179,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "c8eae533-2cda-4d2d-9545-77ffc1c2fa8f",
+						"id": "d718341f-aee8-4ff2-8099-4ad2d436d616",
 						"exec": [
 							"//delete patient data from variables",
 							"var addPatientData =  pm.variables.get('ADD_PATIENTS_DATA');",
@@ -262,7 +262,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "f8ae2381-80dd-45d2-a3bc-81fa9d84d7bb",
+						"id": "fceb49d0-4356-4d43-a345-4c6538bce409",
 						"exec": [
 							""
 						],
@@ -356,7 +356,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "37767dc7-875d-414e-9fe1-22e2355fda6f",
+						"id": "ded8ac29-4406-42d4-b135-caecc3816f82",
 						"exec": [
 							"console.log(\"* Requested Token: \");",
 							"console.log(JSON.parse(pm.request.body.raw));",
@@ -375,7 +375,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "8a86c729-e951-4dc9-a976-9728728a9a25",
+						"id": "618a05ee-836c-455d-b0c4-c7d3d10fb908",
 						"exec": [
 							""
 						],
@@ -423,7 +423,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "686e149d-8a26-48c0-b979-266b38fb7145",
+						"id": "4f3a1999-e6a5-4e63-8614-e82af0423f04",
 						"exec": [
 							"console.log(\"* Requested Token: \");",
 							"console.log(JSON.parse(pm.request.body.raw));",
@@ -442,7 +442,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "4fa6540c-1ed3-45e5-8f98-21034886b121",
+						"id": "fd775c69-5b5a-4ccb-b526-8dbe82adc712",
 						"exec": [
 							""
 						],
@@ -490,7 +490,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "1a2d71d0-9aca-42f5-a2b6-3dce85424569",
+						"id": "2ad9686a-b95d-446e-a4cb-0599a04287f4",
 						"exec": [
 							"console.log(\"* Requested Token: \");",
 							"console.log(JSON.parse(pm.request.body.raw));",
@@ -509,7 +509,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "5fe832d0-ac8e-422a-aeee-0090f3fbb143",
+						"id": "2527d383-ebd2-4441-a1a0-44b7d8dd92a2",
 						"exec": [
 							""
 						],
@@ -557,7 +557,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "8664b143-b8fa-453c-801b-689cdd41b8df",
+						"id": "b98cd204-a3c6-42e4-9cdf-5b5b4f444743",
 						"exec": [
 							"console.log(\"* Requested Token: \");",
 							"console.log(JSON.parse(pm.request.body.raw));",
@@ -576,7 +576,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fbd3a61b-7908-4be1-ab92-d28ad0dddd1d",
+						"id": "f8e8c8cc-6276-4457-80b8-2d9cb9a6e793",
 						"exec": [
 							""
 						],
@@ -624,7 +624,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "29658020-dcc1-4b56-8beb-e82b0b0f44d9",
+						"id": "4c1bf54c-7762-4f4d-9fe2-4ba5a3b03d80",
 						"exec": [
 							"console.log(\"* Requested Token: \");",
 							"console.log(JSON.parse(pm.request.body.raw));",
@@ -643,7 +643,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "84e0deb4-3173-4f41-945d-5b1c8bd4a1d3",
+						"id": "224bfc4e-7f16-4b61-83d7-337260cd9d02",
 						"exec": [
 							""
 						],
@@ -691,7 +691,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "ea98c97f-55d5-462d-8dc8-de5c77e1bf52",
+						"id": "b49522cf-0018-437e-bf02-6c3accd679d7",
 						"exec": [
 							"console.log(\"* Requested Token: \");",
 							"var token = JSON.parse(pm.request.body.raw);",
@@ -746,7 +746,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "78511995-e36d-4c3e-b3e4-02163a9fe30f",
+						"id": "53dc896a-9a9a-4444-9c12-bcd215d97d68",
 						"exec": [
 							""
 						],
@@ -794,7 +794,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "3955aabd-7f50-48eb-a0e3-88349c488863",
+						"id": "15d82a61-cfd2-4cf4-9ce8-70d47f768379",
 						"exec": [
 							"pm.test('no patient found', function() {",
 							"    pm.response.to.have.status(404);",
@@ -844,7 +844,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "e3cd3115-69ee-445b-a0e6-72af2a49aca7",
+						"id": "c0908a78-5891-4cce-831b-10ca1d732529",
 						"exec": [
 							"console.log(\"* Requested Token: \");",
 							"var token = JSON.parse(pm.request.body.raw);",
@@ -900,7 +900,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "127c4622-fef0-49ad-bf9a-9e5bb6d36e5f",
+						"id": "6c4a6aa5-bcb9-4eb4-9963-583e9cdb939a",
 						"exec": [
 							""
 						],
@@ -948,7 +948,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "9ef04d09-1fc7-4205-9194-46ee2b7647db",
+						"id": "e43f1be0-c675-4762-b1ec-6067ce7c162b",
 						"exec": [
 							"// log response",
 							"if(pm.response.code !== 200) {",
@@ -1017,7 +1017,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "b423c562-475e-4829-990a-c0006e708614",
+						"id": "959019c7-e979-4edd-8fcf-08d866735ae1",
 						"exec": [
 							"console.log(\"* Requested Token: \");",
 							"var token = JSON.parse(pm.request.body.raw);",
@@ -1074,7 +1074,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fc2634ff-9580-4096-b7ac-c217e8574a51",
+						"id": "ec67cfec-d703-44a5-83c8-6e67bbc72506",
 						"exec": [
 							"var patients = pm.variables.get(\"patients\");\r",
 							"pm.collectionVariables.set(\"1_patientIdType\", patients[0].ids[0].idType);\r",
@@ -1124,7 +1124,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "e07ac674-c9c5-42cb-a8d8-29c7856f43c6",
+						"id": "0a0dd2eb-b466-4868-96b8-62cedb88f25a",
 						"exec": [
 							"// log response",
 							"if(pm.response.code !== 200) {",
@@ -1245,7 +1245,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "5037ce62-291d-4098-95b4-da1664f90c93",
+						"id": "e8741ca1-a6af-4bf8-9dbd-ebebaf0c38d7",
 						"exec": [
 							"console.log(\"* Requested Token: \");",
 							"var token = JSON.parse(pm.request.body.raw);",
@@ -1301,7 +1301,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "00652883-0722-40e3-aa7e-3ad23cb78b0a",
+						"id": "4049e34b-943d-4aa0-b348-b852c07985cc",
 						"exec": [
 							""
 						],
@@ -1349,7 +1349,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "fb05f336-4148-416f-9182-6ac0a4e17c93",
+						"id": "a58e567d-2467-4983-8e67-e0a08ae29d8a",
 						"exec": [
 							"// log response",
 							"if(pm.response.code !== 200) {",
@@ -1473,7 +1473,7 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "abebc8e4-9d7f-4d0f-9590-70f408d916a1",
+				"id": "d56a6584-c41b-4323-b59d-d89f963a44a8",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -1483,7 +1483,7 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "efe0bd77-6029-45dc-aa5f-a8fd1ab061f1",
+				"id": "5d77cb38-4e1e-4984-b48d-6b9cd0448ac0",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -1493,32 +1493,32 @@
 	],
 	"variable": [
 		{
-			"id": "5163d748-6764-4ffe-aded-b1686187278e",
+			"id": "1435d36b-f6fe-46f1-8255-7cb4c11b129c",
 			"key": "addPatientsPointer",
 			"value": ""
 		},
 		{
-			"id": "2118798b-d0ab-4bf4-848c-55f4b668250c",
+			"id": "8afe00de-2961-4196-ad20-59729e83590b",
 			"key": "readPatientsPointer",
 			"value": ""
 		},
 		{
-			"id": "e13bde28-0d6c-48f2-88a9-3a7d54180668",
+			"id": "29e70acd-4aa5-46ec-a5f5-0fcb1c9fa114",
 			"key": "tokenId",
 			"value": ""
 		},
 		{
-			"id": "c88ffeb9-006d-48c7-9f26-d144fa969a54",
+			"id": "01d8a3c7-c3b5-4a69-a359-f65d4e5d5d76",
 			"key": "idString",
 			"value": ""
 		},
 		{
-			"id": "18a3a065-321d-47e4-8294-4e136d425f5f",
+			"id": "287da121-ad7e-4333-8bc0-b81ed26945e6",
 			"key": "patients",
 			"value": ""
 		},
 		{
-			"id": "b7dfd314-d59a-426f-abcc-3da406ca3c25",
+			"id": "18ab5dd7-bdab-432e-9e30-acef9e547e79",
 			"key": "expectedResultLength",
 			"value": ""
 		}
