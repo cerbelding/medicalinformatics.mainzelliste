@@ -387,120 +387,144 @@ public class PatientsResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientsToken(@PathParam("tokenId") String tokenId, @Context HttpServletRequest request) {
       logger.debug("@GET getPatientsToken");
-      logger.info("Received request to get patient with token " + tokenId);
+      logger.info("Received request to get patient with token {}", tokenId);
       // Check if token exists and has the right type.
       // Validity of token is checked upon creation
       Token token = Servers.instance.getTokenByTid(tokenId);
       if (token == null) {
-        logger.info("No token with id " + tokenId + " found");
+        logger.info("No token with id {} found", tokenId);
         throw new InvalidTokenException("Please supply a valid 'readPatients' token.", Status.UNAUTHORIZED);
       }
 
       token.checkTokenType("readPatients");
       // Check if token is valid against server permissions
-      List<?> requests = token.getDataItemList("searchIds");
-
-      //TODO: Validate permissions
-      if (requests.size() > 0 && ((LinkedHashMap) requests.get(0)).containsValue("*")) {
-        return readPatientWildCardSelect(token, requests);
-      } else {
-        return readPatientIndividualSelect(token, requests, request);
-      }
+      return readPatientIndividualSelect(token, request);
     }
 
-  private Response readPatientIndividualSelect(Token token, List<?> requests, HttpServletRequest request) {
+  private Response readPatientIndividualSelect(Token token, HttpServletRequest request) {
     JSONArray ret = new JSONArray();
     ArrayList<Patient> patientList = new ArrayList<>();
-    for (Object item : requests) {
-      JSONObject thisPatient = new JSONObject();
+    boolean noPatientFound = true;
+
+    for (Object item : token.getDataItemList("searchIds")) {
       @SuppressWarnings("unchecked")
       Map<String, String> thisSearchId = (Map<String, String>) item;
       String idType = thisSearchId.get("idType");
       String idString = thisSearchId.get("idString");
-      ID id = IDGeneratorFactory.instance.buildId(idType, idString);
-      Patient patient = Persistor.instance.getPatient(id);
-      if (token.hasDataItem("resultFields")) {
-        // get fields for output
-        Map<String, String> outputFields = new HashMap<>();
-        @SuppressWarnings("unchecked")
-        List<String> fieldNames = (List<String>) token.getDataItemList("resultFields");
-        for (String thisFieldName : fieldNames) {
-          outputFields.put(thisFieldName, patient.getInputFields().get(thisFieldName).toString());
-        }
-        try {
-          thisPatient.put("fields", outputFields);
-        } catch (JSONException e) {
-          logger.error("Error while transforming patient fields into JSON", e);
-          throw new InternalErrorException("Error while transforming patient fields into JSON");
-        }
+
+      // find patients from database
+      List<Patient> patients;
+      if(idString.trim().equals("*")) {
+        patients = Persistor.instance.getPatients(idType);
+      } else {
+        ID id = IDGeneratorFactory.instance.buildId(idType, idString);
+        patients = Collections.singletonList(Persistor.instance.getPatient(id));
       }
 
-      if (Boolean.TRUE.equals(token.getData().get("readAllPatientIds"))) {
+      for(Patient patient : patients) {
+        JSONObject thisPatient = new JSONObject();
 
-        if (token.getParentServerName() == null) {
-          throw new NoParentServerNameException();
-        } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds")) {
+        // add empty json object if no patient found
+        if(patient == null) {
+          ret.put(new JSONObject());
+          continue;
+        }
+        noPatientFound = false;
+
+        if (token.hasDataItem("resultFields")) {
+          // get fields for output
+          Map<String, String> outputFields = new HashMap<>();
+          @SuppressWarnings("unchecked")
+          List<String> fieldNames = (List<String>) token.getDataItemList("resultFields");
+          for (String thisFieldName : fieldNames) {
+            if(patient.getInputFields().containsKey(thisFieldName)) {
+              outputFields.put(thisFieldName, patient.getInputFields().get(thisFieldName)
+                  .toString());
+            }
+          }
           try {
-            thisPatient.put("ids", getAllIDsOfPatient(patient));
+            thisPatient.put("fields", outputFields);
+          } catch (JSONException e) {
+            logger.error("Error while transforming patient fields into JSON", e);
+            throw new InternalErrorException("Error while transforming patient fields into JSON");
+          }
+        }
 
+        if (Boolean.TRUE.equals(token.getData().get("readAllPatientIds"))) {
+          if (token.getParentServerName() == null) {
+            throw new NoParentServerNameException();
+          } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds")) {
+            try {
+              List<JSONObject> foundedIds = getAllIDsOfPatient(patient);
+              if(!foundedIds.isEmpty()) {
+                thisPatient.put("ids", foundedIds);
+              }
+            } catch (JSONException e) {
+              logger.error("Error while transforming patient ids into JSON", e);
+              throw new InternalErrorException("Error while transforming patient ids into JSON");
+            }
+          } else {
+            logger.info("Server has no readAllPatientIds permission");
+            throw new UnauthorizedException("Server has no readAllPatientIds permission");
+          }
+        } else if (token.hasDataItem("resultIds")) {
+          try {
+            @SuppressWarnings("unchecked")
+            List<String> idTypes = (List<String>) token.getDataItemList("resultIds");
+            List<JSONObject> returnIds = new LinkedList<>();
+            for (String thisIdType : idTypes) {
+              ID returnId = patient.getId(thisIdType);
+              if (returnId != null) {
+                returnIds.add(returnId.toJSON());
+              }
+            }
+            if(!returnIds.isEmpty()) {
+              thisPatient.put("ids", returnIds);
+            }
           } catch (JSONException e) {
             logger.error("Error while transforming patient ids into JSON", e);
             throw new InternalErrorException("Error while transforming patient ids into JSON");
           }
-        } else {
-          logger.info("Server has no readAllPatientIds permission");
-          throw new UnauthorizedException("Server has no readAllPatientIds permission");
         }
 
-      } else if (token.hasDataItem("resultIds")) {
-        try {
-          @SuppressWarnings("unchecked")
-          List<String> idTypes = (List<String>) token.getDataItemList("resultIds");
-          List<JSONObject> returnIds = new LinkedList<>();
-          for (String thisIdType : idTypes) {
-            ID returnId = patient.getId(thisIdType);
-            if (returnId != null) {
-              returnIds.add(returnId.toJSON());
+        if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
+          if (token.getParentServerName() == null) {
+            throw new NoParentServerNameException();
+          } else if (Servers.instance.hasServerPermission(token.getParentServerName(),
+              "readAllPatientIdTypes")) {
+            try {
+              thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
+            } catch (JSONException e) {
+              logger.error("Error while transforming ID types into JSON", e);
+              throw new InternalErrorException("Error while transforming ID types into JSON");
             }
+          } else {
+            logger.info("Server has no resultAllIds permission");
+            throw new UnauthorizedException("Server has no readAllPatientIdTypes permission");
           }
-          thisPatient.put("ids", returnIds);
-        } catch (JSONException e) {
-          logger.error("Error while transforming patient ids into JSON", e);
-          throw new InternalErrorException("Error while transforming patient ids into JSON");
         }
-      }
-      if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
 
-        if (token.getParentServerName() == null) {
-          throw new NoParentServerNameException();
-        } else if (Servers.instance.hasServerPermission(token.getParentServerName(),
-            "readAllPatientIdTypes")) {
-          try {
-            thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
-          } catch (JSONException e) {
-            logger.error("Error while transforming ID types into JSON", e);
-            throw new InternalErrorException("Error while transforming ID types into JSON");
-          }
-        } else {
-          logger.info("Server has no resultAllIds permission");
-          throw new UnauthorizedException("Server has no readAllPatientIdTypes permission");
+        //Write audit trail
+        if (Config.instance.auditTrailIsOn()) {
+          AuditTrail at = PatientBackend.instance.buildAuditTrailRecord(token.getId(),
+              idString,
+              idType,
+              "read",
+              thisPatient.toString(),
+              null);
+          Persistor.instance.createAuditTrail(at);
         }
+
+        ret.put(thisPatient);
+        patientList.add(patient);
       }
+    }
 
-      //Write audit trail
-      if (Config.instance.auditTrailIsOn()) {
-        AuditTrail at = PatientBackend.instance.buildAuditTrailRecord(token.getId(),
-            idString,
-            idType,
-            "read",
-            thisPatient.toString(),
-            null);
-        Persistor.instance.createAuditTrail(at);
-      }
-
-      ret.put(thisPatient);
-      patientList.add(patient);
-
+    // return 404 if no patient found
+    if (noPatientFound) {
+      return Response.status(Status.NOT_FOUND)
+          .entity("No patient found")
+          .build();
     }
 
     // Callback
@@ -535,59 +559,12 @@ public class PatientsResource {
               .setTemplateURI(redirectURITempl)
               .build().execute();
         }
-
       } else {
         return Response.status(HttpStatus.SC_BAD_REQUEST)
             .entity("Couldn't generate redirect because request is not valid").build();
       }
     }
     return Response.ok().entity(ret).build();
-  }
-
-  private Response readPatientWildCardSelect(Token token, List<?> requests) {
-    logger.info("Request all Ids for a idtype");
-
-    if (token.getDataItemList("resultFields") != null && !token.getDataItemList("resultFields").isEmpty() ) {
-      throw new NotImplementedException("ResultFields are not implemented for wildcard select.");
-    }
-
-    //validate resultIds
-    List<String> resultIds = (List<String>) token.getDataItemList("resultIds");
-    if (resultIds == null || resultIds.isEmpty()) {
-      throw new InvalidTokenException("Please provide a resultIds in token data!");
-    } else if (resultIds.size() > 1) {
-      throw new NotImplementedException(
-          "It's only possible to request one IdType as wildcard select.");
-    }
-
-    String searchIdType = ((Map<String, String>) requests.get(0)).get("idType");
-    logger.info("idType:" + searchIdType);
-
-    // find patient ids
-    List<ID> foundIds;
-    if (resultIds.contains(searchIdType)) {
-      foundIds = PatientBackend.instance.getIdsWithType(searchIdType);
-    } else {
-      foundIds = PatientBackend.instance.getIdsOfPatientWithIdType(searchIdType,
-          resultIds.toArray(new String[0]));
-    }
-
-    // serialize result to json
-    JSONArray resultJson = new JSONArray();
-    for (ID id : foundIds) {
-      JSONObject foundPatientJson = new JSONObject();
-      JSONArray idsJson = new JSONArray();
-      idsJson.put(id.toJSON());
-      try {
-        foundPatientJson.put("ids", idsJson);
-      } catch (JSONException e) {
-        logger.error("Couldn't put JSONArray in a JSONObject ", e);
-        e.printStackTrace();
-        throw new InvalidJSONException("Couldn't serialize search result to JSON");
-      }
-      resultJson.put(foundPatientJson);
-    }
-    return Response.ok().entity(resultJson).build();
   }
 
     private JSONArray getAllIdTypesOfPatient(Patient patient) {
