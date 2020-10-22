@@ -492,7 +492,9 @@ public class PatientsResource {
           .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().toString()));
 
       try {
-        patientJson.put("fields", requestedFields);
+        if (!requestedFields.isEmpty()) {
+          patientJson.put("fields", requestedFields);
+        }
       } catch (JSONException e) {
         logger.error("Error while transforming patient fields into JSON", e);
         throw new InternalErrorException("Error while transforming patient fields into JSON");

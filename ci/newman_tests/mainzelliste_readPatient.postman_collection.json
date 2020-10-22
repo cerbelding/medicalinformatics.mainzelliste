@@ -322,7 +322,8 @@
 						{
 							"key": "plz",
 							"value": "{{plz}}",
-							"type": "text"
+							"type": "text",
+							"disabled": true
 						},
 						{
 							"key": "ort",
@@ -926,7 +927,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t\t\"searchIds\": [\r\n            {\r\n\t\t\t\t\"idType\":\"pid\",\r\n\t\t\t\t\"idString\":\"*\"\r\n\t\t\t}\r\n\t\t],\r\n\t\t\"resultIds\":[\"extid\"]\r\n\t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t\t\"searchIds\": [\r\n            {\r\n\t\t\t\t\"idType\":\"pid\",\r\n\t\t\t\t\"idString\":\"*\"\r\n\t\t\t}\r\n\t\t],\r\n\t\t\"resultIds\":[\"extid\"],\r\n        \"resultFields\":[\"plz\"]\r\n\t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -1493,32 +1494,32 @@
 	],
 	"variable": [
 		{
-			"id": "1435d36b-f6fe-46f1-8255-7cb4c11b129c",
+			"id": "dbc15e30-3f87-4f70-a842-93fe8bae7241",
 			"key": "addPatientsPointer",
 			"value": ""
 		},
 		{
-			"id": "8afe00de-2961-4196-ad20-59729e83590b",
+			"id": "b611c3be-f2d1-4812-851b-cbe8ff637c6a",
 			"key": "readPatientsPointer",
 			"value": ""
 		},
 		{
-			"id": "29e70acd-4aa5-46ec-a5f5-0fcb1c9fa114",
+			"id": "4aad1c7c-6df0-487f-b82e-78b5c2335ee4",
 			"key": "tokenId",
 			"value": ""
 		},
 		{
-			"id": "01d8a3c7-c3b5-4a69-a359-f65d4e5d5d76",
+			"id": "764a5dc4-ed9e-4fc5-8147-3c82caae87bb",
 			"key": "idString",
 			"value": ""
 		},
 		{
-			"id": "287da121-ad7e-4333-8bc0-b81ed26945e6",
+			"id": "e6796b17-9f13-43db-99e4-4a9d1434601f",
 			"key": "patients",
 			"value": ""
 		},
 		{
-			"id": "18ab5dd7-bdab-432e-9e30-acef9e547e79",
+			"id": "072e1c41-a650-42ab-a9e8-e0f0a99f28dc",
 			"key": "expectedResultLength",
 			"value": ""
 		}
