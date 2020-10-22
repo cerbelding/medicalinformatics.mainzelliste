@@ -484,25 +484,22 @@ public class PatientsResource {
       return patientJson;
     }
 
+    // serialize patient fields
     if (token.hasDataItem("resultFields")) {
-      // get fields for output
-      Map<String, String> outputFields = new HashMap<>();
-      @SuppressWarnings("unchecked")
-      List<String> fieldNames = (List<String>) token.getDataItemList("resultFields");
-      for (String thisFieldName : fieldNames) {
-        if (patient.getInputFields().containsKey(thisFieldName)) {
-          outputFields.put(thisFieldName, patient.getInputFields().get(thisFieldName)
-              .toString());
-        }
-      }
+      List<?> requestedFieldTypes = token.getDataItemList("resultFields");
+      Map<String, String> requestedFields = patient.getInputFields().entrySet().stream()
+          .filter(e -> requestedFieldTypes.contains(e.getKey()))
+          .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().toString()));
+
       try {
-        patientJson.put("fields", outputFields);
+        patientJson.put("fields", requestedFields);
       } catch (JSONException e) {
         logger.error("Error while transforming patient fields into JSON", e);
         throw new InternalErrorException("Error while transforming patient fields into JSON");
       }
     }
 
+    // serialize patient ids
     if (Boolean.TRUE.equals(token.getData().get("readAllPatientIds"))) {
       if (token.getParentServerName() == null) {
         throw new NoParentServerNameException();
@@ -525,17 +522,14 @@ public class PatientsResource {
       }
     } else if (token.hasDataItem("resultIds")) {
       try {
-        @SuppressWarnings("unchecked")
-        List<String> idTypes = (List<String>) token.getDataItemList("resultIds");
-        List<JSONObject> returnIds = new LinkedList<>();
-        for (String thisIdType : idTypes) {
-          ID returnId = patient.getId(thisIdType);
-          if (returnId != null) {
-            returnIds.add(returnId.toJSON());
-          }
-        }
-        if (!returnIds.isEmpty()) {
-          patientJson.put("ids", returnIds);
+        List<?> requestedIdTypes = token.getDataItemList("resultIds");
+        List<JSONObject> requestedIds = patient.getIds().stream()
+            .filter(id -> requestedIdTypes.contains(id.getType()))
+            .map(ID::toJSON)
+            .collect(Collectors.toList());
+
+        if (!requestedIds.isEmpty()) {
+          patientJson.put("ids", requestedIds);
         }
       } catch (JSONException e) {
         logger.error("Error while transforming patient ids into JSON", e);
@@ -543,6 +537,7 @@ public class PatientsResource {
       }
     }
 
+    // serialize patient id types
     if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
       if (token.getParentServerName() == null) {
         throw new NoParentServerNameException();
