@@ -213,6 +213,18 @@ public enum Persistor {
 		em.close();
 		return p;
 	}
+
+	/**
+	 * Returns a list of patients, who own at least one ID with the given idType.
+	 *
+	 * @return A list of searched patients.
+	 */
+	public synchronized List<Patient> getPatients(String idType) {
+		return this.em.createQuery(
+				"select p from Patient p join p.ids i where i.type = '" + idType + "'",
+				Patient.class)
+				.getResultList();
+	}
 	
 	/**
 	 * Returns all patients currently persisted in the patient list. This is not
@@ -309,34 +321,6 @@ public enum Persistor {
 			ret.add(thisPatientIds);
 		}
 		return ret;
-	}
-
-	/**
-	 * Returns a list of the IDs of a specific idType of all patients.
-	 *
-	 * @return A list where every item represents the IDs of one patient.
-	 */
-	public synchronized List<ID> getIdsWithType(String idType) {
-		EntityManager em = emf.createEntityManager();
-		TypedQuery<ID> query = em.createQuery("SELECT i from ID i where i.type='" + idType + "'", ID.class);
-		List<ID> result = query.getResultList();
-		em.close();
-		return result;
-	}
-
-	/**
-	 * Returns a list of IDs of all patients, who own at least one ID with the given idType.
-	 *
-	 * @return A list where every item represents the IDs of one patient.
-	 */
-	public synchronized List<ID> getIdsOfPatientsWithIdType(String idType, String[] resultIdTypes ) {
-		String resultIdTypesStr = String.join(", ", resultIdTypes);
-		TypedQuery<ID> query = emf.createEntityManager().createQuery(
-				"select i from Patient p join p.ids i where i.type in ('" + resultIdTypesStr + "') and" +
-				" EXISTS (select someP from Patient someP join someP.ids somePid " +
-						"where someP = p and somePid.type = '"+ idType +"' )",
-				ID.class);
-		return query.getResultList();
 	}
 
 	/**

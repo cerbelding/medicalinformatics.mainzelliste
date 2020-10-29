@@ -25,27 +25,31 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
-import java.util.regex.Pattern;
-
-import javax.ws.rs.core.Response.Status;
-
-import de.pseudonymisierung.mainzelliste.Servers;
-import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jettison.json.JSONObject;
-
 import com.sun.jersey.api.uri.UriTemplate;
-
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
-import de.pseudonymisierung.mainzelliste.Session;
+import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
+import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
+import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
+import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jettison.json.JSONObject;
 
 /**
  * A temporary "ticket" to realize authorization and/or access to a resource.
@@ -130,7 +134,7 @@ public class Token {
 		if (this.type.equals("addPatient"))
 			this.checkAddPatient(apiVersion);
 		else if (this.type.equals("readPatients"))
-			this.checkReadPatients();
+			this.checkReadPatients(apiVersion);
 		else if (this.type.equals("editPatient"))
 			this.checkEditPatient(apiVersion);
 		else if (this.type.equals("deletePatient")); // TODO: checkDeletePatient
@@ -389,7 +393,7 @@ public class Token {
 	/**
 	 * Check whether this is a valid readPatients token.
 	 */
-	private void checkReadPatients() {
+	private void checkReadPatients(ApiVersion apiVersion) {
 
 		// check that IDs to search for are provided
 		if (!this.getData().containsKey("searchIds"))
@@ -421,10 +425,14 @@ public class Token {
 			}
 			checkIdType(idType);
 
-			if (!Persistor.instance.patientExists(idType, idString) && !idString.equals("*")) {
+			if ((apiVersion.majorVersion < 3 || apiVersion.majorVersion == 3 && apiVersion.minorVersion < 2)
+					&& !Persistor.instance.patientExists(idType, idString)) {
 				throw new InvalidTokenException(
 						"No patient found with provided " + idType + " '"
 								+ idString + "'!");
+			} else if (searchIds.size() > 1 && idString.trim().equals("*")){
+				throw new NotImplementedException(
+						"It's only possible to request one IdType as wildcard select.");
 			}
 		}
 

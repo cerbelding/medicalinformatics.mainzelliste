@@ -4,6 +4,10 @@
 - Support encryption with JCE API and Tink library
 - Generated ID can be configured to be always encrypted before exposing it to the outside via the REST API
 
+### 1.9-RC10 - 2020-10-21
+#### Fixed
+- validate read patient with wildcard
+
 ### 1.9-RC9 - 2020-10-01
 #### Fixed
 - Read Patient from endpoint '[GET] /patients/?tokenId={tokenid}]' cause an exception
