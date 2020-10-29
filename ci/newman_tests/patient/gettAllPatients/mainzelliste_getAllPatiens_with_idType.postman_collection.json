@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "b516167b-9ddf-4291-8dd3-73d8a1d33cd7",
+		"_postman_id": "237e5637-f44e-4003-b3db-3dd964c50ac0",
 		"name": "mainzelliste_getAllPatiens_with_idType",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "bae37559-74e4-4e9b-9ff2-0515ae0e171c",
+						"id": "a1a4aeb6-20f1-43b0-aadd-df6bad7bbfd4",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -33,7 +33,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "d3ff9f7d-8c35-41ab-baa5-0f0576a70090",
+						"id": "497e2cf8-3b39-45e6-ba25-ee8c2a7b748a",
 						"exec": [
 							"pm.collectionVariables.set('addPatientsPointer', 0);",
 							"pm.collectionVariables.set('readPatientsPointer', 0);",
@@ -74,7 +74,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "c357cae5-7298-4ed0-9c9d-151d07f08846",
+						"id": "b88ef312-43af-4502-8a03-0d9512bf0f8e",
 						"exec": [
 							"console.log(\"New TOKEN (addPatient)\")",
 							"var jsonBody;",
@@ -146,7 +146,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "f07dcd09-baf9-464a-9475-635bba271814",
+						"id": "555a3e57-09f7-4c29-a65a-ec54eea3bf3e",
 						"exec": [
 							"var externalData =  pm.variables.get('ADD_PATIENTS_DATA');",
 							"var patientsPointer = (pm.variables.get('addPatientsPointer'));",
@@ -220,7 +220,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "a514f2de-b015-440b-a2c1-a15c0f56cfe3",
+						"id": "68a7e53d-3bb5-45dc-943c-9c758b8443aa",
 						"exec": [
 							"//Deleting unnecessary keys",
 							"var addPatientData =  pm.variables.get('ADD_PATIENTS_DATA');",
@@ -355,7 +355,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "10ce7dd4-4a0f-4865-ac48-72c756407c5c",
+						"id": "4a119d5b-cd00-4c10-bb82-d492e599c5b8",
 						"exec": [
 							""
 						],
@@ -448,7 +448,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "675226d9-19b1-49df-a0de-50301722be18",
+						"id": "09c94fe0-62e0-4a58-80a2-fafb080d7349",
 						"exec": [
 							"console.log(\"New TOKEN (addPatient)\")",
 							"var jsonBody;",
@@ -520,7 +520,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "153ae9c5-6604-46ec-bded-9d84e5e5ee69",
+						"id": "d982a217-e1e7-4738-b95c-b155e6dd000b",
 						"exec": [
 							"var externalData =  pm.variables.get('ADD_PATIENTS_DATA');",
 							"var patientsPointer = (pm.variables.get('addPatientsPointer'));",
@@ -594,7 +594,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "b2dd0218-cd60-4c78-8b50-e501f6bb5092",
+						"id": "3601114e-5171-45dd-be50-e546e8a7252e",
 						"exec": [
 							"//Deleting unnecessary keys",
 							"var addPatientData =  pm.variables.get('ADD_PATIENTS_DATA');",
@@ -729,7 +729,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "9b8d8945-05fa-444a-97e1-d117e2553624",
+						"id": "0a3f0036-37ff-4e99-87b6-668425f6196a",
 						"exec": [
 							""
 						],
@@ -822,7 +822,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "d35bd602-6a0f-4c30-9f41-995c6b9496ca",
+						"id": "24263c42-ebbb-40a2-bf45-19d96d1d7be3",
 						"exec": [
 							"console.log(\"New TOKEN (addPatient)\")",
 							"var jsonBody;",
@@ -894,7 +894,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "a5db9225-0d46-4933-8bdf-5d6c6c4ca3a0",
+						"id": "7f1b769d-e33f-42cb-8092-86f2b8cbbae8",
 						"exec": [
 							"var externalData =  pm.variables.get('ADD_PATIENTS_DATA');",
 							"var patientsPointer = (pm.variables.get('addPatientsPointer'));",
@@ -968,7 +968,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "aa9df014-5d2a-410f-a4fc-98f49f6e4948",
+						"id": "40a9c908-0733-46ae-b7b9-01043ebf12b9",
 						"exec": [
 							"//Deleting unnecessary keys",
 							"var addPatientData =  pm.variables.get('ADD_PATIENTS_DATA');",
@@ -1103,7 +1103,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "0749f282-d83b-4fdb-8f91-0eecd14a2384",
+						"id": "4d0cd16a-b906-415f-9269-693f54bc76a5",
 						"exec": [
 							""
 						],
@@ -1196,7 +1196,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "86b359ab-74d8-40af-8a34-a1f42c101751",
+						"id": "1f7c0aa7-5b49-4f6a-97fe-8e5f60ac974f",
 						"exec": [
 							"console.log(\"New TOKEN (addPatient)\")",
 							"var jsonBody;",
@@ -1268,7 +1268,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "2ddf69ad-8358-4259-9bc3-4871b3d0a5d6",
+						"id": "f675b5a1-d8f8-4c29-b14d-c9701a274d01",
 						"exec": [
 							"var externalData =  pm.variables.get('ADD_PATIENTS_DATA');",
 							"var patientsPointer = (pm.variables.get('addPatientsPointer'));",
@@ -1342,7 +1342,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "7287d753-1a1d-4834-9fc2-9a7b21ea4489",
+						"id": "85e0a107-51de-4558-99de-7b22f963995a",
 						"exec": [
 							"//Deleting unnecessary keys",
 							"var addPatientData =  pm.variables.get('ADD_PATIENTS_DATA');",
@@ -1477,7 +1477,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "b5a88e0c-7aa1-4d3f-861a-288aab0c4226",
+						"id": "c6ef8f98-65ae-48a8-b97c-c21282f99a85",
 						"exec": [
 							""
 						],
@@ -1570,7 +1570,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "5a519df7-6a34-4452-b8da-640d39948c87",
+						"id": "7e24f272-c049-40e2-b3e6-1966bc6c9cfe",
 						"exec": [
 							"",
 							"var jsonBody;",
@@ -1645,7 +1645,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "b06ef231-afd8-40fa-8fe9-00cd2427214b",
+						"id": "a0bee4be-2f6f-4e7b-a09e-39256f93db6d",
 						"exec": [
 							"",
 							"var readPatientsData = pm.variables.get('READ_PATIENTS_DATA')",
@@ -1680,7 +1680,7 @@
 					},
 					{
 						"key": "mainzellisteApiVersion",
-						"value": "{{mainzellisteApiVersion}}"
+						"value": "3.2"
 					}
 				],
 				"body": {
@@ -1707,7 +1707,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "528dff8c-f457-4864-9935-2436d0fcdb85",
+						"id": "2deee1e5-7c28-475e-92e7-88fcdc0a2fa0",
 						"exec": [
 							"console.log(\"GET Patient\")",
 							"",
@@ -1870,7 +1870,7 @@
 					},
 					{
 						"key": "mainzellisteApiVersion",
-						"value": "{{mainzellisteApiVersion}}"
+						"value": "3.2"
 					}
 				],
 				"url": {
@@ -1893,7 +1893,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "4ec0278f-a2de-4f55-a950-4771c65d915a",
+						"id": "10f6a221-601b-4c1e-aa07-dae266d366c3",
 						"exec": [
 							"",
 							"var jsonBody;",
@@ -1947,30 +1947,18 @@
 							"    var patients = pm.variables.get('patients');",
 							"    var readPatientsPointer = pm.variables.get('readPatientsPointer');",
 							"    ",
-							"    ",
-							"    ",
 							"    if(patients){",
-							"       ",
-							"      searchIdTypes = [\"intid\",\"pid\"];",
+							"      searchIdTypes = [\"pid\"];",
 							"            ",
 							"      var filteredPatients = patients.filter( (patient_x) =>  ",
 							"           searchIdTypes.every( searchIdType =>  patient_x.ids.map(patient_id => patient_id.idType).includes(searchIdType)) );",
-							"   ",
 							"    ",
 							"    console.log(filteredPatients)",
-							"    ",
 							"   ",
 							"    var expectedResultLength = filteredPatients.length;",
 							"    console.log(\"expectedLength\" + expectedResultLength);",
 							"    pm.collectionVariables.set('expectedResultLength', expectedResultLength);",
-							"            ",
-							"    ",
-							"    ",
-							"       ",
-							"        ",
-							"        ",
 							"    }",
-							"    ",
 							"}",
 							""
 						],
@@ -1980,7 +1968,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "a360ce5b-beda-40ab-a881-3581c122a5a4",
+						"id": "66b1588c-26ce-45e9-9dab-5d79bcef0b9b",
 						"exec": [
 							"",
 							"var readPatientsData = pm.variables.get('READ_PATIENTS_DATA')",
@@ -2030,7 +2018,7 @@
 					},
 					{
 						"key": "mainzellisteApiVersion",
-						"value": "{{mainzellisteApiVersion}}"
+						"value": "3.2"
 					}
 				],
 				"body": {
@@ -2057,7 +2045,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "53d32fb3-a998-4207-bf20-d3aaef5ecd49",
+						"id": "cc26389b-eba9-410d-8709-ec48348afea4",
 						"exec": [
 							"console.log(\"GET Patient\")",
 							"",
@@ -2114,10 +2102,6 @@
 							"                \"#ref\": innerArraySchema",
 							"           ",
 							"       }};",
-							"            ",
-							"            ",
-							"   ",
-							"",
 							"",
 							"pm.test('response must be valid and have a valid scheme body', function() {",
 							"    pm.response.to.have.status(200);",
@@ -2125,23 +2109,39 @@
 							"    pm.response.to.be.json;",
 							"    var localBody =  pm.response.json();",
 							"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
-							"     ",
-							"    ",
-							"    ",
 							"});",
-							"",
-							"",
 							"",
 							"pm.test(\"Check number of results\", function(){",
 							"     var localBody = JSON.parse(responseBody);",
 							"     pm.expect(localBody).to.have.lengthOf(pm.variables.get('expectedResultLength'))",
-							"    ",
-							"    ",
-							"    ",
 							"})",
 							"",
+							"pm.test('Check PatientID', function () {",
+							"    var localBody = JSON.parse(responseBody);",
+							"    var patients =  pm.variables.get(\"patients\");",
+							"    ",
+							"    localBody.forEach( foundPatient => {",
+							"        if(foundPatient.ids === undefined) {",
+							"            return;",
+							"        }",
 							"",
+							"        pm.expect(foundPatient).to.have.nested.property('ids[0]');",
+							"        pm.expect(foundPatient).to.have.nested.property('ids[0].idType');",
+							"        pm.expect(foundPatient).to.have.nested.property('ids[0].idString');",
+							"        ",
+							"        foundID = foundPatient.ids[0];",
 							"",
+							"        //Search for corresponding patient",
+							"        var filteredPatients = patients.filter( x_patient => x_patient.ids.some(",
+							"            id => id.idString === foundID.idString && id.idType === foundID.idType));",
+							"        pm.expect(filteredPatients).to.have.lengthOf(1);",
+							"        var filtredPatientId = filteredPatients[0].ids.find(id => id.idString === foundID.idString && id.idType === foundID.idType);",
+							"        pm.expect(filtredPatientId).to.not.be.undefined;",
+							"        for(var propt in foundID){",
+							"            pm.expect(filtredPatientId[propt]).to.eql(foundID[propt]);",
+							"        }",
+							"    });  ",
+							"})",
 							"",
 							"/*",
 							"pm.test(\"Check Patientdata (NOT IMPLEMENTED YET)\", function () {",
@@ -2171,36 +2171,6 @@
 							"    jsonBody = localBody;",
 							"});",
 							"*/",
-							"",
-							"pm.test('Check PatientID', function () {",
-							"    ",
-							"    ",
-							"    var localBody = JSON.parse(responseBody);",
-							"    var patients =  pm.variables.get(\"patients\");",
-							"    ",
-							"    ",
-							"    localBody.forEach( foundPatient => {",
-							"    ",
-							"    pm.expect(foundPatient).to.have.nested.property('ids[0]');",
-							"    pm.expect(foundPatient).to.have.nested.property('ids[0].idType');",
-							"    pm.expect(foundPatient).to.have.nested.property('ids[0].idString');",
-							"    ",
-							"    responseElement = foundPatient.ids[0];",
-							"",
-							"    //Search for corresponding patient",
-							"    var filteredPatients = patients.filter( x_patient => x_patient.ids.some(x_property => x_property.idString === responseElement.idString && x_property.idType === responseElement.idType));",
-							"    pm.expect(filteredPatients).to.have.lengthOf(1);",
-							"    var patient = filteredPatients[0];",
-							"    var patientProperty = patient.ids.find(x => x.idString === responseElement.idString && x.idType === responseElement.idType);",
-							"    pm.expect(patientProperty).to.not.be.undefined;",
-							"        for(var propt in responseElement){",
-							"            pm.expect(patientProperty[propt]).to.eql(responseElement[propt]);",
-							"        }",
-							"        ",
-							"    });",
-							"    ",
-							"})",
-							"",
 							""
 						],
 						"type": "text/javascript"
@@ -2220,7 +2190,7 @@
 					},
 					{
 						"key": "mainzellisteApiVersion",
-						"value": "{{mainzellisteApiVersion}}"
+						"value": "3.2"
 					}
 				],
 				"url": {
@@ -2242,7 +2212,7 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "0fac983c-ce93-43be-8b4f-bd9dcb843cc9",
+				"id": "794d66e0-e176-4598-8d78-a04d848d3114",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -2252,12 +2222,44 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "53d10bc2-2cc6-4f82-81a0-01e9c728312c",
+				"id": "d60218c4-cbcb-4270-a779-643969a82c1a",
 				"type": "text/javascript",
 				"exec": [
 					""
 				]
 			}
+		}
+	],
+	"variable": [
+		{
+			"id": "5163d748-6764-4ffe-aded-b1686187278e",
+			"key": "addPatientsPointer",
+			"value": ""
+		},
+		{
+			"id": "2118798b-d0ab-4bf4-848c-55f4b668250c",
+			"key": "readPatientsPointer",
+			"value": ""
+		},
+		{
+			"id": "e13bde28-0d6c-48f2-88a9-3a7d54180668",
+			"key": "tokenId",
+			"value": ""
+		},
+		{
+			"id": "c88ffeb9-006d-48c7-9f26-d144fa969a54",
+			"key": "idString",
+			"value": ""
+		},
+		{
+			"id": "18a3a065-321d-47e4-8294-4e136d425f5f",
+			"key": "patients",
+			"value": ""
+		},
+		{
+			"id": "b7dfd314-d59a-426f-abcc-3da406ca3c25",
+			"key": "expectedResultLength",
+			"value": ""
 		}
 	],
 	"protocolProfileBehavior": {}
