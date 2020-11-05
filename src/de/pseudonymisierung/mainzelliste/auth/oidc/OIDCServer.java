@@ -1,10 +1,10 @@
-package de.pseudonymisierung.mainzelliste.auth.oicd;
+package de.pseudonymisierung.mainzelliste.auth.oidc;
 
 import de.pseudonymisierung.mainzelliste.auth.AuthorizationServer;
 
-public class OICDServer extends AuthorizationServer {
+public class OIDCServer extends AuthorizationServer {
 
-  public OICDServer(String issuer){
+  public OIDCServer(String issuer){
     super(issuer, ".well-known/openid-configuration");
   }
 

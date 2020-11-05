@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.auth.oicd;
+package de.pseudonymisierung.mainzelliste.auth.oidc;
 
 
 

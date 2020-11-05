@@ -1,25 +1,22 @@
-package de.pseudonymisierung.mainzelliste.auth;
+package de.pseudonymisierung.mainzelliste.auth.oidc.operator;
 
 import com.sun.jersey.api.NotFoundException;
-import de.pseudonymisierung.mainzelliste.auth.oidc.OIDCConfigurationParser;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class ClaimPropertyFactory {
-  private Map<String, String> config;
-
-  private Map<ClaimAuth, Supplier<ClaimProperty>> factoryMap = new HashMap() {
+public class OperatorFactory {
+  private Map<OperatorEnum, Supplier<Operator>> factoryMap = new HashMap() {
     {
-      put(ClaimAuth.OIDC,  OIDCConfigurationParser.parseConfiguration(config));
+      put(OperatorEnum.AND,  new AndOperator());
+      put(OperatorEnum.OR,  new OrOperator());
     }
   };
 
-  public ClaimProperty createClaimProperty(ClaimAuth claimAuth, Map<String, String> config) {
-    this.config = config;
-    Supplier<ClaimProperty> factory = factoryMap.get(claimAuth);
+  public Operator createOperator(OperatorEnum operator) {
+    Supplier<Operator> factory = factoryMap.get(operator);
     if (factory == null) {
-      throw new NotFoundException("Could not parse ClaimProperty");
+      throw new NotFoundException("Could not parse Operator");
     }
     return factory.get();
   }

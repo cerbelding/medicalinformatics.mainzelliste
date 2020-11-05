@@ -1,2 +1,5 @@
-package de.pseudonymisierung.mainzelliste.auth.oidc.operator;public class OrOperator {
+package de.pseudonymisierung.mainzelliste.auth.oidc.operator;
+
+public class OrOperator {
+
 }

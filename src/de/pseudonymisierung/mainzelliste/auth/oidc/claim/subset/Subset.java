@@ -1,4 +1,4 @@
-package de.pseudonymisierung.mainzelliste.auth.oicd.claim.subset;
+package de.pseudonymisierung.mainzelliste.auth.oidc.claim.subset;
 
 import java.util.List;
 

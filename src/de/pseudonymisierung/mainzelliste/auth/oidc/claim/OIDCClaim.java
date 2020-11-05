@@ -3,12 +3,12 @@ package de.pseudonymisierung.mainzelliste.auth.oidc.claim;
 import de.pseudonymisierung.mainzelliste.auth.oidc.claim.subset.Subset;
 import java.util.List;
 
-public class OICDClaim {
+public class OIDCClaim {
   private String claim;
   private Subset subset;
   private List<String> requiredValues;
 
-  public OICDClaim(String claim, Subset subset, List<String> requiredValues){
+  public OIDCClaim(String claim, Subset subset, List<String> requiredValues){
     this.claim = claim;
     this.subset=subset;
     this.requiredValues=requiredValues;
