@@ -27,6 +27,7 @@ package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.auth.Authentication;
 
+import de.pseudonymisierung.mainzelliste.auth.ClaimConfigurationParser;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.ApiKeyAuthenticator;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.AuthenticationEum;
 import de.pseudonymisierung.mainzelliste.requester.Requester;
@@ -207,6 +208,7 @@ public enum Servers {
 	}
 
 	private void createUsers(Properties props){
+		ClaimConfigurationParser.parseConfiguration(props);
 		for (int i = 0; ; i++) {
 			if (!props.containsKey("users." + i + ".permissions") ||
 					(!props.containsKey("users." + i + ".oauth.claims.subs") && !props.containsKey("users." + i + ".oauth.claims.roles")))

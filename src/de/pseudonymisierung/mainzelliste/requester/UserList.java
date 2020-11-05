@@ -2,7 +2,7 @@ package de.pseudonymisierung.mainzelliste.requester;
 
 import de.pseudonymisierung.mainzelliste.auth.authenticator.OICDPropertiesAdapter;
 import de.pseudonymisierung.mainzelliste.httpsClient.OICDService;
-import de.pseudonymisierung.mainzelliste.auth.oicd.JWTDecoder;
+import de.pseudonymisierung.mainzelliste.auth.oidc.JWTDecoder;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
