@@ -89,6 +89,9 @@ public class ExternalIDGenerator implements IDGenerator<ExternalID>{
 	public boolean isExternal() { return true; }
 
     @Override
+    public boolean isPersistent() { return true; }
+
+    @Override
     public Optional<IDGeneratorMemory> getMemory() {
         return Optional.empty();
     }
