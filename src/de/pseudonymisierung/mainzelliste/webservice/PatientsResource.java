@@ -519,15 +519,13 @@ public class PatientsResource {
         List<?> requestedIdTypes = token.getDataItemList("resultIds");
         Set<String> transientIdTypes = IDGeneratorFactory.instance.getTransientIdTypes();
         List<String> derivedIdTypes = (List<String>)requestedIdTypes.stream().filter(o -> (transientIdTypes.contains(o))).collect(Collectors.toList());
-        List<JSONObject> requestedIds = patient.getIds().stream()
+        if (!derivedIdTypes.isEmpty()) {
+            derivedIdTypes.forEach(patient::createId);
+        }
+        List<JSONObject> requestedIds = patient.getAllIds().stream()
             .filter(id -> requestedIdTypes.contains(id.getType()))
             .map(ID::toJSON)
             .collect(Collectors.toList());
-        // Add transient ids (derived from other id types) at the end of the list
-        if (!derivedIdTypes.isEmpty()) {
-          derivedIdTypes.forEach(patient::createId);
-          requestedIds.addAll(patient.getTransientIds().stream().map(ID::toJSON).collect(Collectors.toList()));
-        }
         if (!requestedIds.isEmpty()) {
           patientJson.put("ids", requestedIds);
         }

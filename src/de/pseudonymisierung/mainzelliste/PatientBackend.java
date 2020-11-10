@@ -157,10 +157,10 @@ public enum PatientBackend {
           case MATCH:
             assignedPatient = match.getBestMatchedPatient();
             // Firstly Generate/update from existing patient the persistent id types
+            assignedPatient.updateFrom(inputPatient);
             for (String idType : idTypes) {
               assignedPatient.getOriginal().createId(idType);
             }
-            assignedPatient.updateFrom(inputPatient);
             for (String idType : derivedIdTypes) {
               assignedPatient.getOriginal().createId(idType);
             }
@@ -197,11 +197,11 @@ public enum PatientBackend {
             }
 
             for (String idType : idTypes) {
-              logger.info("Created new ID " + inputPatient.getId(idType).getIdString() + " for ID request " + t.getId());
+              logger.debug("Created new ID " + inputPatient.getId(idType).getIdString() + " for ID request " + t.getId());
             }
 
             for (String idType : transientIdTypes) {
-              logger.info("Generated new transient ID " + inputPatient.getTransientId(idType).getIdString() + " for ID request " + t.getId());
+              logger.debug("Generated new transient ID " + inputPatient.getTransientId(idType).getIdString() + " for ID request " + t.getId());
             }
             if (match.getResultType() == MatchResultType.POSSIBLE_MATCH) {
               inputPatient.setTentative(true);

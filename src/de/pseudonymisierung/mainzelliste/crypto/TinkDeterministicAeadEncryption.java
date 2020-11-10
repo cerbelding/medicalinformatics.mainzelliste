@@ -25,54 +25,45 @@
  */
 package de.pseudonymisierung.mainzelliste.crypto;
 
-import com.google.crypto.tink.HybridEncrypt;
+import com.google.crypto.tink.DeterministicAead;
 import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.hybrid.HybridConfig;
+import com.google.crypto.tink.daead.DeterministicAeadConfig;
 import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-
-import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class TinkHybridEncryption extends AbstractTinkEncryption<HybridEncrypt> {
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 
-  private static final Logger logger = LogManager.getLogger(TinkHybridEncryption.class);
+public class TinkDeterministicAeadEncryption extends AbstractTinkEncryption<DeterministicAead> {
+
+  private static final Logger logger = LogManager.getLogger(TinkDeterministicAeadEncryption.class);
 
   static {
     try {
-      HybridConfig.register();
+      DeterministicAeadConfig.register();
     } catch (GeneralSecurityException e) {
-      logger.fatal("Couldn't register key managers to handle supported HybridDecrypt "
-          + "and HybridEncrypt Tink-key types", e);
+      logger.fatal("Couldn't register key managers to handle supported DeterministicAeas Tink-key types", e);
       throw new InternalErrorException(e);
     }
   }
 
-  public TinkHybridEncryption(CryptoKey key)
+  public TinkDeterministicAeadEncryption(CryptoKey key)
       throws GeneralSecurityException {
-    super(key, HybridEncrypt.class);
+    super(key, DeterministicAead.class);
   }
 
-  public TinkHybridEncryption(KeysetHandle keysetHandle)
+  public TinkDeterministicAeadEncryption(KeysetHandle keysetHandle)
       throws GeneralSecurityException {
-    super(keysetHandle, HybridEncrypt.class);
+    super(keysetHandle, DeterministicAead.class);
   }
 
   @Override
   public byte[] encrypt(String plaintext) throws GeneralSecurityException {
-    return primitive.encrypt(plaintext.getBytes(StandardCharsets.UTF_8), null);
+    return primitive.encryptDeterministically(plaintext.getBytes(StandardCharsets.UTF_8), null);
   }
-
-  /**
-   * return a URL-safe base 64 cipher text
-   *
-   * @param plaintext plain text
-   * @return resulting a URL-safe base 64 text
-   */
 
   @Override
   public String encryptToBase64String(String plaintext) throws GeneralSecurityException {
@@ -80,12 +71,12 @@ public class TinkHybridEncryption extends AbstractTinkEncryption<HybridEncrypt> 
   }
 
   @Override
-  public byte[] decrypt(String plaintext) {
-    throw new NotImplementedException("No decryption defined for Tink HybridEncrypt");
+  public byte[] decrypt(String plaintext) throws GeneralSecurityException {
+    return primitive.decryptDeterministically(Base64.decodeBase64(plaintext.getBytes(StandardCharsets.UTF_8)), null);
   }
 
   @Override
-  public String decryptToString(String plaintext) {
-    throw new NotImplementedException("Not implemented");
+  public String decryptToString(String plaintext) throws GeneralSecurityException {
+    return new String(decrypt(plaintext));
   }
 }

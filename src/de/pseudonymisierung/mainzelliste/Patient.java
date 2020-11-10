@@ -331,27 +331,18 @@ public class Patient {
 					.forEach(e -> this.generateId(e.getValue()));
 		}
 
-		// Set the base id for transient id
-		// after eager generation, because it can be dependent on other generated types
-		if (!factory.isPersistent()) {
-			String baseIdType = ((DerivedIDGenerator<?>)factory).getBaseIdType();
-			ID baseId = getId(baseIdType);
-			if (baseId == null) {
-				throw new InvalidIDException("The base ID Type for encryption " + type + " doesn't exist!");
-			} else {
-				((DerivedIDGenerator<?>)factory).setBaseId(baseId);
-			}
-		}
-
-		ID newID = generateId(factory);
-		return newID;
+		return generateId(factory);
 	}
 
 	private ID generateId(IDGenerator<? extends ID> factory) {
-		ID newID = factory.getNext();
+		ID newID;
 		if (factory.isPersistent()){
+			newID = factory.getNext();
 			ids.add(newID);
 		} else {
+			String baseIdType = ((DerivedIDGenerator<?>)factory).getBaseIdType();
+			ID baseId = getId(baseIdType);
+			newID = ((DerivedIDGenerator<?>)factory).computeId(baseId);
 			transientIds.add(newID);
 		}
 		return newID;
@@ -427,6 +418,17 @@ public class Patient {
 	 */
 	public Set<ID> getTransientIds() {
 		return Collections.unmodifiableSet(transientIds);
+	}
+
+	/**
+	 * Get all generated ids of this patient (persistent and transient).
+	 *
+	 * @return All already generated IDs of the patient
+	 */
+	public Set<ID> getAllIds() {
+		Set<ID> allIds = ids;
+		allIds.addAll(transientIds);
+		return allIds;
 	}
 
 	/**

@@ -47,6 +47,8 @@ public class CryptoUtil {
           return new JCEAsymmetricEncryption(wrappedKey);
         case TINK_HYBRID:
           return new TinkHybridEncryption(wrappedKey.getKey(KeysetHandle.class));
+        case TINK_DETERMINISTIC:
+          return new TinkDeterministicAeadEncryption(wrappedKey.getKey(KeysetHandle.class));
       }
     } catch (IllegalArgumentException e) {
       throw new InvalidKeySpecException("The given crypto key '" +

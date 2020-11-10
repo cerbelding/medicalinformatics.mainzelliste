@@ -28,8 +28,13 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.crypto.Encryption;
+import de.pseudonymisierung.mainzelliste.exceptions.GeneralCryptoException;
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 
+import java.security.GeneralSecurityException;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -41,20 +46,30 @@ public class CryptoIDGenerator implements DerivedIDGenerator<CryptoID> {
 
   /** The ID type this generator instance creates. */
   private String idType;
-
   private String baseIdType;
-  private ID baseId;
+  private Encryption symEncryption;
 
   @Override
   public void init(IDGeneratorMemory mem, String idType, String[] eagerGenRelatedIdTypes, Properties props) {
     this.idType = idType;
     this.baseIdType = props.getProperty("baseIdType");
+    if (baseIdType.isEmpty()) {
+      throw new InvalidConfigurationException("Base ID type for CryptoID <"+idType+"> wasn't configured");
+    }
+    String encryptionName = props.getProperty("symEncryption");
+    if (encryptionName.isEmpty()) {
+      throw new InvalidConfigurationException("Symmetric encryption for CryptoID <"+idType+"> wasn't configured");
+    }
+    this.symEncryption = Config.instance.getEncryption(encryptionName);
   }
 
   @Override
   public synchronized CryptoID getNext() {
-  	return new CryptoID(encode(baseId.idString), idType);
+  	throw new NotImplementedException("Cannot get next ID for crypto ID type!");
   }
+
+  @Override
+  public CryptoID computeId(ID baseId) { return new CryptoID(encode(baseId.getIdString()), idType); }
 
   @Override
   public CryptoID buildId(String id) {
@@ -89,11 +104,6 @@ public class CryptoIDGenerator implements DerivedIDGenerator<CryptoID> {
 	}
 
   @Override
-  public void setBaseId(ID baseId) {
-		this.baseId = baseId;
-	}
-
-  @Override
   public String getBaseIdType() { return baseIdType; }
 
   @Override
@@ -101,21 +111,33 @@ public class CryptoIDGenerator implements DerivedIDGenerator<CryptoID> {
   	return IDGeneratorFactory.instance.buildId(baseIdType, decode(derivedId.idString));
   }
 
-  // Dummy generator
-  // TODO: Replace with encryption
+  /**
+   * Encrypts string with a symmetric encryption method
+   *
+   * @param sourceString source string for encryption
+   * @return encrypted string in Base64String format
+   */
   private String encode( String sourceString ) {
-  	StringBuilder builder = new StringBuilder();
-  	builder.append(sourceString);
-  	builder = builder.reverse();
-  	return builder.toString();
+    try {
+      return symEncryption.encryptToBase64String(sourceString);
+    } catch (GeneralSecurityException e) {
+      throw new GeneralCryptoException(
+          "Computing Crypto ID with IDtype " + this.idType + " failed", e);
+    }
   }
 
-  // Dummy decoder
-  // TODO: Replace with decryption
+  /**
+   * Decrypts encrypted string with a symmetric encryption method
+   *
+   * @param encodedString source string for encryption
+   * @return decrypted string
+   */
   private String decode( String encodedString ) {
-  	StringBuilder builder = new StringBuilder();
-  	builder.append(encodedString);
-  	builder = builder.reverse();
-  	return builder.toString();
+    try {
+      return symEncryption.decryptToString(encodedString);
+    } catch (GeneralSecurityException e) {
+      throw new GeneralCryptoException(
+        "Computing Base ID with IDtype " + this.baseIdType + " failed", e);
+    }
   }
 }

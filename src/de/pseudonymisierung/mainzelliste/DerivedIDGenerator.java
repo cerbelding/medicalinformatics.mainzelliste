@@ -32,13 +32,6 @@ package de.pseudonymisierung.mainzelliste;
 public interface DerivedIDGenerator<I extends ID> extends IDGenerator<ID> {
 
   /**
-   * Sets base id for generating the derived id
-   *
-   * @param baseId An ID instance of base id type
-   */
-  public void setBaseId(ID baseId);
-
-  /**
    * Gets id type for base id
    *
    * @return type of base id
@@ -52,4 +45,12 @@ public interface DerivedIDGenerator<I extends ID> extends IDGenerator<ID> {
    * @return ID instance of base id type corresponding to provided derived id
    */
   public ID getBaseId(I derivedId);
+
+  /**
+   * Determines the derived id for provided base id
+   *
+   * @param baseId ID instance
+   * @return ID instance of derived id type corresponding to provided base id
+   */
+  public I computeId(ID baseId);
 }

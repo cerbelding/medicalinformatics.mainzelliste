@@ -44,4 +44,20 @@ public interface Encryption {
    * @return resulting a URL-safe base 64 text
    */
   String encryptToBase64String(String plaintext) throws GeneralSecurityException;
+
+  /**
+   * return cipher text
+   *
+   * @param plaintext plain text
+   * @return cipher text
+   */
+  byte[] decrypt(String plaintext) throws GeneralSecurityException;
+
+  /**
+   * return decrypted plain text
+   *
+   * @param plaintext plain text
+   * @return decrypted plain text
+   */
+  String decryptToString(String plaintext) throws GeneralSecurityException;
 }
