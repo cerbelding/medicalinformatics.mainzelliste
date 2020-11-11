@@ -192,7 +192,7 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	public boolean isExternal() { return false; }
 
 	@Override
-	public boolean isPersistent() { return false; }
+	public boolean isPersistent() { return true; }
 
 	@Override
 	public Optional<IDGeneratorMemory> getMemory() {

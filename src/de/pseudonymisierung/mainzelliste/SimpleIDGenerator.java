@@ -104,7 +104,7 @@ public class SimpleIDGenerator implements IDGenerator<IntegerID> {
 	public boolean isExternal() { return false; }
 
 	@Override
-	public boolean isPersistent() { return false; }
+	public boolean isPersistent() { return true; }
 
 	@Override
 	public Optional<IDGeneratorMemory> getMemory() {
