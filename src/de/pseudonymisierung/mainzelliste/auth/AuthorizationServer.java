@@ -1,25 +1,33 @@
 package de.pseudonymisierung.mainzelliste.auth;
 
 public class AuthorizationServer {
+
   protected String issuer;
   protected String metaDataUrl;
+  protected String id;
 
 
-  public AuthorizationServer(String issuer){
-    this.issuer=issuer;
+  public AuthorizationServer(String issuer, String id) {
+    this.issuer = issuer;
     this.metaDataUrl = ".well-known/oauth-authorization-server";
-  }
-  public AuthorizationServer(String issuer, String metaDataUrl){
-    this.issuer=issuer;
-    this.metaDataUrl=metaDataUrl;
+    this.id = id;
   }
 
-  protected String getIssuer() {
-    return issuer;
+  public AuthorizationServer(String issuer, String id, String metaDataUrl) {
+    this.issuer = issuer;
+    this.metaDataUrl = metaDataUrl;
+    this.id = id;
   }
 
-  protected String getMetaDataUrl() {
-    return issuer+metaDataUrl;
+  public String getIssuer() {
+    return this.issuer;
   }
+
+  public String getMetaDataUrl() {
+    return this.issuer + this.metaDataUrl;
+  }
+
+  public String getId(){return this.id;}
+
 
 }

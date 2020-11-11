@@ -8,15 +8,22 @@ import java.util.function.Supplier;
 
 public class ClaimPropertyFactory {
   private Map<String, String> config;
+  private String prefix;
+  private  Map<ClaimAuthEnum, Supplier<ClaimProperty>> factoryMap = new HashMap();
 
-  private Map<ClaimAuthEnum, Supplier<ClaimProperty>> factoryMap = new HashMap() {
-    {
-      put(ClaimAuthEnum.OIDC,  OIDCConfigurationParser.parseConfiguration(config));
-    }
-  };
 
-  public ClaimProperty createClaimProperty(ClaimAuthEnum claimAuthEnum, Map<String, String> config) {
+  private void initFactoryMap(){
+    factoryMap.put(ClaimAuthEnum.OIDC,  () -> OIDCConfigurationParser.parseConfiguration(this.config, this.prefix));
+  }
+
+  public ClaimPropertyFactory(Map<String, String> config, String prefix){
     this.config = config;
+    this.prefix = prefix;
+    this.initFactoryMap();
+
+  }
+
+  public ClaimProperty createClaimProperty(ClaimAuthEnum claimAuthEnum) {
     Supplier<ClaimProperty> factory = factoryMap.get(claimAuthEnum);
     if (factory == null) {
       throw new NotFoundException("Could not parse ClaimProperty");

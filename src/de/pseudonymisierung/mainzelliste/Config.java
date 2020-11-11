@@ -25,6 +25,10 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.auth.ClaimConfiguration;
+import de.pseudonymisierung.mainzelliste.auth.ClaimConfigurationParser;
+import de.pseudonymisierung.mainzelliste.auth.oidc.OIDCServer;
+import de.pseudonymisierung.mainzelliste.auth.oidc.OIDCServerConfigurationParser;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
@@ -82,6 +86,11 @@ public enum Config {
 
 	/** Allowed headers for Cross Domain Resource Sharing */
 	private Set<String> allowedHeaders;
+
+	/**List of allowed OIDC-Servers*/
+	private Set<OIDCServer> oidcServerSet = new HashSet<>();
+	/**List of Claims*/
+	private Set<ClaimConfiguration> claimConfigurationSet = new HashSet<>();
 
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
@@ -188,6 +197,8 @@ public enum Config {
 
 		// Read version number provided by pom.xml
 		version = readVersion();
+
+		this.oidcServerSet = OIDCServerConfigurationParser.parseOIDCServerConfiguration(props);
 	}
 
     /**
@@ -597,5 +608,21 @@ public enum Config {
 		} catch (IOException e) {
 			throw new Error ("I/O error while reading version.properties", e);
 		}
+	}
+
+	public Set<ClaimConfiguration> getClaimConfigurationSet() {
+		return claimConfigurationSet;
+	}
+
+	public void setClaimConfigurationSet(Set<ClaimConfiguration> claimConfigurationSet){
+		this.claimConfigurationSet = claimConfigurationSet;
+	}
+	public void updateClaimConfigurationSet(){
+		Set<ClaimConfiguration> claimConfigurationSet = ClaimConfigurationParser.parseConfiguration(this.props);
+		this.setClaimConfigurationSet(claimConfigurationSet);
+	}
+
+	public Set<OIDCServer> getOidcServerSet() {
+		return oidcServerSet;
 	}
 }

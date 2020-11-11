@@ -8,8 +8,10 @@ import java.util.List;
 public class OIDCProperty implements ClaimProperty {
   private Operator operator;
   private List<OIDCClaim> oidcClaimList;
+  private OIDCServer server;
 
-  public  OIDCProperty(Operator operator, List<OIDCClaim> oidcClaimList){
+  public  OIDCProperty(OIDCServer server, Operator operator, List<OIDCClaim> oidcClaimList){
+    this.server = server;
     this.oidcClaimList = oidcClaimList;
     this.operator = operator;
   }

@@ -6,10 +6,12 @@ import de.pseudonymisierung.mainzelliste.configuration.ConfigurationParser;
 import de.pseudonymisierung.mainzelliste.configuration.ConfigurationUtils;
 import de.pseudonymisierung.mainzelliste.utils.EnumLookup;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import org.apache.commons.collections.ArrayStack;
 import org.apache.log4j.Logger;
 
 public class ClaimConfigurationParser {
@@ -18,29 +20,22 @@ public class ClaimConfigurationParser {
  private static Logger logger = Logger.getLogger(ClaimConfigurationParser.class);
 
  private static ClaimConfiguration parseClaim(Properties props, String prefix){
-   Set<String> permissions = Permission.parsePermissions(
-       props.getProperty(ConfigurationUtils.getConcatedConfigurationPath(prefix, ClaimEnum.PERMISSIONS.getClaimName()))
-   );
+   Set<String> permissions = Permission.getPemissions(props, prefix);
    String authValue = props.getProperty(ConfigurationUtils.getConcatedConfigurationPath(prefix, ClaimEnum.AUTH.getClaimName()));
-   ClaimAuthEnum claimAuthEnum = EnumLookup.lookup(ClaimAuthEnum.class,authValue);
+   ClaimAuthEnum claimAuthEnum = EnumLookup.lookup(ClaimAuthEnum.class, authValue);
+   String authPrefix =  ConfigurationUtils.getConcatedConfigurationPath(prefix,claimAuthEnum.getClaimAuthName());
 
-
-
-   List<String> claimKeys = ConfigurationParser.filterConfiguration(
-       props,
-       ConfigurationUtils.getConcatedConfigurationPath(prefix,claimAuthEnum.getClaimAuthName().toLowerCase())
-       );
+   List<String> claimKeys = ConfigurationParser.filterConfiguration(props,authPrefix,true);
    Map<String, String> mappedClaimProperties = ConfigurationParser.parseConfigurationToMap(props, claimKeys);
 
-   ClaimProperty claimProperty = new ClaimPropertyFactory().createClaimProperty(claimAuthEnum,mappedClaimProperties );
+   ClaimProperty claimProperty = new ClaimPropertyFactory(mappedClaimProperties, authPrefix).createClaimProperty(claimAuthEnum);
 
    ClaimConfiguration claimConfiguration = new ClaimConfiguration(permissions,claimAuthEnum,claimProperty);
-
    return claimConfiguration;
  }
 
-  public static List<ClaimConfiguration> parseConfiguration(Properties props) {
-    List<ClaimConfiguration> claimConfigurationList = new ArrayList<>();
+  public static Set<ClaimConfiguration> parseConfiguration(Properties props) {
+    Set<ClaimConfiguration> claimConfigurationList = new HashSet<>();
 
     for (int i = 0; ; i++) {
       if (

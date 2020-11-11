@@ -6,12 +6,17 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class OperatorFactory {
-  private Map<OperatorEnum, Supplier<Operator>> factoryMap = new HashMap() {
-    {
-      put(OperatorEnum.AND,  new AndOperator());
-      put(OperatorEnum.OR,  new OrOperator());
-    }
-  };
+  private Map<OperatorEnum, Supplier<Operator>> factoryMap = new HashMap();
+
+  private void initFactoryMap(){
+    factoryMap.put(OperatorEnum.AND, () -> new AndOperator());
+    factoryMap.put(OperatorEnum.OR, () -> new OrOperator());
+  }
+
+  public OperatorFactory(){
+    this.initFactoryMap();
+
+  }
 
   public Operator createOperator(OperatorEnum operator) {
     Supplier<Operator> factory = factoryMap.get(operator);
