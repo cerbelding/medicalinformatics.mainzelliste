@@ -26,11 +26,8 @@
 package de.pseudonymisierung.mainzelliste.webservice;
 
 import com.sun.jersey.api.uri.UriTemplate;
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
-import de.pseudonymisierung.mainzelliste.Servers;
+import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
-import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
@@ -425,11 +422,19 @@ public class Token {
 			}
 			checkIdType(idType);
 
-			if ((apiVersion.majorVersion < 3 || apiVersion.majorVersion == 3 && apiVersion.minorVersion < 2)
-					&& !Persistor.instance.patientExists(idType, idString)) {
-				throw new InvalidTokenException(
-						"No patient found with provided " + idType + " '"
-								+ idString + "'!");
+			if (apiVersion.majorVersion < 3 || apiVersion.majorVersion == 3 && apiVersion.minorVersion < 2){
+				IDGenerator generator = IDGeneratorFactory.instance.getFactory(idType);
+				if(!generator.isPersistent()){
+					// CryptoIds are transient, compute the base id to check if the patient exists
+					ID newID =((DerivedIDGenerator)generator).getBaseId(IDGeneratorFactory.instance.buildId(idType, idString));
+					idType = newID.getType();
+					idString = newID.getIdString();
+				}
+				if(!Persistor.instance.patientExists(idType, idString)) {
+					throw new InvalidTokenException(
+							"No patient found with provided " + idType + " '"
+									+ idString + "'!");
+				}
 			} else if (searchIds.size() > 1 && idString.trim().equals("*")){
 				throw new NotImplementedException(
 						"It's only possible to request one IdType as wildcard select.");
