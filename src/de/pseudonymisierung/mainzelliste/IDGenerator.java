@@ -112,6 +112,11 @@ public interface IDGenerator<I extends ID> {
 	public boolean isExternal();
 
 	/**
+	 * Check whether an ID generator persists generated IDs
+	 */
+	public boolean isPersistent();
+
+	/**
 	 * Get the {@link IDGeneratorMemory} if it exists.
 	 * This method could have a default implementation with Optional.empty(),
 	 * but it does not to prevent developers from forgetting to override it.

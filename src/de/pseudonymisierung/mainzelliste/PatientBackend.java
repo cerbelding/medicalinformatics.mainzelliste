@@ -145,10 +145,10 @@ public enum PatientBackend {
         Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
         String atChangeType; // The action taken depending on the match result, for Audit Trail logging
 
-        // If a list of ID types is given in token, return these types
-        Set<String> idTypes;
-        idTypes = t.getRequestedIdTypes();
-        if (idTypes.isEmpty()) { // otherwise use the default ID type
+        Set<String> transientIdTypes = IDGeneratorFactory.instance.getTransientIdTypes();
+        Set<String> idTypes = t.getRequestedIdTypes().stream().filter(o -> (!transientIdTypes.contains(o))).collect(Collectors.toSet());
+        Set<String> derivedIdTypes = t.getRequestedIdTypes().stream().filter(o -> (transientIdTypes.contains(o))).collect(Collectors.toSet());
+        if (t.getRequestedIdTypes().isEmpty()) { // otherwise use the default ID type
           idTypes = new CopyOnWriteArraySet<>();
           idTypes.add(IDGeneratorFactory.instance.getDefaultIDType());
         }
@@ -156,13 +156,24 @@ public enum PatientBackend {
         switch (match.getResultType()) {
           case MATCH:
             assignedPatient = match.getBestMatchedPatient();
+            // Firstly Generate/update from existing patient the persistent id types
+            assignedPatient.updateFrom(inputPatient);
             for (String idType : idTypes) {
               assignedPatient.getOriginal().createId(idType);
             }
-            assignedPatient.updateFrom(inputPatient);
+            for (String idType : derivedIdTypes) {
+              assignedPatient.getOriginal().createId(idType);
+            }
 
             // log token to separate concurrent request in the log file
-            ID returnedId = assignedPatient.getOriginal().getId(idTypes.iterator().next());
+            // Log message is not informative if new ID types were requested
+            // TODO: Discuss, which ID should we log in this case
+            ID returnedId;
+            if (!idTypes.isEmpty()) {
+              returnedId = assignedPatient.getOriginal().getId(idTypes.iterator().next());
+            } else {
+              returnedId = assignedPatient.getOriginal().getTransientId(derivedIdTypes.iterator().next());
+            }
             logger.info("Found match with ID " + returnedId.getIdString() + " for ID request " + t.getId());
 
             atChangeType = "match";
@@ -180,11 +191,17 @@ public enum PatientBackend {
             if(IDGeneratorFactory.instance.isEagerGenerationOn()) {
               IDGeneratorFactory.instance.generateIds().forEach(inputPatient::addId);
             } else {
+              // first generate all persistent ids
               idTypes.forEach(inputPatient::createId);
+              transientIdTypes.forEach(inputPatient::createId);
             }
 
             for (String idType : idTypes) {
-              logger.info("Created new ID " + inputPatient.createId(idType).getIdString() + " for ID request " + t.getId());
+              logger.debug("Created new ID " + inputPatient.getId(idType).getIdString() + " for ID request " + t.getId());
+            }
+
+            for (String idType : transientIdTypes) {
+              logger.debug("Generated new transient ID " + inputPatient.getTransientId(idType).getIdString() + " for ID request " + t.getId());
             }
             if (match.getResultType() == MatchResultType.POSSIBLE_MATCH) {
               inputPatient.setTentative(true);
@@ -208,7 +225,7 @@ public enum PatientBackend {
         logger.info("Weight of best match: " + match.getBestMatchedWeight());
 
         // persist id request and new patient
-        request = new IDRequest(inputPatient.getInputFields(), idTypes, match, assignedPatient, t);
+        request = new IDRequest(inputPatient.getInputFields(), t.getRequestedIdTypes(), match, assignedPatient, t);
         if (match.getResultType().equals(MatchResultType.MATCH)) {
           Persistor.instance.addIdRequest(request);
         } else {

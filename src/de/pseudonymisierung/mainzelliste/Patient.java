@@ -124,7 +124,7 @@ public class Patient {
 	/**
 	 * Updates empty or missing fields and external Ids from another Patient
 	 * object. Modifies the object and returns it.
-	 * 
+	 *
 	 * @param from The patient object from which to update fields.
 	 * @return The modified patient object on which the method is called.
 	 */
@@ -205,6 +205,12 @@ public class Patient {
 	@OneToMany(cascade = { CascadeType.DETACH, CascadeType.MERGE,
 			CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
 	private Set<ID> ids = new HashSet<>();
+
+	/**
+	 * Set of IDs for this patient, which are not persisted in DB
+	 */
+	@Transient
+	private Set<ID> transientIds = new HashSet<>();
 
 	/**
 	 * Input fields as read from form (before transformation). Used to display
@@ -312,20 +318,33 @@ public class Patient {
 			return null;
 		}
 
-		ID newID = generateId(factory);
 		// generate ids eagerly
+		// Only non external and persistent ids can be generated eagerly
+		// Can lead to cycles in generating ids due to incorrect configuration
+		// pid -> pid2 (eagerly), pid2 -> pid3 (eagerly), pid3 -> pid (eagerly))
+		// TODO: Check for cycles in the configuration
 		if (!IDGeneratorFactory.instance.isEagerGenerationOn()) {
 			IDGeneratorFactory.instance.getNonExternalIdGenerators().entrySet().stream()
+					.filter(e -> e.getValue().isPersistent())
 					.filter(e -> e.getValue().isEagerGenerationOn(type))
 					.filter(e -> getId(e.getKey()) == null)
 					.forEach(e -> this.generateId(e.getValue()));
 		}
-		return newID;
+
+		return generateId(factory);
 	}
 
 	private ID generateId(IDGenerator<? extends ID> factory) {
-		ID newID = factory.getNext();
-		ids.add(newID);
+		ID newID;
+		if (factory.isPersistent()){
+			newID = factory.getNext();
+			ids.add(newID);
+		} else {
+			String baseIdType = ((DerivedIDGenerator<?>)factory).getBaseIdType();
+			ID baseId = getId(baseIdType);
+			newID = ((DerivedIDGenerator<?>)factory).computeId(baseId);
+			transientIds.add(newID);
+		}
 		return newID;
 	}
 
@@ -342,6 +361,23 @@ public class Patient {
 	 */
 	public ID getId(String type) {
 		for (ID thisId : ids) {
+			if (thisId.getType().equals(type))
+				return thisId;
+		}
+		return null;
+	}
+
+	/**
+	 * Get the already generated transient ID of the specified type from this patient.
+	 *
+	 * @param type
+	 *            The ID type. See {@link ID} for the general structure of an
+	 *            ID.
+	 * @return This patient's ID of the given type or null if the ID is
+	 *         not defined for this patient.
+	 */
+	public ID getTransientId(String type) {
+		for (ID thisId : transientIds) {
 			if (thisId.getType().equals(type))
 				return thisId;
 		}
@@ -373,6 +409,26 @@ public class Patient {
 	 */
 	public Set<ID> getIds() {
 		return Collections.unmodifiableSet(ids);
+	}
+
+	/**
+	 * Get the set of transient IDs of this patient.
+	 *
+	 * @return The already generated transient IDs of the patient
+	 */
+	public Set<ID> getTransientIds() {
+		return Collections.unmodifiableSet(transientIds);
+	}
+
+	/**
+	 * Get all generated ids of this patient (persistent and transient).
+	 *
+	 * @return All already generated IDs of the patient
+	 */
+	public Set<ID> getAllIds() {
+		Set<ID> allIds = ids;
+		allIds.addAll(transientIds);
+		return allIds;
 	}
 
 	/**
@@ -493,6 +549,15 @@ public class Patient {
 	}
 
 	/**
+	 * Set the transient IDs for this patient.
+	 *
+	 * @param transientIds Set of transient IDs
+	 */
+	public void setTransientIds(Set<ID> transientIds) {
+		this.transientIds = transientIds;
+	}
+
+	/**
 	 * Set the input fields. Whenever a request modifies this patient object (or
 	 * upon creation) the input fields as transmitted in the request, before
 	 * transformation, should be set with this method. This allows redisplaying
@@ -556,8 +621,8 @@ public class Patient {
 	public String toString() {
 		return fields.toString();
 	}
-	
-	/** 
+
+	/**
 	 * Determine if another patient object is equal to this. Two patient
 	 * objects p1 and p2 are considered equal if they are equal by reference
 	 * (p1==p2) or if they refer to the same object in the database. 

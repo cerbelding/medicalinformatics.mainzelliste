@@ -33,6 +33,7 @@ import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
+import de.pseudonymisierung.mainzelliste.DerivedIDGenerator;
 import de.pseudonymisierung.mainzelliste.IDRequest;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.PatientBackend;
@@ -389,6 +390,10 @@ public class PatientsResource {
         patients = Persistor.instance.getPatients(idType);
       } else {
         ID id = IDGeneratorFactory.instance.buildId(idType, idString);
+        if (IDGeneratorFactory.instance.getTransientIdTypes().contains(idType)){
+          // if id is an instance of transient id types, find a corresponding persistent base id
+          id = ((DerivedIDGenerator)IDGeneratorFactory.instance.getFactory(idType)).getBaseId(id);
+        }
         patients = Collections.singletonList(Persistor.instance.getPatient(id));
       }
 
@@ -512,11 +517,15 @@ public class PatientsResource {
     } else if (token.hasDataItem("resultIds")) {
       try {
         List<?> requestedIdTypes = token.getDataItemList("resultIds");
-        List<JSONObject> requestedIds = patient.getIds().stream()
+        Set<String> transientIdTypes = IDGeneratorFactory.instance.getTransientIdTypes();
+        List<String> derivedIdTypes = (List<String>)requestedIdTypes.stream().filter(o -> (transientIdTypes.contains(o))).collect(Collectors.toList());
+        if (!derivedIdTypes.isEmpty()) {
+            derivedIdTypes.forEach(patient::createId);
+        }
+        List<JSONObject> requestedIds = patient.getAllIds().stream()
             .filter(id -> requestedIdTypes.contains(id.getType()))
             .map(ID::toJSON)
             .collect(Collectors.toList());
-
         if (!requestedIds.isEmpty()) {
           patientJson.put("ids", requestedIds);
         }

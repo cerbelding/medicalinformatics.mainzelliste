@@ -773,6 +773,9 @@ public class PIDGenerator implements IDGenerator<PID>{
 	public boolean isExternal() { return false; }
 
 	@Override
+	public boolean isPersistent() { return true; }
+
+	@Override
 	public Optional<IDGeneratorMemory> getMemory() {
 		return Optional.of(mem);
 	}

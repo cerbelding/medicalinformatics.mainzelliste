@@ -23,41 +23,34 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.crypto;
+package de.pseudonymisierung.mainzelliste;
 
-import java.security.GeneralSecurityException;
-
-public interface Encryption {
-
-  /**
-   * return cipher text
-   *
-   * @param plaintext plain text
-   * @return cipher text
-   */
-  byte[] encrypt(String plaintext) throws GeneralSecurityException;
+/**
+ * Generator for id types which are derived from other id types (base id types)
+ * using an algorithm, e.g. symmetric encryption
+ */
+public interface DerivedIDGenerator<I extends ID> extends IDGenerator<ID> {
 
   /**
-   * return a URL-safe base 64 cipher text
+   * Gets id type for base id
    *
-   * @param plaintext plain text
-   * @return resulting a URL-safe base 64 text
+   * @return type of base id
    */
-  String encryptToBase64String(String plaintext) throws GeneralSecurityException;
+  public String getBaseIdType();
 
   /**
-   * return cipher text
+   * Gets base id for provided derived id
    *
-   * @param plaintext plain text
-   * @return cipher text
+   * @param derivedId ID instance of derived id type
+   * @return ID instance of base id type corresponding to provided derived id
    */
-  byte[] decrypt(String plaintext) throws GeneralSecurityException;
+  public ID getBaseId(I derivedId);
 
   /**
-   * return decrypted plain text
+   * Determines the derived id for provided base id
    *
-   * @param plaintext plain text
-   * @return decrypted plain text
+   * @param baseId ID instance
+   * @return ID instance of derived id type corresponding to provided base id
    */
-  String decryptToString(String plaintext) throws GeneralSecurityException;
+  public I computeId(ID baseId);
 }

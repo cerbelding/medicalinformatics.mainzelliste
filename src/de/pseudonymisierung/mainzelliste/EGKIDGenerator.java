@@ -126,6 +126,9 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
 	}
 
 	@Override
+	public boolean isPersistent() { return true; }
+
+	@Override
 	public boolean isEagerGenerationOn(String idType) {
 		return false;
 	}

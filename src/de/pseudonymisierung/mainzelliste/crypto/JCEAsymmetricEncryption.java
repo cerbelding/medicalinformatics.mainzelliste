@@ -30,6 +30,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import javax.crypto.Cipher;
+
+import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 import org.apache.commons.codec.binary.Base64;
 
 public class JCEAsymmetricEncryption implements Encryption {
@@ -54,4 +56,15 @@ public class JCEAsymmetricEncryption implements Encryption {
   public String encryptToBase64String(String plaintext) throws GeneralSecurityException {
     return Base64.encodeBase64URLSafeString(encrypt(plaintext));
   }
+
+  @Override
+  public byte[] decrypt(String plaintext) {
+    throw new NotImplementedException("Not implemented");
+  }
+
+  @Override
+  public String decryptToString(String plaintext) {
+    throw new NotImplementedException("Not implemented");
+  }
+
 }

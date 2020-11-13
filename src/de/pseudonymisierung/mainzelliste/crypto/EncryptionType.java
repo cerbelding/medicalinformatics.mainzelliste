@@ -37,5 +37,11 @@ public enum EncryptionType {
    * used to encrypt the symmetric key only.
    * ciphertext = symmetric ciphertext + encrypted symmetric key.
    */
-  TINK_HYBRID
+  TINK_HYBRID,
+
+  /**
+   * Symmetric deterministic encryption with Tink (AEAD: AES-SIV).
+   * The plaintext is encrypted with a symmetric key
+   */
+  TINK_DETERMINISTIC
 }
