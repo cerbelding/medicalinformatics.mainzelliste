@@ -1,6 +1,7 @@
 package de.pseudonymisierung.mainzelliste.webservice.commons;
 
 import com.sun.jersey.api.uri.UriTemplate;
+import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
 import de.pseudonymisierung.mainzelliste.IDRequest;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
@@ -50,7 +51,11 @@ public class RedirectBuilder {
     public RedirectBuilder setMappedIdTypesdAndIds(List<String> idTypes, Patient patient) {
         Map<String, String> mappedIdTypesAndIds = new HashMap<>();
         for (String idType : idTypes) {
-            mappedIdTypesAndIds.put(idType, patient.getId(idType).getEncryptedIdStringFirst());
+            if (IDGeneratorFactory.instance.getFactory(idType).isPersistent()) {
+                mappedIdTypesAndIds.put(idType, patient.getId(idType).getEncryptedIdStringFirst());
+            } else {
+                mappedIdTypesAndIds.put(idType, patient.getTransientId(idType).getEncryptedIdStringFirst());
+            }
         }
         this.mappedIdTypesdAndIds = mappedIdTypesAndIds;
         return this;
