@@ -260,7 +260,7 @@ public enum Servers {
 	 * for at least the configured timeout.
 	 */
 	public void cleanUpSessions() {
-		logger.debug("Cleaning up sessions...");
+		logger.trace("Cleaning up sessions...");
 		LinkedList<String> sessionsToDelete = new LinkedList<String>();
 		Date now = new Date();
 		synchronized (sessions) {

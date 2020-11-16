@@ -203,7 +203,7 @@ public enum PatientBackend {
 
             for (String idType : idTypes) {
               ID currentId = inputPatient.createId(idType);
-              logger.info("Created new ID {} for ID request {}", currentId.getIdString(), t.getId());
+              logger.debug("Created new ID {} for ID request {}", currentId.getIdString(), t.getId());
             }
             if (match.getResultType() == MatchResultType.POSSIBLE_MATCH) {
               inputPatient.setTentative(true);
