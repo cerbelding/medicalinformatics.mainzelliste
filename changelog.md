@@ -1,3 +1,7 @@
+### 1.9-RC12 - 2020-11-17
+#### Changed
+- upgrade to Java Persistence 2.2
+
 ### 1.9-RC11 - 2020-11-16
 #### Refactor
 - use logger method with arguments and supplier to add logging message instead of string concatenation to improve the performance
