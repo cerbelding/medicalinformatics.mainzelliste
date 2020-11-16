@@ -89,8 +89,7 @@ public class Initializer implements ServletContextListener {
 		Enumeration<String> en = context.getInitParameterNames();
 		while (en.hasMoreElements()) {
 			String paramName = en.nextElement();
-			logger.debug("Init param " + paramName + "="
-					+ context.getInitParameter(paramName));
+			logger.debug("Init param {}={}", paramName, context.getInitParameter(paramName));
 		}
 
 		Config c = Config.instance;
@@ -140,7 +139,7 @@ public class Initializer implements ServletContextListener {
 			Path filePath = Paths.get(logFileName);
 			String fileDir = filePath.getParent().toString();
 			String fileName = filePath.getFileName().toString();
-			logger.info(fileDir+ "," + fileName);
+			logger.info("{},{}", fileDir, fileName);
 			LoggerContext lc = (LoggerContext) LogManager.getContext(false);
 			Configuration config  = lc.getConfiguration();
 			PatternLayout patternLayout = PatternLayout.newBuilder().withPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %logger{36} - %msg%n").build();
@@ -157,7 +156,7 @@ public class Initializer implements ServletContextListener {
 			rollingFileAppender.start();
 
 			if (!Config.instance.debugIsOn()) {
-				logger.warn("Redirecting mainzelliste log to " + logFileName + ".");
+				logger.warn("Redirecting mainzelliste log to {}.", logFileName);
 				config.getLoggers().forEach((loggerKey, loggerValue) -> loggerValue.getAppenders()
 						.forEach((appenderKey, appenderValue) -> loggerValue.removeAppender(appenderValue.getName())));
 

@@ -77,7 +77,7 @@ public class CorsResponseFilter implements Filter {
 			String thisHostAndScheme = httpRequest.getScheme() + "://" + httpRequest.getHeader("Host");
 			if (origin != null) {
 				if (origin.equals(thisHostAndScheme) || Config.instance.originAllowed(origin)) {
-					logger.debug("Allowing cross domain request from origin " + origin);
+					logger.debug("Allowing cross domain request from origin {}", origin);
 					httpResponse.addHeader("Access-Control-Allow-Origin", origin);
 					String allowedHeaders = Config.instance.getAllowedHeaders();
 					if(!allowedHeaders.equals("")){
@@ -89,7 +89,7 @@ public class CorsResponseFilter implements Filter {
 					}
 					httpResponse.addHeader("Access-Control-Max-Age", String.valueOf(Config.instance.getAllowedMaxAge()));
 				} else {
-					logger.info("Rejecting cross domain request from origin " + origin);
+					logger.info("Rejecting cross domain request from origin {}", origin);
 					// For illegal origin, cancel request with 403 Forbidden.
 					HttpServletResponse resp = (HttpServletResponse) response;
 					resp.setStatus(403);

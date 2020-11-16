@@ -58,7 +58,7 @@ public class RedirectBuilder {
 
     //put in build() to avoid "uriTemplate is not set" problem?
     public RedirectBuilder setTemplateURI(UriTemplate uriTemplate) {
-        logger.info("SetTemplateURI: " + uriTemplate);
+        logger.info("SetTemplateURI: {}", uriTemplate);
         this.uriTemplate = uriTemplate;
         return this;
     }

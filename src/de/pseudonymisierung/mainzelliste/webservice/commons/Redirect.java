@@ -32,7 +32,7 @@ public class Redirect {
     }
 
     public Response execute(){
-        logger.info("execute() " + "redirectURI: " + this.redirectURI);
+        logger.info("execute() redirectURI: {}", this.redirectURI);
         return Response.status(javax.ws.rs.core.Response.Status.SEE_OTHER)
                 .location(this.redirectURI)
                 .build();

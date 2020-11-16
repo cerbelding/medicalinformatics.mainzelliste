@@ -148,7 +148,7 @@ public class EpilinkMatcher implements Matcher {
 			m = p.matcher((String) key);
 			if (m.find()){
 				String fieldName = m.group(1);
-				logger.info("Initializing properties for field " + fieldName);
+				logger.info("Initializing properties for field {}", fieldName);
 				String fieldCompStr = props.getProperty("field." + fieldName + ".comparator");
 				if (fieldCompStr != null)
 				{
@@ -174,7 +174,7 @@ public class EpilinkMatcher implements Matcher {
 					// all e_i have same value in this implementation
 					double weight = (1 - error_rate) / frequency;
 					weight = Math.log(weight) / Math.log(2);
-					logger.debug("Field weight for field " + fieldName + ": " + weight);
+					logger.debug("Field weight for field {}: {}", fieldName, weight);
 					weights.put(fieldName, weight);
 				}
 			}
@@ -352,7 +352,7 @@ public class EpilinkMatcher implements Matcher {
 			double fieldWeight = weights.get(fieldName);
 			weightSum += fieldWeight;
 			double thisCompWeight = comparators.get(fieldName).compare(left, right) * fieldWeight;
-			logger.debug("Weighted comparison for field " + fieldName + ": " + thisCompWeight);
+			logger.debug("Weighted comparison for field {}: {}", fieldName, thisCompWeight);
 			totalWeight += thisCompWeight;
 		}
 		totalWeight /= weightSum;

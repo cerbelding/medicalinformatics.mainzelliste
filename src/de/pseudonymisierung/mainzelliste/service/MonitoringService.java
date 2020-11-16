@@ -48,7 +48,7 @@ public class MonitoringService {
             }
             return Persistor.instance.getIDRequestCount(startDate, endDate) + "";
         } catch (IllegalArgumentException e) {
-            logger.warn("Couldn't process request because of invalid input format. Message: " + e.getMessage());
+            logger.warn("Couldn't process request because of invalid input format. Message: {}", e.getMessage());
             throw e;
         } catch (RuntimeException e) {
             logger.fatal( "Persistence provider error. Can't get IDRequestCount. Cause: " +  e.getMessage());

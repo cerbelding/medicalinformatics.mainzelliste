@@ -281,8 +281,8 @@ public class PatientsResource {
 					.entity(ret)
 					.build();
 		}
-		logger.debug("Accept: " + request.getHeader("Accept"));
-		logger.debug("Content-Type: " + request.getHeader("Content-Type"));
+		logger.debug(() -> "Accept: " + request.getHeader("Accept"));
+		logger.debug(() -> "Content-Type: " + request.getHeader("Content-Type"));
 		List<ID> newIds = new LinkedList<ID>(response.createRequestedIds());
 		
 		int apiMajorVersion = Servers.instance.getRequestMajorApiVersion(request);
@@ -630,7 +630,7 @@ public class PatientsResource {
                 String callback = token.getDataItemString("callback");
                 if (callback != null && callback.length() > 0) {
                     MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
-                    logger.debug("Sending request to callback " + callback);
+                    logger.debug("Sending request to callback {}", callback);
                     HttpResponse httpResponse = mainzellisteCallback
                             .apiVersion(Servers.instance.getRequestApiVersion(request)).url(callback)
                             .tokenId(token.getId())
@@ -639,7 +639,7 @@ public class PatientsResource {
                     StatusLine sline = httpResponse.getStatusLine();
                     // Accept callback if OK, CREATED or ACCEPTED is returned
                     if ((sline.getStatusCode() < 200) || sline.getStatusCode() >= 300) {
-                        logger.error("Received invalid status form mdat callback: " + httpResponse.getStatusLine());
+                        logger.error("Received invalid status form mdat callback: {}", httpResponse.getStatusLine());
                         throw new InternalErrorException("Request to callback failed!");
                     }
                 }
@@ -685,7 +685,7 @@ public class PatientsResource {
         Token t = Servers.instance.getTokenByTid(tokenId);
         EditPatientToken tt;
         if (t == null || !"editPatient".equals(t.getType())) {
-            logger.info("Token with id " + tokenId + " "
+            logger.info(() -> "Token with id " + tokenId + " "
                     + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
             throw new InvalidTokenException("Please supply a valid 'editPatient' token.", Status.UNAUTHORIZED);
         }
@@ -757,7 +757,7 @@ public class PatientsResource {
         Token token = Servers.instance.getTokenByTid(tokenId);
 
             if (token == null) {
-                logger.info("No token with id " + tokenId + " found");
+                logger.info("No token with id {} found", tokenId);
                 throw new InvalidTokenException("Please supply a valid 'deletePatient' token.", Status.UNAUTHORIZED);
             }
             token.checkTokenType("deletePatient");
@@ -800,14 +800,14 @@ public class PatientsResource {
     @Path("checkMatch/{tokenId}")
     public Response getBestMatch(@Context HttpServletRequest request, @PathParam("tokenId")
             String tokenId, MultivaluedMap<String, String> form) throws JSONException {
-        logger.debug("checkMatch" + "tokenId: " + tokenId);
+        logger.debug("checkMatch tokenId: {}", tokenId);
 
         //TODO: add permission checks
         Token token = Servers.instance.getTokenByTid(tokenId);
         token.checkTokenType("checkMatch");
 
         MatchResult matchResult = PatientBackend.instance.findMatch(form);
-        logger.info("CheckMatch/Bestmatch score: " + matchResult.getBestMatchedWeight());
+        logger.info("CheckMatch/Bestmatch score: {}", matchResult.getBestMatchedWeight());
         List<Double> similarityScores = Collections.singletonList(matchResult.getBestMatchedWeight());
         JSONArray jsonArray = new JSONArray();
         JSONObject jsonPatientObject = new JSONObject().put("similarityScore", similarityScores.get(0));
@@ -846,7 +846,7 @@ public class PatientsResource {
 
     private void sendCallback(@Context HttpServletRequest request, Token token, Collection<ID> ids, Collection<Double> similarityScores, String callback) {
         try {
-            logger.debug("Sending request to callback " + callback);
+            logger.debug("Sending request to callback {}", callback);
 
             HttpResponse httpResponse = null;
 
