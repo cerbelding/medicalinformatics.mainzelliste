@@ -1,3 +1,7 @@
+### 1.9-RC11 - 2020-11-16
+#### Refactor
+- use logger method with arguments and supplier to add logging message instead of string concatenation to improve the performance
+
 ### 1.9-RC10 - 2020-10-21
 #### Fixed
 - validate read patient with wildcard
