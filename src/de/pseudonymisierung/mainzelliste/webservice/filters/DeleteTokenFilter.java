@@ -18,14 +18,14 @@ public class DeleteTokenFilter implements ContainerResponseFilter {
         if(request.getAbsolutePath().toString().contains("/patients")){
             if(100 <= response.getStatus() && response.getStatus() < 400){
                 String tokenId = getTokenId(request);
-                logger.info("Checking if token with id " + tokenId + " can be be deleted ...");
+                logger.info("Checking if token with id {} can be be deleted ...", tokenId);
                 Token token = Servers.instance.getTokenByTid(tokenId);
                 if(token != null){
                     int remainingUses = token.decreaseRemainingUses();
                     if(remainingUses > 0){
-                        logger.info("Token with id " + token.getId() + " should not be deleted. Remaining uses are: " + remainingUses);
+                        logger.info("Token with id {} should not be deleted. Remaining uses are: {}", token.getId(), remainingUses);
                     } else {
-                        logger.info("Deleting Token with id " + token.getId() + " from Mainzelliste");
+                        logger.info("Deleting Token with id {} from Mainzelliste", token.getId());
                         Servers.instance.deleteToken(token.getId());
                     }
                 }

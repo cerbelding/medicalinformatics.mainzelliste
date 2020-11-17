@@ -32,7 +32,7 @@ public class Redirect {
     }
 
     public Response execute(){
-        logger.info("execute() " + "redirectURI: " + this.redirectURI);
+        logger.info("execute() redirectURI: {}", this.redirectURI);
         return Response.seeOther(this.redirectURI)
                 .build();
     }

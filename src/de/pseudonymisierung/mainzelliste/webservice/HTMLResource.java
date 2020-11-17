@@ -47,7 +47,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 
 import com.sun.jersey.api.view.Viewable;
@@ -390,7 +390,7 @@ public class HTMLResource {
 			// getPath() is sufficient since getMimeType() is actually checking the file's extension only
 			String contentType = Initializer.getServletContext().getMimeType(logoURL.getPath().toLowerCase());
 			if (contentType == null || !contentType.startsWith("image/")) {
-				logger.error("Logo file has incorrect mime type: " + contentType);
+				logger.error("Logo file has incorrect mime type: {}", contentType);
 				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR)
 						.entity("The logo file has incorrect mime type. See server log for details.").build());
 			}

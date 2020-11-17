@@ -443,7 +443,8 @@ public class HLsh extends BlockingKeyExtractor {
 								.forEach(curFrequentBitPositions::set);
 			}
 			frequentBitPositions.put(fieldIdx, curFrequentBitPositions);
-			logger.info("FrequentBitPositions for " + blockingFieldNames.get(fieldIdx) + ": " +
+			String blockingFieldName = blockingFieldNames.get(fieldIdx);
+			logger.info(() -> "FrequentBitPositions for " + blockingFieldName + ": " +
 							HashedField.bitSetToBitString(curFrequentBitPositions));
 		}
 		initMasks();

@@ -23,12 +23,12 @@
 
         <version.servlet>4.0.1</version.servlet>
         <version.commons.codec>1.14</version.commons.codec>
-        <version.log4j>2.13.3</version.log4j>
+        <version.log4j>2.14.0</version.log4j>
         <version.jersey>1.19.4</version.jersey>
-        <version.openjpa>2.4.3</version.openjpa>
-        <version.commons-dbcp>1.4</version.commons-dbcp>
-        <version.postgresql>42.2.9</version.postgresql>
-        <version.mysql>8.0.19</version.mysql>
+        <version.openjpa>3.1.2</version.openjpa>
+        <version.commons-dbcp2>2.8.0</version.commons-dbcp2>
+        <version.postgresql>42.2.18</version.postgresql>
+        <version.mysql>8.0.22</version.mysql>
         <version.httpclient>4.5.11</version.httpclient>
         <version.commons.net>3.6</version.commons.net>
         <version.maven-artifact>3.6.3</version.maven-artifact>
@@ -53,9 +53,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>commons-dbcp</groupId>
-            <artifactId>commons-dbcp</artifactId>
-            <version>${version.commons-dbcp}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-dbcp2</artifactId>
+            <version>${version.commons-dbcp2}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -74,23 +74,10 @@
         <!-- Logging -->
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-api</artifactId>
-        <version>${version.log4j}</version>
-        <scope>compile</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-core</artifactId>
         <version>${version.log4j}</version>
         <scope>compile</scope>
       </dependency>
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-web</artifactId>
-        <version>${version.log4j}</version>
-        <scope>compile</scope>
-      </dependency>
-
         <!-- cryptography -->
         <dependency>
           <groupId>com.google.crypto.tink</groupId>

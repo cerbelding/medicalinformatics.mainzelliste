@@ -133,10 +133,10 @@ public enum Persistor {
 					handleMySQLShutdown();
 				}
 				try {
-					logger.info("Deregistering JDBC driver " + driver);
+					logger.info("Deregistering JDBC driver {}", driver);
 					DriverManager.deregisterDriver(driver);
 				} catch (SQLException ex) {
-					logger.debug("An error occured during deregistering JDBC driver " + driver, ex);
+					logger.debug(() -> "An error occured during deregistering JDBC driver " + driver, ex);
 				}
 			}
 		}
@@ -237,7 +237,7 @@ public enum Persistor {
 		// Entities are not detached, because the IDs are lazy-loaded
 		List<Patient> pl;
 		pl = this.em.createQuery("select p from Patient p", Patient.class).getResultList();
-		logger.debug("Retrieved " + pl.size() + " patients (all)");
+		logger.debug("Retrieved {} patients (all)", pl.size());
 		return pl;
 	}
 
@@ -269,7 +269,7 @@ public enum Persistor {
 						.setParameter("bks", bkStrings)
 						.getResultList();
 
-		logger.debug("Retrieved " + pl.size() + " patients");
+		logger.debug("Retrieved {} patients", pl.size());
 
 		return pl;
 	}
@@ -1058,7 +1058,7 @@ public enum Persistor {
 
 	private void checkForSuspectSQLCharacters(String checkValue){
 	    if (checkValue.contains("%") || checkValue.contains(";")|| checkValue.contains("--")){
-	        logger.error("Found illegal character in " + checkValue);
+	        logger.error("Found illegal character in {}", checkValue);
 	        throw new IllegalUsedCharacterException();
 
         }
