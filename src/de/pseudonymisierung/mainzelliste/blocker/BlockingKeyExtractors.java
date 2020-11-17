@@ -54,7 +54,7 @@ public class BlockingKeyExtractors {
 									.getConstructor(String.class, Map.class);
 					BlockingKeyExtractor bke = (BlockingKeyExtractor) c.newInstance(bkName, getParamMap(bkName, props));
 					blockingKeyExtractors.add(bke);
-					logger.info("Initialized blocking key extractor: " + bke);
+					logger.info("Initialized blocking key extractor: {}", bke);
 				} catch (Exception e) {
 					throw new InternalErrorException(e.getMessage());
 				}
@@ -99,8 +99,8 @@ public class BlockingKeyExtractors {
 			List<BlockingKey> orphanedBlockingKeys = Persistor.instance.getBlockingKeys().stream()
 							.filter(bk -> bk.getType().equals(previousBlockingMethod))
 							.collect(Collectors.toList());
-			logger.info("Blocking config " + previousBlockingMethod + " was removed. Deleting " +
-							orphanedBlockingKeys.size() + " orphaned blocking keys.");
+			logger.info("Blocking config {} was removed. Deleting {} orphaned blocking keys.",
+					previousBlockingMethod, orphanedBlockingKeys.size());
 			Persistor.instance.removeBlockingKeys(orphanedBlockingKeys);
 		}
 		Persistor.instance.removeBlockingMemories(
@@ -110,7 +110,7 @@ public class BlockingKeyExtractors {
 		);
 
 		long t2 = System.currentTimeMillis();
-		logger.info("Blocking keys update time in ms: " + (t2 - t1));
+		logger.info("Blocking keys update time in ms: {}", (t2 - t1));
 	}
 
 	/**

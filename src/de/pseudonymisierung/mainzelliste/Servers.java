@@ -125,7 +125,7 @@ public enum Servers {
 
 			String allowedRemoteAdressesString = props.getProperty("servers." + i + ".allowedRemoteAdresses");
 			String allowedRemoteAdresses[] = (allowedRemoteAdressesString != null) ?  allowedRemoteAdressesString.split("[;,]") : new String[]{"127.0.0.1", "0:0:0:0:0:0:0:1"};
-			logger.info("No AllowedRemoteAddresses are specified for servers." + i + ". Allowing localhost as default.");
+			logger.info("No AllowedRemoteAddresses are specified for servers.{}. Allowing localhost as default.", i);
 			s.allowedRemoteAdressRanges = new LinkedList<SubnetUtils>();
 			s.allowedRemoteAdresses = new HashSet<String>();
 			for (String thisAddress : allowedRemoteAdresses) {
@@ -260,7 +260,7 @@ public enum Servers {
 	 * for at least the configured timeout.
 	 */
 	public void cleanUpSessions() {
-		logger.debug("Cleaning up sessions...");
+		logger.trace("Cleaning up sessions...");
 		LinkedList<String> sessionsToDelete = new LinkedList<String>();
 		Date now = new Date();
 		synchronized (sessions) {
@@ -272,7 +272,7 @@ public enum Servers {
 			// ConcurrentModificationException
 			for (String sessionId : sessionsToDelete) {
 				this.deleteSession(sessionId);
-				logger.info(String.format("Session %s timed out", sessionId));
+				logger.info("Session {} timed out", sessionId);
 			}
 		}
 	}
@@ -305,7 +305,7 @@ public enum Servers {
 			Server server = servers.get(apiKey);
 			
 			if(server == null){
-				logger.info("No server found with provided API key \"" + apiKey + "\"");
+				logger.info("No server found with provided API key \"{}\"", apiKey);
 				throw new WebApplicationException(Response
 						.status(Status.UNAUTHORIZED)
 						.entity("Please supply your API key in HTTP header field 'mainzellisteApiKey'.")
@@ -327,7 +327,7 @@ public enum Servers {
 					}
 				}
 				if (!addressInRange) {
-					logger.info("IP address " + req.getRemoteAddr() +  " rejected");
+					logger.info("IP address {} rejected", req.getRemoteAddr());
 					throw new WebApplicationException(Response
 							.status(Status.UNAUTHORIZED)
 							.entity(String.format("Rejecting your IP address %s.", req.getRemoteAddr()))
@@ -341,11 +341,11 @@ public enum Servers {
 			req.getSession().setAttribute("serverName", getServerNameForApiKey(apiKey));
 
 
-			logger.info("Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(perms.toArray()) + ".");
+			logger.info(() -> "Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(server.permissions.toArray()) + ".");
 		}
 		
 		if(!perms.contains(permission) && perms.stream().noneMatch(p -> p.matches(permission + ".*}"))){ // Check permission
-			logger.info("Access from " + req.getRemoteHost() + " is denied since they lack permission " + permission + ".");
+			logger.info("Access from {} is denied since they lack permission {}.", req.getRemoteHost(), permission);
 			throw new WebApplicationException(Response
 					.status(Status.UNAUTHORIZED)
 					.entity("Your permissions do not allow the requested access.")
@@ -474,7 +474,7 @@ public enum Servers {
 	public void checkToken(String tid, String type) throws InvalidTokenException {
 		Token t = getTokenByTid(tid);
 		if (t == null || !type.equals(t.getType()) ) {
-			logger.info("Token with id " + tid + " " + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
+			logger.info(() -> "Token with id " + tid + " " + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
 			throw new InvalidTokenException("Please supply a valid '" + type + "' token.");
 		}
 	}

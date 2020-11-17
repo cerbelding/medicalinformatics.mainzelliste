@@ -151,7 +151,7 @@ public class MainzellisteCallback {
      * @throws IOException then the callback fails
      */
     public HttpResponse execute() throws IOException {
-        logger.info("Executing Mainzelliste Callback on url " + this.url + " and apiVersion " + this.apiVersion.majorVersion + "." + this.apiVersion.minorVersion + ". Tokenid is " + this.tokenId);
+        logger.info(() -> "Executing Mainzelliste Callback on url " + this.url + " and apiVersion " + this.apiVersion.majorVersion + "." + this.apiVersion.minorVersion + ". Tokenid is " + this.tokenId);
 
         if(Config.instance.getProperty("proxy.callback.url")==null){
             HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslSocketFactory).build();
@@ -236,7 +236,7 @@ public class MainzellisteCallback {
         }
 
         // Parse JSON to Request Entity
-        logger.debug("Building StringEntity for Callback on url " + this.url + " with json " + json.toString());
+        logger.debug(() -> "Building StringEntity for Callback on url " + this.url + " with json " + json.toString());
         StringEntity reqEntity = new StringEntity(json.toString());
         reqEntity.setContentType("application/json");
 

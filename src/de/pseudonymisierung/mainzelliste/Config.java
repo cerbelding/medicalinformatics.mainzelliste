@@ -125,7 +125,7 @@ public enum Config {
 
 			// try to read config from configured path
 			if (configPath != null) {
-				logger.info("Reading config from path " + configPath + "...");
+				logger.info("Reading config from path {}...", configPath);
 				props = readConfigFromFile(configPath);
 				if (props == null) {
 					throw new Error("Configuration file could not be read from provided location " + configPath);
@@ -134,10 +134,10 @@ public enum Config {
 				// otherwise, try default locations
 				logger.info("No configuration file configured. Try to read from default locations...");
 				for (String defaultConfigPath : defaultConfigPaths) {
-					logger.info("Try to read configuration from default location " + defaultConfigPath);
+					logger.info("Try to read configuration from default location {}", defaultConfigPath);
 					props = readConfigFromFile(defaultConfigPath);
 					if (props != null) {
-						logger.info("Found configuration file at default location " + defaultConfigPath);
+						logger.info("Found configuration file at default location {}", defaultConfigPath);
 						break;
 					}
 				}
@@ -163,7 +163,7 @@ public enum Config {
 			Class<?> matcherClass = Class.forName("de.pseudonymisierung.mainzelliste.matcher." + props.getProperty("matcher"));
 			matcher = (Matcher) matcherClass.newInstance();
 			matcher.initialize(props);
-			logger.info("Matcher of class " + matcher.getClass() + " initialized.");
+			logger.info("Matcher of class {} initialized.", matcher.getClass());
 		} catch (Exception e){
 			logger.fatal("Initialization of matcher failed: " + e.getMessage(), e);
 			throw new InternalErrorException();
@@ -188,7 +188,7 @@ public enum Config {
 						fieldClass = (Class<? extends Field<?>>) Class.forName("de.pseudonymisierung.mainzelliste." + fieldClassStr);
 					}
 					this.FieldTypes.put(fieldName, fieldClass);
-					logger.debug("Initialized field " + fieldName + " with class " + fieldClass);
+					logger.debug("Initialized field {} with class {}", fieldName, fieldClass);
 				} catch (Exception e) {
 					logger.fatal("Initialization of field " + fieldName + " failed: ", e);
 					throw new InternalErrorException();
@@ -247,7 +247,7 @@ public enum Config {
             try {
                 URL subConfigurationURL = new URL(props.getProperty(attribute).trim());
                 subConfigurationProperties = readConfigFromUrl(subConfigurationURL);
-                logger.info("Sub configuration file " + attribute + " = " + subConfigurationURL + " has been read in.");
+                logger.info("Sub configuration file {} = {} has been read in.", attribute, subConfigurationURL);
             }  catch (MalformedURLException e) {
                 logger.fatal("Custom configuration file '" + attribute +
                         "' could not be read from provided URL " + attribute, e);

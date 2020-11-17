@@ -138,11 +138,11 @@ public abstract class BlockingKeyExtractor {
 	 * @param patients The list of patients that need an update of the blocking keys
 	 */
 	public void updateBlockingKeys(List<Patient> patients) {
-		logger.info("Updating blocking keys for: " + this.name);
+		logger.info("Updating blocking keys for: {}", this.name);
 		final Collection<BlockingKey> bksNew = patients.stream()
 						.flatMap(p -> extract(p).stream())
 						.collect(Collectors.toList());
-		logger.info("Extracted " + bksNew.size() + " new blockingkeys");
+		logger.info("Extracted {} new blockingkeys", bksNew.size());
 
 		final Collection<BlockingKey> bksOld = Persistor.instance.getBlockingKeys(patients)
 						.stream()
@@ -150,9 +150,9 @@ public abstract class BlockingKeyExtractor {
 						.filter(bk -> bk.getType().equals(name))
 						.collect(Collectors.toList());
 
-		logger.info("Remove " + bksOld.size() + " old blockingkeys");
+		logger.info("Remove {} old blockingkeys", bksOld.size());
 		Persistor.instance.removeBlockingKeys(bksOld);
-		logger.info("Add " + bksNew.size() + " new blockingkeys");
+		logger.info("Add {} new blockingkeys", bksNew.size());
 		Persistor.instance.addBlockingKeys(bksNew);
 		needsUpdate = false;
 	}

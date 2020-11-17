@@ -116,15 +116,14 @@ public enum PatientBackend {
         t = (AddPatientToken) Servers.instance.getTokenByTid(tokenId);
 
         if (t == null) {
-          String infoLog = "Token with ID " + tokenId + " is invalid. It was invalidated by a "
-              + "concurrent request or the session timed out during this request.";
-          logger.info(infoLog);
+          logger.info("Token with ID {} is invalid. It was invalidated by a "
+              + "concurrent request or the session timed out during this request.", tokenId);
           throw new WebApplicationException(Response
               .status(Status.UNAUTHORIZED)
               .entity("Please supply a valid 'addPatient' token.")
               .build());
         }
-        logger.info("Handling ID Request with token " + t.getId());
+        logger.info("Handling ID Request with token {}", t.getId());
 
         // get fields transmitted from MDAT server
         for (String key : t.getFields().keySet()) {
@@ -163,7 +162,7 @@ public enum PatientBackend {
             Persistor.instance.updatePatient(assignedPatient);
             // log token to separate concurrent request in the log file
             ID returnedId = assignedPatient.getOriginal().getId(idTypes.iterator().next());
-            logger.info("Found match with ID " + returnedId.getIdString() + " for ID request " + t.getId());
+            logger.info("Found match with ID {} for ID request {}", returnedId.getIdString(), t.getId());
 
             // Add optional fields if they are not already entered
             Map<String, Field<?>> fieldSet = new HashMap<>(assignedPatient.getFields());
@@ -203,7 +202,8 @@ public enum PatientBackend {
             newIds.forEach(inputPatient::addId);
 
             for (String idType : idTypes) {
-              logger.info("Created new ID " + inputPatient.createId(idType).getIdString() + " for ID request " + t.getId());
+              ID currentId = inputPatient.createId(idType);
+              logger.debug("Created new ID {} for ID request {}", currentId.getIdString(), t.getId());
             }
             if (match.getResultType() == MatchResultType.POSSIBLE_MATCH) {
               inputPatient.setTentative(true);
@@ -211,8 +211,8 @@ public enum PatientBackend {
               // log tentative and possible match ids
               newIds.stream()
                   .filter(id -> bestMatchedPatient.getId(id.getType()) != null)
-                  .forEach(id -> logger.info("New ID " + id.getIdString() + " is tentative. Found "
-                      + "possible match with ID " + bestMatchedPatient.getId(id.getType()).getIdString()));
+                  .forEach(id -> logger.info("New ID {} is tentative. Found possible match "
+                      + "with ID {}", id.getIdString(), bestMatchedPatient.getId(id.getType()).getIdString()));
             }
             assignedPatient = inputPatient;
             atChangeType = match.getResultType() == MatchResultType.POSSIBLE_MATCH ?
@@ -220,11 +220,11 @@ public enum PatientBackend {
             break;
 
           default:
-            logger.error("Illegal match result: " + match.getResultType());
+            logger.error("Illegal match result: {}", match.getResultType());
             throw new InternalErrorException();
         }
 
-        logger.info("Weight of best match: " + match.getBestMatchedWeight());
+        logger.info("Weight of best match: {}", match.getBestMatchedWeight());
 
         // persist id request and new patient
         request = new IDRequest(inputPatient.getInputFields(), idTypes, match, assignedPatient, t);
@@ -270,7 +270,7 @@ public enum PatientBackend {
         }
         Patient pToEdit = Persistor.instance.getPatient(patientId);
         if (pToEdit == null) {
-            logger.info("Request to edit patient with unknown ID " + patientId.toString());
+            logger.info("Request to edit patient with unknown ID {}", patientId.toString());
             throw new InvalidIDException("No patient found with ID " + patientId.toString());
         }
 
@@ -308,7 +308,7 @@ public enum PatientBackend {
                 ID extId = IDGeneratorFactory.instance.buildId(idType, newFieldValues.get(idType));
                 Patient pDuplicate = Persistor.instance.getPatient(extId);
                 if (pDuplicate != null && !pDuplicate.sameAs(pToEdit)) {
-                    logger.info("Request to add patient with existing external ID " + extId.toString());
+                    logger.info("Request to add patient with existing external ID {}", extId.toString());
                     throw new WebApplicationException(
                             Response.status(Status.CONFLICT)
                                     .entity("Cannot create a new patient with the supplied external ID, " +
@@ -408,7 +408,7 @@ public enum PatientBackend {
                 if (!inputPatient.getFields().isEmpty() && idMatchHasIdat) {
                     MatchResult matchWithIdMatch = Config.instance.getMatcher().match(inputPatient, Collections.singletonList(idMatch));
                     if (matchWithIdMatch.getResultType() != MatchResultType.MATCH) {
-                        logger.debug("Best matching weight on ID Matching: " + matchWithIdMatch.getBestMatchedWeight());
+                        logger.debug("Best matching weight on ID Matching: {}", matchWithIdMatch.getBestMatchedWeight());
                         throw new WebApplicationException(
                                 Response.status(Status.CONFLICT)
                                         .entity("Found existing patient with matching external ID but conflicting IDAT!")
@@ -449,7 +449,7 @@ public enum PatientBackend {
                 candidatePatients = Persistor.instance.getPatients(bks);
             }
             result = matcher.match(inputPatient, candidatePatients);
-            logger.debug("Best matching weight for IDAT matching: " + result.getBestMatchedWeight());
+            logger.debug("Best matching weight for IDAT matching: {}", result.getBestMatchedWeight());
         }
         return result;
     }

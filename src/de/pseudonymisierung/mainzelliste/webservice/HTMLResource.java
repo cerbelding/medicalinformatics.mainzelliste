@@ -371,7 +371,7 @@ public class HTMLResource {
 			// getPath() is sufficient since getMimeType() is actually checking the file's extension only
 			String contentType = Initializer.getServletContext().getMimeType(logoURL.getPath().toLowerCase());
 			if (contentType == null || !contentType.startsWith("image/")) {
-				logger.error("Logo file has incorrect mime type: " + contentType);
+				logger.error("Logo file has incorrect mime type: {}", contentType);
 				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR)
 						.entity("The logo file has incorrect mime type. See server log for details.").build());
 			}
