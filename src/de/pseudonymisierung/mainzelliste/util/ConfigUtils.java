@@ -27,7 +27,7 @@ package de.pseudonymisierung.mainzelliste.util;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import java.util.Properties;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class ConfigUtils {
 
