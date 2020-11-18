@@ -1,3 +1,7 @@
+### 1.9-RC13 - 2020-11-18
+#### Changed
+- downgrade to Java Persistence 2.1
+
 ### 1.9-RC12 - 2020-11-17
 #### Changed
 - upgrade to Java Persistence 2.2
