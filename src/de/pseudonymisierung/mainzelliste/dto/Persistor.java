@@ -767,6 +767,33 @@ public enum Persistor {
 		}
 		return result;
 	}
+
+	/**
+	 * Retrieves a ListID that contains `identifier` from the database.
+	 * @param identifier The identifier listed in a ListID to search for.
+	 * @return An (refreshed) ListID instance that holds `identifier`.
+	 */
+	public synchronized ListID getListContaining(ID identifier) {
+		EntityManager emLocal = this.emf.createEntityManager();
+		Query q = emLocal.createNativeQuery(
+			"SELECT i.* FROM id i "
+			+ "JOIN id_id link ON link.listid_idjpaid = i.idjpaid "
+			+ "JOIN id search ON search.idjpaid = link.identifiers_idjpaid "
+			+ "WHERE search.type = ?1 AND search.idstring = ?2", 
+			ListID.class);
+		q.setParameter(1, identifier.getType());
+		q.setParameter(2, identifier.getIdString());
+		List<ListID> ids = (List<ListID>) q.getResultList();
+		if(ids.size() != 1) {
+			emLocal.close();
+			System.out.println("Got a List of size " + ids.size());
+			return null;
+		}
+		ListID lid = ids.get(0);
+		emLocal.refresh(lid);
+		emLocal.close();
+		return lid;
+	}
 	
 	/**
 	 * Performs database updates after JPA initialization.

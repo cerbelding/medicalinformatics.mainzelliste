@@ -127,6 +127,10 @@ public abstract class ID {
 		setIdString(idString);
 	}
 
+	public ID() {
+		setTentative(false);
+	}
+
 	/**
 	 * Compare this ID with another. Two ID objects are considered equal if they
 	 * belong to the same class (subclass of ID) and have equal values for ID

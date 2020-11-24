@@ -27,23 +27,35 @@ package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
 
 /**
- * An externally generated patient identifier.
- * Imported in Mainzelliste from external systems (cannot be internally generated or overwritten).
+ * An externally generated patient identifier. Imported in Mainzelliste from
+ * external systems (cannot be internally generated or overwritten).
  */
 @Entity
-public class ExternalID extends ID {
+public class ExternalID extends ID implements IHasIdentifier {
 
 	/**
 	 * Creates an instance with the given ID string and type.
+	 * 
 	 * @param idString ID string.
-	 * @param type The ID type.
-	 * @throws InvalidIDException If the ID type is unknown or idString cannot be parsed to an integer.
+	 * @param type     The ID type.
+	 * @throws InvalidIDException If the ID type is unknown or idString cannot be
+	 *                            parsed to an integer.
 	 */
 	public ExternalID(String idString, String type) throws InvalidIDException {
 		super(idString, type);
+	}
+
+	public ExternalID() {
+		super();
 	}
 
 	@Override
@@ -54,5 +66,54 @@ public class ExternalID extends ID {
 	@Override
 	protected void setIdString(String id) {
 		this.idString = id;
+	}
+
+	// Extension for 1:N-Identifiers
+
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
+	protected Set<ID> identifiers = new HashSet<ID>();
+
+	@Override
+	public ID createIdentifier(String idType) {
+		ID newId = this.getIdentifier(idType);
+		if(newId == null) {
+			newId = IDGeneratorFactory.instance.getFactory(idType).getNext();
+			this.identifiers.add(newId);
+		}
+		return newId;
+	}
+
+	@Override
+	public ID getIdentifier(String idType) {
+		for(ID id: this.identifiers) {
+			if(id.getType().equals(idType)) {
+				return id;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public boolean addIdentifier(ID identifier) {
+		if(this.getIdentifier(identifier.getType()) != null) {
+			return false;
+		}
+		return this.identifiers.add(identifier);
+	}
+
+	@Override
+	public Set<ID> getIdentifiers() {
+		return this.identifiers;
+	}
+
+	@Override
+	public boolean removeIdentifier(String idType) {
+		ID searchId = null;
+		for(ID id: this.identifiers) {
+			if(id.getType().equals(idType)) {
+				searchId = id;
+			}
+		}
+		return this.identifiers.remove(searchId);
 	}
 }
