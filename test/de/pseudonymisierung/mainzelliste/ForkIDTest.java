@@ -6,10 +6,10 @@ import org.testng.annotations.*;
 
 import org.testng.Assert;
 
-public class ExternalIDTest {
+public class ForkIDTest {
 
-    protected ExternalID createExtId(String idType, String idString) {
-        ExternalID extId = new ExternalID();
+    protected ForkID createExtId(String idType, String idString) {
+        ForkID extId = new ForkID();
         extId.setType(idType);
         extId.setIdString(idString);
         return extId;
@@ -23,7 +23,7 @@ public class ExternalIDTest {
     }
 
     @DataProvider(name="extId")
-    protected Object[][] createExternalID() {
+    protected Object[][] createForkID() {
         return new Object[][] {
             { this.createExtId("fallnummer", "abcd1234") },
             { this.createExtId("fallnummer", "1234") },
@@ -35,7 +35,7 @@ public class ExternalIDTest {
     // Integration Test, not possible here
     //@Test
     public void testCreateIdentifier() {
-        ExternalID visit = new ExternalID();
+        ForkID visit = new ForkID();
         visit.setType("fallnummer");
         ID newId = visit.createIdentifier("fallnummer_psn");
 
@@ -43,7 +43,7 @@ public class ExternalIDTest {
     }
 
     @Test(dataProvider = "extId")
-    public void testGetIdentifier(ExternalID extId) {
+    public void testGetIdentifier(ForkID extId) {
         IntegerID intId = this.createIntId("fallnummer_psn", "123456");
         extId.addIdentifier(intId);
 
@@ -52,7 +52,7 @@ public class ExternalIDTest {
     }
 
     @Test(dataProvider = "extId")
-    public void testAddIdentifier(ExternalID extId) {
+    public void testAddIdentifier(ForkID extId) {
         Assert.assertNull(extId.getIdentifier("fallnummer_psn"));
         Assert.assertNull(extId.getIdentifier("fallnummer_psn_2"));
 
@@ -68,7 +68,7 @@ public class ExternalIDTest {
     }
 
     @Test(dataProvider = "extId")
-    public void testGetIdentifiers(ExternalID extId) {
+    public void testGetIdentifiers(ForkID extId) {
         Set<ID> emptyList = extId.getIdentifiers();
         Assert.assertNotNull(emptyList);
         Assert.assertEquals(emptyList.size(), 0);
@@ -85,7 +85,7 @@ public class ExternalIDTest {
     }
 
     @Test(dataProvider = "extId")
-    public void testRemoveIdentifier(ExternalID extId) {
+    public void testRemoveIdentifier(ForkID extId) {
         IntegerID intId = this.createIntId("fallnummer_psn", "123456");
         extId.addIdentifier(intId);
         IntegerID intId_2 = this.createIntId("fallnummer_psn_2", "654321");

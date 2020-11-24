@@ -32,7 +32,7 @@ public class ListIDGenerator implements IDGenerator<ListID> {
 
     public Set<String> availableIdTypes() {
         Set<String> idTypes = new HashSet<String>();
-        for(String idType: this.props.getProperty("idgenerators").split(",")) {
+        for(String idType: this.props.getProperty("contains").split(",")) {
             idTypes.add(idType.trim());
         }
         return idTypes;

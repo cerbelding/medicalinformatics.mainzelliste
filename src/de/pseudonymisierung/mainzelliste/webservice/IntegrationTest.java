@@ -9,6 +9,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import de.pseudonymisierung.mainzelliste.ExternalID;
+import de.pseudonymisierung.mainzelliste.ForkID;
+import de.pseudonymisierung.mainzelliste.ForkIDGenerator;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGenerator;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
@@ -45,7 +47,7 @@ public class IntegrationTest {
     @Path("/visit_1")
     public Response testVisitIdCreation(@Context HttpServletRequest req) {
         StringBuilder output = new StringBuilder();
-        output.append("<p>We will perform hard-coded tests in order to check the functionality of ListID and ExternalID.</p>");
+        output.append("<p>We will perform hard-coded tests in order to check the functionality of ListID and ForkID.</p>");
 
         // our test input
         String[] visit_id_1 = { "fallnummer", "1234asdf" };
@@ -69,27 +71,24 @@ public class IntegrationTest {
          */
 
         // lets check for a ListID
-        ListIDGenerator genfac = this.getListIDGeneratorBySubIdType(visit_id_1[0]);
-        if(genfac != null) {
+        ListIDGenerator list_genfac = this.getListIDGeneratorBySubIdType(visit_id_1[0]);
+        if(list_genfac != null) {
             output.append("<h1> Visit 1 </h1>\n");
             // visit_id_1 is contained in a ListID
-            ListID listId = (ListID) patient.getId(genfac.getIdType());
+            ListID listId = (ListID) patient.getId(list_genfac.getIdType());
             if(listId == null) {
-                listId = genfac.getNext();
+                listId = list_genfac.getNext();
             }
 
-            // Try to retrieve the ExternalID or create a new one
-            ExternalID visit_1 = (ExternalID) IDGeneratorFactory.instance.buildId(visit_id_1[0], visit_id_1[1]);
+            // Try to retrieve the ForkID or create a new one
+            ForkIDGenerator visit_genfac = (ForkIDGenerator) IDGeneratorFactory.instance.getFactory(visit_id_1[0]);
+            ForkID visit_1 = visit_genfac.buildId(visit_id_1[1]);
             if(listId.getIdList().contains(visit_1)) {
-                visit_1 = (ExternalID) listId.getId(visit_1);
+                visit_1 = (ForkID) listId.getId(visit_1);
             }
 
             // add all other possible ids to visit_1. The ListID generator knows which id Types are allowed.
-            Set<String> otherIdTypes = genfac.availableIdTypes();
-            // do not create the supplied idType itself
-            otherIdTypes.remove(visit_id_1[0]);
-            System.out.println(visit_1);
-            System.out.println(visit_1.getIdentifiers());
+            Set<String> otherIdTypes = visit_genfac.availableIdTypes();
             for(String idType: otherIdTypes) {
                 // for each idType: get the IDGenerator and if not external, create the next id 
                 IDGenerator<?> gen = IDGeneratorFactory.instance.getFactory(idType);
@@ -99,7 +98,7 @@ public class IntegrationTest {
                 }
             }
 
-            // add the ExternalID (including the GeneratedID) to the List
+            // add the ForkID (including the GeneratedID) to the List
             listId.addToIdList(visit_1);
             // add the ListID to the patient
             patient.addId(listId);
@@ -109,25 +108,25 @@ public class IntegrationTest {
             // re-read the patient and generate some outputs
             patient = Persistor.instance.getPatient(pat_id);
             output.append("<p>Added patient instance to database: " + patient + "</p>\n");
-            output.append("<p>The patient includes this ListID: " + patient.getId(genfac.getIdType()) + "</p>\n");
+            output.append("<p>The patient includes this ListID: " + patient.getId(list_genfac.getIdType()) + "</p>\n");
 
-            // and generate some additional output for the ExternalID
+            // and generate some additional output for the ForkID
             output.append("The external Identifier (" + visit_1 + ") has one sub-ID:\n<ul>\n");
             for(ID subId: visit_1.getIdentifiers()) {
                 output.append("<li>" + subId + "</li>\n");
             }
             output.append("</ul>");
         }
-        genfac = null;
+        list_genfac = null;
 
         // Let us assume we want to find visit_id_1 in our database.
         output.append("<h2>Intermezzo</h2>\n");
         output.append("<p>Getting the external ID from the Persistor directly this time.</p>\n");
-        ExternalID intermezzo_extId = (ExternalID) IDGeneratorFactory.instance.buildId(visit_id_1[0], visit_id_1[1]); 
+        ForkID intermezzo_extId = (ForkID) IDGeneratorFactory.instance.buildId(visit_id_1[0], visit_id_1[1]); 
 
         // check for a ListID containing the searched external ID and retrieve it
         ListID intermezzo_listId = Persistor.instance.getListContaining(intermezzo_extId);
-        intermezzo_extId = (ExternalID) intermezzo_listId.getId(intermezzo_extId);
+        intermezzo_extId = (ForkID) intermezzo_listId.getId(intermezzo_extId);
 
         // generate the output of extId
         output.append("The external Identifier (" + intermezzo_extId + ") has one sub-ID:\n<ul>\n");
@@ -137,20 +136,20 @@ public class IntegrationTest {
         output.append("</ul>");
 
         // Let us assume, Visit_2 arrives as a later API call
-        genfac = this.getListIDGeneratorBySubIdType(visit_id_2[0]);
-        if(genfac != null) {
+        list_genfac = this.getListIDGeneratorBySubIdType(visit_id_2[0]);
+        if(list_genfac != null) {
             output.append("<h1> Visit 2 </h1>\n");
             // get the ListID from the patient
-            ListID listId = (ListID) patient.getId(genfac.getIdType());
+            ListID listId = (ListID) patient.getId(list_genfac.getIdType());
 
             // create the externalID and check the list, if it is already available
-            ExternalID visit_2 = (ExternalID) IDGeneratorFactory.instance.buildId(visit_id_2[0], visit_id_2[1]);
+            ForkID visit_2 = (ForkID) IDGeneratorFactory.instance.buildId(visit_id_2[0], visit_id_2[1]);
             // I propose this type of List-checking as I assume it is more performant. I think `.contains()` is 
             // implemented very performantly on the JVM side:
             if(listId.getIdList().contains(visit_2)) {
                 for(ID containedId: listId.getIdList()) {
                     if(containedId.equals(visit_2)) {
-                        visit_2 = (ExternalID) containedId;
+                        visit_2 = (ForkID) containedId;
                     }
                 }
             }
@@ -163,7 +162,7 @@ public class IntegrationTest {
             Persistor.instance.updatePatient(patient);
             patient = Persistor.instance.getPatient(pat_id);
             output.append("<p>Existing patient instance to database: " + patient + "</p>");
-            output.append("<p>The patient includes this ListID: " + patient.getId(genfac.getIdType()) + "</p>");
+            output.append("<p>The patient includes this ListID: " + patient.getId(list_genfac.getIdType()) + "</p>");
         }
 
         return Response.ok(output.toString()).build();
