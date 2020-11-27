@@ -106,18 +106,27 @@ public class AssociatedIdsFactory {
     }
 
     /**
+     * Checks if `idType` is valid to be stored in a appropriate AssociatedIds instance.
+     * @param idType
+     * @return
+     */
+    public boolean isAssociatedIdsIdType(String idType) {
+        for(String assocType: this.assocTypes.keySet()) {
+            if(this.assocTypes.get(assocType).contains(idType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if `identifier` has a valid idType to be stored in a appropriate AssociatedIds
      * instance.
      * @param identifier
      * @return
      */
     public boolean isAssociatedIdsID(ID identifier) {
-        for(String assocType: this.assocTypes.keySet()) {
-            if(this.assocTypes.get(assocType).contains(identifier.getType())) {
-                return true;
-            }
-        }
-        return false;
+        return this.isAssociatedIdsIdType(identifier.getType());
     }
 
     /**

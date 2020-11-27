@@ -306,21 +306,15 @@ matcher.epilink.threshold_non_match = 0.6
 # idgenerator.{identifier}: Class which implements the ID generator.
 # additional parameters depend on the ID generator used.
 #
-idgenerators = pid, intid, patientennummer, faelle, fallnummer, fallnummer_psn
+idgenerators = pid, intid, patientennummer, fallnummer, fallnummer_psn
 
 # these three IDGenerators are used for testing purposes
 idgenerator.patientennummer = ExternalIDGenerator
+idgenerator.fallnummer = ExternalIDGenerator
 idgenerator.fallnummer_psn = SimpleIDGenerator
 
-# The ListIDGenerator allows to attach a List of IDs to a patient
-idgenerator.faelle = ListIDGenerator
-# .contains for a ListID sets the available IDs for a ListID
-idgenerator.faelle.contains = fallnummer
-
-# The ForkIDGenerator allows to attach IDs to an ExternalID
-idgenerator.fallnummer = ForkIDGenerator
-# .idgenerators describes the id-Types available for a ForkID
-idgenerator.fallnummer.idgenerators = fallnummer_psn
+# AssociatedIds allow to attach multiple instances of IDs from the same idType to a patient
+associatedids.faelle.idgenerators = fallnummer, fallnummer_psn
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
 # idgenerators = pid, intid, extid, elasticid, exportId, cryptoid

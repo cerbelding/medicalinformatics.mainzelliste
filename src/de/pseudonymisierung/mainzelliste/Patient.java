@@ -645,7 +645,7 @@ public class Patient {
 		return Objects.hash(patientJpaId);
 	}
 
-	@OneToMany
+	@OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
 	protected List<AssociatedIds> associatedIds = new ArrayList<AssociatedIds>();
 
 	public List<AssociatedIds> getAssociatedIdentifiers() {
@@ -670,6 +670,7 @@ public class Patient {
 
     public boolean addAssociatedIdentifier(AssociatedIds assocId) {
 		if(this.getAssociatedIdentifier(assocId) != null) {
+			// TODO: merge instead of returning false.
 			return false;
 		}
 		return this.associatedIds.add(assocId);

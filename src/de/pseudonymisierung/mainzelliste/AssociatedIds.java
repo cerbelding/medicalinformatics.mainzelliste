@@ -32,6 +32,8 @@ import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
 /**
@@ -40,6 +42,10 @@ import javax.persistence.OneToMany;
  */
 @Entity
 public class AssociatedIds implements IHasIdentifier {
+
+	@Id
+	@GeneratedValue
+	private int jpaid; 
 
 	@Basic
 	protected String type;
@@ -125,17 +131,28 @@ public class AssociatedIds implements IHasIdentifier {
 		if(!this.type.equals(assocId.getType())) {
 			return false;
 		}
-		// check for same number of contained identifiers
-		if(this.identifiers.size() != assocId.getIdentifiers().size()) {
-			return false;
-		}
-		// check if each identifier is contained in the other instance
+
+		// two AssociatedIds are same iff at least one ID is the same. (an ID can only be in one AssociatedIds)
 		for(ID myId: this.identifiers) {
-			if(!assocId.getIdentifiers().contains(myId)) {
-				return false;
+			if(assocId.getIdentifiers().contains(myId)) {
+				// TODO: check for inconsistencies?
+				return true;
 			}
 		}
-		// same size and all identifiers are contained in assocId: this is the same!
-		return true;
+		return false;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		str.append("AssociatedIds=[");
+		String delimiter = "";
+		for(ID id: this.identifiers) {
+			str.append(delimiter);
+			delimiter = ",";
+			str.append(id.toString());
+		}
+		str.append("]");
+		return str.toString();
 	}
 }

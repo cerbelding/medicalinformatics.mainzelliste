@@ -774,27 +774,21 @@ public enum Persistor {
 	 * @return An (refreshed) ListID instance that holds `identifier`.
 	 */
 	public synchronized AssociatedIds getAssociatedIdsByID(ID identifier) {
-		/*
 		EntityManager emLocal = this.emf.createEntityManager();
-		Query q = emLocal.createNativeQuery(
-			"SELECT i.* FROM id i "
-			+ "JOIN id_id link ON link.listid_idjpaid = i.idjpaid "
-			+ "JOIN id search ON search.idjpaid = link.identifiers_idjpaid "
-			+ "WHERE search.type = ?1 AND search.idstring = ?2", 
-			ListID.class);
-		q.setParameter(1, identifier.getType());
-		q.setParameter(2, identifier.getIdString());
-		List<ListID> ids = (List<ListID>) q.getResultList();
-		if(ids.size() != 1) {
-			emLocal.close();
-			System.out.println("Got a List of size " + ids.size());
+		TypedQuery<AssociatedIds> qry = emLocal.createQuery("SELECT assoc FROM AssociatedIds assoc, IN(assoc.identifiers) id WHERE id.idString = :idString AND id.type = :idType", AssociatedIds.class);
+		qry.setParameter("idString", identifier.getIdString());
+		qry.setParameter("idType", identifier.getType());
+		List<AssociatedIds> result = qry.getResultList();
+		emLocal.close();
+		if(result.size() == 0) {
 			return null;
 		}
-		ListID lid = ids.get(0);
-		emLocal.refresh(lid);
-		emLocal.close();
-		*/
-		return null;
+		if(result.size() > 1) {
+			//TODO: inconsistency!
+			return null;
+		}
+		// made sure only one element is in results
+		return result.get(0);
 	}
 	
 	/**
