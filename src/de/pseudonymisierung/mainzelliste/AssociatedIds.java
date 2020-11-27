@@ -25,11 +25,10 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
-
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -40,38 +39,29 @@ import javax.persistence.OneToMany;
  * external systems (cannot be internally generated or overwritten).
  */
 @Entity
-public class ForkID extends ID implements IHasIdentifier {
+public class AssociatedIds implements IHasIdentifier {
 
-	/**
-	 * Creates an instance with the given ID string and type.
-	 * 
-	 * @param idString ID string.
-	 * @param type     The ID type.
-	 * @throws InvalidIDException If the ID type is unknown or idString cannot be
-	 *                            parsed to an integer.
-	 */
-	public ForkID(String idString, String type) throws InvalidIDException {
-		super(idString, type);
-	}
-
-	public ForkID() {
-		super();
-	}
-
-	@Override
-	public String getIdString() {
-		return idString;
-	}
-
-	@Override
-	protected void setIdString(String id) {
-		this.idString = id;
-	}
-
-	// Extension for 1:N-Identifiers
+	@Basic
+	protected String type;
 
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
 	protected Set<ID> identifiers = new HashSet<ID>();
+
+
+	public AssociatedIds() {
+	}
+
+	public AssociatedIds(String type) {
+		this.type = type;
+	}
+
+	public String getType() {
+		return this.type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
 
 	@Override
 	public ID createIdentifier(String idType) {
@@ -115,5 +105,37 @@ public class ForkID extends ID implements IHasIdentifier {
 			}
 		}
 		return this.identifiers.remove(searchId);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		// "Free" checks until we can cast
+		if(obj == this) {
+			return true;
+		}
+		if(obj == null) {
+			return false;
+		}
+		if(!(obj instanceof AssociatedIds)) {
+			return false;
+		}
+		AssociatedIds assocId = (AssociatedIds) obj;
+
+		// check for same type
+		if(!this.type.equals(assocId.getType())) {
+			return false;
+		}
+		// check for same number of contained identifiers
+		if(this.identifiers.size() != assocId.getIdentifiers().size()) {
+			return false;
+		}
+		// check if each identifier is contained in the other instance
+		for(ID myId: this.identifiers) {
+			if(!assocId.getIdentifiers().contains(myId)) {
+				return false;
+			}
+		}
+		// same size and all identifiers are contained in assocId: this is the same!
+		return true;
 	}
 }

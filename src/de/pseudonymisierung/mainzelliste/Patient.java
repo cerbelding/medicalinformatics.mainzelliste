@@ -645,4 +645,34 @@ public class Patient {
 		return Objects.hash(patientJpaId);
 	}
 
+	@OneToMany
+	protected List<AssociatedIds> associatedIds = new ArrayList<AssociatedIds>();
+
+	public List<AssociatedIds> getAssociatedIdentifiers() {
+		return this.associatedIds;
+	};
+
+    public AssociatedIds getAssociatedIdentifier(AssociatedIds assocId) {
+		for(AssociatedIds searchAssoc: this.associatedIds) {
+			if(searchAssoc.equals(assocId)) {
+				return searchAssoc;
+			}
+		}
+		return null;
+	}
+
+    public boolean removeAssociatedIdentifier(AssociatedIds assocId) {
+		if(this.getAssociatedIdentifier(assocId) == null) {
+			return false;
+		}
+		return this.associatedIds.remove(assocId);
+	}
+
+    public boolean addAssociatedIdentifier(AssociatedIds assocId) {
+		if(this.getAssociatedIdentifier(assocId) != null) {
+			return false;
+		}
+		return this.associatedIds.add(assocId);
+	}
+
 }

@@ -773,7 +773,8 @@ public enum Persistor {
 	 * @param identifier The identifier listed in a ListID to search for.
 	 * @return An (refreshed) ListID instance that holds `identifier`.
 	 */
-	public synchronized ListID getListContaining(ID identifier) {
+	public synchronized AssociatedIds getAssociatedIdsByID(ID identifier) {
+		/*
 		EntityManager emLocal = this.emf.createEntityManager();
 		Query q = emLocal.createNativeQuery(
 			"SELECT i.* FROM id i "
@@ -792,7 +793,8 @@ public enum Persistor {
 		ListID lid = ids.get(0);
 		emLocal.refresh(lid);
 		emLocal.close();
-		return lid;
+		*/
+		return null;
 	}
 	
 	/**

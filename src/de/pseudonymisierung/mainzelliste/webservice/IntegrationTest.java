@@ -9,8 +9,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import de.pseudonymisierung.mainzelliste.ExternalID;
-import de.pseudonymisierung.mainzelliste.ForkID;
-import de.pseudonymisierung.mainzelliste.ForkIDGenerator;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGenerator;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
@@ -27,7 +25,6 @@ public class IntegrationTest {
      * Retrieves the ListIDGenerator for an idType String if and only if this idType is configured to be contained in a ListID
      * @param subIdType
      * @return The ListIDGenerator for subIdType, null if none is configured
-     */
     public ListIDGenerator getListIDGeneratorBySubIdType(String subIdType) {
         for(String idType: IDGeneratorFactory.instance.getIDTypes()) {
             IDGenerator<?> unknownIdGen = IDGeneratorFactory.instance.getFactory(idType);
@@ -68,7 +65,6 @@ public class IntegrationTest {
          * ...
          * Do anything that would be necessary in the normal execution
          * ...
-         */
 
         // lets check for a ListID
         ListIDGenerator list_genfac = this.getListIDGeneratorBySubIdType(visit_id_1[0]);
@@ -167,4 +163,5 @@ public class IntegrationTest {
 
         return Response.ok(output.toString()).build();
     }
+    */
 }
