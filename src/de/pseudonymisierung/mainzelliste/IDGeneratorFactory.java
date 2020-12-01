@@ -25,6 +25,8 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
+import de.pseudonymisierung.mainzelliste.util.ConfigUtils;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,6 +65,9 @@ public enum IDGeneratorFactory {
 	private String[] idTypes;
 
 	private HashSet<String> extIdTypes;
+
+	/** the configured eager generation flag */
+	private final boolean eagerGenerationOn;
 
 	/** The logging instance */
 	private Logger logger = LogManager.getLogger(this.getClass());
@@ -111,6 +116,7 @@ public enum IDGeneratorFactory {
 					 */
 					mem = Persistor.instance.getIDGeneratorMemory(thisIdType);
 				}
+
 				// Get properties for this ID generator
 				Properties thisIdProps = new Properties();
 				for (Object key : propIt.keyIterator()) {
@@ -135,6 +141,14 @@ public enum IDGeneratorFactory {
 		for (String idType : this.generators.keySet()) {
 			if (this.generators.get(idType).isExternal())
 				extIdTypes.add(idType);
+		}
+
+		// read the configured eager generation flag
+		try {
+			this.eagerGenerationOn = ConfigUtils.readValue(props, "idgenerators.eagerGeneration", false);
+		} catch (InvalidConfigurationException e) {
+			logger.error(e.getMessage());
+			throw e;
 		}
 
 		logger.info("ID generators have initialized successfully.");
@@ -224,6 +238,15 @@ public enum IDGeneratorFactory {
 	 */
 	public String getDefaultIDType() {
 		return this.idTypes[0];
+	}
+
+	/**
+	 * return whether IDs of all configured types should be created for a given patient eagerly
+	 *
+	 * @return true if eager generation of patient IDs is enabled
+	 */
+	public boolean isEagerGenerationOn() {
+		return this.eagerGenerationOn;
 	}
 
 	public ID idFromJSON(JSONObject json) throws JSONException, InvalidIDException {

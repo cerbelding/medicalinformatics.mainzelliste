@@ -23,31 +23,38 @@
  * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
-package de.pseudonymisierung.mainzelliste.exceptions;
+package de.pseudonymisierung.mainzelliste.util;
 
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
+import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 
-public class InvalidConfigurationException extends RuntimeException {
+public class ConfigUtils {
 
-  public InvalidConfigurationException(String errorMessage, Throwable err) {
-    super(errorMessage, err);
+  private ConfigUtils() {
+    throw new IllegalStateException("Utility class");
   }
 
-  public InvalidConfigurationException(String errorMessage) {
-    super(errorMessage);
-  }
-
-  public InvalidConfigurationException(String configurationKey, String errorMessage) {
-    this(buildMessage(configurationKey, errorMessage));
-  }
-
-  public InvalidConfigurationException(String configurationKey, String errorMessage,
-      Throwable err) {
-    this(buildMessage(configurationKey, errorMessage), err);
-  }
-
-  private static String buildMessage(String configurationKey, String errorMessage) {
-    return StringUtils.isBlank(configurationKey) ? errorMessage :
-        String.format("Invalid configuration '%s': %s", configurationKey, errorMessage);
+  /**
+   * Get and parse a boolean configuration value
+   *
+   * @param configurations   configurations as properties
+   * @param configurationKey the key of the configured value
+   * @param defaultValue     return this value, if no configuration value found
+   * @return the configuration value, otherwise the given default value
+   */
+  public static boolean readValue(Properties configurations, String configurationKey,
+      boolean defaultValue) {
+    String value = configurations.getProperty(configurationKey);
+    if (StringUtils.isBlank(value)) {
+      return defaultValue;
+    } else if (StringUtils.trim(value).equalsIgnoreCase("true")) {
+      return true;
+    } else if (StringUtils.trim(value).equalsIgnoreCase("false")) {
+      return false;
+    } else {
+      throw new InvalidConfigurationException(
+          configurationKey, "the configured value " + value + " must be boolean");
+    }
   }
 }
