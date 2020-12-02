@@ -325,6 +325,7 @@ public class Patient {
 		// TODO: Check for cycles in the configuration
 		if (!IDGeneratorFactory.instance.isEagerGenerationOn()) {
 			IDGeneratorFactory.instance.getNonExternalIdGenerators().entrySet().stream()
+					.filter(e -> !(e.getValue().getIdType()).equals(type))
 					.filter(e -> e.getValue().isPersistent())
 					.filter(e -> e.getValue().isEagerGenerationOn(type))
 					.filter(e -> getId(e.getKey()) == null)
