@@ -809,8 +809,17 @@ public class PatientsResource {
 
         //TODO: IMPORTANT ADD PERMISSION CONCEPT. send only "permitted" IDs
         if(matchResult.getBestMatchedPatient()!=null){
-            for (ID id: matchResult.getBestMatchedPatient().getIds()) {
-                jsonPatientObject.put(id.getType(), id.getEncryptedIdStringFirst());
+            Set<String> transientIdTypes = IDGeneratorFactory.instance.getTransientIdTypes();
+            for (Object idType : token.getDataItemList("idTypes")) {
+                ID id;
+                if (transientIdTypes.contains((String) idType)) {
+                    id = matchResult.getBestMatchedPatient().createId((String) idType);
+                } else {
+                    id = matchResult.getBestMatchedPatient().getId((String) idType);
+                }
+                if (id != null) {
+                    jsonPatientObject.put(id.getType(), id.getEncryptedIdStringFirst());
+                }
             }
         }
 
