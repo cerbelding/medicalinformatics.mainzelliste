@@ -2,6 +2,7 @@ package de.pseudonymisierung.mainzelliste.auth;
 
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Servers;
+import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
 import de.pseudonymisierung.mainzelliste.configuration.ConfigurationParser;
 import de.pseudonymisierung.mainzelliste.configuration.ConfigurationUtils;
 import de.pseudonymisierung.mainzelliste.utils.EnumLookup;
@@ -29,8 +30,8 @@ public class ClaimConfigurationParser {
    Map<String, String> mappedClaimProperties = ConfigurationParser.parseConfigurationToMap(props, claimKeys);
 
    ClaimProperty claimProperty = new ClaimPropertyFactory(mappedClaimProperties, authPrefix).createClaimProperty(claimAuthEnum);
-
-   ClaimConfiguration claimConfiguration = new ClaimConfiguration(permissions,claimAuthEnum,claimProperty);
+   IAuthorization iAuthorization = new AuthorizationServerFactory(mappedClaimProperties, authPrefix).getAuthorizationServer(claimAuthEnum);
+   ClaimConfiguration claimConfiguration = new ClaimConfiguration(permissions,claimAuthEnum,claimProperty, iAuthorization);
    return claimConfiguration;
  }
 

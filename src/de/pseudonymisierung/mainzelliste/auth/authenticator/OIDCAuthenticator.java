@@ -25,47 +25,38 @@
  */
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
+import de.pseudonymisierung.mainzelliste.auth.ClaimProperty;
+import de.pseudonymisierung.mainzelliste.auth.IAuthorization;
 import org.apache.log4j.Logger;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
  * Represents the OpenID Connect Authentication
  */
-public class OICDAuthenticator implements Authenticator {
+public class OIDCAuthenticator implements Authenticator {
 
-  private final Logger logger = Logger.getLogger(OICDAuthenticator.class);
-  protected Set<String> subs;
-  protected Set<String> roles;
+  private final Logger logger = Logger.getLogger(OIDCAuthenticator.class);
+  private Set<ClaimProperty> claimProperties;
+  private IAuthorization oidcServer;
+  private String sub;
 
-  /**
-   * Creates a new OICDAuthenticator related to a User or a Server
-   *
-   * @param subs  the registered subs
-   * @param roles the registered roles
-   */
-  public OICDAuthenticator(Set<String> subs, Set<String> roles) {
-    this.subs = subs;
-    this.roles = roles;
+
+  public OIDCAuthenticator(String sub, Set<ClaimProperty> claimProperties, IAuthorization oidcServer) {
+    this.claimProperties = claimProperties;
+    this.oidcServer = oidcServer;
+    this.sub = sub;
   }
 
   @Override
-  public boolean isAuthenticated(Map<String, String> claims) {
-    boolean isAuthenticated = false;
-    for (Map.Entry<String, String> entry : claims.entrySet()) {
-      if (entry.getKey().equals("sub")) {
-        isAuthenticated = isAuthenticated || subs.contains(entry.getValue());
-      } else if (entry.getKey().matches("role.*")) {
-        isAuthenticated = isAuthenticated || roles.contains(entry.getValue());
-      }
-    }
-    if (isAuthenticated) {
-      logger.info("Requester could be authenticated with claims: " + claims.toString());
-    } else {
-      logger.info("Requester could not been authenticated");
-    }
-    return isAuthenticated;
+  public boolean isAuthenticated(ClaimMap claimMap) {
+    String sub = claimMap.get("sub");
+    boolean isEqual = sub.equals(this.sub);
+    return isEqual;
   }
 
+  @Override
+  public String getId() {
+    return oidcServer.getId();
+  }
 }

@@ -50,6 +50,8 @@ public final class Authentication {
     return authenticationMap;
   }
 
+
+
   /**
    * @param httpHeader The HttpHeader of the Request
    * @return The found requester otherwise null

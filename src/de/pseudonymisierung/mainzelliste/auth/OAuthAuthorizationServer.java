@@ -1,19 +1,22 @@
 package de.pseudonymisierung.mainzelliste.auth;
 
-public class AuthorizationServer {
+import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
+import java.util.Map;
+
+public class OAuthAuthorizationServer {
 
   protected String issuer;
   protected String metaDataUrl;
   protected String id;
 
 
-  public AuthorizationServer(String issuer, String id) {
+  public OAuthAuthorizationServer(String issuer, String id) {
     this.issuer = issuer;
     this.metaDataUrl = ".well-known/oauth-authorization-server";
     this.id = id;
   }
 
-  public AuthorizationServer(String issuer, String id, String metaDataUrl) {
+  public OAuthAuthorizationServer(String issuer, String id, String metaDataUrl) {
     this.issuer = issuer;
     this.metaDataUrl = metaDataUrl;
     this.id = id;
@@ -28,6 +31,5 @@ public class AuthorizationServer {
   }
 
   public String getId(){return this.id;}
-
 
 }

@@ -87,6 +87,7 @@ public class SessionsResource {
 		logger.info("Request to create session received by host " + req.getRemoteHost());
 
 		// TODOO REFACTOR
+		// Session will be
 		Servers.instance.checkPermission(req, "createSession");
 
 

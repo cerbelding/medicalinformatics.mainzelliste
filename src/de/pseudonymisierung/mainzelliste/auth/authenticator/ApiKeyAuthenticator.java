@@ -2,8 +2,6 @@ package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
 import org.apache.log4j.Logger;
 
-import java.util.Map;
-
 /**
  * Implements the Apiikey authentication
  */
@@ -25,7 +23,7 @@ public class ApiKeyAuthenticator implements Authenticator {
 
 
   @Override
-  public boolean isAuthenticated(Map<String, String> tokens) {
+  public boolean isAuthenticated(ClaimMap tokens) {
     String apiKey = tokens.get(AuthenticationEum.APIKEY.getAuthenticationName());
     boolean isAuthenticated = false;
     if (apiKey != null) {
@@ -37,6 +35,11 @@ public class ApiKeyAuthenticator implements Authenticator {
       logger.info("Requester could not been authenticated");
     }
     return isAuthenticated;
+  }
+
+  @Override
+  public String getId() {
+    return this.apiKey;
   }
 
 }

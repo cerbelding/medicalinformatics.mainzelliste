@@ -27,6 +27,7 @@ package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.auth.ClaimConfiguration;
 import de.pseudonymisierung.mainzelliste.auth.ClaimConfigurationParser;
+import de.pseudonymisierung.mainzelliste.auth.ClaimConfigurationSet;
 import de.pseudonymisierung.mainzelliste.auth.oidc.OIDCServer;
 import de.pseudonymisierung.mainzelliste.auth.oidc.OIDCServerConfigurationParser;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
@@ -90,7 +91,7 @@ public enum Config {
 	/**List of allowed OIDC-Servers*/
 	private Set<OIDCServer> oidcServerSet = new HashSet<>();
 	/**List of Claims*/
-	private Set<ClaimConfiguration> claimConfigurationSet = new HashSet<>();
+	private ClaimConfigurationSet claimConfigurationSet;
 
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
@@ -610,12 +611,12 @@ public enum Config {
 		}
 	}
 
-	public Set<ClaimConfiguration> getClaimConfigurationSet() {
+	public ClaimConfigurationSet getClaimConfigurationSet() {
 		return claimConfigurationSet;
 	}
 
 	public void setClaimConfigurationSet(Set<ClaimConfiguration> claimConfigurationSet){
-		this.claimConfigurationSet = claimConfigurationSet;
+		this.claimConfigurationSet = new ClaimConfigurationSet(claimConfigurationSet);
 	}
 	public void updateClaimConfigurationSet(){
 		Set<ClaimConfiguration> claimConfigurationSet = ClaimConfigurationParser.parseConfiguration(this.props);

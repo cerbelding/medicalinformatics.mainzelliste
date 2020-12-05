@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * Represents a user or usergroup which implements a Requester
  */
-public class UserGroup extends Requester {
+public class Client extends Requester {
 
   /**
    * Creates a new User, with his permissions and authentication method, creates a random ID
@@ -15,7 +15,7 @@ public class UserGroup extends Requester {
    * @param permissions    List of the permissions
    * @param authenticator Authentication method of the User
    */
-  public UserGroup(Set<String> permissions,
+  public Client(Set<String> permissions,
       Authenticator authenticator) {
     super(permissions, authenticator);
   }

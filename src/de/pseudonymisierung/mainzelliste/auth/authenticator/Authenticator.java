@@ -25,8 +25,6 @@
  */
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
-import java.util.Map;
-
 /**
  * Represents the Authentication of a request
  */
@@ -38,6 +36,7 @@ public interface Authenticator {
    * @param claims the identification of the requester
    * @return true if the requester could be authenticated, otherwise false
    */
-  boolean isAuthenticated(Map<String, String> claims);
+  boolean isAuthenticated(ClaimMap claims);
+  String getId();
 
 }

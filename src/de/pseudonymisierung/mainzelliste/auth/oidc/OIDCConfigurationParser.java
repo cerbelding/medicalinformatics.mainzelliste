@@ -2,8 +2,7 @@ package de.pseudonymisierung.mainzelliste.auth.oidc;
 
 
 import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.auth.ClaimProperty;
-import de.pseudonymisierung.mainzelliste.auth.oidc.claim.OIDCClaim;
+import de.pseudonymisierung.mainzelliste.auth.oidc.claim.Claim;
 import de.pseudonymisierung.mainzelliste.auth.oidc.claim.subset.Subset;
 import de.pseudonymisierung.mainzelliste.auth.oidc.claim.subset.SubsetEnum;
 import de.pseudonymisierung.mainzelliste.auth.oidc.claim.subset.SubsetFactory;
@@ -15,7 +14,6 @@ import de.pseudonymisierung.mainzelliste.configuration.ConfigurationUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import org.apache.log4j.Logger;
 
@@ -27,10 +25,12 @@ public class OIDCConfigurationParser {
   private static SubsetEnum defaultSubsetEnum = SubsetEnum.ANY;
   private static String subsetRegex = "subset|";
   private static final String EXCLUDEOIDC = "(?!.operator)";
+  private static final String ISSPREFIX ="iss";
 
-  private static OIDCServer getOIDCServer(Map<String, String> configurationProperties, String prefix){
-    if(configurationProperties.containsKey(prefix)){
-      String oidcServerName = configurationProperties.get(prefix);
+  public static OIDCServer getOIDCServer(Map<String, String> configurationProperties, String prefix){
+    String oidcServerKey = ConfigurationUtils.getConcatedConfigurationPath(prefix, ISSPREFIX);
+    if(configurationProperties.containsKey(oidcServerKey)){
+      String oidcServerName = configurationProperties.get(oidcServerKey);
       Set<OIDCServer> oidcServerSet = Config.instance.getOidcServerSet();
       return  oidcServerSet.stream().filter(el -> el.getId().equals(oidcServerName)).findFirst().orElse(null);
     }
@@ -60,13 +60,13 @@ public class OIDCConfigurationParser {
     }
   }
 
-  private static OIDCClaim parseOIDCClaim(Map<String, String> configurationProperties, String prefix, String claim){
+  private static Claim parseOIDCClaim(Map<String, String> configurationProperties, String prefix, String claim){
     String claimPrefix = ConfigurationUtils.getConcatedConfigurationPath(prefix, claim);
     SubsetEnum subsetEnum = getSubsetEnum(configurationProperties, claimPrefix);
     Subset subset = new SubsetFactory().createSubset(subsetEnum);
     String claimValue = configurationProperties.get(claimPrefix);
     Set<String> splittedClaimValues = ConfigurationUtils.splitDefaultConfigurationValue(claimValue);
-    return  new OIDCClaim(claim, subset, splittedClaimValues);
+    return  new Claim(claim, subset, splittedClaimValues);
   }
 
 
@@ -76,18 +76,20 @@ public class OIDCConfigurationParser {
     OperatorEnum operatorEnum = getOperatorEnum(configurationProperties, prefix);
     Operator operator = new OperatorFactory().createOperator(operatorEnum);
 
-    Set<String> claims = ConfigurationParser.getDynamicKeys(configurationProperties, "("+prefix+")"+EXCLUDEOIDC, subsetRegex);
-    List<OIDCClaim> oidcClaimList = new ArrayList<>();
-    for(String claim: claims){
-      OIDCClaim oidcClaim =  parseOIDCClaim(configurationProperties, prefix, claim);
-      if(oidcClaim != null) oidcClaimList.add(oidcClaim);
-    }
+    Map<String, String> filteredConfgigurationProperties = configurationProperties;
 
+    Set<String> claims = ConfigurationParser.getDynamicKeys(filteredConfgigurationProperties, "("+prefix+")"+EXCLUDEOIDC, subsetRegex);
+    claims.remove(ISSPREFIX);
+    List<Claim> claimList = new ArrayList<>();
+    for(String claim: claims){
+      Claim oidcClaim =  parseOIDCClaim(configurationProperties, prefix, claim);
+      if(oidcClaim != null) claimList.add(oidcClaim);
+    }
     OIDCServer oidcServer = getOIDCServer(configurationProperties, prefix);
     if(oidcServer == null){
       return null;
     }
-    OIDCProperty oidcProperty = new OIDCProperty(oidcServer,operator, oidcClaimList);
+    OIDCProperty oidcProperty = new OIDCProperty(operator, claimList);
     return oidcProperty;
 
   }
