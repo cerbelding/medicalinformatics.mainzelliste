@@ -45,7 +45,7 @@ public class OICDService {
       return metaData.getString(USERINFOENDPOINTKEY);
     } catch (JSONException e) {
       logger.warn(e);
-      return null;
+      return "";
     }
   }
 

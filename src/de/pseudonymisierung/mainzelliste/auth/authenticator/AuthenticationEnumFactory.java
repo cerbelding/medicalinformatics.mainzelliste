@@ -1,9 +1,7 @@
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
 import com.sun.jersey.api.NotFoundException;
-import de.pseudonymisierung.mainzelliste.auth.ClaimAuthEnum;
-import de.pseudonymisierung.mainzelliste.auth.ClaimProperty;
-import de.pseudonymisierung.mainzelliste.auth.oidc.OIDCConfigurationParser;
+import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimAuthEnum;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;

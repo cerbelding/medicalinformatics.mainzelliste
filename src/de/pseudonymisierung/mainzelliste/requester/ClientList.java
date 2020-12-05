@@ -1,15 +1,9 @@
 package de.pseudonymisierung.mainzelliste.requester;
 
-import de.pseudonymisierung.mainzelliste.auth.authenticator.ClaimMap;
+import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.OIDCPropertiesAdapter;
-import de.pseudonymisierung.mainzelliste.auth.oidc.claim.Claim;
-import de.pseudonymisierung.mainzelliste.httpsClient.OICDService;
-import de.pseudonymisierung.mainzelliste.auth.oidc.JWTDecoder;
 import org.apache.log4j.Logger;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -102,7 +96,7 @@ public class ClientList {
    * @param claims the claims of the user
    * @return The User if he could be authenticated otherwise null
    */
-  private Requester getUserByAuthentication(ClaimMap claims) {
+  private Requester getUserByAuthentication(UserInfoClaims claims) {
 
     for (Map.Entry<String, Requester> entry : clients.entrySet()) {
       Requester client = entry.getValue();
@@ -121,8 +115,12 @@ public class ClientList {
    * @return returns the User if it could be found, otherwise null
    */
   public Requester getUserByAccessToken(String accessToken) {
-      ClaimMap claims = OIDCPropertiesAdapter.getIdToken(accessToken);
-      return getUserByAuthentication(claims);
+      UserInfoClaims claims = OIDCPropertiesAdapter.getIdToken(accessToken);
+      if(claims != null){
+        return getUserByAuthentication(claims);
+      }
+      return null;
+
   }
 
   public Collection<Requester> getClients() {

@@ -1,5 +1,6 @@
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
+import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
 import org.apache.log4j.Logger;
 
 /**
@@ -23,7 +24,7 @@ public class ApiKeyAuthenticator implements Authenticator {
 
 
   @Override
-  public boolean isAuthenticated(ClaimMap tokens) {
+  public boolean isAuthenticated(UserInfoClaims tokens) {
     String apiKey = tokens.get(AuthenticationEum.APIKEY.getAuthenticationName());
     boolean isAuthenticated = false;
     if (apiKey != null) {

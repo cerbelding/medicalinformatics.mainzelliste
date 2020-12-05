@@ -27,10 +27,10 @@ package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.auth.Authentication;
 
-import de.pseudonymisierung.mainzelliste.auth.ClaimConfigurationSet;
+import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurationSet;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.ApiKeyAuthenticator;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.AuthenticationEum;
-import de.pseudonymisierung.mainzelliste.auth.authenticator.ClaimMap;
+import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.OIDCPropertiesAdapter;
 import de.pseudonymisierung.mainzelliste.requester.Requester;
 import de.pseudonymisierung.mainzelliste.requester.ClientList;
@@ -171,6 +171,7 @@ public enum Servers {
 	}
 
 	private void createServers(Properties props) {
+		// TODO: 05.12.2020 Refactoring
 		for (int i = 0; ; i++)
 		{
 			if (!props.containsKey("servers." + i + ".apiKey") ||
@@ -733,11 +734,16 @@ public enum Servers {
 	}
 
 	public Requester createRequesterByAccessToken(String accessToken){
-		ClaimMap claimMap = OIDCPropertiesAdapter.getIdToken(accessToken);
-		ClaimConfigurationSet claimConfigurationSet = Config.instance.getClaimConfigurationSet();
-		Requester requester =  claimConfigurationSet.createRequester(claimMap, AuthenticationEum.ACCESS_TOKEN);
-		clientList.add(requester);
-		return requester;
+		UserInfoClaims userInfoClaims = OIDCPropertiesAdapter.getIdToken(accessToken);
+		if(userInfoClaims != null){
+			ClaimConfigurationSet claimConfigurationSet = Config.instance.getClaimConfigurationSet();
+			Requester requester =  claimConfigurationSet.createRequester(userInfoClaims, AuthenticationEum.ACCESS_TOKEN);
+			if(requester != null){
+				clientList.add(requester);
+			}
+			return requester;
+		}
+		return null;
 	}
 
 	/**

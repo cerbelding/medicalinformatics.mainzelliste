@@ -51,7 +51,6 @@ public final class Authentication {
   }
 
 
-
   /**
    * @param httpHeader The HttpHeader of the Request
    * @return The found requester otherwise null

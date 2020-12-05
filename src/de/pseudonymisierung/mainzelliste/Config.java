@@ -25,11 +25,12 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import de.pseudonymisierung.mainzelliste.auth.ClaimConfiguration;
-import de.pseudonymisierung.mainzelliste.auth.ClaimConfigurationParser;
-import de.pseudonymisierung.mainzelliste.auth.ClaimConfigurationSet;
-import de.pseudonymisierung.mainzelliste.auth.oidc.OIDCServer;
-import de.pseudonymisierung.mainzelliste.auth.oidc.OIDCServerConfigurationParser;
+import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfiguration;
+import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurationParser;
+import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurationSet;
+import de.pseudonymisierung.mainzelliste.auth.authorizationServer.OIDCServer;
+import de.pseudonymisierung.mainzelliste.configuration.oidcServer.OIDCServerConfigurationParser;
+import de.pseudonymisierung.mainzelliste.auth.authorizationServer.OIDCServerSet;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
@@ -89,7 +90,7 @@ public enum Config {
 	private Set<String> allowedHeaders;
 
 	/**List of allowed OIDC-Servers*/
-	private Set<OIDCServer> oidcServerSet = new HashSet<>();
+	private OIDCServerSet oidcServerSet;
 	/**List of Claims*/
 	private ClaimConfigurationSet claimConfigurationSet;
 
@@ -199,7 +200,8 @@ public enum Config {
 		// Read version number provided by pom.xml
 		version = readVersion();
 
-		this.oidcServerSet = OIDCServerConfigurationParser.parseOIDCServerConfiguration(props);
+		Set<OIDCServer> oidcServerSet = OIDCServerConfigurationParser.parseOIDCServerConfiguration(props);
+		this.oidcServerSet = new OIDCServerSet(oidcServerSet);
 	}
 
     /**
@@ -623,7 +625,11 @@ public enum Config {
 		this.setClaimConfigurationSet(claimConfigurationSet);
 	}
 
-	public Set<OIDCServer> getOidcServerSet() {
+	public OIDCServerSet getOidcServers() {
 		return oidcServerSet;
+	}
+
+	public Set<OIDCServer> getOidcServerSet() {
+		return oidcServerSet.getOidcServerSet();
 	}
 }

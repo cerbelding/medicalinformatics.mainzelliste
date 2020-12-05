@@ -1,6 +1,6 @@
 package de.pseudonymisierung.mainzelliste.requester;
 
-import de.pseudonymisierung.mainzelliste.auth.authenticator.ClaimMap;
+import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
 import java.util.Set;
 import java.util.UUID;
@@ -53,7 +53,7 @@ public abstract class Requester {
    * @param authentication the claims to authenticate
    * @return true if the requester could be authenticated, false if not
    */
-  public boolean isAuthenticated(ClaimMap authentication) {
+  public boolean isAuthenticated(UserInfoClaims authentication) {
     return this.authenticator.isAuthenticated(authentication);
   }
 

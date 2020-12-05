@@ -25,8 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
-import de.pseudonymisierung.mainzelliste.auth.ClaimProperty;
-import de.pseudonymisierung.mainzelliste.auth.IAuthorization;
+import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
+import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimProperty;
+import de.pseudonymisierung.mainzelliste.auth.authorizationServer.IAuthorization;
 import org.apache.log4j.Logger;
 
 import java.util.Set;
@@ -49,8 +50,8 @@ public class OIDCAuthenticator implements Authenticator {
   }
 
   @Override
-  public boolean isAuthenticated(ClaimMap claimMap) {
-    String sub = claimMap.get("sub");
+  public boolean isAuthenticated(UserInfoClaims userInfoClaims) {
+    String sub = userInfoClaims.get("sub");
     boolean isEqual = sub.equals(this.sub);
     return isEqual;
   }

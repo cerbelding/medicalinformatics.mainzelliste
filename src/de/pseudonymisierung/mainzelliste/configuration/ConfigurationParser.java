@@ -15,10 +15,8 @@ public class ConfigurationParser {
 
   private static  Logger logger = Logger.getLogger(ConfigurationParser.class);
 
-
   private ConfigurationParser(){
   }
-
 
   public static Map<String,String> parseConfigurationToMap(Properties props, List<String> keys){
     Map<String, String> mappedConfiguration = new HashMap<>();

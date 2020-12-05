@@ -1,6 +1,5 @@
 package de.pseudonymisierung.mainzelliste.utils;
 
-import de.pseudonymisierung.mainzelliste.auth.ClaimConfigurationParser;
 import org.apache.log4j.Logger;
 
 public class EnumLookup {

@@ -25,6 +25,8 @@
  */
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
+import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
+
 /**
  * Represents the Authentication of a request
  */
@@ -36,7 +38,7 @@ public interface Authenticator {
    * @param claims the identification of the requester
    * @return true if the requester could be authenticated, otherwise false
    */
-  boolean isAuthenticated(ClaimMap claims);
+  boolean isAuthenticated(UserInfoClaims claims);
   String getId();
 
 }
