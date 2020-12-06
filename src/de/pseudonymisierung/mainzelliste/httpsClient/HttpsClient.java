@@ -7,7 +7,6 @@ import org.codehaus.jettison.json.JSONObject;
 import javax.net.ssl.*;
 import javax.ws.rs.HttpMethod;
 import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
 import java.io.*;
@@ -71,17 +70,11 @@ public class HttpsClient implements
       HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 
       // Create all-trusting host name verifier
-      HostnameVerifier allHostsValid = new HostnameVerifier() {
-        public boolean verify(String hostname, SSLSession session) {
-          return true;
-        }
-      };
+      HostnameVerifier allHostsValid = (hostname, session) -> true;
 
       // Install the all-trusting host verifier
       HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-    } catch (KeyManagementException e) {
+    } catch (NoSuchAlgorithmException | KeyManagementException e) {
       e.printStackTrace();
     }
   }
@@ -144,7 +137,7 @@ public class HttpsClient implements
   }
 
   private void setHeader(HttpsURLConnection con,
-      HttpHeadersInterface<Map<String, String>> httpHeader) throws ProtocolException {
+      HttpHeadersInterface<Map<String, String>> httpHeader) {
     String httpMethod = httpHeader.getRequestMethod();
     switch (httpMethod) {
       case HttpMethod.GET:

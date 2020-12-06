@@ -10,7 +10,6 @@ public class HttpClientAuthorization {
 
   private final String authorization;
 
-
   public HttpClientAuthorization(String authorization) {
     this.authorization = authorization;
   }
@@ -22,7 +21,7 @@ public class HttpClientAuthorization {
   /**
    * Creates a Bearer Authorization
    *
-   * @param bearerToken the bearertoken
+   * @param bearerToken the bearer token
    * @return returns an Instance of the HTTTpClientAuthorization
    */
   public static HttpClientAuthorization createBearerAuthentication(String bearerToken) {

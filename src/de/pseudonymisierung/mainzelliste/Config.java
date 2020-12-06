@@ -27,10 +27,10 @@ package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfiguration;
 import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurationParser;
-import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurationSet;
+import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurations;
 import de.pseudonymisierung.mainzelliste.auth.authorizationServer.OIDCServer;
 import de.pseudonymisierung.mainzelliste.configuration.oidcServer.OIDCServerConfigurationParser;
-import de.pseudonymisierung.mainzelliste.auth.authorizationServer.OIDCServerSet;
+import de.pseudonymisierung.mainzelliste.auth.authorizationServer.OIDCServers;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
@@ -90,9 +90,9 @@ public enum Config {
 	private Set<String> allowedHeaders;
 
 	/**List of allowed OIDC-Servers*/
-	private OIDCServerSet oidcServerSet;
+	private OIDCServers oidcServers;
 	/**List of Claims*/
-	private ClaimConfigurationSet claimConfigurationSet;
+	private ClaimConfigurations claimConfigurations = new ClaimConfigurations(new HashSet<>());
 
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
@@ -201,7 +201,7 @@ public enum Config {
 		version = readVersion();
 
 		Set<OIDCServer> oidcServerSet = OIDCServerConfigurationParser.parseOIDCServerConfiguration(props);
-		this.oidcServerSet = new OIDCServerSet(oidcServerSet);
+		this.oidcServers = new OIDCServers(oidcServerSet);
 	}
 
     /**
@@ -613,23 +613,28 @@ public enum Config {
 		}
 	}
 
-	public ClaimConfigurationSet getClaimConfigurationSet() {
-		return claimConfigurationSet;
+	/**
+	 * Returns the Claims which are defined in the configuration file
+	 * @return the stored claims
+	 */
+	public ClaimConfigurations getClaimConfigurationSet() {
+		return claimConfigurations;
 	}
 
-	public void setClaimConfigurationSet(Set<ClaimConfiguration> claimConfigurationSet){
-		this.claimConfigurationSet = new ClaimConfigurationSet(claimConfigurationSet);
-	}
-	public void updateClaimConfigurationSet(){
-		Set<ClaimConfiguration> claimConfigurationSet = ClaimConfigurationParser.parseConfiguration(this.props);
-		this.setClaimConfigurationSet(claimConfigurationSet);
-	}
-
-	public OIDCServerSet getOidcServers() {
-		return oidcServerSet;
+	/**
+	 * Returns the OIDCServers which are defined in the configuration file
+	 * @return the stored OIDCServers
+	 */
+	public OIDCServers getOidcServers() {
+		return oidcServers;
 	}
 
-	public Set<OIDCServer> getOidcServerSet() {
-		return oidcServerSet.getOidcServerSet();
+	/**
+	 * Generates the ClaimConfigurations with the provided configuration file and the stored OIDCServers
+	 */
+	public void updateClaimConfigurations(){
+		Set<ClaimConfiguration> claimConfigurationSet = ClaimConfigurationParser.parseConfiguration(props);
+		this.claimConfigurations = new ClaimConfigurations(claimConfigurationSet);
 	}
+
 }

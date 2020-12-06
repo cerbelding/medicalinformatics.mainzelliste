@@ -12,7 +12,7 @@ public class Auth0JWT implements IDecodedJWT {
 
   @Override
   public String getKey(String key) {
-    return null;
+    return decodedJWT.getClaim(key).asString();
   }
 
   @Override

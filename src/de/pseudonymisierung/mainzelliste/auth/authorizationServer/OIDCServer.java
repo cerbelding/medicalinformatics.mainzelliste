@@ -1,7 +1,10 @@
 package de.pseudonymisierung.mainzelliste.auth.authorizationServer;
 
-import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
+import de.pseudonymisierung.mainzelliste.auth.credentials.OIDCCredentials;
 
+/**
+ * Represents the OIDC-Server
+ */
 public class OIDCServer extends OAuthAuthorizationServer implements IAuthorization {
 
   public OIDCServer(String issuer, String id) {
@@ -9,7 +12,7 @@ public class OIDCServer extends OAuthAuthorizationServer implements IAuthorizati
   }
 
   @Override
-  public boolean authorize(UserInfoClaims userInfoClaims) {
-    return this.issuer.equals(userInfoClaims.getIss());
+  public boolean authorize(OIDCCredentials oidcCredentials) {
+    return this.issuer.equals(oidcCredentials.getIss());
   }
 }

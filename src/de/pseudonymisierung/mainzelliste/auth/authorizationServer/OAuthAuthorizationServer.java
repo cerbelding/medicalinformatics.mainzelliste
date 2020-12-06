@@ -1,8 +1,8 @@
 package de.pseudonymisierung.mainzelliste.auth.authorizationServer;
 
-import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
-import java.util.Map;
-
+/**
+ * Represents the OAuth-Server
+ */
 public class OAuthAuthorizationServer {
 
   protected String issuer;
@@ -26,10 +26,8 @@ public class OAuthAuthorizationServer {
     return this.issuer;
   }
 
-  public String getMetaDataUrl() {
-    return this.issuer + this.metaDataUrl;
+  public String getId() {
+    return this.id;
   }
-
-  public String getId(){return this.id;}
 
 }

@@ -25,13 +25,14 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import de.pseudonymisierung.mainzelliste.auth.Authentication;
+import de.pseudonymisierung.mainzelliste.auth.credentials.ApiKeyCredentials;
+import de.pseudonymisierung.mainzelliste.utils.AuthenticationUtils;
 
-import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurationSet;
+import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurations;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.ApiKeyAuthenticator;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.AuthenticationEum;
-import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
-import de.pseudonymisierung.mainzelliste.auth.authenticator.OIDCPropertiesAdapter;
+import de.pseudonymisierung.mainzelliste.auth.credentials.OIDCCredentials;
+import de.pseudonymisierung.mainzelliste.auth.oidc.OIDCPropertiesAdapter;
 import de.pseudonymisierung.mainzelliste.requester.Requester;
 import de.pseudonymisierung.mainzelliste.requester.ClientList;
 import java.util.Arrays;
@@ -129,9 +130,8 @@ public enum Servers {
 		// read Server configuration from mainzelliste.conf
 		Properties props = Config.instance.getProperties();
 		createServers(props);
-		createUsers(props);
 
-		if(servers.size() == 0 &&  clientList.size() == 0) {
+		if(servers.size() == 0) {
 			logger.error("No servers or users added. Is your config complete?");
 		}
 
@@ -206,30 +206,6 @@ public enum Servers {
 			servers.put(s.apiKey, s);
 
 		}
-	}
-
-	private void createUsers(Properties props){
-/*
-		for (int i = 0; ; i++) {
-			if (!props.containsKey("users." + i + ".permissions") ||
-					(!props.containsKey("users." + i + ".oauth.claims.subs") && !props.containsKey("users." + i + ".oauth.claims.roles")))
-				break;
-
-			String permissions[] = props.getProperty("users." + i + ".permissions").split("[;,]");
-			String subs[] = new String[0];
-			String roles[] = new String[0];
-
-			if(props.containsKey("users." + i + ".oauth.claims.roles")){
-				roles = props.getProperty("users." + i + ".oauth.claims.roles").split("[;,]");
-			}
-			if(props.containsKey("users." + i + ".oauth.claims.subs")){
-				subs = props.getProperty("users." + i + ".oauth.claims.subs").split("[;,]");
-			}
-			Authenticator oicdAuth = new OICDAuthenticator(new HashSet<>(Arrays.asList(subs)), new HashSet<>(Arrays.asList(roles)));
-			Client client = new Client(new HashSet<>(Arrays.asList(permissions)), oicdAuth);
-			users.add(client);
-		}
-		*/
 	}
 
 	/**
@@ -324,18 +300,25 @@ public enum Servers {
 			// ConcurrentModificationException
 			for (String sessionId : sessionsToDelete) {
 				this.deleteSession(sessionId);
-				this.deleteRequestersWithoutSession();
 				logger.info(String.format("Session %s timed out", sessionId));
 			}
+			this.deleteRequestersWithoutSession();
 		}
 	}
 
+	/**
+	 * Deletes all Requesters without active Session
+	 */
 	public void deleteRequestersWithoutSession(){
 		for(Requester requester: this.clientList.getClients()){
+			boolean hasSession = false;
 			for (Session s : this.sessions.values()) {
-				if(s.getParentServerName().equals(requester.getId())){
-					continue;
+				if (s.getParentServerName().equals(requester.getId())) {
+					hasSession = true;
+					break;
 				}
+			}
+			if(!hasSession){
 				clientList.removeClient(requester.getId());
 			}
 		}
@@ -360,6 +343,7 @@ public enum Servers {
 	//TODO: This function is not only checking permissions. it's also adding the configured server permission to a session. The function should have another name and function should be separated.
 	public void checkPermission(HttpServletRequest req, String permission) {
 		@SuppressWarnings("unchecked")
+		// TODO: 05.12.2020 Refactoring
 
 
 		Set<String> perms = (Set<String>) req.getSession(true).getAttribute("permissions");
@@ -367,7 +351,7 @@ public enum Servers {
 		if(perms == null){
 
 			// Gets the http header information which are nnecessaryfor authenticate a server/ user
-			Map<AuthenticationEum, String> authenticationMap  = Authentication.getAuthenticationHeader(req);
+			Map<AuthenticationEum, String> authenticationMap  = AuthenticationUtils.getAuthenticationHeader(req);
 			Requester requester = null;
 			String idKey = "";
 
@@ -711,12 +695,13 @@ public enum Servers {
 	 * @return the authenticated requester, otherwise null
 	 */
 	public Requester getRequesterByAPIKey(String apiKey){
-		if(servers.containsKey(apiKey)){
-			return servers.get(apiKey);
+		ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials(apiKey);
+		for(Server requester: servers.values()){
+			if(requester.isAuthenticated(apiKeyCredentials)){
+				return requester;
+			}
 		}
-		else{
-			return null;
-		}
+		return  null;
 	}
 
 	/**
@@ -726,18 +711,26 @@ public enum Servers {
 	 * @return the authenticated requester, otherwise null
 	 */
 	public Requester getRequesterByAccessToken(String accessToken){
-		Requester requester = clientList.getUserByAccessToken(accessToken);
+		OIDCCredentials OIDCCredentials = OIDCPropertiesAdapter.getIdToken(accessToken);
+		Requester requester = clientList.getRequesterByAuthentication(OIDCCredentials);
 		if(requester == null){
 			requester  = createRequesterByAccessToken(accessToken);
 		}
 		return requester;
 	}
 
+
+	/**
+	 * Creates a Requester with his OIDC-Accesstoken and the Config-File
+	 * @param accessToken the given accesstoken
+	 * @return the created requester
+	 */
+
 	public Requester createRequesterByAccessToken(String accessToken){
-		UserInfoClaims userInfoClaims = OIDCPropertiesAdapter.getIdToken(accessToken);
-		if(userInfoClaims != null){
-			ClaimConfigurationSet claimConfigurationSet = Config.instance.getClaimConfigurationSet();
-			Requester requester =  claimConfigurationSet.createRequester(userInfoClaims, AuthenticationEum.ACCESS_TOKEN);
+		OIDCCredentials OIDCCredentials = OIDCPropertiesAdapter.getIdToken(accessToken);
+		if(OIDCCredentials != null){
+			ClaimConfigurations claimConfigurations = Config.instance.getClaimConfigurationSet();
+			Requester requester =  claimConfigurations.createRequester(OIDCCredentials);
 			if(requester != null){
 				clientList.add(requester);
 			}
@@ -752,7 +745,7 @@ public enum Servers {
 	 * @return the authenticated requester, otherwise null
 	 */
 	public Requester getRequesterByName(String name){
-		Requester client =  clientList.getUserByName(name);
+		Requester client =  clientList.getRequesterByName(name);
 		Requester server = this.getServerByName(name);
 
 		if(server != null) return server;

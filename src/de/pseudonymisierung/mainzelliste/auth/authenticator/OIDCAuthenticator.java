@@ -25,8 +25,8 @@
  */
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
-import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
-import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimProperty;
+import de.pseudonymisierung.mainzelliste.auth.credentials.Credentials;
+import de.pseudonymisierung.mainzelliste.configuration.claim.claimList.ClaimList;
 import de.pseudonymisierung.mainzelliste.auth.authorizationServer.IAuthorization;
 import org.apache.log4j.Logger;
 
@@ -38,26 +38,21 @@ import java.util.Set;
 public class OIDCAuthenticator implements Authenticator {
 
   private final Logger logger = Logger.getLogger(OIDCAuthenticator.class);
-  private Set<ClaimProperty> claimProperties;
+  private Set<ClaimList> claimProperties;
   private IAuthorization oidcServer;
   private String sub;
 
 
-  public OIDCAuthenticator(String sub, Set<ClaimProperty> claimProperties, IAuthorization oidcServer) {
+  public OIDCAuthenticator(String sub, Set<ClaimList> claimProperties, IAuthorization oidcServer) {
     this.claimProperties = claimProperties;
     this.oidcServer = oidcServer;
     this.sub = sub;
   }
 
   @Override
-  public boolean isAuthenticated(UserInfoClaims userInfoClaims) {
-    String sub = userInfoClaims.get("sub");
+  public boolean isAuthenticated(Credentials userInfoClaims) {
+    String sub = userInfoClaims.getId();
     boolean isEqual = sub.equals(this.sub);
     return isEqual;
-  }
-
-  @Override
-  public String getId() {
-    return oidcServer.getId();
   }
 }

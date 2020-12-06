@@ -1,6 +1,6 @@
 package de.pseudonymisierung.mainzelliste.requester;
 
-import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
+import de.pseudonymisierung.mainzelliste.auth.credentials.Credentials;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
 import java.util.Set;
 import java.util.UUID;
@@ -25,13 +25,27 @@ public abstract class Requester {
   /**
    * Creates a new Requester, with his permissions and authentication method, creates a random ID
    *
-   * @param permissions    List of the permissions
+   * @param permissions   List of the permissions
    * @param authenticator Authentication method of the User
    */
   public Requester(Set<String> permissions, Authenticator authenticator) {
     this.permissions = permissions;
     this.authenticator = authenticator;
     this.id = UUID.randomUUID().toString();
+    this.name = id;
+  }
+
+  /**
+   * Creates a new Requester, with his permissions and authentication method, creates a random ID
+   *
+   * @param permissions   List of the permissions
+   * @param authenticator Authentication method of the User
+   * @param id            The id of the requester
+   */
+  public Requester(Set<String> permissions, Authenticator authenticator, String id) {
+    this.permissions = permissions;
+    this.authenticator = authenticator;
+    this.id = id;
     this.name = id;
   }
 
@@ -53,7 +67,7 @@ public abstract class Requester {
    * @param authentication the claims to authenticate
    * @return true if the requester could be authenticated, false if not
    */
-  public boolean isAuthenticated(UserInfoClaims authentication) {
+  public boolean isAuthenticated(Credentials authentication) {
     return this.authenticator.isAuthenticated(authentication);
   }
 
@@ -67,7 +81,7 @@ public abstract class Requester {
   }
 
   /**
-   * Returns the name of the user
+   * Returns the name of the requester
    *
    * @return Returns the name
    */

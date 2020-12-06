@@ -3,14 +3,14 @@ package de.pseudonymisierung.mainzelliste.configuration.claim.oidc;
 
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.auth.authorizationServer.OIDCServer;
-import de.pseudonymisierung.mainzelliste.configuration.claim.Claim;
-import de.pseudonymisierung.mainzelliste.configuration.claim.oidc.subset.Subset;
-import de.pseudonymisierung.mainzelliste.configuration.claim.oidc.subset.SubsetEnum;
-import de.pseudonymisierung.mainzelliste.configuration.claim.oidc.subset.SubsetFactory;
-import de.pseudonymisierung.mainzelliste.configuration.claim.oidc.operator.Operator;
-import de.pseudonymisierung.mainzelliste.configuration.claim.oidc.operator.OperatorEnum;
-import de.pseudonymisierung.mainzelliste.configuration.claim.oidc.operator.OperatorFactory;
-import de.pseudonymisierung.mainzelliste.configuration.ConfigurationParser;
+import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimItem;
+import de.pseudonymisierung.mainzelliste.configuration.claim.claimList.OIDCList;
+import de.pseudonymisierung.mainzelliste.configuration.claim.subset.Subset;
+import de.pseudonymisierung.mainzelliste.configuration.claim.subset.SubsetEnum;
+import de.pseudonymisierung.mainzelliste.configuration.claim.subset.SubsetFactory;
+import de.pseudonymisierung.mainzelliste.configuration.claim.operator.Operator;
+import de.pseudonymisierung.mainzelliste.configuration.claim.operator.OperatorEnum;
+import de.pseudonymisierung.mainzelliste.configuration.claim.operator.OperatorFactory;
 import de.pseudonymisierung.mainzelliste.configuration.ConfigurationUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,41 +18,72 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.log4j.Logger;
 
-public class OIDCConfigurationParser {
-  private static Logger logger = Logger.getLogger(OIDCConfigurationParser.class);
-  private static final String OPERATOR ="operator";
-  private static final String SUBSET = "subset";
-  private static OperatorEnum defaulltOperatorEnum = OperatorEnum.AND;
-  private static SubsetEnum defaultSubsetEnum = SubsetEnum.ANY;
-  private static String subsetRegex = "subset|";
-  private static final String EXCLUDEOIDC = "(?!.operator)";
-  private static final String ISSPREFIX ="iss";
+/**
+ * Parses the OIDC claim-configuration given by the configuration file
+ */
 
-  public static OIDCServer getOIDCServer(Map<String, String> configurationProperties, String prefix){
-    String oidcServerKey = ConfigurationUtils.getConcatedConfigurationPath(prefix, ISSPREFIX);
-    if(configurationProperties.containsKey(oidcServerKey)){
+public class OIDCConfigurationParser {
+
+  private static final Logger logger = Logger.getLogger(OIDCConfigurationParser.class);
+  private static final String OPERATOR = "operator";
+  private static final String SUBSET = "subset";
+  private static final OperatorEnum defaultOperatorEnum = OperatorEnum.AND;
+  private static final SubsetEnum defaultSubsetEnum = SubsetEnum.ANY;
+  private static final String subsetRegex = "subset|";
+  private static final String EXCLUDEOIDC = "(?!.operator)";
+  private static final String ISSPREFIX = "iss";
+
+  /**
+   * Retrieves the OIDC-Server defined by the iss property of an claim configuration
+   *
+   * @param configurationProperties the key-value Mapping of the claim configuration
+   * @param prefix                  the oidc prefix to define the OIDC-Server
+   * @return the OIDC-Server if it could be found otherwise null
+   */
+
+  public static OIDCServer getOIDCServer(Map<String, String> configurationProperties,
+      String prefix) {
+    String oidcServerKey = ConfigurationUtils.getConcatenatedConfigurationPath(prefix, ISSPREFIX);
+    if (configurationProperties.containsKey(oidcServerKey)) {
       String oidcServerName = configurationProperties.get(oidcServerKey);
-      Set<OIDCServer> oidcServerSet = Config.instance.getOidcServerSet();
-      return  oidcServerSet.stream().filter(el -> el.getId().equals(oidcServerName)).findFirst().orElse(null);
+      Set<OIDCServer> oidcServerSet = Config.instance.getOidcServers().getOidcServerSet();
+      return oidcServerSet.stream().filter(el -> el.getId().equals(oidcServerName)).findFirst()
+          .orElse(null);
     }
-    logger.warn("OIDC-Server name not found "+prefix);
+    logger.warn("OIDC-Server name not found " + prefix);
     return null;
   }
 
+  /**
+   * Defines the required operator value
+   *
+   * @param configurationProperties the key-value Mapping of the claim configuration
+   * @param prefix                  the oidc prefix to define the operator value
+   * @return the operator value
+   */
 
-  private static OperatorEnum getOperatorEnum(Map<String, String> configurationProperties, String prefix){
-    String operatorKey = ConfigurationUtils.getConcatedConfigurationPath(prefix,OPERATOR);
-    if(configurationProperties.containsKey(operatorKey)){
+
+  private static OperatorEnum getOperatorEnum(Map<String, String> configurationProperties,
+      String prefix) {
+    String operatorKey = ConfigurationUtils.getConcatenatedConfigurationPath(prefix, OPERATOR);
+    if (configurationProperties.containsKey(operatorKey)) {
       String operatorValue = configurationProperties.get(operatorKey);
       return OperatorEnum.valueOf(operatorValue);
-    }
-    else{
-      return defaulltOperatorEnum;
+    } else {
+      return defaultOperatorEnum;
     }
   }
 
-  private static SubsetEnum getSubsetEnum(Map<String, String> configurationProperties, String prefix) {
-    String subsetKey = ConfigurationUtils.getConcatedConfigurationPath(prefix,SUBSET);
+  /**
+   * Defines the required subset value for an claimItem
+   *
+   * @param configurationProperties the key-value Mapping of the claim configuration
+   * @param prefix                  the oidc prefix to define the subset value
+   * @return the subset value
+   */
+  private static SubsetEnum getSubsetEnum(Map<String, String> configurationProperties,
+      String prefix) {
+    String subsetKey = ConfigurationUtils.getConcatenatedConfigurationPath(prefix, SUBSET);
     if (configurationProperties.containsKey(subsetKey)) {
       String subsetValue = configurationProperties.get(subsetKey);
       return SubsetEnum.valueOf(subsetValue);
@@ -61,37 +92,53 @@ public class OIDCConfigurationParser {
     }
   }
 
-  private static Claim parseOIDCClaim(Map<String, String> configurationProperties, String prefix, String claim){
-    String claimPrefix = ConfigurationUtils.getConcatedConfigurationPath(prefix, claim);
+  /**
+   * Parses the claimItem configuration given by the configuration file to an claimItem instance
+   *
+   * @param configurationProperties the key-value Mapping of the claim configuration
+   * @param prefix                  the oidc prefix of the claimItem
+   * @param claim                   the name of the claim
+   * @return the generated claimItem
+   */
+
+  private static ClaimItem parseOIDCClaim(Map<String, String> configurationProperties,
+      String prefix, String claim) {
+    String claimPrefix = ConfigurationUtils.getConcatenatedConfigurationPath(prefix, claim);
     SubsetEnum subsetEnum = getSubsetEnum(configurationProperties, claimPrefix);
     Subset subset = new SubsetFactory().createSubset(subsetEnum);
     String claimValue = configurationProperties.get(claimPrefix);
     Set<String> splittedClaimValues = ConfigurationUtils.splitDefaultConfigurationValue(claimValue);
-    return  new Claim(claim, subset, splittedClaimValues);
+    return new ClaimItem(claim, subset, splittedClaimValues);
   }
 
 
+  /**
+   * Generates an OIDCProperty for an ClaimConfiguration instance
+   *
+   * @param configurationProperties the key-value Mapping of the claim configuration
+   * @param prefix                  the oidc prefix of the claimItem
+   * @return the generated OIDCProperty instance
+   */
 
-  public static OIDCProperty parseConfiguration(Map<String, String> configurationProperties, String prefix){
+  public static OIDCList parseConfiguration(Map<String, String> configurationProperties,
+      String prefix) {
 
     OperatorEnum operatorEnum = getOperatorEnum(configurationProperties, prefix);
     Operator operator = new OperatorFactory().createOperator(operatorEnum);
 
-    Map<String, String> filteredConfgigurationProperties = configurationProperties;
-
-    Set<String> claims = ConfigurationParser.getDynamicKeys(filteredConfgigurationProperties, "("+prefix+")"+EXCLUDEOIDC, subsetRegex);
+    Set<String> claims = ConfigurationUtils
+        .getDynamicKeys(configurationProperties, "(" + prefix + ")" + EXCLUDEOIDC, subsetRegex);
     claims.remove(ISSPREFIX);
-    List<Claim> claimList = new ArrayList<>();
-    for(String claim: claims){
-      Claim oidcClaim =  parseOIDCClaim(configurationProperties, prefix, claim);
-      if(oidcClaim != null) claimList.add(oidcClaim);
+    List<ClaimItem> claimItemList = new ArrayList<>();
+    for (String claim : claims) {
+      ClaimItem oidcClaimItem = parseOIDCClaim(configurationProperties, prefix, claim);
+      claimItemList.add(oidcClaimItem);
     }
     OIDCServer oidcServer = getOIDCServer(configurationProperties, prefix);
-    if(oidcServer == null){
+    if (oidcServer == null) {
       return null;
     }
-    OIDCProperty oidcProperty = new OIDCProperty(operator, claimList);
-    return oidcProperty;
+    return new OIDCList(operator, claimItemList);
 
   }
 

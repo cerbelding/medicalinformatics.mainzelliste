@@ -25,7 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
-import de.pseudonymisierung.mainzelliste.auth.Authentication;
+import de.pseudonymisierung.mainzelliste.utils.AuthenticationUtils;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.AuthenticationEum;
 import de.pseudonymisierung.mainzelliste.requester.Requester;
 import java.net.URI;
@@ -92,7 +92,7 @@ public class SessionsResource {
 
 
 		Session s = null;
-		Map<AuthenticationEum, String> authenticationMap = Authentication.getAuthenticationHeader(req);
+		Map<AuthenticationEum, String> authenticationMap = AuthenticationUtils.getAuthenticationHeader(req);
 
 		// Authenticate Requester (Server / User)
 		if(authenticationMap.containsKey(AuthenticationEum.APIKEY) && authenticationMap.containsKey(AuthenticationEum.ACCESS_TOKEN)){
@@ -106,7 +106,7 @@ public class SessionsResource {
 
 		}
 		else if(authenticationMap.containsKey(AuthenticationEum.ACCESS_TOKEN)){
-			Requester requester = Authentication.authenticate(authenticationMap);
+			Requester requester = AuthenticationUtils.authenticate(authenticationMap);
 			if(requester != null ){
 				s = Servers.instance.newSession(requester.getId());
 			}

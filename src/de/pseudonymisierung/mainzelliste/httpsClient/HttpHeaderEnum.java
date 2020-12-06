@@ -5,7 +5,7 @@ public enum HttpHeaderEnum {
   APIKEY_DEPRECATED("mzidApiKey"),
   AUTHORIZATION("Authorization");
 
-  private String httpHeader;
+  private final String httpHeader;
 
   HttpHeaderEnum(String httpHeaderString) {
     this.httpHeader = httpHeaderString;

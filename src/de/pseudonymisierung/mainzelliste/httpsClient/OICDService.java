@@ -15,7 +15,7 @@ public class OICDService {
   /**
    * Return the UserInformation provided by the Userinfo endpoint from the openId Provider
    *
-   * @return Userinformation as JSONObject
+   * @return User information as JSONObject
    */
   public static JSONObject getIdTokenFromUserInfoEndpoint(String accessToken,
       String userInfoEndpointUrl) throws IOException {

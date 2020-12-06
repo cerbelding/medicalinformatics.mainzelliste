@@ -1,19 +1,24 @@
-package de.pseudonymisierung.mainzelliste.configuration.claim.oidc.operator;
+package de.pseudonymisierung.mainzelliste.configuration.claim.operator;
 
 import com.sun.jersey.api.NotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class OperatorFactory {
-  private Map<OperatorEnum, Supplier<Operator>> factoryMap = new HashMap();
+/**
+ * Factory to generate the right Operator
+ */
 
-  private void initFactoryMap(){
-    factoryMap.put(OperatorEnum.AND, () -> new AndOperator());
-    factoryMap.put(OperatorEnum.OR, () -> new OrOperator());
+public class OperatorFactory {
+
+  private final Map<OperatorEnum, Supplier<Operator>> factoryMap = new HashMap<>();
+
+  private void initFactoryMap() {
+    factoryMap.put(OperatorEnum.AND, AndOperator::new);
+    factoryMap.put(OperatorEnum.OR, OrOperator::new);
   }
 
-  public OperatorFactory(){
+  public OperatorFactory() {
     this.initFactoryMap();
 
   }

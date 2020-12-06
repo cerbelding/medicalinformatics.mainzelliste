@@ -1,12 +1,15 @@
 package de.pseudonymisierung.mainzelliste.auth.authorizationServer;
 
-import de.pseudonymisierung.mainzelliste.auth.authorizationServer.OIDCServer;
 import java.util.Set;
 
-public class OIDCServerSet {
+/**
+ * Represents a Set of AuthorizationServers
+ */
+public class OIDCServers {
+
   private final Set<OIDCServer> oidcServerSet;
 
-  public OIDCServerSet(Set<OIDCServer> oidcServerSet){
+  public OIDCServers(Set<OIDCServer> oidcServerSet) {
     this.oidcServerSet = oidcServerSet;
   }
 
@@ -21,5 +24,14 @@ public class OIDCServerSet {
       }
     }
     return false;
+  }
+
+  public String getIdByIssuer(String iss) {
+    for (OIDCServer oidcServer : oidcServerSet) {
+      if (oidcServer.getIssuer().equals(iss)) {
+        return oidcServer.id;
+      }
+    }
+    return "";
   }
 }

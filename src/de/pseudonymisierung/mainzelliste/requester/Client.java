@@ -5,20 +5,21 @@ import java.util.Set;
 
 
 /**
- * Represents a user or usergroup which implements a Requester
+ * Represents a authenticated client
  */
 public class Client extends Requester {
 
-  /**
-   * Creates a new User, with his permissions and authentication method, creates a random ID
-   *
-   * @param permissions    List of the permissions
-   * @param authenticator Authentication method of the User
-   */
+
   public Client(Set<String> permissions,
       Authenticator authenticator) {
     super(permissions, authenticator);
   }
+
+  public Client(Set<String> permissions,
+      Authenticator authenticator, String sub) {
+    super(permissions, authenticator, sub);
+  }
+
 
   @Override
   public String toString() {

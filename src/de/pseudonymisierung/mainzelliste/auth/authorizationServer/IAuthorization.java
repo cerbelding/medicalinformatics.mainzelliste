@@ -1,10 +1,13 @@
 package de.pseudonymisierung.mainzelliste.auth.authorizationServer;
 
-import de.pseudonymisierung.mainzelliste.auth.jwt.UserInfoClaims;
+import de.pseudonymisierung.mainzelliste.auth.credentials.OIDCCredentials;
 
+/**
+ * Represents an Authorization-Server (e.g OIDC-Server,..)
+ */
 public interface IAuthorization {
 
-  String getId();
-  boolean authorize(UserInfoClaims userInfoClaims);
+  boolean authorize(OIDCCredentials userInfoClaims);
 
+  String getId();
 }
