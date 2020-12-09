@@ -134,7 +134,8 @@ public class Token {
 		else if (this.type.equals("editPatient"))
 			this.checkEditPatient(apiVersion);
 		else if (this.type.equals("deletePatient")); // TODO: checkDeletePatient
-		else if (this.type.equals("checkMatch")); // TODO: checkCheckMatch
+		else if (this.type.equals("checkMatch"))
+			this.checkCheckMatch();
 		else
 			throw new InvalidTokenException("Token type " + this.type
 					+ " unknown!");
@@ -509,6 +510,18 @@ public class Token {
 		if (!this.getData().containsKey("ids") && !this.getData().containsKey("fields")) {
 			throw new InvalidTokenException("Token must contain at least one field or id to edit");
 		}
+		return;
+	}
+
+	/**
+	 * Check whether this is a valid checkMatch token.
+	 * CheckMatch token without idtypes throws an exception
+	 */
+	private void checkCheckMatch() {
+		if (!this.getData().containsKey("idTypes") || this.getDataItemList("idTypes").isEmpty()) {
+			throw new InvalidTokenException("No idtypes defined! Token must contain at least one idtype for best match patient.");
+		}
+
 		return;
 	}
 
