@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "b11c2c81-d2d5-435d-94a1-b1f6ddd76d3e",
-		"name": "mainzelliste_oauth_sub_valid",
+		"_postman_id": "b6d67553-f1f2-4fc0-9ea4-8b6faa1b07ed",
+		"name": "mainzelliste_oauth_valid_ALL_subset",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "1201cf7f-8134-4dbf-9082-dfb7690a7594",
+						"id": "e413ed9a-62d7-4159-b84d-a86f54cacfa3",
 						"exec": [
 							"console.log(\"Authentication\")",
 							"",
@@ -95,7 +95,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "a98379d1-32e5-4582-941f-5edd868a7328",
+						"id": "bf1e7144-8ab6-4d4a-8010-3aa3fa8c904a",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -135,7 +135,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "19d02c69-310e-4c91-9a25-0d70f3e93a41",
+						"id": "c1b6c8ca-f7a0-4334-8043-2e3ac001e610",
 						"exec": [
 							""
 						],
@@ -191,8 +191,13 @@
 	],
 	"variable": [
 		{
-			"id": "bbc0dbe3-3c38-447f-a4e1-7f7327ac213c",
+			"id": "b54ef923-72d5-44fa-b8ef-46329ecf9209",
 			"key": "access_token",
+			"value": ""
+		},
+		{
+			"id": "154a5c3b-5556-4f5b-9cb7-cf0378c83240",
+			"key": "sessionId",
 			"value": ""
 		}
 	],

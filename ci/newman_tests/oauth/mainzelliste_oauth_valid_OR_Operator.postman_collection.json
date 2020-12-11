@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "d6ff129f-7a8d-4e16-9faf-0c38304f5e95",
-		"name": "mainzelliste_oauth_invalid_invalid sub_api_Key_and_access_token_provided",
+		"_postman_id": "1978b3e3-9566-4b3b-8099-910a53f4e43d",
+		"name": "mainzelliste_oauth_valid_OR_Operator",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "c317b55f-9d91-4c00-aa65-c29303db20a0",
+						"id": "b2d84e44-7680-4e1b-9c58-7876883391fc",
 						"exec": [
 							"console.log(\"Authentication\")",
 							"",
@@ -95,7 +95,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "b19b5125-aaab-4f25-9912-1799da41bcf0",
+						"id": "2f4cf457-cfea-485d-b325-30421f514bb6",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -114,11 +114,13 @@
 							"    };",
 							"",
 							"pm.test(\"Check StatusCode\", function(){",
-							"    pm.response.to.have.status(400);",
+							"    pm.response.to.have.status(\"Created\");",
 							"});",
 							"",
 							"pm.test(\"Check ResponseSchema\", function(){",
-							"      pm.expect(pm.response.text()).to.include(\"Please supply either Api key or an access token\")",
+							"     var jsonData = pm.response.json();",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
 							"});",
 							"",
 							"",
@@ -133,7 +135,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "d18ed037-4e5c-4cca-b989-2c39d4d25cae",
+						"id": "ec635293-5f28-4ac3-a18a-efc57163cb1a",
 						"exec": [
 							""
 						],
@@ -166,7 +168,8 @@
 				"header": [
 					{
 						"key": "mainzellisteApiKey",
-						"value": "{{mainzellisteApiKey}}"
+						"value": "{{mainzellisteApiKey}}",
+						"disabled": true
 					},
 					{
 						"key": "mainzellisteApiVersion",
@@ -186,32 +189,15 @@
 			"response": []
 		}
 	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"id": "e220ec1f-4048-450b-b79f-4d432b2fcb3a",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"id": "3bb6fd42-b8b1-4cc7-906d-cfab69ec5005",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	],
 	"variable": [
 		{
-			"id": "4c256a2f-a1c5-4dbb-976c-3acaa173c204",
+			"id": "871483cf-a84d-41be-9a38-5403632a659c",
 			"key": "access_token",
+			"value": ""
+		},
+		{
+			"id": "90f1b55d-c34f-4874-8224-0cd84533529c",
+			"key": "sessionId",
 			"value": ""
 		}
 	],

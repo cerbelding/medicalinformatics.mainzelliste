@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "688fcb45-13e2-47bb-b23c-2d51bd77f85f",
-		"name": "mainzelliste_oauth_invalid_valid sub_api_Key_and_access_token_provided Copy",
+		"_postman_id": "a653805a-6192-4f44-9850-cd967c86bab2",
+		"name": "mainzelliste_oauth_invalid_ALL_subset_claim_not_exist",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "48cbe380-55ca-458c-bf95-13250e5e0ae4",
+						"id": "7679c4b5-5774-491c-ac9c-ea35bab2f6c9",
 						"exec": [
 							"console.log(\"Authentication\")",
 							"",
@@ -95,7 +95,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "1228e296-435d-4391-bf8e-6231df4d1a6b",
+						"id": "554ff1e9-3b11-4e47-b59c-fd0ecd08c01f",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -114,11 +114,11 @@
 							"    };",
 							"",
 							"pm.test(\"Check StatusCode\", function(){",
-							"    pm.response.to.have.status(400);",
+							"    pm.response.to.have.status(401);",
 							"});",
 							"",
 							"pm.test(\"Check ResponseSchema\", function(){",
-							"      pm.expect(pm.response.text()).to.include(\"Please supply either Api key or an access token\")",
+							"      pm.expect(pm.response.text()).to.include(\"Access token could not been validated\")",
 							"});",
 							"",
 							"",
@@ -133,7 +133,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "4d21b3e9-4f49-4ebd-87db-f72b966855da",
+						"id": "97f833b0-23d0-4919-b0c3-695c25e10133",
 						"exec": [
 							""
 						],
@@ -166,7 +166,8 @@
 				"header": [
 					{
 						"key": "mainzellisteApiKey",
-						"value": "{{mainzellisteApiKey}}"
+						"value": "{{mainzellisteApiKey}}",
+						"disabled": true
 					},
 					{
 						"key": "mainzellisteApiVersion",
@@ -190,7 +191,7 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "12cbfbb8-47e9-4851-b942-231e00c0a704",
+				"id": "3b2bb652-c67d-4873-865d-4390203770df",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -200,7 +201,7 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "06fd0062-0a42-4475-a041-8038e60df27b",
+				"id": "5836d073-17d0-4e82-afd7-c15e6820eea5",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -210,7 +211,7 @@
 	],
 	"variable": [
 		{
-			"id": "709b0cde-9636-43b8-9594-de5cb3d5b25d",
+			"id": "d64aa7f0-db31-41ed-8957-ae8277636f0b",
 			"key": "access_token",
 			"value": ""
 		}

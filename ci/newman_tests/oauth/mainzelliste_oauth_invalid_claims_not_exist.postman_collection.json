@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "1dcee3ce-3e72-40a5-9619-4b15af73e2e5",
-		"name": "mainzelliste_oauth_role_valid_contains_only",
+		"_postman_id": "80560405-e8d4-46f9-928c-cd3db03d7b6a",
+		"name": "mainzelliste_oauth_invalid_claims_not_exist",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "1a93acc1-a545-4f4e-ac7d-8320d5660d4f",
+						"id": "51edf498-94e7-4fd8-af19-453c5b13f029",
 						"exec": [
 							"console.log(\"Authentication\")",
 							"",
@@ -95,7 +95,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "ea7da34a-2357-4950-b72f-0424e7d8235c",
+						"id": "91e7342e-19f3-4f2c-b0b4-bb9b067a6fd3",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -114,13 +114,11 @@
 							"    };",
 							"",
 							"pm.test(\"Check StatusCode\", function(){",
-							"    pm.response.to.have.status(\"Created\");",
+							"    pm.response.to.have.status(401);",
 							"});",
 							"",
 							"pm.test(\"Check ResponseSchema\", function(){",
-							"     var jsonData = pm.response.json();",
-							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
-							"     pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
+							"      pm.expect(pm.response.text()).to.include(\"Access token could not been validated\")",
 							"});",
 							"",
 							"",
@@ -135,7 +133,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "9624fe19-ebc8-4b57-8f6c-bfe7f7bdc2f8",
+						"id": "c246c19c-5c22-42d9-af42-3ec442abb46e",
 						"exec": [
 							""
 						],
@@ -193,7 +191,7 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "da3e4de8-ccb3-486c-8ca5-8df802184b94",
+				"id": "8863a7aa-5f63-4fed-8a46-e59f8838f835",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -203,7 +201,7 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "c4ccd7c2-31e8-4651-b7eb-abd5c0ed571e",
+				"id": "825502d6-f63e-448d-a7b0-109b87ff14b7",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -213,7 +211,7 @@
 	],
 	"variable": [
 		{
-			"id": "14cc781c-310e-4451-af87-e09284962637",
+			"id": "c72f3f46-7f6f-4fd8-9d7a-1391e99f5152",
 			"key": "access_token",
 			"value": ""
 		}

@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "a177d9c1-81f1-464b-ae5a-6ef58235841e",
-		"name": "mainzelliste_oauth_sub_invalid_sub_wrong_user",
+		"_postman_id": "f756607f-b9c0-4b69-8a2b-8383c61f00ce",
+		"name": "mainzelliste_oauth_valid_sub_and_role_one_claim",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "2100b0c9-a75a-46e6-9935-59614c526454",
+						"id": "8ccb0158-5a10-4222-a3aa-eb5af4d0759e",
 						"exec": [
 							"console.log(\"Authentication\")",
 							"",
@@ -65,7 +65,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"client_id\":\"CYYmWTcDvVNDbo8N5y1JbGti43AY8N0G\",\"client_secret\":\"mfwmbaHA-sbq-O-6VNyQfP_0ZWPXOTYGr5-zRMkUcLgZkE9u4c0bwVwVICaHIO6L\",\"audience\":\"audience\",\"grant_type\":\"password\",\n\"username\": \"notexist@test.de\", \"password\": \",<U~,8gp\", \"scope\": \"openid\", \"response_type\": \"token\"\n}",
+					"raw": "{\"client_id\":\"CYYmWTcDvVNDbo8N5y1JbGti43AY8N0G\",\"client_secret\":\"mfwmbaHA-sbq-O-6VNyQfP_0ZWPXOTYGr5-zRMkUcLgZkE9u4c0bwVwVICaHIO6L\",\"audience\":\"audience\",\"grant_type\":\"password\",\n\"username\": \"mainzelliste@test.de\", \"password\": \",<U~,8gp\", \"scope\": \"openid\", \"response_type\": \"token\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -95,7 +95,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "84f74423-d442-4193-bd44-0f93b8cc7ab2",
+						"id": "09c16677-20b4-41fa-8002-9a8d2be975ba",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -114,11 +114,13 @@
 							"    };",
 							"",
 							"pm.test(\"Check StatusCode\", function(){",
-							"    pm.response.to.have.status(401);",
+							"    pm.response.to.have.status(\"Created\");",
 							"});",
 							"",
 							"pm.test(\"Check ResponseSchema\", function(){",
-							"      pm.expect(pm.response.text()).to.include(\"Access token could not been validated\")",
+							"     var jsonData = pm.response.json();",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
 							"});",
 							"",
 							"",
@@ -133,7 +135,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "76896ad3-5239-4b2b-b819-2490eed87503",
+						"id": "fb5cb065-4703-4edb-907a-50fc6e3ee076",
 						"exec": [
 							""
 						],
@@ -187,32 +189,15 @@
 			"response": []
 		}
 	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"id": "fcc968cb-f233-4aed-9bd2-7393e740d8c7",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"id": "3f6133cc-83ba-4c04-9b38-b53c0992ffd8",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	],
 	"variable": [
 		{
-			"id": "d23fd6e6-1a9a-4275-b2c5-24ddd3a76a12",
+			"id": "54df3d28-9d6f-4efe-be45-68aef31072ec",
 			"key": "access_token",
+			"value": ""
+		},
+		{
+			"id": "2238809e-4ca5-4acc-9704-59cd21228a15",
+			"key": "sessionId",
 			"value": ""
 		}
 	],

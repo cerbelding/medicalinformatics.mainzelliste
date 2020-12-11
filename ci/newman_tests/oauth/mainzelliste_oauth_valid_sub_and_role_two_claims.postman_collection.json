@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "1dcee3ce-3e72-40a5-9619-4b15af73e2e5",
-		"name": "mainzelliste_oauth_role_valid_contains_only",
+		"_postman_id": "6b2c768b-ff69-4b9a-a776-1b27e18fb820",
+		"name": "mainzelliste_oauth_valid_sub_and_role_two_claims",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "1a93acc1-a545-4f4e-ac7d-8320d5660d4f",
+						"id": "b4df02d5-4450-4041-8cbb-e56fdf9ce1a7",
 						"exec": [
 							"console.log(\"Authentication\")",
 							"",
@@ -95,7 +95,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "ea7da34a-2357-4950-b72f-0424e7d8235c",
+						"id": "3f0bfd5a-a80c-4e52-a978-60f6da4f6f6e",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -135,7 +135,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "9624fe19-ebc8-4b57-8f6c-bfe7f7bdc2f8",
+						"id": "ca23b015-d90a-4bfc-96f2-003eb3a5f34e",
 						"exec": [
 							""
 						],
@@ -187,34 +187,168 @@
 				}
 			},
 			"response": []
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"id": "da3e4de8-ccb3-486c-8ca5-8df802184b94",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
 		},
 		{
-			"listen": "test",
-			"script": {
-				"id": "c4ccd7c2-31e8-4651-b7eb-abd5c0ed571e",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
+			"name": "NEW_TOKEN (addPatient) - Token anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "0d53487d-bfc3-4e09-819b-801dac4f6b18",
+						"exec": [
+							"console.log(\"New TOKEN (addPatient)\")",
+							"var jsonBody;",
+							"pm.collectionVariables.unset(\"tokenId\");",
+							"",
+							"",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"id\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"type\":{",
+							"                \"type\": \"string\",",
+							"                \"pattern\": \"addPatient\"",
+							"            },",
+							"            \"data\": {",
+							"                \"type\": \"object\",",
+							"                 \"required\": [\"idTypes\"]",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"",
+							"",
+							"",
+							"pm.test('response must be valid and have a body', function() {",
+							"    pm.response.to.have.status(201);",
+							"    pm.response.to.be.withBody;",
+							"    pm.response.to.be.json; ",
+							"     ",
+							"    ",
+							"});",
+							"",
+							"pm.test(\"response have correct scheme\", function() {",
+							"    var localBody =  pm.response.json();",
+							"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+							"    jsonBody = localBody;",
+							"    ",
+							"});",
+							"",
+							"pm.test('response header have correct scheme', function(){",
+							"    pm.expect(pm.response.headers.has('Location')).to.be.true;",
+							"})",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"if(jsonBody){",
+							"    var tokenId = jsonBody.id;",
+							"    pm.collectionVariables.set(\"tokenId\",tokenId);",
+							"}",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "a54ffddf-59ef-4569-8015-6e46e791de1b",
+						"exec": [
+							"var externalData =  pm.variables.get('ADD_PATIENTS_DATA');",
+							"var patientsPointer = (pm.variables.get('addPatientsPointer'));",
+							"",
+							"",
+							"",
+							"",
+							"if(typeof(externalData) ==\"object\" && typeof(patientsPointer) == 'number' ){",
+							"    ",
+							" ",
+							"   ",
+							"    var patient = externalData[patientsPointer];",
+							"    ",
+							"   ",
+							"    Object.keys(patient).forEach(key=> {",
+							"      ",
+							"        pm.collectionVariables.set(key, patient[key]);",
+							"",
+							"        ",
+							"    });",
+							"    ",
+							"     ",
+							"     ",
+							"    ",
+							"}",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"variable": [
 		{
-			"id": "f6bc2bc5-9e4c-4f63-9098-6dd091a3b0a0",
+			"id": "61d9c562-6bb4-4905-88e3-1345a939bba6",
 			"key": "access_token",
+			"value": ""
+		},
+		{
+			"id": "d81430f0-7f73-401f-b352-f723a3e83f4c",
+			"key": "sessionId",
+			"value": ""
+		},
+		{
+			"id": "90a6f118-a362-45e1-9251-7d6ee54b8904",
+			"key": "tokenId",
 			"value": ""
 		}
 	],

@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "a177d9c1-81f1-464b-ae5a-6ef58235841e",
-		"name": "mainzelliste_oauth_sub_invalid_sub_wrong_user",
+		"_postman_id": "4e6f4fff-55c5-41e2-8509-4124c837f6d7",
+		"name": "mainzelliste_oauth_invalid_AND_Operator",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "2100b0c9-a75a-46e6-9935-59614c526454",
+						"id": "6f1224e1-dea4-4bea-9b06-10afed239c4a",
 						"exec": [
 							"console.log(\"Authentication\")",
 							"",
@@ -65,7 +65,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"client_id\":\"CYYmWTcDvVNDbo8N5y1JbGti43AY8N0G\",\"client_secret\":\"mfwmbaHA-sbq-O-6VNyQfP_0ZWPXOTYGr5-zRMkUcLgZkE9u4c0bwVwVICaHIO6L\",\"audience\":\"audience\",\"grant_type\":\"password\",\n\"username\": \"notexist@test.de\", \"password\": \",<U~,8gp\", \"scope\": \"openid\", \"response_type\": \"token\"\n}",
+					"raw": "{\"client_id\":\"CYYmWTcDvVNDbo8N5y1JbGti43AY8N0G\",\"client_secret\":\"mfwmbaHA-sbq-O-6VNyQfP_0ZWPXOTYGr5-zRMkUcLgZkE9u4c0bwVwVICaHIO6L\",\"audience\":\"audience\",\"grant_type\":\"password\",\n\"username\": \"mainzelliste@test.de\", \"password\": \",<U~,8gp\", \"scope\": \"openid\", \"response_type\": \"token\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -95,7 +95,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "84f74423-d442-4193-bd44-0f93b8cc7ab2",
+						"id": "cf0a015c-d510-4f8e-9ec7-49763225639a",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -133,7 +133,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "76896ad3-5239-4b2b-b819-2490eed87503",
+						"id": "0477a53e-8fea-4c6b-a600-6eda41b89e26",
 						"exec": [
 							""
 						],
@@ -191,7 +191,7 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "fcc968cb-f233-4aed-9bd2-7393e740d8c7",
+				"id": "31b930fd-d424-4f02-bf24-adb281e3c5c6",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -201,7 +201,7 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "3f6133cc-83ba-4c04-9b38-b53c0992ffd8",
+				"id": "e233367f-4ee1-496e-959b-4f0cf4e5570d",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -211,7 +211,7 @@
 	],
 	"variable": [
 		{
-			"id": "408056a0-dd4c-4c49-9dcc-046fb1908489",
+			"id": "1668a20b-1f25-4e72-89de-0e80f0d88f64",
 			"key": "access_token",
 			"value": ""
 		}

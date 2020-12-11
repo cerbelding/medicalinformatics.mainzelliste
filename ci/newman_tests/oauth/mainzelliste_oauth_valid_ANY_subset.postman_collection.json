@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "49c84672-7390-4eeb-a354-6bb3a92566b6",
-		"name": "mainzelliste_oauth_invalid_sub_not_exist",
+		"_postman_id": "57f8ecf0-0488-4b75-a80e-58f50795753a",
+		"name": "mainzelliste_oauth_valid_ANY_subset",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "721e7d22-ec5f-4f99-aa30-20dc32aae2ee",
+						"id": "4cda59da-3c20-4bd2-9434-7875209d2e6a",
 						"exec": [
 							"console.log(\"Authentication\")",
 							"",
@@ -95,7 +95,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "aa6baff4-a642-4f20-a862-4e9c988b4e7d",
+						"id": "b91e04e9-888d-4772-8561-f8b94a9d4f6b",
 						"exec": [
 							"console.log(\"New Session\")",
 							"",
@@ -114,11 +114,13 @@
 							"    };",
 							"",
 							"pm.test(\"Check StatusCode\", function(){",
-							"    pm.response.to.have.status(401);",
+							"    pm.response.to.have.status(\"Created\");",
 							"});",
 							"",
 							"pm.test(\"Check ResponseSchema\", function(){",
-							"      pm.expect(pm.response.text()).to.include(\"Access token could not been validated\")",
+							"     var jsonData = pm.response.json();",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
 							"});",
 							"",
 							"",
@@ -133,7 +135,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "a63cc742-a3c5-4d7a-844f-ba7a9e1362f2",
+						"id": "643f8888-5c6a-4dc9-8d59-37a6d26a0fb4",
 						"exec": [
 							""
 						],
@@ -187,32 +189,15 @@
 			"response": []
 		}
 	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"id": "010a001c-124d-47e3-a090-b57cb0b84cf3",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"id": "9a7b5cee-f3e7-4975-bb3b-1a95200ac4f8",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	],
 	"variable": [
 		{
-			"id": "dfaa477d-7a04-42f4-a365-e20d7abde254",
+			"id": "0619fa5d-f181-44d3-b600-00ca32aaa84a",
 			"key": "access_token",
+			"value": ""
+		},
+		{
+			"id": "78fad3e8-0544-444d-8b00-97b9ba000733",
+			"key": "sessionId",
 			"value": ""
 		}
 	],
