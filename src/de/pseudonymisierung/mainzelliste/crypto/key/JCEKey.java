@@ -29,16 +29,21 @@ import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 public class JCEKey implements CryptoKey {
 
   private final Key key;
 
-  public JCEKey(byte[] encodedKey) {
+  public JCEKey(byte[] encodedKey, String keyType) {
     try {
-      this.key = KeyFactory.getInstance("RSA")
-          .generatePublic(new X509EncodedKeySpec(encodedKey));
+      if (KeyType.valueOf(keyType.trim()) == KeyType.RSA_PUBLIC) {
+        this.key = KeyFactory.getInstance("RSA")
+          .generatePublic(new X509EncodedKeySpec(encodedKey));}
+      else {
+        this.key = KeyFactory.getInstance("RSA")
+          .generatePrivate(new PKCS8EncodedKeySpec(encodedKey));}
     } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
       throw new UnsupportedOperationException(e);
     }

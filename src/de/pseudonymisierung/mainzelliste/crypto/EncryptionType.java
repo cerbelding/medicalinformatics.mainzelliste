@@ -27,9 +27,14 @@ package de.pseudonymisierung.mainzelliste.crypto;
 
 public enum EncryptionType {
   /**
-   * JCE encryption with ECB/OAEPWithSHA-1AndMGF1Padding
+   * JCE asymmetric encryption with ECB/OAEPWithSHA-1AndMGF1Padding
    */
-  RSA,
+  RSA_ENCRYPT,
+
+  /**
+   * JCE asymmetric decryption
+   */
+  RSA_DECRYPT,
 
   /**
    * Hybrid encryption with Tink (ECIES with AEAD and HKDF).
@@ -37,7 +42,12 @@ public enum EncryptionType {
    * used to encrypt the symmetric key only.
    * ciphertext = symmetric ciphertext + encrypted symmetric key.
    */
-  TINK_HYBRID,
+  TINK_HYBRID_ENCRYPT,
+
+  /**
+   * Hybrid decryption with Tink
+   */
+  TINK_HYBRID_DECRYPT,
 
   /**
    * Symmetric deterministic encryption with Tink (AEAD: AES-SIV).

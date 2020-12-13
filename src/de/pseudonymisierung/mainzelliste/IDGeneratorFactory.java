@@ -26,8 +26,11 @@
 package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.crypto.Encryption;
+import de.pseudonymisierung.mainzelliste.exceptions.GeneralCryptoException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import de.pseudonymisierung.mainzelliste.util.ConfigUtils;
+
+import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,6 +78,8 @@ public enum IDGeneratorFactory {
 
 	/** Map of export encryption, with respective ID types as keys. */
 	private final Map<String, Encryption> exportEncryptions = new HashMap<>();
+
+	private final Map<String, Encryption> inputEncryptions = new HashMap<>();
 
 	/** the configured eager generation flag */
 	private final boolean eagerGenerationOn;
@@ -145,6 +150,19 @@ public enum IDGeneratorFactory {
 						throw new InvalidConfigurationException(
 								"idgenerator." + thisIdType + ".exportEncryption",
 								"the given export encryption not configured");
+					}
+				}
+
+				// init input encryption
+				String inputEncryption = StringUtils
+						.trimToEmpty((String) thisIdProps.get("inputEncryption"));
+				if (!inputEncryption.isEmpty()) {
+					if (Config.instance.getEncryption(inputEncryption) != null) {
+						inputEncryptions.put(thisIdType, Config.instance.getEncryption(inputEncryption));
+					} else {
+						throw new InvalidConfigurationException(
+								"idgenerator." + thisIdType + ".inputEncryption",
+								"the given input encryption not configured");
 					}
 				}
 
@@ -314,6 +332,10 @@ public enum IDGeneratorFactory {
 		return this.exportEncryptions.get(idType);
 	}
 
+	public Encryption getInputEncryption(String idType) {
+		return this.inputEncryptions.get(idType);
+	}
+
 	/**
 	 * return whether IDs of all configured types should be created for a given patient eagerly
 	 *
@@ -361,4 +383,29 @@ public enum IDGeneratorFactory {
 
 		return this.getFactory(idType).buildId(idString);
 	}
+
+	/**
+	 * Build an ID with the given ID string (or decrypted ID string) and type.
+	 *
+	 * @param idType
+	 *            The ID type.
+	 * @param idString
+	 *            The ID string.
+	 * @return An ID instance with the given properties.
+	 * @throws InvalidIDException
+	 *             If the given id type is unknown.
+	 */
+	public ID decryptAndBuildId(String idType, String idString) {
+		Encryption encryption = IDGeneratorFactory.instance.getInputEncryption(idType);
+		try {
+			// if input encryption isn't defined for idType, take plain id string
+			// otherwise decrypt id string before building id
+			String resultIdString = encryption != null ? encryption.decryptToString(idString) : idString;
+			return IDGeneratorFactory.instance.buildId(idType,resultIdString);
+		} catch (GeneralSecurityException e) {
+			throw new GeneralCryptoException(
+					"Decryption of ID[type:" + idType + "," + idString.length() + " failed", e);
+		}
+	}
+
 }

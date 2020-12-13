@@ -48,6 +48,11 @@ import javax.ws.rs.core.Response.Status;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+
 /**
  * A temporary "ticket" to realize authorization and/or access to a resource.
  * Tokens are used by providing their token id (e.g. GET
@@ -77,6 +82,9 @@ public class Token {
 
 	/** The remaining amount of uses allowed for the token */
 	private int remainingUses;
+
+	/** Logging instance */
+	private Logger logger = LogManager.getLogger(Config.class);
 
 	/**
 	 * Create emtpy instance. Used internally only.
@@ -422,13 +430,25 @@ public class Token {
 			}
 			checkIdType(idType);
 
+			// Decrypt id if necessary before token validation
+			ID searchId;
+			try {
+				searchId = IDGeneratorFactory.instance.decryptAndBuildId(idType, idString);
+			} catch (Exception e) {
+				logger.warn("Decryption failed, try to proceed with search id string");
+				searchId = IDGeneratorFactory.instance.buildId(idType, idString);
+			}
+
 			if (apiVersion.majorVersion < 3 || apiVersion.majorVersion == 3 && apiVersion.minorVersion < 2){
 				IDGenerator generator = IDGeneratorFactory.instance.getFactory(idType);
 				if(!generator.isPersistent()){
 					// CryptoIds are transient, compute the base id to check if the patient exists
-					ID newID =((DerivedIDGenerator)generator).getBaseId(IDGeneratorFactory.instance.buildId(idType, idString));
+					ID newID =((DerivedIDGenerator)generator).getBaseId(searchId);
 					idType = newID.getType();
 					idString = newID.getIdString();
+				} else {
+					idType = searchId.getType();
+					idString = searchId.getIdString();
 				}
 				if(!Persistor.instance.patientExists(idType, idString)) {
 					throw new InvalidTokenException(
