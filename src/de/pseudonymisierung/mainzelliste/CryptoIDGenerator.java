@@ -135,9 +135,9 @@ public class CryptoIDGenerator implements DerivedIDGenerator<CryptoID> {
   private String decode( String encodedString ) {
     try {
       return symEncryption.decryptToString(encodedString);
-    } catch (GeneralSecurityException e) {
+    } catch (GeneralSecurityException | IllegalArgumentException e) {
       throw new GeneralCryptoException(
-        "Computing Base ID with IDtype " + this.baseIdType + " failed", e);
+        "Computing Base ID with IDtype " + this.baseIdType + " failed.", e);
     }
   }
 }
