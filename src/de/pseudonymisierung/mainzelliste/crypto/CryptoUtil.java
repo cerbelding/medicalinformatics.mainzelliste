@@ -34,7 +34,6 @@ import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
-import org.apache.commons.lang3.StringUtils;
 
 public class CryptoUtil {
 
@@ -42,11 +41,7 @@ public class CryptoUtil {
     throw new IllegalStateException("Utility class");
   }
 
-  public static Encryption createEncryption(String encryptionType, CryptoKey wrappedKey) throws InvalidKeySpecException {
-    return createEncryption(encryptionType, null, wrappedKey);
-  }
-
-  public static Encryption createEncryption(String encryptionType, String encryptionMode, CryptoKey wrappedKey)
+  public static Encryption createEncryption(String encryptionType, CryptoKey wrappedKey)
       throws InvalidKeySpecException {
     try {
       switch (EncryptionType.valueOf(encryptionType.trim())) {
