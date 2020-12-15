@@ -71,12 +71,12 @@ public class CryptoUtilTest {
 
   @Test
   public void test_createEncryption_RSA_PUBLIC() throws InvalidKeySpecException {
-    CryptoUtil.createEncryption(EncryptionType.RSA.name(), this.rsaPublicKey);
+    CryptoUtil.createEncryption(EncryptionType.RSA_ENCRYPT.name(), this.rsaPublicKey);
   }
 
   @Test
   public void test_createEncryption_TINK_HYBRID() throws InvalidKeySpecException {
-    CryptoUtil.createEncryption(EncryptionType.TINK_HYBRID.name(), this.tinkHybridPublicKey);
+    CryptoUtil.createEncryption(EncryptionType.TINK_HYBRID_ENCRYPT.name(), this.tinkHybridPublicKey);
   }
 
   // Test failed calls of createEncryption(...)
@@ -92,12 +92,12 @@ public class CryptoUtilTest {
    */
   @Test(expectedExceptions = {InvalidKeySpecException.class})
   public void test_createEncryption_InvalidKeySpecException() throws InvalidKeySpecException {
-    CryptoUtil.createEncryption(EncryptionType.TINK_HYBRID.name(), this.rsaPublicKey);
+    CryptoUtil.createEncryption(EncryptionType.TINK_HYBRID_ENCRYPT.name(), this.rsaPublicKey);
   }
 
   @Test(expectedExceptions = {UnsupportedOperationException.class})
   public void test_createEncryption_UnsupportedOperationException() throws InvalidKeySpecException {
-    CryptoUtil.createEncryption(EncryptionType.TINK_HYBRID.name(), this.tinkHybridPrivateKey);
+    CryptoUtil.createEncryption(EncryptionType.TINK_HYBRID_ENCRYPT.name(), this.tinkHybridPrivateKey);
   }
 
   /**

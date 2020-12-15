@@ -32,6 +32,11 @@ public enum KeyType {
   RSA_PUBLIC,
 
   /**
+   * A binary encoded (DER) rsa private key.
+   */
+  RSA_PRIVATE,
+
+  /**
    * Tink KeySet in json format
    */
   TINK_KEYSET

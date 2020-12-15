@@ -31,6 +31,8 @@ import de.pseudonymisierung.mainzelliste.crypto.key.JCEKey;
 import de.pseudonymisierung.mainzelliste.crypto.key.KeyType;
 import de.pseudonymisierung.mainzelliste.crypto.key.TinkKeySet;
 import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 
 public class CryptoUtil {
@@ -43,10 +45,14 @@ public class CryptoUtil {
       throws InvalidKeySpecException {
     try {
       switch (EncryptionType.valueOf(encryptionType.trim())) {
-        case RSA:
-          return new JCEAsymmetricEncryption(wrappedKey);
-        case TINK_HYBRID:
+        case RSA_ENCRYPT:
+          return new JCEAsymmetricEncryption(wrappedKey.getKey(PublicKey.class));
+        case RSA_DECRYPT:
+          return new JCEAsymmetricEncryption(wrappedKey.getKey(PrivateKey.class));
+        case TINK_HYBRID_ENCRYPT:
           return new TinkHybridEncryption(wrappedKey.getKey(KeysetHandle.class));
+        case TINK_HYBRID_DECRYPT:
+          return new TinkHybridDecryption(wrappedKey.getKey(KeysetHandle.class));
         case TINK_DETERMINISTIC:
           return new TinkDeterministicAeadEncryption(wrappedKey.getKey(KeysetHandle.class));
       }
@@ -64,7 +70,9 @@ public class CryptoUtil {
 
   public static CryptoKey readKey(String keyType, byte[] encodedKey) {
     if (KeyType.valueOf(keyType.trim()) == KeyType.RSA_PUBLIC) {
-      return new JCEKey(encodedKey);
+      return new JCEKey(encodedKey, keyType);
+    } else if (KeyType.valueOf(keyType.trim()) == KeyType.RSA_PRIVATE) {
+      return new JCEKey(encodedKey, keyType);
     } else if (KeyType.valueOf(keyType.trim()) == KeyType.TINK_KEYSET) {
       return new TinkKeySet(encodedKey);
     }

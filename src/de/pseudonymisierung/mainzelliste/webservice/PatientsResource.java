@@ -389,7 +389,15 @@ public class PatientsResource {
       if(idString.trim().equals("*")) {
         patients = Persistor.instance.getPatients(idType);
       } else {
-        ID id = IDGeneratorFactory.instance.buildId(idType, idString);
+        ID id;
+        try {
+          // Decrypt input id, if configured
+          id = IDGeneratorFactory.instance.decryptAndBuildId(idType, idString);
+        } catch (Exception e) {
+          // if cannot decrypt id, proceed with plain id string
+          logger.warn("Decryption failed, try to proceed with search id string");
+          id = IDGeneratorFactory.instance.buildId(idType, idString);
+        }
         if (IDGeneratorFactory.instance.getTransientIdTypes().contains(idType)){
           // if id is an instance of transient id types, find a corresponding persistent base id
           id = ((DerivedIDGenerator)IDGeneratorFactory.instance.getFactory(idType)).getBaseId(id);

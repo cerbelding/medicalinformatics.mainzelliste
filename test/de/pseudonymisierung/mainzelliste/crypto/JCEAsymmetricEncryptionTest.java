@@ -28,7 +28,7 @@ public class JCEAsymmetricEncryptionTest {
     PrivateKey rsaPrivateKey = KeyFactory.getInstance("RSA")
         .generatePrivate(new PKCS8EncodedKeySpec(
             Files.readAllBytes(new File(CRYPTO_KEY_FOLDER + "rsa_private.der").toPath())));
-    Encryption encryption = CryptoUtil.createEncryption(EncryptionType.RSA.name(), rsaPublicKey);
+    Encryption encryption = CryptoUtil.createEncryption(EncryptionType.RSA_ENCRYPT.name(), rsaPublicKey);
 
     // test encryption
     String plainText = "Test Text";

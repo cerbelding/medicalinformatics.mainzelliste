@@ -26,7 +26,7 @@ public class TinkHybridEncryptionTest {
     CryptoKey tinkHybridPrivateKey = CryptoUtil
         .readKey(KeyType.TINK_KEYSET.name(),
             Files.readAllBytes(new File(CRYPTO_KEY_FOLDER + "tink_hybrid_private.json").toPath()));
-    Encryption encryption = CryptoUtil.createEncryption(EncryptionType.TINK_HYBRID.name(), tinkHybridPublicKey);
+    Encryption encryption = CryptoUtil.createEncryption(EncryptionType.TINK_HYBRID_ENCRYPT.name(), tinkHybridPublicKey);
 
     // test encryption
     String plainText = "Test Text";
