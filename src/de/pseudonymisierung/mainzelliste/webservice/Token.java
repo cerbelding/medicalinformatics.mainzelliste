@@ -431,16 +431,15 @@ public class Token {
 			}
 			checkIdType(idType);
 
-			// Decrypt id if necessary before token validation
-			ID searchId;
-			try {
-				searchId = IDGeneratorFactory.instance.decryptAndBuildId(idType, idString);
-			} catch (Exception e) {
-				logger.warn("Decryption failed, try to proceed with search id string");
-				searchId = IDGeneratorFactory.instance.buildId(idType, idString);
-			}
-
 			if (apiVersion.majorVersion < 3 || apiVersion.majorVersion == 3 && apiVersion.minorVersion < 2){
+				// Decrypt id if necessary before token validation
+				ID searchId;
+				try {
+					searchId = IDGeneratorFactory.instance.decryptAndBuildId(idType, idString);
+				} catch (Exception e) {
+					logger.warn("Decryption failed, try to proceed with search id string");
+					searchId = IDGeneratorFactory.instance.buildId(idType, idString);
+				}
 				IDGenerator generator = IDGeneratorFactory.instance.getFactory(idType);
 				if(!generator.isPersistent()){
 					// CryptoIds are transient, compute the base id to check if the patient exists

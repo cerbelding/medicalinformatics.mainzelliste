@@ -134,6 +134,8 @@
 							"",
 							"tests[\"ctsid generated\"] = enc_ctsid != null;",
 							"tests[\"ctsid encrypted\"] = enc_ctsid.length > 8;",
+							"",
+							"postman.setGlobalVariable(\"enc_ctsid\",enc_ctsid)",
 							""
 						],
 						"type": "text/javascript"
@@ -263,7 +265,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"ctsid\",\r\n\t \t\t\t\"idString\":\"lIw5UZaZjbFd0j6to47pznb3oy3bCiwwcaGOxSYXwJuv08DqURL6-VFOrl9tBAcP4pv1q-rGBMaWbkcUkXgmy8MgbzMpUTZKvnlflObl7f0PCXXooasPh6fmfpjt4sBEjzrrA2Lyp_R-x0E3h41dAxCWP0QTzC1Awc6m3ZBwdck\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultIds\":[\"pid\"]\r\n\r\n \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"ctsid\",\r\n\t \t\t\t\"idString\":\"{{enc_ctsid}}\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultIds\":[\"pid\"]\r\n\r\n \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
