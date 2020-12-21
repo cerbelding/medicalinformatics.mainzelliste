@@ -144,9 +144,7 @@ public enum PatientBackend {
         Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
         String atChangeType; // The action taken depending on the match result, for Audit Trail logging
 
-        // If a list of ID types is given in token, return these types
-        Set<String> idTypes;
-        idTypes = t.getRequestedIdTypes();
+        Set<String> idTypes = t.getRequestedIdTypes();
         if (idTypes.isEmpty()) { // otherwise use the default ID type
           idTypes = new CopyOnWriteArraySet<>();
           idTypes.add(IDGeneratorFactory.instance.getDefaultIDType());
@@ -155,33 +153,16 @@ public enum PatientBackend {
         switch (match.getResultType()) {
           case MATCH:
             assignedPatient = match.getBestMatchedPatient();
+            // Firstly Generate/update from existing patient the persistent id types
+            assignedPatient.updateFrom(inputPatient);
             for (String idType : idTypes) {
               assignedPatient.getOriginal().createId(idType);
             }
-            assignedPatient.updateFrom(inputPatient);
-            Persistor.instance.updatePatient(assignedPatient);
+
             // log token to separate concurrent request in the log file
             ID returnedId = assignedPatient.getOriginal().getId(idTypes.iterator().next());
             logger.info("Found match with ID {} for ID request {}", returnedId.getIdString(), t.getId());
 
-            // Add optional fields if they are not already entered
-            Map<String, Field<?>> fieldSet = new HashMap<>(assignedPatient.getFields());
-            Map<String, Field<?>> inputFieldSet = new HashMap<>(assignedPatient.getInputFields());
-            boolean updatePatient = false;
-
-            for (String key : inputPatient.getFields().keySet()) {
-              if (!assignedPatient.getFields().containsKey(key)) {
-                updatePatient = true;
-                fieldSet.put(key, Field.build(key, inputPatient.getFields().get(key).toString()));
-                inputFieldSet.put(key, Field.build(key, inputPatient.getInputFields().get(key).toString()));
-              }
-            }
-
-            if (updatePatient) {
-              assignedPatient.setFields(fieldSet);
-              assignedPatient.setInputFields(inputFieldSet);
-              Persistor.instance.updatePatient(assignedPatient);
-            }
             atChangeType = "match";
             break;
 
@@ -193,23 +174,23 @@ public enum PatientBackend {
             }
 
             // Generate internal IDs
-            boolean eagerGeneration = Boolean
-                .parseBoolean(Config.instance.getProperty("idgenerators.eagerGeneration"));
-            Set<ID> newIds = eagerGeneration ? IDGeneratorFactory.instance.generateIds()
-                : IDGeneratorFactory.instance.generateIds(idTypes);
-            // add generated internal ids
-            // Note: pNormalized already contain all externals ids
-            newIds.forEach(inputPatient::addId);
+            // Note: inputPatient already contain all externals ids
+            if(IDGeneratorFactory.instance.isEagerGenerationOn()) {
+              IDGeneratorFactory.instance.generateIds().forEach(inputPatient::addId);
+            } else {
+              idTypes.forEach(inputPatient::createId);
+            }
 
             for (String idType : idTypes) {
               ID currentId = inputPatient.createId(idType);
               logger.debug("Created new ID {} for ID request {}", currentId.getIdString(), t.getId());
             }
+
             if (match.getResultType() == MatchResultType.POSSIBLE_MATCH) {
               inputPatient.setTentative(true);
               Patient bestMatchedPatient = match.getBestMatchedPatient();
               // log tentative and possible match ids
-              newIds.stream()
+              inputPatient.getIds().stream()
                   .filter(id -> bestMatchedPatient.getId(id.getType()) != null)
                   .forEach(id -> logger.info("New ID {} is tentative. Found possible match "
                       + "with ID {}", id.getIdString(), bestMatchedPatient.getId(id.getType()).getIdString()));
