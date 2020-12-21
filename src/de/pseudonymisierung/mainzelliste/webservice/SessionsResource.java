@@ -47,18 +47,14 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
-
+import de.pseudonymisierung.mainzelliste.*;
+import de.pseudonymisierung.mainzelliste.webservice.commons.RefinedPermission;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import de.pseudonymisierung.mainzelliste.ID;
-import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
-import de.pseudonymisierung.mainzelliste.Patient;
-import de.pseudonymisierung.mainzelliste.Servers;
-import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
@@ -88,11 +84,24 @@ public class SessionsResource {
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public synchronized Response newSession(@Context HttpServletRequest req) throws JSONException{
-		logger.info("Request to create session received by host " + req.getRemoteHost());
+		logger.info("Request to create session received by host {}", req.getRemoteHost());
 
 		Servers.instance.checkPermission(req, "createSession");
 
-		Session s = Servers.instance.newSession();
+
+		Session s = null;
+		try {
+			String apiKey = req.getHeader("mainzellisteApiKey");
+			if (apiKey == null) // Compatibility to pre 1.0 (needed by secuTrial interface)
+				apiKey = req.getHeader("mzidApiKey");
+
+			String parentServerName = Servers.instance.getServerNameForApiKey(apiKey);
+
+			s = Servers.instance.newSession(parentServerName);
+		} catch (Exception e) {
+			s = Servers.instance.newSession("");
+		}
+
 		String sid = s.getId();
 		URI newUri = UriBuilder
 				.fromUri(req.getRequestURL().toString())
@@ -100,7 +109,7 @@ public class SessionsResource {
 				.build(sid);
 		s.setURI(newUri);
 
-		logger.info("Created session " + sid);
+		logger.info("Created session {}", sid);
 
 		JSONObject ret = new JSONObject()
 				.put("sessionId", sid)
@@ -163,10 +172,10 @@ public class SessionsResource {
 			@PathParam("session") String sid,
 			@Context HttpServletRequest req){
 		// No authentication other than knowing the session id.
-		logger.info("Received request to delete session " + sid + " from host " +
+		logger.info("Received request to delete session {} from host {}", sid,
 				req.getRemoteHost());
 		Servers.instance.deleteSession(sid);
-		logger.info("Deleted session " + sid);
+		logger.info("Deleted session {}", sid);
 		return Response
 			.status(Status.NO_CONTENT)
 			.build();
@@ -187,7 +196,7 @@ public class SessionsResource {
 	public Set<Token> getTokens(
 			@PathParam("session") SessionIdParam sid,
 			@Context HttpServletRequest req){
-		logger.info("Received request to list tokens for session " + sid + " from host " +
+		logger.info("Received request to list tokens for session {} from host {}", sid,
 			req.getRemoteHost());
 		// No authorization except for knowing the session id
 		return Servers.instance.getAllTokens(sid.getValue().getId());
@@ -218,53 +227,79 @@ public class SessionsResource {
 			@PathParam("session") SessionIdParam sid,
 			String tp) throws JSONException {
 
-		Session s = sid.getValue();
+		Session session = sid.getValue();
 
-		logger.info("Received request to create token for session " + s.getId() + " by host " +
+		logger.info("Received request to create token for session {} by host {}", session.getId(),
 				req.getRemoteHost());
-		logger.debug("Received data: " + tp);
+		logger.debug("Received data: {}", tp);
 
-		Token t = new TokenParam(tp).getValue();
-		t.setParentSessionId(s.getId());
-		Object parentServerName = req.getSession(true).getAttribute("serverName");
-		if(parentServerName == null) {
-			logger.info("parentServerName can't be derived from this request. Reason could be that JSESSIONID is not being sent, or the Tomcat servlet context is badly configured (e.g. SSL enabled/disabled), see server.xml  ");
-		}
+        boolean allowRequest= true;
+        String notAuthorizedMessage="";
+
+		if(Config.instance.getProperty("extendedPermissionCheck") != null && Config.instance.getProperty("extendedPermissionCheck").equals("true")){
+            RefinedPermission refinedPermission = new RefinedPermission();
+            allowRequest = refinedPermission.checkPermission(tp, session);
+            notAuthorizedMessage = refinedPermission.getReturnMessage();
+        }
 		else{
-			t.setParentServerName(parentServerName.toString());
+		    logger.warn("ExtendedPermissionCheck is deactivated. This is considered an unsafe configuration.");
+        }
+
+
+		if(allowRequest){
+			Token t = new TokenParam(tp).getValue();
+			t.setParentSessionId(session.getId());
+			Object parentServerName = session.getParentServerName();
+			if(parentServerName == null) {
+				logger.info("parentServerName can't be derived from session");
+			}
+			else{
+				t.setParentServerName(parentServerName.toString());
+			}
+
+			if(t.getType() == null) {
+				throw new WebApplicationException(Response
+						.status(Status.BAD_REQUEST)
+						.entity("Token type must not be empty.")
+						.build());
+			} else {
+				Servers.instance.checkPermission(req, "createToken");
+				Servers.instance.checkPermission(req, "tt_" + t.getType());
+			}
+
+			// Check validity of token (i.e. data items have correct format etc.)
+			t.checkValidity(Servers.instance.getRequestApiVersion(req));
+
+			//Token erstellen, speichern und URL zurückgeben
+			Servers.instance.registerToken(session.getId(), t, req.getRemoteAddr());
+
+			URI newUri = UriBuilder
+					.fromUri(req.getRequestURL().toString())
+					.path("/{tid}")
+					.build(t.getId());
+
+			logger.info(() -> "Created token of type " + t.getType() + " with id " + t.getId() +
+					" in session " + session.getId());
+			logger.debug(() -> "Returned data for token " + t.getId() + ": "
+					+ t.toJSON(Servers.instance.getRequestApiVersion(req)));
+
+			return Response
+					.status(Status.CREATED)
+					.location(newUri)
+					.entity(t.toJSON(Servers.instance.getRequestApiVersion(req)))
+					.build();
+		}else{
+		    if(Config.instance.getProperty("extendedPermissionCheck.failedAuthMessage") !=null && Config.instance.getProperty("extendedPermissionCheck.failedAuthMessage").equals("deactivated")){
+                return Response
+                        .status(Status.UNAUTHORIZED).build();
+            }
+
+			return Response
+					.status(Status.UNAUTHORIZED).entity(notAuthorizedMessage).build();
 		}
-		
-		if(t.getType() == null) {
-			throw new WebApplicationException(Response
-					.status(Status.BAD_REQUEST)
-					.entity("Token type must not be empty.")
-					.build());
-		} else {
-			Servers.instance.checkPermission(req, "createToken");
-			Servers.instance.checkPermission(req, "tt_" + t.getType());
-		}
 
-		// Check validity of token (i.e. data items have correct format etc.)
-		t.checkValidity(Servers.instance.getRequestApiVersion(req));
 
-		//Token erstellen, speichern und URL zurückgeben
-		  Servers.instance.registerToken(s.getId(), t);
 
-		URI newUri = UriBuilder
-				.fromUri(req.getRequestURL().toString())
-				.path("/{tid}")
-				.build(t.getId());
-
-		logger.info("Created token of type " + t.getType() + " with id " + t.getId() +
-				" in session " + s.getId());
-		logger.debug("Returned data for token " + t.getId() + ": "
-				+ t.toJSON(Servers.instance.getRequestApiVersion(req)));
-
-		return Response
-			.status(Status.CREATED)
-			.location(newUri)
-			.entity(t.toJSON(Servers.instance.getRequestApiVersion(req)))
-			.build();
 	}
 
 	/**
@@ -289,7 +324,7 @@ public class SessionsResource {
 			@Context HttpServletRequest req,
 			@Context UriInfo uriInfo){
 
-		logger.info("Received request to get token " + tokenId + " in session " + sid.getValue().getId()  +
+		logger.info(() -> "Received request to get token " + tokenId + " in session " + sid.getValue().getId()  +
 				" by host " + req.getRemoteHost());
 
 		Session s = sid.getValue();

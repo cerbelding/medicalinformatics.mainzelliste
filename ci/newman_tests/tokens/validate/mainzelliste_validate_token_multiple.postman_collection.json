@@ -74,6 +74,115 @@
 			"response": []
 		},
 		{
+			"name": "NEW TOKEN (checkMatch) - Token anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ac4a4408-56de-43ff-9f6c-2a39f28ff65b",
+						"exec": [
+							"",
+							"",
+							"console.log(\"New TOKEN (checkMatch)\")",
+							"var jsonBody;",
+							"pm.collectionVariables.unset(\"tokenId\");",
+							"",
+							"",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"id\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"type\":{",
+							"                \"type\": \"string\",",
+							"                \"pattern\": \"checkMatch\"",
+							"            },",
+							"            \"data\": {",
+							"                \"type\": \"object\",",
+							"                 \"required\": [\"idTypes\"]",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"",
+							"",
+							"",
+							"pm.test('response must be valid and have a body', function() {",
+							"    pm.response.to.have.status(201);",
+							"    pm.response.to.be.withBody;",
+							"    pm.response.to.be.json; ",
+							"     ",
+							"    ",
+							"});",
+							"",
+							"pm.test(\"responseBody have correct scheme\", function() {",
+							"    var localBody =  pm.response.json();",
+							"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+							"    jsonBody = localBody;",
+							"    ",
+							"});",
+							"pm.test('response header have correct scheme', function(){",
+							"    pm.expect(pm.response.headers.has('Location')).to.be.true;",
+							"})",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"if(jsonBody){",
+							"    var tokenId = jsonBody.id;",
+							"    pm.collectionVariables.set(\"tokenId\",tokenId);",
+							"}",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"checkMatch\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "NEW_TOKEN (addPatient) - Token anlegen",
 			"event": [
 				{
@@ -228,6 +337,116 @@
 						"sessions",
 						"{{sessionId}}",
 						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "VALIDATE_VALID_TOKEN",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c9c6e2a9-b514-41b2-b9ee-4acd363034c0",
+						"exec": [
+							"",
+							"",
+							"",
+							"pm.test('response must be valid', function() {",
+							"    pm.response.to.have.status(200);",
+							"    pm.response.to.not.have.body();",
+							"     ",
+							"    ",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "441da37a-487a-44bd-ab27-ae710eed8627",
+						"exec": [
+							"pm.collectionVariables.set('tokenId', pm.variables.get('tokenIds')[0]);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/validate/token?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"validate",
+						"token"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "VALIDATE_VALID_TOKEN",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c9c6e2a9-b514-41b2-b9ee-4acd363034c0",
+						"exec": [
+							"",
+							"",
+							"",
+							"pm.test('response must be valid', function() {",
+							"    pm.response.to.have.status(200);",
+							"    pm.response.to.not.have.body();",
+							"     ",
+							"    ",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "68fc5d98-89e9-4e8d-ab5a-ff206f8ee887",
+						"exec": [
+							"pm.collectionVariables.set('tokenId', pm.variables.get('tokenIds')[1]);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/validate/token?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"validate",
+						"token"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
 					]
 				}
 			},

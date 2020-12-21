@@ -311,7 +311,7 @@ public enum Validator {
 	private void checkFieldKeys(Map<String, ?> form) throws ValidatorException {
 		for(String s: requiredFields){
 			if (!form.containsKey(s)) {
-				logger.error("Required field " + s + " not found in input data!");
+				logger.error("Required field {} not found in input data!", s);
 				throw new ValidatorException("Required field " + s + " not found in input data!");
 			}
 		}

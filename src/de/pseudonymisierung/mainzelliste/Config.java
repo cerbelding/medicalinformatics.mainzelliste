@@ -25,7 +25,11 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
+import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
+import de.pseudonymisierung.mainzelliste.matcher.Matcher;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -33,11 +37,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -45,17 +53,10 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.regex.Pattern;
-
+import java.util.stream.Collectors;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
-
-
-import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import de.pseudonymisierung.mainzelliste.matcher.*;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -86,8 +87,12 @@ public enum Config {
 
 	/** The record transformer matching the configured field transformations. */
 	private RecordTransformer recordTransformer;
+
 	/** The configured matcher */
 	private Matcher matcher;
+
+	/** The configured blockingkey extractors */
+	private BlockingKeyExtractors blockingKeyExtractors;
 
 	/** Logging instance */
 	private Logger logger = LogManager.getLogger(Config.class);
@@ -120,7 +125,7 @@ public enum Config {
 
 			// try to read config from configured path
 			if (configPath != null) {
-				logger.info("Reading config from path " + configPath + "...");
+				logger.info("Reading config from path {}...", configPath);
 				props = readConfigFromFile(configPath);
 				if (props == null) {
 					throw new Error("Configuration file could not be read from provided location " + configPath);
@@ -129,10 +134,10 @@ public enum Config {
 				// otherwise, try default locations
 				logger.info("No configuration file configured. Try to read from default locations...");
 				for (String defaultConfigPath : defaultConfigPaths) {
-					logger.info("Try to read configuration from default location " + defaultConfigPath);
+					logger.info("Try to read configuration from default location {}", defaultConfigPath);
 					props = readConfigFromFile(defaultConfigPath);
 					if (props != null) {
-						logger.info("Found configuration file at default location " + defaultConfigPath);
+						logger.info("Found configuration file at default location {}", defaultConfigPath);
 						break;
 					}
 				}
@@ -141,7 +146,10 @@ public enum Config {
 				}
 			}
 
-			logger.info("Config read successfully");
+
+            addSubConfigurationPropertiesToProps();
+
+            logger.info("Config read successfully");
 			logger.debug(props);
 
 		} catch (IOException e)	{
@@ -155,7 +163,7 @@ public enum Config {
 			Class<?> matcherClass = Class.forName("de.pseudonymisierung.mainzelliste.matcher." + props.getProperty("matcher"));
 			matcher = (Matcher) matcherClass.newInstance();
 			matcher.initialize(props);
-			logger.info("Matcher of class " + matcher.getClass() + " initialized.");
+			logger.info("Matcher of class {} initialized.", matcher.getClass());
 		} catch (Exception e){
 			logger.fatal("Initialization of matcher failed: " + e.getMessage(), e);
 			throw new InternalErrorException();
@@ -180,13 +188,16 @@ public enum Config {
 						fieldClass = (Class<? extends Field<?>>) Class.forName("de.pseudonymisierung.mainzelliste." + fieldClassStr);
 					}
 					this.FieldTypes.put(fieldName, fieldClass);
-					logger.debug("Initialized field " + fieldName + " with class " + fieldClass);
+					logger.debug("Initialized field {} with class {}", fieldName, fieldClass);
 				} catch (Exception e) {
 					logger.fatal("Initialization of field " + fieldName + " failed: ", e);
 					throw new InternalErrorException();
 				}
 			}
 		}
+
+		// Parse blockingkey extractors after the matcher as the blocking may depend on the matcher config
+		this.blockingKeyExtractors = new BlockingKeyExtractors(props);
 
 		// Read allowed origins for cross domain resource sharing (CORS)
 		allowedOrigins = new HashSet<>();
@@ -215,12 +226,66 @@ public enum Config {
 		version = readVersion();
 	}
 
-	/**
+    /**
+     * Reads subConfiguration.{n}.uri(s) and adds the values to Config.props
+     *
+     */
+    private void addSubConfigurationPropertiesToProps() {
+        //
+        // add custom configuration values
+
+		// get custom config attributes
+		List<String> subConfigurations = props.stringPropertyNames().stream().filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
+				.map(k -> Integer.parseInt(k.split("\\.")[1])).sorted()
+				.map(d -> "subConfiguration." + d + ".uri")
+				.collect(Collectors.toList());
+
+
+        for (String attribute : subConfigurations) {
+            // read custom configuration properties from url
+            Properties subConfigurationProperties;
+            try {
+                URL subConfigurationURL = new URL(props.getProperty(attribute).trim());
+                subConfigurationProperties = readConfigFromUrl(subConfigurationURL);
+                logger.info("Sub configuration file {} = {} has been read in.", attribute, subConfigurationURL);
+            }  catch (MalformedURLException e) {
+                logger.fatal("Custom configuration file '" + attribute +
+                        "' could not be read from provided URL " + attribute, e);
+                throw new Error(e);
+            } catch (IOException e) {
+                logger.fatal("Error reading custom configuration file '" + attribute +
+                        "'. Please configure according to installation manual.", e);
+                throw new Error(e);
+            }
+
+            // merge configuration files
+            for (String currentKey : subConfigurationProperties.stringPropertyNames()) {
+                if(props.containsKey(currentKey) && !subConfigurationProperties.getProperty(currentKey).trim()
+                        .equals(props.getProperty(currentKey).trim())) {
+                    String msg = "Sub configuration tries to override main config or former sub config values. This is not allowed. Property key: " + currentKey +
+                            ", custom configuration file: " + attribute;
+                    logger.fatal(msg);
+                    throw new Error(msg);
+                }
+            }
+            props.putAll(subConfigurationProperties);
+        }
+    }
+
+    /**
 	 * Get the {@link RecordTransformer} instance configured for this instance.
 	 * @return The {@link RecordTransformer} instance configured for this instance.
 	 */
 	public RecordTransformer getRecordTransformer() {
 		return recordTransformer;
+	}
+
+	/**
+	 * Get the {@link BlockingKeyExtractors} instance configured for this instance.
+	 * @return The {@link BlockingKeyExtractors} instance configured for this instance.
+	 */
+	public BlockingKeyExtractors getBlockingKeyExtractors() {
+		return this.blockingKeyExtractors;
 	}
 
 	/**
@@ -305,6 +370,16 @@ public enum Config {
 	{
 		String debugMode = this.props.getProperty("debug");
 		return (debugMode != null && debugMode.equals("true"));
+	}
+
+	/**
+	 * Checks whether this instance has audit trailing enabled by the administrator.
+	 *
+	 * @return true if audit trail is enabled.
+	 */
+	public boolean auditTrailIsOn() {
+		String audittrail = this.props.getProperty("gcp.audittrail");
+		return (audittrail != null && audittrail.equals("true"));
 	}
 
 	/**
@@ -403,8 +478,35 @@ public enum Config {
 				configInputStream = new FileInputStream(configPath);
 			else return null;
 		}
+		return readConfigFromInputStream(configInputStream);
+	}
 
-		Reader reader = new InputStreamReader(configInputStream, "UTF-8");
+	/**
+	 * Read configuration from the given URL.
+	 *
+	 * @param url
+	 *            url of the configuration file.
+	 * @return The configuration as a Properties object
+	 * @throws IOException
+	 *             If an I/O error occurs while reading the configuration file.
+	 */
+	private Properties readConfigFromUrl(URL url) throws IOException {
+		try (BufferedInputStream in = new BufferedInputStream(url.openStream()) ) {
+			return readConfigFromInputStream(in);
+		}
+	}
+
+	/**
+	 * Read configuration from the given input stream.
+	 *
+	 * @param configInputStream
+	 *            input stream of the configuration file.
+	 * @return The configuration as a Properties object
+	 * @throws IOException
+	 *             If an I/O error occurs while reading the configuration file.
+	 */
+	private Properties readConfigFromInputStream(InputStream configInputStream) throws IOException {
+		Reader reader = new InputStreamReader(configInputStream, StandardCharsets.UTF_8);
 		Properties props = new Properties();
 		props.load(reader);
 		// trim property values

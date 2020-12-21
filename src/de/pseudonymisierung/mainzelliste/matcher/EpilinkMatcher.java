@@ -95,6 +95,14 @@ public class EpilinkMatcher implements Matcher {
 		return thresholdNonMatch;
 	}
 
+	/**
+	 * Get the exchange groups used by this matcher
+	 * @return The exchange groups
+	 */
+	public List<List<String>> getExchangeGroups() {
+		return exchangeGroups;
+	}
+
 	/** The minimum weight for possible matches. */
 	private double thresholdNonMatch;
 
@@ -119,9 +127,6 @@ public class EpilinkMatcher implements Matcher {
 	/** The logging instance. */
 	private Logger logger = LogManager.getLogger(EpilinkMatcher.class);
 
-	private String blockingSpeedOptimization;
-	private String[] blockingFields;
-
 	@Override
 	public void initialize(Properties props) throws InternalErrorException
 	{
@@ -143,7 +148,7 @@ public class EpilinkMatcher implements Matcher {
 			m = p.matcher((String) key);
 			if (m.find()){
 				String fieldName = m.group(1);
-				logger.info("Initializing properties for field " + fieldName);
+				logger.info("Initializing properties for field {}", fieldName);
 				String fieldCompStr = props.getProperty("field." + fieldName + ".comparator");
 				if (fieldCompStr != null)
 				{
@@ -169,7 +174,7 @@ public class EpilinkMatcher implements Matcher {
 					// all e_i have same value in this implementation
 					double weight = (1 - error_rate) / frequency;
 					weight = Math.log(weight) / Math.log(2);
-					logger.debug("Field weight for field " + fieldName + ": " + weight);
+					logger.debug("Field weight for field {}: {}", fieldName, weight);
 					weights.put(fieldName, weight);
 				}
 			}
@@ -181,13 +186,6 @@ public class EpilinkMatcher implements Matcher {
 		// load other config vars
 		this.thresholdMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_match"));
 		this.thresholdNonMatch = Double.parseDouble(props.getProperty("matcher.epilink.threshold_non_match"));
-
-		if (props.getProperty("blocking.soundex.type") != null) {
-			this.blockingSpeedOptimization = props.getProperty("blocking.soundex.type");
-			this.blockingFields = Arrays.stream(props.getProperty("blocking.soundex.fields").split(","))
-					.map(String::trim)
-					.toArray(String[]::new);
-		}
 
 		// initialize exchange groups
 		//TODO Mechanismus generalisieren für andere Matcher
@@ -207,73 +205,14 @@ public class EpilinkMatcher implements Matcher {
 
 	@Override
 	public MatchResult match(Patient patient, Iterable<Patient> patientList) {
-
-		if (blockingSpeedOptimization != null && blockingSpeedOptimization.equalsIgnoreCase("Soundex")) {
-			return matchAlgorithmSoundexBlocked(patient, patientList, blockingFields);
-		} else {
-			return matchAlgorithmClassic(patient, patientList);
-		}
-
-	}
-
-	public MatchResult matchAlgorithmClassic(Patient patient, Iterable<Patient> patientList) {
-
-
 		MatchTempResult tempMatchResult = new MatchTempResult();
 
-
-		for (Patient patientFromList : patientList)
-		{
+		for (Patient patientFromList : patientList) {
 			// assert that the persons have the fields required for matching
 			if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
 				continue;
-
 			tempMatchResult = calculateBestMatches(patient, patientFromList, tempMatchResult);
-
 		}
-
-		return getMatchResult(tempMatchResult.getBestMatch(), tempMatchResult.getBestWeight(), tempMatchResult.getPossibleMatches());
-
-	}
-
-	private MatchResult matchAlgorithmSoundexBlocked(Patient patient, Iterable<Patient> patientList, String[] blockingFields) {
-
-
-		MatchTempResult tempMatchResult = new MatchTempResult();
-
-
-		////////////////////////////////////////////////////////////////////
-		//check equality of soundex codes
-		boolean equalClusterId;
-
-		patient.setClusterIdByField(blockingFields);
-		for (Patient patientFromList : patientList)
-		{
-			// assert that the persons have the fields required for matching
-			if (assertPatientHasRequiredMatchingFields(patient, patientFromList))
-				continue;
-
-			equalClusterId= false;
-			patientFromList.setClusterIdByField(blockingFields);
-
-			for(String f :blockingFields)
-			{
-				if(patient.getClusterIds().get(f).equals(patientFromList.getClusterIds().get(f)))
-				{
-					equalClusterId= true;
-					continue;
-				}
-			}
-
-			if(!equalClusterId)
-			{
-				continue;
-			}
-
-			tempMatchResult = calculateBestMatches(patient, patientFromList, tempMatchResult);
-
-		}
-
 		return getMatchResult(tempMatchResult.getBestMatch(), tempMatchResult.getBestWeight(), tempMatchResult.getPossibleMatches());
 	}
 
@@ -288,6 +227,7 @@ public class EpilinkMatcher implements Matcher {
 		{
 			tempMatchResult.setBestWeight(weight);
 			tempMatchResult.setBestMatch(referencePatient);
+			referencePatient.getIds();
 		}
 
 		tempMatchResult.setPossibleMatches(addPatientIfPossibleMatch(tempMatchResult.getPossibleMatches(), referencePatient, weight));
@@ -412,7 +352,7 @@ public class EpilinkMatcher implements Matcher {
 			double fieldWeight = weights.get(fieldName);
 			weightSum += fieldWeight;
 			double thisCompWeight = comparators.get(fieldName).compare(left, right) * fieldWeight;
-			logger.debug("Weighted comparison for field " + fieldName + ": " + thisCompWeight);
+			logger.debug("Weighted comparison for field {}: {}", fieldName, thisCompWeight);
 			totalWeight += thisCompWeight;
 		}
 		totalWeight /= weightSum;

@@ -27,7 +27,7 @@ package de.pseudonymisierung.mainzelliste;
 
 import javax.persistence.Entity;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONObject;
 
 /**

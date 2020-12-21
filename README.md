@@ -13,6 +13,7 @@ The following article describes the underlying concepts of Mainzelliste and the 
 Java developers should have a look at [Mainzelliste.Client](https://bitbucket.org/medinfo_mainz/mainzelliste.client), a library that handles the HTTP calls necessary for using Mainzelliste in a client application.
 
 Information about the official docker image of Mainzelliste you can find [here](./docker.md). 
+Information about the newman tests you can find [here](./docker.md). 
 
 ## References
 
@@ -59,7 +60,6 @@ We have compiled this list from the results of public search engines. If you use
 
 We would love to include your useful changes to the Mainzelliste code in a future official release. See the related [Wiki page](https://bitbucket.org/medicalinformatics/mainzelliste/wiki/Contributing) for further information on contributing code.
 
-
 ## Release notes
 
 All notable changes to the mainzelliste project you can see in the [changelog](./changelog.md)
@@ -72,13 +72,16 @@ As an open source project, Mainzelliste profits from contributions from the rese
 - Benjamin Gathmann, Universitätsklinikum Freiburg
 - Christian Koch, DKFZ-Heidelberg
 - Daniel Volk, Universitätsmedizin Mainz
+- David Croft, DKFZ-Heidelberg
 - Dirk Langner, Universitätsmedizin Greifswald
 - Florens Rohde, Universität Leipzig
 - Florian Stampe, DKFZ-Heidelberg
 - Galina Tremper, DKFZ-Heidelberg
 - Jens Schwanke, Universitätsmedizin Göttingen
+- Cornelius Knopp, Universitätsmedizin Göttingen 
 - Martin Lablans, DKFZ-Heidelberg
 - Matthias Lemmer, Universität Marburg
+- Moanes Ben Amor, DKFZ-Heidelberg
 - Maximilian Ataian, Universitätsmedizin Mainz
 - Project FP7-305653-chILD-EU
 - Stephan Rusch, Universitätsklinikum Freiburg

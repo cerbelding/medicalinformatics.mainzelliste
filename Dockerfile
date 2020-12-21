@@ -1,18 +1,17 @@
-FROM maven:3.6-alpine AS build
+FROM maven:3-jdk-8 AS build
 
 ARG http_proxy=""
 
 COPY ./ /workingdir/
 WORKDIR /workingdir
-RUN apk add dos2unix
+RUN apt-get update && apt-get -y install dos2unix
 RUN cp docker/maven_proxy_parser.sh /usr/local/bin/ && \
     chmod +x /usr/local/bin/maven_proxy_parser.sh && \
     dos2unix /usr/local/bin/maven_proxy_parser.sh
 RUN if [ "$http_proxy" != "" ]; then \
-        apk add --no-cache xmlstarlet && \
+        apt-get -y install xmlstarlet && \
         ## TODO: Split Proxy Parsing from Maven Proxy Setting
-        maven_proxy_parser.sh parse && \
-        apk del xmlstarlet \
+        maven_proxy_parser.sh parse \
     ;fi
 
 RUN mvn clean && \
@@ -22,6 +21,7 @@ RUN mvn clean && \
     unzip /workingdir/target/mainzelliste-*.war
 
 FROM tomcat:8-jdk8-openjdk-slim
+
 ENV ML_CONFIG_FILE ""
 
 RUN apt-get update && \

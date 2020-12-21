@@ -272,6 +272,54 @@
 			"response": []
 		},
 		{
+			"name": "INVALID_TOKEN_ADD_PATIENT_EXTID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
+						"exec": [
+							"tests[\"Bad Request\"] = responseCode.code === 400;"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"ids\":{\r\n     \t\t\t\"UnknownExtIdType\":\"UnknownExtIdValue\"\r\n     \t\t},\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "NEW_SESSION",
 			"event": [
 				{
@@ -363,7 +411,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultFields\": [\"vorname\", \"nachname\", \"geburtsname\", \"geburtstag\", \"geburtsmonat\", \"geburtsjahr\", \"plz\", \"ort\"]\r\n \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n    \"allowedUses\": \"2\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"{{idType}}\",\r\n\t \t\t\t\"idString\":\"{{idString}}\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultFields\": [\"vorname\", \"nachname\", \"geburtsname\", \"geburtstag\", \"geburtsmonat\", \"geburtsjahr\", \"plz\", \"ort\"]\r\n \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -429,6 +477,66 @@
 						"patients",
 						"tokenId",
 						"{{tokenId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET_PATIENT old",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "240b4969-6810-49e6-9505-3f68aa70ac38",
+						"exec": [
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"",
+							"tests[\"patient found\"] = responseCode.code === 200;",
+							"tests[\"patient vorname matches\"] = jsonBody[0].fields.vorname === pm.variables.get(\"vorname\");",
+							"tests[\"patient nachname matches\"] = jsonBody[0].fields.nachname === pm.variables.get(\"nachname\");",
+							"tests[\"patient geburtsname matches\"] = jsonBody[0].fields.geburtsname === pm.variables.get(\"geburtsname\");",
+							"tests[\"patient geburtstag matches\"] = jsonBody[0].fields.geburtstag === pm.variables.get(\"geburtstag\");",
+							"tests[\"patient geburtsmonat matches\"] = jsonBody[0].fields.geburtsmonat == pm.variables.get(\"geburtsmonat\");",
+							"tests[\"patient geburtsjahr matches\"] = jsonBody[0].fields.geburtsjahr === pm.variables.get(\"geburtsjahr\");",
+							"tests[\"patient plz matches\"] = jsonBody[0].fields.plz === pm.variables.get(\"plz\");",
+							"tests[\"patient ort matches\"] = jsonBody[0].fields.ort === pm.variables.get(\"ort\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/patients/?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"patients",
+						""
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
 					]
 				}
 			},

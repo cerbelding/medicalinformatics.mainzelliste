@@ -1,3 +1,25 @@
+### 1.9.0 - 2020-12-21
+#### Added
+- A new endpoint (/monitoring) was implemented that enables clients to request information about the operating state of Mainzelliste [PR85](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/85)
+- It is now possible to request all ids of a specific idtype with the ReadToken. You will need to specify idstring as “*” [PR76](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/76)
+- Tokens can now be used multiple times, reducing the number of required tokens e.g. for batch processes. Specifiy the „allowedUses“ parameter at Token creation to use this feature [PR83](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/83)
+- The implementation of an GCP-compliant Audit Trail ([PR55](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/55)) is now available as Beta in this version
+- All endpoints of the patient resource now support sending callbacks and redirecting users [PR77](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/77)
+- A new idgenerator which validates the German ”Krankenversichertennummer” was implemented [PR68](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/68)
+- It is now possible to configure subconfigs that should be merged into the current config at startup [PR70](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/70)
+- An implementation for Database-side blocking with Bloom filters was added [PR67](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/67)
+- The performance of the hashed fields was improved [PR66](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/66)
+#### Changed
+- Idgenerator memories will now persist with the idrequest [PR63](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/63)
+- The versions of various dependencies were updated [PR92](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/92)
+- Upgrade to Java Persistence 2.1
+- use logger method with arguments and supplier to add logging message instead of string concatenation to improve the performance
+#### Fixed
+- A NullPointerException was raised when a client omitted certain fields [PR65](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/65)
+- A NullPointerException was raised in certain configurations using different idTypes in the same Mainzelliste instance [PR86](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/86)
+- ReadTokens could return ids that had not been yet persisted PR86 [PR76](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/76)
+- An issue was fixed, in which normalized fields were being saved instead of the input fields [PR87](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/87)
+
 ### 1.8.5 - 2020-10-13
 #### Fixed
 - Upgrade to log4j2
@@ -42,6 +64,7 @@
 - Correction in token handling
 - Use correct NULL representation of JSONObject
 - Issues with multiple idtypes in same mainzelliste instance
+
 ### 1.7.0
 
 This release introduces support for externally generated IDs. This feature introduces an incompatible API change; therefore the API version is bumped to 3.0. However, old API versions are still supported by means of the `mainzellisteApiVersion` header, i.e. this software release is fully backwards compatible. 

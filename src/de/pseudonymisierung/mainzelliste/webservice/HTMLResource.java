@@ -47,21 +47,26 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 
 import com.sun.jersey.api.view.Viewable;
 
+import de.pseudonymisierung.mainzelliste.AuditTrail;
 import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
 import de.pseudonymisierung.mainzelliste.Initializer;
 import de.pseudonymisierung.mainzelliste.Patient;
+import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -129,6 +134,32 @@ public class HTMLResource {
 	}
 
 	/**
+	 * Get the form for changing an existing patient's IDAT.
+	 *
+	 * @param idType
+	 *            Type of accessed ID.
+	 * @param idString
+	 * 	          The ID for which the Audit Trail should be retrieved.
+	 * @return The AuditTrail viewer form or an error message
+	 */
+	@Path("/admin/viewAuditTrail")
+	@GET
+	@Produces(MediaType.TEXT_HTML)
+	public Response viewAuditTrailAdmin(
+			@QueryParam("idType") String idType,
+			@QueryParam("idString") String idString
+	) {
+		if (StringUtils.isEmpty(idType) || StringUtils.isEmpty(idString))
+			return Response.ok(new Viewable("/selectPatientAuditTrail.jsp")).build();
+
+		List<AuditTrail> at = Persistor.instance.getAuditTrail(idString, idType);
+
+
+		return Response.ok(new Viewable("/viewAuditTrail.jsp", at)).build();
+
+	}
+
+	/**
 	 * Get the administrator form for editing an existing patient's IDAT. The
 	 * arguments can be omitted, in which case an input form is shown where an
 	 * ID of the patient to edit can be input. Authentication is handled by the
@@ -154,7 +185,7 @@ public class HTMLResource {
 
 		ID patId = IDGeneratorFactory.instance.buildId(idType, idString);
 		Patient p = Persistor.instance.getPatient(patId);
-		
+
 		if (p == null)
 			throw new WebApplicationException(Response
 					.status(Status.NOT_FOUND)
@@ -182,7 +213,7 @@ public class HTMLResource {
 		map.put("tentative", p.getId(IDGeneratorFactory.instance.getDefaultIDType()).isTentative());
 		if (p.getOriginal() != p)
 			map.put("original", p.getOriginal());
-		
+
 		map.put("duplicates", duplicateIds);
 		map.put("possibleDuplicates", possibleDupIds);
 
@@ -217,6 +248,23 @@ public class HTMLResource {
 		if (form.containsKey("delete")) {
 			logger.info(String.format("Handling delete operation for patient with id of type %s and value %s.",
 					idType, idString));
+			if (Config.instance.auditTrailIsOn()) {
+				ID idPatToDelete = IDGeneratorFactory.instance.buildId(idType, idString);
+				Patient pToDelete = Persistor.instance.getPatient(idPatToDelete);
+				for (ID id : pToDelete.getIds()) {
+					AuditTrail at = new AuditTrail( new Date(),
+							id.getIdString(),
+							id.getType(),
+							(Config.instance.debugIsOn()) ? "debug" : "ADMINISTRATOR",
+							(Config.instance.debugIsOn()) ? "debug" : "MAINZELLISTE INSTANCE",
+							req.getRemoteAddr(),
+							"delete",
+							(Config.instance.debugIsOn()) ? "debug" : "ADMINSTRATIVE " + form.get("reasonForDelete"),
+							pToDelete.toString(),
+							null);
+					Persistor.instance.createAuditTrail(at);
+				}
+			}
 			Persistor.instance.deletePatient(IDGeneratorFactory.instance.buildId(idType, idString));
 			return Response.status(Status.SEE_OTHER)
 					.location(UriBuilder.fromResource(this.getClass()).path("admin/editPatient").build())
@@ -228,6 +276,8 @@ public class HTMLResource {
 
 		ID idPatToEdit = IDGeneratorFactory.instance.buildId(idType, idString);
 		Patient pToEdit = Persistor.instance.getPatient(idPatToEdit);
+		// save patient for Audit Trail
+		String pOld = pToEdit.toString();
 		if (pToEdit == null)
 		{
 			logger.info(String.format("Request to edit patient with unknown ID of type %s and value %s.",
@@ -277,7 +327,21 @@ public class HTMLResource {
 		{
 			pToEdit.setOriginal(pToEdit);
 		}
-
+		if (Config.instance.auditTrailIsOn()) {
+			for (ID id : pToEdit.getIds()) {
+				AuditTrail at = new AuditTrail( new Date(),
+						id.getIdString(),
+						id.getType(),
+						(Config.instance.debugIsOn()) ? "debug" : "ADMINISTRATOR",
+						(Config.instance.debugIsOn()) ? "debug" : "MAINZELLISTE INSTANCE",
+						"localhost",
+						"edit",
+						(Config.instance.debugIsOn()) ? "debug" : "ADMINSTRATIVE " + form.get("reasonForChange"),
+						pOld,
+						pToEdit.toString());
+				Persistor.instance.createAuditTrail(at);
+			}
+		}
 
 		Persistor.instance.updatePatient(pToEdit);
 
@@ -307,7 +371,7 @@ public class HTMLResource {
 			// getPath() is sufficient since getMimeType() is actually checking the file's extension only
 			String contentType = Initializer.getServletContext().getMimeType(logoURL.getPath().toLowerCase());
 			if (contentType == null || !contentType.startsWith("image/")) {
-				logger.error("Logo file has incorrect mime type: " + contentType);
+				logger.error("Logo file has incorrect mime type: {}", contentType);
 				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR)
 						.entity("The logo file has incorrect mime type. See server log for details.").build());
 			}
