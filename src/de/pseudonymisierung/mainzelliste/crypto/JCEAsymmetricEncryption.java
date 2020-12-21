@@ -25,26 +25,26 @@
  */
 package de.pseudonymisierung.mainzelliste.crypto;
 
-import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import javax.crypto.Cipher;
 
-import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 import org.apache.commons.codec.binary.Base64;
 
 public class JCEAsymmetricEncryption implements Encryption {
 
   private final Cipher cipher;
 
-  public JCEAsymmetricEncryption(CryptoKey key) throws GeneralSecurityException {
-    this(key.getKey(PublicKey.class));
-  }
-
   public JCEAsymmetricEncryption(PublicKey publicKey) throws GeneralSecurityException {
     cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
     cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+  }
+
+  public JCEAsymmetricEncryption(PrivateKey privateKey) throws GeneralSecurityException {
+    cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+    cipher.init(Cipher.DECRYPT_MODE, privateKey);
   }
 
   @Override
@@ -58,13 +58,13 @@ public class JCEAsymmetricEncryption implements Encryption {
   }
 
   @Override
-  public byte[] decrypt(String plaintext) {
-    throw new NotImplementedException("Not implemented");
+  public byte[] decrypt(String plaintext) throws GeneralSecurityException {
+    return cipher.doFinal(java.util.Base64.getUrlDecoder().decode(plaintext));
   }
 
   @Override
-  public String decryptToString(String plaintext) {
-    throw new NotImplementedException("Not implemented");
+  public String decryptToString(String plaintext) throws GeneralSecurityException {
+    return new String(decrypt(plaintext), StandardCharsets.UTF_8);
   }
 
 }

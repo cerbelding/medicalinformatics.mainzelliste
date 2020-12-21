@@ -948,6 +948,106 @@
 				"description": "Get patient cryptoid using as input his extid"
 			},
 			"response": []
+		},
+		{
+			"name": "TOKEN_READ_PATIENT_EmptyId",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "55fe7d66-cff3-4575-a990-d6382fb5376d",
+						"exec": [
+							"console.log(responseBody);",
+							"tests[\"Bad Request\"] = responseCode.code === 400;",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"cryptoid\",\r\n\t \t\t\t\"idString\":\"\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultIds\":[\"extid\"]\r\n \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TOKEN_READ_PATIENT_InvalidCryptoId",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "bcecaa88-4508-4ed0-b90a-41356cd9f288",
+						"exec": [
+							"console.log(responseBody);",
+							"tests[\"Bad Request\"] = responseCode.code === 400;",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":\"cryptoid\",\r\n\t \t\t\t\"idString\":\"Y35nXmS\"\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultIds\":[\"extid\"]\r\n \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"protocolProfileBehavior": {}
