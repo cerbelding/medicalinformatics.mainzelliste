@@ -10,14 +10,16 @@ import de.pseudonymisierung.mainzelliste.requester.Client;
 import de.pseudonymisierung.mainzelliste.requester.Requester;
 import java.util.HashSet;
 import java.util.Set;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  * Stores a Set of Claim configurations
  */
 public class ClaimConfigurations {
 
-  private  final Logger  logger = Logger.getLogger(ClaimConfigurations.class);
+  private  final Logger logger = LogManager.getLogger(ClaimConfigurations.class);
   private final Set<ClaimConfiguration> claimConfigurationSet;
 
   public ClaimConfigurations(Set<ClaimConfiguration> claimConfigurationSet) {

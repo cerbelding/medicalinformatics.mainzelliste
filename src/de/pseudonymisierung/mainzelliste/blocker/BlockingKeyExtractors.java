@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Wrapper for all used {@link BlockingKeyExtractor}s.
@@ -26,7 +27,7 @@ public class BlockingKeyExtractors {
 	private List<BlockingKeyExtractor> blockingKeyExtractors;
 
 	/** The logging instance */
-	static Logger logger = Logger.getLogger(BlockingKeyExtractors.class);
+	static Logger logger = LogManager.getLogger(BlockingKeyExtractors.class);
 
 	/**
 	 * Initialize from the configuration properties
@@ -53,7 +54,7 @@ public class BlockingKeyExtractors {
 									.getConstructor(String.class, Map.class);
 					BlockingKeyExtractor bke = (BlockingKeyExtractor) c.newInstance(bkName, getParamMap(bkName, props));
 					blockingKeyExtractors.add(bke);
-					logger.info("Initialized blocking key extractor: " + bke);
+					logger.info("Initialized blocking key extractor: {}", bke);
 				} catch (Exception e) {
 					throw new InternalErrorException(e.getMessage());
 				}
@@ -98,8 +99,8 @@ public class BlockingKeyExtractors {
 			List<BlockingKey> orphanedBlockingKeys = Persistor.instance.getBlockingKeys().stream()
 							.filter(bk -> bk.getType().equals(previousBlockingMethod))
 							.collect(Collectors.toList());
-			logger.info("Blocking config " + previousBlockingMethod + " was removed. Deleting " +
-							orphanedBlockingKeys.size() + " orphaned blocking keys.");
+			logger.info("Blocking config {} was removed. Deleting {} orphaned blocking keys.",
+					previousBlockingMethod, orphanedBlockingKeys.size());
 			Persistor.instance.removeBlockingKeys(orphanedBlockingKeys);
 		}
 		Persistor.instance.removeBlockingMemories(
@@ -109,7 +110,7 @@ public class BlockingKeyExtractors {
 		);
 
 		long t2 = System.currentTimeMillis();
-		logger.info("Blocking keys update time in ms: " + (t2 - t1));
+		logger.info("Blocking keys update time in ms: {}", (t2 - t1));
 	}
 
 	/**

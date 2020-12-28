@@ -27,16 +27,17 @@ package de.pseudonymisierung.mainzelliste.service;
 
 import com.sun.management.OperatingSystemMXBean;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
-import org.apache.log4j.Logger;
 
 import javax.persistence.PersistenceException;
 import java.lang.management.ManagementFactory;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class MonitoringService {
-    private Logger logger = Logger.getLogger(this.getClass());
+    private Logger logger = LogManager.getLogger(this.getClass());
 
     public String getIDRequestCount(String startDateStr, String endDateStr) {
         try {
@@ -47,7 +48,7 @@ public class MonitoringService {
             }
             return Persistor.instance.getIDRequestCount(startDate, endDate) + "";
         } catch (IllegalArgumentException e) {
-            logger.warn("Couldn't process request because of invalid input format. Message: " + e.getMessage());
+            logger.warn("Couldn't process request because of invalid input format. Message: {}", e.getMessage());
             throw e;
         } catch (RuntimeException e) {
             logger.fatal( "Persistence provider error. Can't get IDRequestCount. Cause: " +  e.getMessage());

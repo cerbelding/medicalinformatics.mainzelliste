@@ -26,7 +26,9 @@
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
 import de.pseudonymisierung.mainzelliste.auth.credentials.ClientCredentials;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  * Implements the ApiKey authentication
@@ -35,7 +37,7 @@ import org.apache.log4j.Logger;
 public class ApiKeyAuthenticator implements Authenticator {
 
   private final String apiKey;
-  private final Logger logger = Logger.getLogger(ApiKeyAuthenticator.class);
+  private final Logger logger = LogManager.getLogger(ApiKeyAuthenticator.class);
 
   /**
    * Creates a new Api Key Authenticator related to a User or a Server

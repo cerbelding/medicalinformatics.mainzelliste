@@ -50,7 +50,8 @@ import com.sun.jersey.spi.resource.Singleton;
 import de.pseudonymisierung.mainzelliste.*;
 
 import de.pseudonymisierung.mainzelliste.webservice.commons.RefinedPermission;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -70,7 +71,7 @@ import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 public class SessionsResource {
 
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Create a new session.
@@ -84,7 +85,7 @@ public class SessionsResource {
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public synchronized Response newSession(@Context HttpServletRequest req) throws JSONException{
-		logger.info("Request to create session received by host " + req.getRemoteHost());
+		logger.info("Request to create session received by host {}", req.getRemoteHost());
 
 		// TODO: 14.12.2020 Refactoring
 		// Session will be
@@ -131,7 +132,7 @@ public class SessionsResource {
 				.build(sid);
 		s.setURI(newUri);
 
-		logger.info("Created session " + sid);
+		logger.info("Created session {}", sid);
 
 		JSONObject ret = new JSONObject()
 				.put("sessionId", sid)
@@ -194,10 +195,10 @@ public class SessionsResource {
 			@PathParam("session") String sid,
 			@Context HttpServletRequest req){
 		// No authentication other than knowing the session id.
-		logger.info("Received request to delete session " + sid + " from host " +
+		logger.info("Received request to delete session {} from host {}", sid,
 				req.getRemoteHost());
 		Servers.instance.deleteSession(sid);
-		logger.info("Deleted session " + sid);
+		logger.info("Deleted session {}", sid);
 		return Response
 			.status(Status.NO_CONTENT)
 			.build();
@@ -218,7 +219,7 @@ public class SessionsResource {
 	public Set<Token> getTokens(
 			@PathParam("session") SessionIdParam sid,
 			@Context HttpServletRequest req){
-		logger.info("Received request to list tokens for session " + sid + " from host " +
+		logger.info("Received request to list tokens for session {} from host {}", sid,
 			req.getRemoteHost());
 		// No authorization except for knowing the session id
 		return Servers.instance.getAllTokens(sid.getValue().getId());
@@ -251,9 +252,9 @@ public class SessionsResource {
 
 		Session session = sid.getValue();
 
-		logger.info("Received request to create token for session " + session.getId() + " by host " +
+		logger.info("Received request to create token for session {} by host {}", session.getId(),
 				req.getRemoteHost());
-		logger.debug("Received data: " + tp);
+		logger.debug("Received data: {}", tp);
 
         boolean allowRequest= true;
         String notAuthorizedMessage="";
@@ -300,9 +301,9 @@ public class SessionsResource {
 					.path("/{tid}")
 					.build(t.getId());
 
-			logger.info("Created token of type " + t.getType() + " with id " + t.getId() +
+			logger.info(() -> "Created token of type " + t.getType() + " with id " + t.getId() +
 					" in session " + session.getId());
-			logger.debug("Returned data for token " + t.getId() + ": "
+			logger.debug(() -> "Returned data for token " + t.getId() + ": "
 					+ t.toJSON(Servers.instance.getRequestApiVersion(req)));
 
 			return Response
@@ -346,7 +347,7 @@ public class SessionsResource {
 			@Context HttpServletRequest req,
 			@Context UriInfo uriInfo){
 
-		logger.info("Received request to get token " + tokenId + " in session " + sid.getValue().getId()  +
+		logger.info(() -> "Received request to get token " + tokenId + " in session " + sid.getValue().getId()  +
 				" by host " + req.getRemoteHost());
 
 		Session s = sid.getValue();

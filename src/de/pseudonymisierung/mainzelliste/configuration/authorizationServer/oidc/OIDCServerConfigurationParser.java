@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  * Parses the oidc-Servers configuration properties
@@ -17,7 +19,7 @@ import org.apache.log4j.Logger;
 
 public class OIDCServerConfigurationParser {
 
-  private static final Logger logger = Logger.getLogger(OIDCClaimConfigurationParser.class);
+  private static final Logger logger = LogManager.getLogger(OIDCClaimConfigurationParser.class);
   private static final String OIDCKEY = "oidc";
   private static final String ISS = "iss";
   private static final String POSTFIXREGEX = "iss|";

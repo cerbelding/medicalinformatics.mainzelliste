@@ -16,7 +16,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -39,7 +40,7 @@ public class MainzellisteCallback {
     /**
      * The logging instance
      */
-    private Logger logger = Logger.getLogger(this.getClass());
+    private Logger logger = LogManager.getLogger(this.getClass());
 
     /**
      * The TLS context depending on the configuration parameters
@@ -95,7 +96,7 @@ public class MainzellisteCallback {
                     SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException ex) {
-            Logger.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
+            LogManager.getLogger(PatientBackend.class).error("Error initializing client Transport Layer Security", ex);
         }
     }
 
@@ -150,7 +151,7 @@ public class MainzellisteCallback {
      * @throws IOException then the callback fails
      */
     public HttpResponse execute() throws IOException {
-        logger.info("Executing Mainzelliste Callback on url " + this.url + " and apiVersion " + this.apiVersion.majorVersion + "." + this.apiVersion.minorVersion + ". Tokenid is " + this.tokenId);
+        logger.info(() -> "Executing Mainzelliste Callback on url " + this.url + " and apiVersion " + this.apiVersion.majorVersion + "." + this.apiVersion.minorVersion + ". Tokenid is " + this.tokenId);
 
         if(Config.instance.getProperty("proxy.callback.url")==null){
             HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslSocketFactory).build();
@@ -217,7 +218,7 @@ public class MainzellisteCallback {
                 idsJson.put(id.toJSON());
             }
             if (apiVersion.majorVersion == 1)
-                json.put("id", new ArrayList<>(this.returnIds).get(0).getIdString());
+                json.put("id", this.returnIds.iterator().next().getEncryptedIdStringFirst());
             else
                 json.put("ids", idsJson);
         }
@@ -235,7 +236,7 @@ public class MainzellisteCallback {
         }
 
         // Parse JSON to Request Entity
-        logger.debug("Building StringEntity for Callback on url " + this.url + " with json " + json.toString());
+        logger.debug(() -> "Building StringEntity for Callback on url " + this.url + " with json " + json.toString());
         StringEntity reqEntity = new StringEntity(json.toString());
         reqEntity.setContentType("application/json");
 

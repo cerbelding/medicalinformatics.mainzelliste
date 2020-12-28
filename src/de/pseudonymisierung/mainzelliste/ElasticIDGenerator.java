@@ -42,11 +42,15 @@ package de.pseudonymisierung.mainzelliste;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
-import org.apache.log4j.Logger;
+
+import java.util.Arrays;
+import java.util.List;
 
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This generator creates IDs from a vocabulary that can be set with cofnig
@@ -57,6 +61,8 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	private String idType;
 	/** The IDGeneratorMemory instance for this generator. */
 	private IDGeneratorMemory mem;
+	/** list of configured ID types with which this generator will create the ID eagerly */
+	private List<String> eagerGenRelatedIdTypes;
 
 	/** Counter, increased with every created id. */
 	private int counter = 1;
@@ -74,7 +80,7 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	private char vocabulary[] = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
 
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Empty constructor. Needed by IDGeneratorFactory in order to instantiate
@@ -84,7 +90,8 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	}
 
 	@Override
-	public void init(IDGeneratorMemory mem, String idType, Properties props) {
+	public void init(IDGeneratorMemory mem, String idType, String[] eagerGenRelatedIdTypes,
+			Properties props) {
 		this.mem = mem;
 
 		String memCounter = mem.get("counter");
@@ -92,10 +99,15 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 		this.counter = Integer.parseInt(memCounter);
 
 		this.idType = idType;
+		this.eagerGenRelatedIdTypes = Arrays.asList(eagerGenRelatedIdTypes);
 		// initialize default configuration
 		this.idLength = 5;
 		this.vocabulary = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
 		this.prefix = idType.toUpperCase();
+		// initialize default configuration
+		this.idLength = 5;
+		this.vocabulary = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
+		this.prefix = idType;
 		try {
 			if (props.containsKey("length"))
 				this.idLength = Integer.parseInt(props.getProperty("length"));
@@ -117,7 +129,7 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	 */
 	private String createPIDString(int counter) {
 
-		Random randomGenerator = new Random(counter);
+		Random randomGenerator = new Random();
 		StringBuilder stringBuilder = new StringBuilder();
 
 		if(prefix != null){
@@ -180,7 +192,15 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	public boolean isExternal() { return false; }
 
 	@Override
+	public boolean isPersistent() { return true; }
+
+	@Override
 	public Optional<IDGeneratorMemory> getMemory() {
 		return Optional.of(mem);
+	}
+
+	@Override
+	public boolean isEagerGenerationOn(String idType) {
+		return eagerGenRelatedIdTypes.contains("*") || eagerGenRelatedIdTypes.contains(idType);
 	}
 }

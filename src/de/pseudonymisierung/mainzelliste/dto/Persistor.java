@@ -32,7 +32,6 @@ import de.pseudonymisierung.mainzelliste.exceptions.IllegalUsedCharacterExceptio
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
-import org.apache.log4j.Logger;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import javax.persistence.*;
@@ -43,6 +42,9 @@ import java.util.*;
 import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.sql.Driver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Handles reading and writing from and to the database. Implemented as a
@@ -59,7 +61,7 @@ public enum Persistor {
 	private EntityManager em;
 	
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 	
 	/** String with which database identifers are quoted. */
 	private String identifierQuoteString = null;
@@ -109,7 +111,7 @@ public enum Persistor {
 		// Check database connection
 		getPatients();
 		
-		Logger.getLogger(Persistor.class).info("Persistence has initialized successfully.");
+		LogManager.getLogger(Persistor.class).info("Persistence has initialized successfully.");
 	}
 
 	/**
@@ -131,10 +133,10 @@ public enum Persistor {
 					handleMySQLShutdown();
 				}
 				try {
-					logger.info("Deregistering JDBC driver " + driver);
+					logger.info("Deregistering JDBC driver {}", driver);
 					DriverManager.deregisterDriver(driver);
 				} catch (SQLException ex) {
-					logger.debug("An error occured during deregistering JDBC driver " + driver, ex);
+					logger.debug(() -> "An error occured during deregistering JDBC driver " + driver, ex);
 				}
 			}
 		}
@@ -211,6 +213,18 @@ public enum Persistor {
 		em.close();
 		return p;
 	}
+
+	/**
+	 * Returns a list of patients, who own at least one ID with the given idType.
+	 *
+	 * @return A list of searched patients.
+	 */
+	public synchronized List<Patient> getPatients(String idType) {
+		return this.em.createQuery(
+				"select p from Patient p join p.ids i where i.type = '" + idType + "'",
+				Patient.class)
+				.getResultList();
+	}
 	
 	/**
 	 * Returns all patients currently persisted in the patient list. This is not
@@ -223,7 +237,7 @@ public enum Persistor {
 		// Entities are not detached, because the IDs are lazy-loaded
 		List<Patient> pl;
 		pl = this.em.createQuery("select p from Patient p", Patient.class).getResultList();
-		logger.debug("Retrieved " + pl.size() + " patients (all)");
+		logger.debug("Retrieved {} patients (all)", pl.size());
 		return pl;
 	}
 
@@ -255,7 +269,7 @@ public enum Persistor {
 						.setParameter("bks", bkStrings)
 						.getResultList();
 
-		logger.debug("Retrieved " + pl.size() + " patients");
+		logger.debug("Retrieved {} patients", pl.size());
 
 		return pl;
 	}
@@ -310,34 +324,6 @@ public enum Persistor {
 	}
 
 	/**
-	 * Returns a list of the IDs of a specific idType of all patients.
-	 *
-	 * @return A list where every item represents the IDs of one patient.
-	 */
-	public synchronized List<ID> getIdsWithType(String idType) {
-		EntityManager em = emf.createEntityManager();
-		TypedQuery<ID> query = em.createQuery("SELECT i from ID i where i.type='" + idType + "'", ID.class);
-		List<ID> result = query.getResultList();
-		em.close();
-		return result;
-	}
-
-	/**
-	 * Returns a list of IDs of all patients, who own at least one ID with the given idType.
-	 *
-	 * @return A list where every item represents the IDs of one patient.
-	 */
-	public synchronized List<ID> getIdsOfPatientsWithIdType(String idType, String[] resultIdTypes ) {
-		String resultIdTypesStr = String.join(", ", resultIdTypes);
-		TypedQuery<ID> query = emf.createEntityManager().createQuery(
-				"select i from Patient p join p.ids i where i.type in ('" + resultIdTypesStr + "') and" +
-				" EXISTS (select someP from Patient someP join someP.ids somePid " +
-						"where someP = p and somePid.type = '"+ idType +"' )",
-				ID.class);
-		return query.getResultList();
-	}
-
-	/**
 	 * Add an ID request to the database. In cases where a new ID is created, a
 	 * new Patient object is persisted.
 	 * 
@@ -356,8 +342,11 @@ public enum Persistor {
 	public synchronized void addIdRequest(IDRequest req, Collection<BlockingKey> blockingKeys) {
 		em.getTransaction().begin();
 		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.
+		em.merge(req.getAssignedPatient());
 		IDGeneratorFactory.instance.getGeneratorMemories().forEach(em::merge);
 		em.getTransaction().commit();
+		// Persist blocking keys
+		Config.instance.getBlockingKeyExtractors().updateBlockingKeys(Collections.singletonList(req.getAssignedPatient()));
 	}
 
 	/**
@@ -372,7 +361,7 @@ public enum Persistor {
 		em.persist(id); //TODO: Fehlerbehandlung, falls PID schon existiert.
 		em.getTransaction().commit();
 	}
-	
+
 	/**
 	 * Add a collection of {@link BlockingKey}s to the database.
 	 * @param blockingKeys The blocking keys to persist
@@ -547,13 +536,13 @@ public enum Persistor {
 	 * @return deleted patients
      */
     public synchronized List<Patient> deletePatientWithDuplicates(ID id) {
-        /* The subgraph of duplicates is a tree whose root can be found by following
-         * the "original" link recursively. From there, determine all connected patients
-         * by breadth-first search.
-         */
-        List<Patient> allInstances = getPatientWithDuplicates(id);
-		allInstances.forEach( p -> p.getId(id.getType()));
-        return allInstances;
+			/* The subgraph of duplicates is a tree whose root can be found by following
+			 * the "original" link recursively. From there, determine all connected patients
+			 * by breadth-first search.
+			 */
+			return getPatientWithDuplicates(id).stream()
+					.filter(p -> deletePatient(p.getId(id.getType())) != null)
+					.collect(Collectors.toList());
     }
 
 	/**
@@ -829,8 +818,26 @@ public enum Persistor {
 			
 			em.getTransaction().commit();
 		} // End of update 1.1 -> 1.3.1
+    if (isSchemaVersionUpdate(fromVersion, "1.9-RC8")) {
+			em.getTransaction().begin();
 
-		if (isSchemaVersionUpdate(fromVersion, "1.9.0")) { // < 1.9
+			// fix for issues with audit_trail schema when requests with result greater than 255 signs were made
+			logger.info("Updating schema: Changing field type of audit_trail.oldvalue to text");
+			em.createNativeQuery("ALTER TABLE audit_trail ALTER COLUMN oldvalue TYPE text").executeUpdate();
+			logger.info("Updating schema: Changing field type of audit_trail.newvalue to text");
+			em.createNativeQuery("ALTER TABLE audit_trail ALTER COLUMN newvalue TYPE text").executeUpdate();
+
+			// Update schema version. Corresponds to Mainzelliste version, therefore the gap
+			this.setSchemaVersion("1.9-RC8", em);
+			fromVersion = "1.9-RC8";
+
+			em.getTransaction().commit();
+		}
+
+		// compress "hashed" field and hashed" input field from bit string to base64
+		// note: the compression was disabled in 1.9-RC5 and 1.9-RC6
+		if (isSchemaVersionUpdate(fromVersion, "1.9-alpha") || fromVersion.equals("1.9-RC5")
+				|| fromVersion.equals("1.9-RC6")) { // < 1.9
 			logger.info("Updating database schema for version 1.9...");
 			em.getTransaction().begin();
 			// Read HashedFields from the database and change the value type from Bitstring to base64 encoding
@@ -847,18 +854,10 @@ public enum Persistor {
 				Collection<Field<?>> fields = new ArrayList<>(patient.getFields().values());
 				fields.addAll(patient.getInputFields().values());
 				fields.stream()
-								.flatMap(f -> {
-									// Unwrap Fields that are subfields of a CompoundField
-									if (f instanceof CompoundField<?>) {
-										@SuppressWarnings("unchecked")
-										final List<Field<?>> subFields = ((CompoundField) f).getValue();
-										return subFields.stream();
-									} else {
-										return Stream.of(f);
-									}
-								})
+								.flatMap(f -> (f instanceof CompoundField<?>) ? ((CompoundField<?>) f).getValue().stream() : Stream.of(f))
 								.filter(f -> f instanceof HashedField)
 								.map(f -> (HashedField)f)
+								.filter(f -> !f.isEmpty())
 								.forEach(hashedField -> hashedField.setValue(HashedField.bitStringToBitSet(hashedField.toString())));
 				// Replace fields and thereby update the fieldsString
 				patient.setFields(patient.getFields());
@@ -866,11 +865,10 @@ public enum Persistor {
 				em.merge(patient);
 			}
 			// Update schema version
-			this.setSchemaVersion("1.9.0", em);
-			fromVersion = "1.9.0";
+			this.setSchemaVersion("1.9-alpha", em);
+			fromVersion = "1.9-alpha";
 			em.getTransaction().commit();
 		} // End of update < 1.9
-
 
 		// Update schema version to release version, even if no changes are necessary
 		em.getTransaction().begin();
@@ -987,6 +985,11 @@ public enum Persistor {
 	 * @return The JDBC connection.
 	 */
 	private Connection getJdbcConnection() {
+		// find database type
+		boolean isPostgres = Config.instance.getProperty("db.driver").equals("org.postgresql.Driver");
+		boolean isMysql = Config.instance.getProperty("db.driver").equals("com.mysql.jdbc.Driver");
+
+		logger.info("Connecting to database ...");
 		Properties connectionProps = new Properties();
 		if (Config.instance.getProperty("db.username") != null) connectionProps.put("user",  Config.instance.getProperty("db.username"));
 		if (Config.instance.getProperty("db.password") != null) connectionProps.put("password",  Config.instance.getProperty("db.password"));
@@ -999,11 +1002,22 @@ public enum Persistor {
 				logger.fatal("Could not find database driver!", e);
 				throw new Error(e);
 			} catch (SQLException e) {
-				if (count < dbconnect_retry_count) {
-					logger.warn("SQL error while getting database connection; retrying.");
-				} else {
+				String sqlState = e.getSQLState();
+				if(e.getSQLState() != null) {
+					// evaluate sql error depending of the database type
+					if(isPostgres && sqlState.equals("3D000") || isMysql && e.getErrorCode() == 1044) {
+						logger.fatal("SQL error: access denied to DB. " + e.getMessage());
+						throw new Error(e);
+					} else if(isPostgres && sqlState.startsWith("28") || isMysql && e.getErrorCode() == 1045) {
+						logger.fatal("SQL error: invalid authorization specification. " + e.getMessage());
+						throw new Error(e);
+					}
+				}
+				if (count >= dbconnect_retry_count) {
 					logger.fatal("SQL error while getting database connection; giving up.", e);
 					throw new Error(e);
+				} else if (count == 1) {
+					logger.info("SQL error while getting database connection; retrying.");
 				}
 			}
 			try{
@@ -1044,7 +1058,7 @@ public enum Persistor {
 
 	private void checkForSuspectSQLCharacters(String checkValue){
 	    if (checkValue.contains("%") || checkValue.contains(";")|| checkValue.contains("--")){
-	        logger.error("Found illegal character in " + checkValue);
+	        logger.error("Found illegal character in {}", checkValue);
 	        throw new IllegalUsedCharacterException();
 
         }

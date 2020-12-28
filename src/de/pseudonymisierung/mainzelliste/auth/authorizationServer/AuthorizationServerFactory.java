@@ -5,7 +5,9 @@ import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.oidcCl
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  * Creates a IAuthorization Instance given an ClaimAuthEnum instance
@@ -17,7 +19,7 @@ public class AuthorizationServerFactory {
   private final String prefix;
   private final Map<ClaimConfigurationAuthEnum, Supplier<AuthorizationServer>> factoryMap = new HashMap<>();
   private final AuthorizationServers authorizationServers;
-  private final static Logger logger = Logger.getLogger(AuthorizationServerFactory.class);
+  private final static Logger logger = LogManager.getLogger(AuthorizationServerFactory.class);
 
 
   private void initFactoryMap() {

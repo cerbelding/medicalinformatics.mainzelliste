@@ -34,7 +34,8 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.codehaus.jettison.json.JSONObject;
@@ -45,7 +46,7 @@ import org.codehaus.jettison.json.JSONObject;
 public class TokenParam extends AbstractParam<Token> {
 
 	/** The logging instance. */
-	private static Logger logger = Logger.getLogger(TokenParam.class);
+	private static Logger logger = LogManager.getLogger(TokenParam.class);
 
 	/**
 	 * Create an instance from a JSON string.
@@ -69,7 +70,7 @@ public class TokenParam extends AbstractParam<Token> {
 					allowedUses = Integer.parseInt(jsob.optString("allowedUses"));
 				}
 			} catch (NumberFormatException nfe){
-				logger.info("Invalid value \"" + jsob.optString("allowedUses") + "\" for allowedUses parameter at token creation");
+				logger.info(() -> "Invalid value \"" + jsob.optString("allowedUses") + "\" for allowedUses parameter at token creation");
 				throw new WebApplicationException(Response.status(400).entity("The parameter allowedUses has an invalid format").header(HttpHeaders.CONTENT_TYPE, "text/plain").build());
 			}
 			Token t;

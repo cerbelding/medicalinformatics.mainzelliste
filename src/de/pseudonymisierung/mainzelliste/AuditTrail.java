@@ -7,10 +7,12 @@ package de.pseudonymisierung.mainzelliste;
 
 import java.io.Serializable;
 import java.util.Date;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -38,7 +40,11 @@ public class AuditTrail implements Serializable {
     private String remoteIp;
     private String typeOfChange;
     private String reasonForChange;
+    @Lob
+    @Column
     private String oldValue;
+    @Lob
+    @Column
     private String newValue;
 
     public AuditTrail(Date timestamp, String idValue, String idType, String username, String remoteSystem, String remoteIp, String typeOfChange, String reasonForChange, String oldValue, String newValue) {

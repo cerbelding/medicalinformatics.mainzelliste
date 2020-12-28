@@ -7,8 +7,6 @@ import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.matcher.EpilinkMatcher;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
-import org.apache.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,6 +19,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A BlockingKeyExtractor generates one or more {@link BlockingKey}s from fields of a {@link Patient}
@@ -59,7 +59,7 @@ public abstract class BlockingKeyExtractor {
 	/**
 	 * Logger instance
 	 */
-	protected Logger logger = Logger.getLogger(this.getClass());
+	protected Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Construct a blockingkey extractor
@@ -138,11 +138,11 @@ public abstract class BlockingKeyExtractor {
 	 * @param patients The list of patients that need an update of the blocking keys
 	 */
 	public void updateBlockingKeys(List<Patient> patients) {
-		logger.info("Updating blocking keys for: " + this.name);
+		logger.info("Updating blocking keys for: {}", this.name);
 		final Collection<BlockingKey> bksNew = patients.stream()
 						.flatMap(p -> extract(p).stream())
 						.collect(Collectors.toList());
-		logger.info("Extracted " + bksNew.size() + " new blockingkeys");
+		logger.info("Extracted {} new blockingkeys", bksNew.size());
 
 		final Collection<BlockingKey> bksOld = Persistor.instance.getBlockingKeys(patients)
 						.stream()
@@ -150,9 +150,9 @@ public abstract class BlockingKeyExtractor {
 						.filter(bk -> bk.getType().equals(name))
 						.collect(Collectors.toList());
 
-		logger.info("Remove " + bksOld.size() + " old blockingkeys");
+		logger.info("Remove {} old blockingkeys", bksOld.size());
 		Persistor.instance.removeBlockingKeys(bksOld);
-		logger.info("Add " + bksNew.size() + " new blockingkeys");
+		logger.info("Add {} new blockingkeys", bksNew.size());
 		Persistor.instance.addBlockingKeys(bksNew);
 		needsUpdate = false;
 	}

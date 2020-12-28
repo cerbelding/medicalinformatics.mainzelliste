@@ -4,10 +4,11 @@ import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.AuthenticationEum;
 import de.pseudonymisierung.mainzelliste.httpsClient.HttpHeaderEnum;
 import de.pseudonymisierung.mainzelliste.requester.Requester;
-import org.apache.log4j.Logger;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Checks if the Requester could be authenticated
@@ -15,7 +16,7 @@ import java.util.Map;
 public final class AuthenticationUtils {
 
 
-  private final static Logger logger = Logger.getLogger(AuthenticationUtils.class);
+  private final static Logger logger = LogManager.getLogger(AuthenticationUtils.class);
 
   /**
    * Parses the HTTP Header to its Authentication methods

@@ -10,7 +10,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  * Implements reusable Configuration methods
@@ -19,7 +21,7 @@ import org.apache.log4j.Logger;
 public class ConfigurationUtils {
 
   private final static String delimiter = "[;,]";
-  private final static Logger logger = Logger.getLogger(ConfigurationUtils.class);
+  private final static Logger logger = LogManager.getLogger(ConfigurationUtils.class);
 
   /**
    * Splits a String by a delimiter (e.g.  for splitting the permissions, claims,..)

@@ -1,11 +1,12 @@
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
 import de.pseudonymisierung.mainzelliste.auth.credentials.ClientCredentials;
-import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfigurationAuthEnum;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  * Creates a Authenticator Instance given an ClaimAuthEnum instance
@@ -15,7 +16,7 @@ public class AuthenticationFactory {
 
   private final ClientCredentials clientCredentials;
   private final Map<AuthenticationEum, Supplier<Authenticator>> factoryMap = new HashMap<>();
-  private final static Logger logger = Logger.getLogger(AuthenticationFactory.class);
+  private final static Logger logger = LogManager.getLogger(AuthenticationFactory.class);
 
 
   private void initFactoryMap() {

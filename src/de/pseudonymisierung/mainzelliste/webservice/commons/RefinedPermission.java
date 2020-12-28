@@ -4,7 +4,8 @@ import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidJSONException;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -22,7 +23,7 @@ public class RefinedPermission {
     final static private String JSON_ARRAY = "JSONArray";
 
 
-    final private static Logger logger = Logger.getLogger(RefinedPermission.class);
+    final private static Logger logger = LogManager.getLogger(RefinedPermission.class);
 
     private List<RefinedPermissionDTO> tokenValues = new ArrayList<>();
     private Set<String> serverPermissions = null;

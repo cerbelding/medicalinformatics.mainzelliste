@@ -6,28 +6,35 @@
 
     <groupId>de.pseudonymisierung.mainzelliste</groupId>
     <artifactId>mainzelliste</artifactId>
-    <version>1.9.0-SNAPSHOT</version>
+    <version>1.10-SNAPSHOT-${buildNumber}-${maven.build.timestamp}</version>
     <packaging>war</packaging>
+
+  <scm>
+    <connection>scm:git:https://bitbucket.org/medicalinformatics/mainzelliste.git</connection>
+  </scm>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.build.timestamp.format>yyyyMMdd_HHmmss</maven.build.timestamp.format>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <version.servlet>4.0.1</version.servlet>
         <version.commons.codec>1.14</version.commons.codec>
-        <version.log4j>1.2.17</version.log4j>
+        <version.log4j>2.14.0</version.log4j>
         <version.jersey>1.19.4</version.jersey>
-        <version.openjpa>2.4.3</version.openjpa>
-        <version.commons-dbcp>1.4</version.commons-dbcp>
-        <version.postgresql>42.2.9</version.postgresql>
-        <version.mysql>8.0.19</version.mysql>
+        <version.openjpa>3.1.2</version.openjpa>
+        <version.commons-dbcp2>2.8.0</version.commons-dbcp2>
+        <version.postgresql>42.2.18</version.postgresql>
+        <version.mysql>8.0.22</version.mysql>
         <version.httpclient>4.5.11</version.httpclient>
         <version.commons.net>3.6</version.commons.net>
         <version.maven-artifact>3.6.3</version.maven-artifact>
-      <version.java-jwt>3.11.0</version.java-jwt>
+        <version.java-jwt>3.11.0</version.java-jwt>
+        <version.tink>1.4.0</version.tink>
+        <version.org.testng>7.3.0</version.org.testng>
     </properties>
 
     <dependencies>
@@ -47,9 +54,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>commons-dbcp</groupId>
-            <artifactId>commons-dbcp</artifactId>
-            <version>${version.commons-dbcp}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-dbcp2</artifactId>
+            <version>${version.commons-dbcp2}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -66,11 +73,18 @@
         </dependency>
 
         <!-- Logging -->
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>${version.log4j}</version>
+        <scope>compile</scope>
+      </dependency>
+        <!-- cryptography -->
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>${version.log4j}</version>
-            <scope>compile</scope>
+          <groupId>com.google.crypto.tink</groupId>
+          <artifactId>tink</artifactId>
+          <version>${version.tink}</version>
+          <scope>compile</scope>
         </dependency>
 
         <!-- Rest -->
@@ -131,10 +145,18 @@
             <scope>compile</scope>
         </dependency>
 
+      <!-- Test -->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${version.org.testng}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <sourceDirectory>${basedir}/src</sourceDirectory>
+        <testSourceDirectory>${basedir}/test</testSourceDirectory>
         <resources>
             <resource>
                 <directory>${basedir}/config</directory>
@@ -171,6 +193,29 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>3.0.0-M5</version>
+            </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>buildnumber-maven-plugin</artifactId>
+            <version>1.4</version>
+            <executions>
+              <execution>
+                <phase>validate</phase>
+                <goals>
+                  <goal>create</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <doCheck>false</doCheck>
+              <doUpdate>false</doUpdate>
+              <shortRevisionLength>10</shortRevisionLength>
+            </configuration>
+          </plugin>
       <plugin>
         <groupId>org.apache.openjpa</groupId>
         <artifactId>openjpa-maven-plugin</artifactId>

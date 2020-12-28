@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  * Parses the Claim- configuration properties
@@ -22,7 +24,7 @@ import org.apache.log4j.Logger;
 
 public class ClaimConfigurationParser {
 
-  private static final Logger logger = Logger.getLogger(ClaimConfigurationParser.class);
+  private static final Logger logger = LogManager.getLogger(ClaimConfigurationParser.class);
 
   /**
    * Parses a specific Claim configuration

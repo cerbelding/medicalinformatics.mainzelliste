@@ -47,8 +47,8 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
 import com.sun.jersey.spi.resource.Singleton;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.lang3.StringUtils;
+
 
 import com.sun.jersey.api.view.Viewable;
 
@@ -67,6 +67,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * HTML pages (rendered via JSP) to be accessed by a human user
@@ -77,15 +79,13 @@ import java.util.List;
 public class HTMLResource {
 
 	/** The logging instance. */
-	Logger logger = Logger.getLogger(HTMLResource.class);
+	Logger logger = LogManager.getLogger(HTMLResource.class);
 
 	/**
 	 * Get the form for entering a new patient.
 	 *
-	 * @param tokenId
-	 *            Id of a valid "addPatient" token.
-	 * @param request
-	 *            The injected HttpServletRequest.
+	 * @param tokenId Id of a valid "addPatient" token.
+	 * @param request The injected HttpServletRequest.
 	 * @return The input form or an error message if the given token is not valid.
 	 */
 	@GET
@@ -94,19 +94,40 @@ public class HTMLResource {
 	public Response createPatientForm(
 			@QueryParam("tokenId") String tokenId,
 			@Context HttpServletRequest request) {
+		return createPatient(tokenId, request, "/createPatient.jsp");
+	}
+
+	/**
+	 * Get the form for entering a new patient.
+	 *
+	 * @param tokenId Id of a valid "addPatient" token.
+	 * @param request The injected HttpServletRequest.
+	 * @return The input form or an error message if the given token is not valid.
+	 */
+	@GET
+	@Path("addPatient")
+	@Produces(MediaType.TEXT_HTML)
+	public Response addPatientForm(
+			@QueryParam("tokenId") String tokenId,
+			@Context HttpServletRequest request) {
+		return createPatient(tokenId, request, "/addPatient.jsp");
+	}
+
+	private Response createPatient(String tokenId, HttpServletRequest request, String jspPage) {
 		String mainzellisteApiVersion = Servers.instance.getRequestApiVersion(request).toString();
 		Token t = Servers.instance.getTokenByTid(tokenId);
 		if (Config.instance.debugIsOn() ||
-				(t != null && t.getType().equals("addPatient")))
-		{
+				(t != null && t.getType().equals("addPatient"))) {
 			HashMap<String, Object> map = new HashMap<String, Object>();
 			map.put("tokenId", tokenId);
 			map.put("mainzellisteApiVersion", mainzellisteApiVersion);
-			return Response.ok(new Viewable("/createPatient.jsp", map)).build();
-		} else throw new WebApplicationException(Response
-				.status(Status.UNAUTHORIZED)
-				.entity("Please supply a valid token id as URL parameter 'tokenId'.")
-				.build());
+			return Response.ok(new Viewable(jspPage, map)).build();
+		} else {
+			throw new WebApplicationException(Response
+					.status(Status.UNAUTHORIZED)
+					.entity("Please supply a valid token id as URL parameter 'tokenId'.")
+					.build());
+		}
 	}
 
 	/**
@@ -369,7 +390,7 @@ public class HTMLResource {
 			// getPath() is sufficient since getMimeType() is actually checking the file's extension only
 			String contentType = Initializer.getServletContext().getMimeType(logoURL.getPath().toLowerCase());
 			if (contentType == null || !contentType.startsWith("image/")) {
-				logger.error("Logo file has incorrect mime type: " + contentType);
+				logger.error("Logo file has incorrect mime type: {}", contentType);
 				throw new WebApplicationException(Response.status(Status.INTERNAL_SERVER_ERROR)
 						.entity("The logo file has incorrect mime type. See server log for details.").build());
 			}

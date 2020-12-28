@@ -25,25 +25,33 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
-import java.net.URI;
-import java.util.*;
-
-import javax.ws.rs.core.Response.Status;
-
-import de.pseudonymisierung.mainzelliste.Servers;
-import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jettison.json.JSONObject;
-
 import com.sun.jersey.api.uri.UriTemplate;
-
-import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
-import de.pseudonymisierung.mainzelliste.Session;
+import de.pseudonymisierung.mainzelliste.*;
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
+import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
+import de.pseudonymisierung.mainzelliste.webservice.commons.MainzellisteCallbackUtil;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jettison.json.JSONObject;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  * A temporary "ticket" to realize authorization and/or access to a resource.
@@ -74,6 +82,9 @@ public class Token {
 
 	/** The remaining amount of uses allowed for the token */
 	private int remainingUses;
+
+	/** Logging instance */
+	private Logger logger = LogManager.getLogger(Config.class);
 
 	/**
 	 * Create emtpy instance. Used internally only.
@@ -128,11 +139,12 @@ public class Token {
 		if (this.type.equals("addPatient"))
 			this.checkAddPatient(apiVersion);
 		else if (this.type.equals("readPatients"))
-			this.checkReadPatients();
+			this.checkReadPatients(apiVersion);
 		else if (this.type.equals("editPatient"))
 			this.checkEditPatient(apiVersion);
 		else if (this.type.equals("deletePatient")); // TODO: checkDeletePatient
-		else if (this.type.equals("checkMatch")); // TODO: checkCheckMatch
+		else if (this.type.equals("checkMatch"))
+			this.checkCheckMatch();
 		else
 			throw new InvalidTokenException("Token type " + this.type
 					+ " unknown!");
@@ -387,7 +399,7 @@ public class Token {
 	/**
 	 * Check whether this is a valid readPatients token.
 	 */
-	private void checkReadPatients() {
+	private void checkReadPatients(ApiVersion apiVersion) {
 
 		// check that IDs to search for are provided
 		if (!this.getData().containsKey("searchIds"))
@@ -419,10 +431,33 @@ public class Token {
 			}
 			checkIdType(idType);
 
-			if (!Persistor.instance.patientExists(idType, idString) && !idString.equals("*")) {
-				throw new InvalidTokenException(
-						"No patient found with provided " + idType + " '"
-								+ idString + "'!");
+			if (apiVersion.majorVersion < 3 || apiVersion.majorVersion == 3 && apiVersion.minorVersion < 2){
+				// Decrypt id if necessary before token validation
+				ID searchId;
+				try {
+					searchId = IDGeneratorFactory.instance.decryptAndBuildId(idType, idString);
+				} catch (Exception e) {
+					logger.warn("Decryption failed, try to proceed with search id string");
+					searchId = IDGeneratorFactory.instance.buildId(idType, idString);
+				}
+				IDGenerator generator = IDGeneratorFactory.instance.getFactory(idType);
+				if(!generator.isPersistent()){
+					// CryptoIds are transient, compute the base id to check if the patient exists
+					ID newID =((DerivedIDGenerator)generator).getBaseId(searchId);
+					idType = newID.getType();
+					idString = newID.getIdString();
+				} else {
+					idType = searchId.getType();
+					idString = searchId.getIdString();
+				}
+				if(!Persistor.instance.patientExists(idType, idString)) {
+					throw new InvalidTokenException(
+							"No patient found with provided " + idType + " '"
+									+ idString + "'!");
+				}
+			} else if (searchIds.size() > 1 && idString.trim().equals("*")){
+				throw new NotImplementedException(
+						"It's only possible to request one IdType as wildcard select.");
 			}
 		}
 
@@ -507,6 +542,18 @@ public class Token {
 		if (!this.getData().containsKey("ids") && !this.getData().containsKey("fields")) {
 			throw new InvalidTokenException("Token must contain at least one field or id to edit");
 		}
+		return;
+	}
+
+	/**
+	 * Check whether this is a valid checkMatch token.
+	 * CheckMatch token without idtypes throws an exception
+	 */
+	private void checkCheckMatch() {
+		if (!this.getData().containsKey("idTypes") || this.getDataItemList("idTypes").isEmpty()) {
+			throw new InvalidTokenException("No idtypes defined! Token must contain at least one idtype for best match patient.");
+		}
+
 		return;
 	}
 

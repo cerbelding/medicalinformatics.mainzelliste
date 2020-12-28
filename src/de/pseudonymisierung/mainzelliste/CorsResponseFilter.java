@@ -36,8 +36,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import org.apache.log4j.Logger;
 
 /**
  * Adds header "Access-Control-Allow-Origin" for Cross-origin resource sharing
@@ -51,7 +52,7 @@ import org.apache.log4j.Logger;
 public class CorsResponseFilter implements Filter {
 
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * Not used in this implementation.
@@ -76,14 +77,19 @@ public class CorsResponseFilter implements Filter {
 			String thisHostAndScheme = httpRequest.getScheme() + "://" + httpRequest.getHeader("Host");
 			if (origin != null) {
 				if (origin.equals(thisHostAndScheme) || Config.instance.originAllowed(origin)) {
-					logger.debug("Allowing cross domain request from origin " + origin);
+					logger.debug("Allowing cross domain request from origin {}", origin);
 					httpResponse.addHeader("Access-Control-Allow-Origin", origin);
 					String allowedHeaders = Config.instance.getAllowedHeaders();
 					if(!allowedHeaders.equals("")){
 						httpResponse.addHeader("Access-Control-Allow-Headers", allowedHeaders);
 					}
+					String allowedMethods = Config.instance.getAllowedMethods();
+					if(!allowedHeaders.equals("")){
+						httpResponse.addHeader("Access-Control-Allow-Methods", allowedMethods);
+					}
+					httpResponse.addHeader("Access-Control-Max-Age", String.valueOf(Config.instance.getAllowedMaxAge()));
 				} else {
-					logger.info("Rejecting cross domain request from origin " + origin);
+					logger.info("Rejecting cross domain request from origin {}", origin);
 					// For illegal origin, cancel request with 403 Forbidden.
 					HttpServletResponse resp = (HttpServletResponse) response;
 					resp.setStatus(403);

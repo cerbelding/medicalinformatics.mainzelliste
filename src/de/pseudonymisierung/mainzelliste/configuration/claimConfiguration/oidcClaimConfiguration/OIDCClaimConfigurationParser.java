@@ -17,7 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Parses the OIDC claim-configuration given by the configuration file
@@ -25,7 +26,7 @@ import org.apache.log4j.Logger;
 
 public class OIDCClaimConfigurationParser {
 
-  private static final Logger logger = Logger.getLogger(OIDCClaimConfigurationParser.class);
+  private static final Logger logger = LogManager.getLogger(OIDCClaimConfigurationParser.class);
   private static final String OPERATOR = "operator";
   private static final String SUBSET = "subset";
   private static final OperatorEnum defaultOperatorEnum = OperatorEnum.AND;

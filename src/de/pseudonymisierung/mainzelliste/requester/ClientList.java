@@ -1,9 +1,11 @@
 package de.pseudonymisierung.mainzelliste.requester;
 
 import de.pseudonymisierung.mainzelliste.auth.credentials.OIDCCredentials;
-import org.apache.log4j.Logger;
+
 
 import java.util.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Represents the list of all requesters with an active Session
@@ -12,7 +14,7 @@ import java.util.*;
 public class ClientList {
 
   private final Map<String, Requester> clients;
-  private static final Logger logger = Logger.getLogger(ClientList.class);
+  private static final Logger logger = LogManager.getLogger(ClientList.class);
 
   /**
    * Creates a empty requester list

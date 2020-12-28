@@ -5,11 +5,12 @@ import com.sun.jersey.spi.container.ContainerResponse;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DeleteTokenFilter implements ContainerResponseFilter {
 
-    private Logger logger = Logger.getLogger(this.getClass());
+    private Logger logger = LogManager.getLogger(this.getClass());
 
     @Override
     public ContainerResponse filter(ContainerRequest request, ContainerResponse response) {
@@ -17,14 +18,14 @@ public class DeleteTokenFilter implements ContainerResponseFilter {
         if(request.getAbsolutePath().toString().contains("/patients")){
             if(100 <= response.getStatus() && response.getStatus() < 400){
                 String tokenId = getTokenId(request);
-                logger.info("Checking if token with id " + tokenId + " can be be deleted ...");
+                logger.info("Checking if token with id {} can be be deleted ...", tokenId);
                 Token token = Servers.instance.getTokenByTid(tokenId);
                 if(token != null){
                     int remainingUses = token.decreaseRemainingUses();
                     if(remainingUses > 0){
-                        logger.info("Token with id " + token.getId() + " should not be deleted. Remaining uses are: " + remainingUses);
+                        logger.info("Token with id {} should not be deleted. Remaining uses are: {}", token.getId(), remainingUses);
                     } else {
-                        logger.info("Deleting Token with id " + token.getId() + " from Mainzelliste");
+                        logger.info("Deleting Token with id {} from Mainzelliste", token.getId());
                         Servers.instance.deleteToken(token.getId());
                     }
                 }
@@ -38,7 +39,11 @@ public class DeleteTokenFilter implements ContainerResponseFilter {
         switch (request.getMethod().toUpperCase()){
             case "GET":
             case "PUT":
-                return requestPath.split("/tokenId/")[1];
+                if(requestPath.contains("/tokenId/")) {
+                    return requestPath.split("/tokenId/")[1];
+                } else {
+                    return request.getQueryParameters().getFirst("tokenId");
+                }
             case "POST":
                 if(requestPath.contains("checkMatch"))
                     return requestPath.split("checkMatch/")[1];

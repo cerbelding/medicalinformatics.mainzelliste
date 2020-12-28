@@ -58,10 +58,11 @@ import javax.ws.rs.core.Response.Status;
 import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
 import org.apache.commons.net.util.SubnetUtils;
-import org.apache.log4j.Logger;
-
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.openjpa.lib.log.Log;
 
 
 /**
@@ -116,7 +117,7 @@ public enum Servers {
 	private final Timer sessionsCleanupTimer;
 
 	/** The loggging instance. */
-	Logger logger = Logger.getLogger(Servers.class);
+	Logger logger = LogManager.getLogger(Servers.class);
 
 	/**
 	 * Creates the singleton instance. Reads configuration properties and
@@ -282,7 +283,7 @@ public enum Servers {
 	 * for at least the configured timeout.
 	 */
 	public void cleanUpSessions() {
-		logger.debug("Cleaning up sessions...");
+		logger.trace("Cleaning up sessions...");
 		LinkedList<String> sessionsToDelete = new LinkedList<String>();
 		Date now = new Date();
 		synchronized (sessions) {
@@ -294,7 +295,7 @@ public enum Servers {
 			// ConcurrentModificationException
 			for (String sessionId : sessionsToDelete) {
 				this.deleteSession(sessionId);
-				logger.info(String.format("Session %s timed out", sessionId));
+				logger.info("Session {} timed out", sessionId);
 			}
 			this.deleteRequestersWithoutSession();
 		}
@@ -414,13 +415,14 @@ public enum Servers {
 			req.getSession().setAttribute("permissions", perms);
 			req.getSession().setAttribute("serverName", requester.getName());
 
-
-			logger.info("Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(perms.toArray()) + ".");
+			Requester finalRequester = requester;
+			logger.info(() -> "Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(
+					finalRequester.getPermissions().toArray()) + ".");
 		}
 
 		// Should be moved to refinedPermissions
 		if(!perms.contains(permission) && perms.stream().noneMatch(p -> p.matches(permission + ".*}"))){ // Check permission
-			logger.info("Access from " + req.getRemoteHost() + " is denied since they lack permission " + permission + ".");
+			logger.info("Access from {} is denied since they lack permission {}.", req.getRemoteHost(), permission);
 			throw new WebApplicationException(Response
 					.status(Status.UNAUTHORIZED)
 					.entity("Your permissions do not allow the requested access.")
@@ -549,7 +551,7 @@ public enum Servers {
 	public void checkToken(String tid, String type) throws InvalidTokenException {
 		Token t = getTokenByTid(tid);
 		if (t == null || !type.equals(t.getType()) ) {
-			logger.info("Token with id " + tid + " " + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
+			logger.info(() -> "Token with id " + tid + " " + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
 			throw new InvalidTokenException("Please supply a valid '" + type + "' token.");
 		}
 	}

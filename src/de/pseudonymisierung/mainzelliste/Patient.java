@@ -26,7 +26,6 @@
 package de.pseudonymisierung.mainzelliste;
 
 import java.util.*;
-import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -40,7 +39,8 @@ import javax.persistence.PostLoad;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -74,11 +74,11 @@ public class Patient {
 			}
 			return fieldsJson.toString();
 		} catch (JSONException e) {
-			Logger.getLogger(Patient.class).error("Exception: ", e);
+			LogManager.getLogger(Patient.class).error("Exception: ", e);
 			throw new InternalErrorException();
 		}
 	}
-	
+
 
 	/**
 	 * Creates a map of fields from its JSON representation. Used to read
@@ -107,15 +107,15 @@ public class Patient {
 			}
 			return fields;
 		} catch (JSONException e) {
-			Logger.getLogger(Patient.class).error(
+			LogManager.getLogger(Patient.class).error(
 					"JSON error while parsing patient fields: "
 							+ e.getMessage(), e);
 			throw new InternalErrorException();
 		} catch (Exception e) {
-			Logger logger = Logger.getLogger(Patient.class);
+			Logger logger = LogManager.getLogger(Patient.class);
 			logger.error("Exception while parsing patient fields from string: "
 					+ fieldsJsonString);
-			Logger.getLogger(Patient.class)
+			LogManager.getLogger(Patient.class)
 					.error("Cause: " + e.getMessage(), e);
 			throw new InternalErrorException();
 		}
@@ -124,7 +124,7 @@ public class Patient {
 	/**
 	 * Updates empty or missing fields and external Ids from another Patient
 	 * object. Modifies the object and returns it.
-	 * 
+	 *
 	 * @param from The patient object from which to update fields.
 	 * @return The modified patient object on which the method is called.
 	 */
@@ -207,6 +207,12 @@ public class Patient {
 	private Set<ID> ids = new HashSet<>();
 
 	/**
+	 * Set of IDs for this patient, which are not persisted in DB
+	 */
+	@Transient
+	private Set<ID> transientIds = new HashSet<>();
+
+	/**
 	 * Input fields as read from form (before transformation). Used to display
 	 * field values as they were entered in first place.
 	 *
@@ -234,7 +240,7 @@ public class Patient {
 	/** The logging instance. */
 	@Transient
 	@JsonIgnore
-	private Logger logger = Logger.getLogger(this.getClass());
+	private Logger logger = LogManager.getLogger(this.getClass());
 
 	/**
 	 * The patient of which this patient is a duplicate of. If p.original is not
@@ -300,24 +306,47 @@ public class Patient {
 	 */
 	public ID createId(String type) {
 		ID thisId = getId(type);
-		if (thisId != null)
+		if (thisId != null) {
 			return thisId;
+		}
+
 		// ID of requested type was not found and is not external -> generate new ID
 		IDGenerator<? extends ID> factory = IDGeneratorFactory.instance.getFactory(type);
-
 		if (factory == null) {
 			throw new InvalidIDException("ID type " + type + " not defined!");
-		}
-		
-		if(!factory.isExternal()) {
-			ID newID = factory.getNext();
-			Persistor.instance.addId(newID);
-			factory.getMemory().ifPresent(IDGeneratorMemory::commit);
-			this.addId(newID);
-			return newID;
+		} else if (factory.isExternal()) {
+			return null;
 		}
 
-		return null;
+		// generate ids eagerly
+		// Only non external and persistent ids can be generated eagerly
+		// Can lead to cycles in generating ids due to incorrect configuration
+		// pid -> pid2 (eagerly), pid2 -> pid3 (eagerly), pid3 -> pid (eagerly))
+		// TODO: Check for cycles in the configuration
+		if (!IDGeneratorFactory.instance.isEagerGenerationOn()) {
+			IDGeneratorFactory.instance.getNonExternalIdGenerators().entrySet().stream()
+					.filter(e -> !(e.getValue().getIdType()).equals(type))
+					.filter(e -> e.getValue().isPersistent())
+					.filter(e -> e.getValue().isEagerGenerationOn(type))
+					.filter(e -> getId(e.getKey()) == null)
+					.forEach(e -> this.generateId(e.getValue()));
+		}
+
+		return generateId(factory);
+	}
+
+	private ID generateId(IDGenerator<? extends ID> factory) {
+		ID newID;
+		if (factory.isPersistent()){
+			newID = factory.getNext();
+			ids.add(newID);
+		} else {
+			String baseIdType = ((DerivedIDGenerator<?>)factory).getBaseIdType();
+			ID baseId = getId(baseIdType);
+			newID = ((DerivedIDGenerator<?>)factory).computeId(baseId);
+			transientIds.add(newID);
+		}
+		return newID;
 	}
 
 	/**
@@ -333,6 +362,23 @@ public class Patient {
 	 */
 	public ID getId(String type) {
 		for (ID thisId : ids) {
+			if (thisId.getType().equals(type))
+				return thisId;
+		}
+		return null;
+	}
+
+	/**
+	 * Get the already generated transient ID of the specified type from this patient.
+	 *
+	 * @param type
+	 *            The ID type. See {@link ID} for the general structure of an
+	 *            ID.
+	 * @return This patient's ID of the given type or null if the ID is
+	 *         not defined for this patient.
+	 */
+	public ID getTransientId(String type) {
+		for (ID thisId : transientIds) {
 			if (thisId.getType().equals(type))
 				return thisId;
 		}
@@ -364,6 +410,26 @@ public class Patient {
 	 */
 	public Set<ID> getIds() {
 		return Collections.unmodifiableSet(ids);
+	}
+
+	/**
+	 * Get the set of transient IDs of this patient.
+	 *
+	 * @return The already generated transient IDs of the patient
+	 */
+	public Set<ID> getTransientIds() {
+		return Collections.unmodifiableSet(transientIds);
+	}
+
+	/**
+	 * Get all generated ids of this patient (persistent and transient).
+	 *
+	 * @return All already generated IDs of the patient
+	 */
+	public Set<ID> getAllIds() {
+		Set<ID> allIds = ids;
+		allIds.addAll(transientIds);
+		return allIds;
 	}
 
 	/**
@@ -484,6 +550,15 @@ public class Patient {
 	}
 
 	/**
+	 * Set the transient IDs for this patient.
+	 *
+	 * @param transientIds Set of transient IDs
+	 */
+	public void setTransientIds(Set<ID> transientIds) {
+		this.transientIds = transientIds;
+	}
+
+	/**
 	 * Set the input fields. Whenever a request modifies this patient object (or
 	 * upon creation) the input fields as transmitted in the request, before
 	 * transformation, should be set with this method. This allows redisplaying
@@ -547,8 +622,8 @@ public class Patient {
 	public String toString() {
 		return fields.toString();
 	}
-	
-	/** 
+
+	/**
 	 * Determine if another patient object is equal to this. Two patient
 	 * objects p1 and p2 are considered equal if they are equal by reference
 	 * (p1==p2) or if they refer to the same object in the database. 

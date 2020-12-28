@@ -32,20 +32,46 @@ import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimC
 import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfigurations;
 import de.pseudonymisierung.mainzelliste.auth.authorizationServer.AuthorizationServers;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
+import de.pseudonymisierung.mainzelliste.crypto.CryptoUtil;
+import de.pseudonymisierung.mainzelliste.crypto.Encryption;
+import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Configuration of the patient list. Implemented as a singleton object, which
@@ -80,19 +106,32 @@ public enum Config {
 	/** The configured blockingkey extractors */
 	private BlockingKeyExtractors blockingKeyExtractors;
 
+	/** The configured cryptographic key */
+	private final Map<String, CryptoKey> cryptographicKeys = new HashMap<>();
+
+	/** The configured encryption */
+	private final Map<String, Encryption> encryptionMap = new HashMap<>();
+
 	/** Logging instance */
-	private Logger logger = Logger.getLogger(Config.class);
+	private Logger logger = LogManager.getLogger(Config.class);
 
 	/** Allowed origins for Cross Domain Resource Sharing. */
 	private Set<String> allowedOrigins;
 
 	/** Allowed headers for Cross Domain Resource Sharing */
-	private Set<String> allowedHeaders;
+	private String allowedHeaders;
+	/** Allowed methods for Cross Domain Resource Sharing */
+	private String allowedMethods;
+	/** Allowed caching time for Cross Domain Resource Sharing Preflight Requests */
+	private int allowedMaxAge;
 
 	/**List of allowed OIDC-Servers*/
 	private AuthorizationServers authorizationServers;
 	/**List of Claims*/
 	private ClaimConfigurations claimConfigurations = new ClaimConfigurations(new HashSet<>());
+
+	/** some gui configurations */
+	private GUI guiConfig;
 
 	/**
 	 * Creates an instance. Invoked on first access to Config.instance. Reads
@@ -104,39 +143,41 @@ public enum Config {
 	 */
 	@SuppressWarnings("unchecked")
 	Config() throws InternalErrorException {
-		props = new Properties();
 		try {
-			// Check if path to configuration file is given in context descriptor
-			ServletContext context = Initializer.getServletContext();
-			String configPath = context.getInitParameter("de.pseudonymisierung.mainzelliste.ConfigurationFile");
+			// try to read config from general config path for all components
+			props = readConfigFromEnv("MAINZELLISTE_CONFIG_DIRS");
 
-			// try to read config from configured path
-			if (configPath != null) {
-				logger.info("Reading config from path " + configPath + "...");
-				props = readConfigFromFile(configPath);
-				if (props == null) {
-					throw new Error("Configuration file could not be read from provided location " + configPath);
-				}
-			} else {
-				// otherwise, try default locations
-				logger.info("No configuration file configured. Try to read from default locations...");
-				for (String defaultConfigPath : defaultConfigPaths) {
-					logger.info("Try to read configuration from default location " + defaultConfigPath);
-					props = readConfigFromFile(defaultConfigPath);
-					if (props != null) {
-						logger.info("Found configuration file at default location " + defaultConfigPath);
-						break;
+			if (props == null) {
+				// Check if path to configuration file is given in context descriptor
+				ServletContext context = Initializer.getServletContext();
+				String configPath = context.getInitParameter("de.pseudonymisierung.mainzelliste.ConfigurationFile");
+
+				// try to read config from configured path
+				if (configPath != null) {
+					logger.info("Reading config from path {}...", configPath);
+					props = readConfigFromFile(configPath);
+					if (props == null) {
+						throw new Error("Configuration file could not be read from provided location " + configPath);
+					}
+				} else {
+					// otherwise, try default locations
+					logger.info("No configuration file configured. Try to read from default locations...");
+					for (String defaultConfigPath : defaultConfigPaths) {
+						logger.info("Try to read configuration from default location {}", defaultConfigPath);
+						props = readConfigFromFile(defaultConfigPath);
+						if (props != null) {
+							logger.info("Found configuration file at default location {}", defaultConfigPath);
+							break;
+						}
+					}
+					if (props == null) {
+						throw new Error("Configuration file could not be found at any default location");
 					}
 				}
-				if (props == null) {
-					throw new Error("Configuration file could not be found at any default location");
-				}
 			}
+			addSubConfigurationPropertiesToProps();
 
-
-            addSubConfigurationPropertiesToProps();
-
-            logger.info("Config read successfully");
+			logger.info("Config read successfully");
 			logger.debug(props);
 
 		} catch (IOException e)	{
@@ -150,14 +191,14 @@ public enum Config {
 			Class<?> matcherClass = Class.forName("de.pseudonymisierung.mainzelliste.matcher." + props.getProperty("matcher"));
 			matcher = (Matcher) matcherClass.newInstance();
 			matcher.initialize(props);
-			logger.info("Matcher of class " + matcher.getClass() + " initialized.");
+			logger.info("Matcher of class {} initialized.", matcher.getClass());
 		} catch (Exception e){
 			logger.fatal("Initialization of matcher failed: " + e.getMessage(), e);
 			throw new InternalErrorException();
 		}
 
 		// Read field types from configuration
-		Pattern pattern = Pattern.compile("field\\.(\\w+)\\.type");
+		Pattern pattern = Pattern.compile("field\\.(\\w+(?:\\.\\w+)*)\\.type");
 		java.util.regex.Matcher patternMatcher;
 		this.FieldTypes = new HashMap<String, Class<? extends Field<?>>>();
 		for (String propKey : props.stringPropertyNames()) {
@@ -175,7 +216,7 @@ public enum Config {
 						fieldClass = (Class<? extends Field<?>>) Class.forName("de.pseudonymisierung.mainzelliste." + fieldClassStr);
 					}
 					this.FieldTypes.put(fieldName, fieldClass);
-					logger.debug("Initialized field " + fieldName + " with class " + fieldClass);
+					logger.debug("Initialized field {} with class {}", fieldName, fieldClass);
 				} catch (Exception e) {
 					logger.fatal("Initialization of field " + fieldName + " failed: ", e);
 					throw new InternalErrorException();
@@ -190,15 +231,77 @@ public enum Config {
 		allowedOrigins = new HashSet<>();
 		String allowedOriginsString = props.getProperty("servers.allowedOrigins");
 		if (allowedOriginsString != null)
-			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split(";")));
+			allowedOrigins.addAll(Arrays.asList(allowedOriginsString.trim().split("[;,]")));
 
-		allowedHeaders = new HashSet<>();
-		String allowedHeadersString = props.getProperty("servers.allowedHeaders");
-		if (allowedHeadersString != null)
-			allowedHeaders.addAll(Arrays.asList(allowedHeadersString.trim().split(";")));
+		allowedHeaders = props.getProperty("servers.allowedHeaders","mainzellisteApiVersion,mainzellisteApiKey")
+				.trim()
+				.replace(';', ',');
+		allowedMethods = props.getProperty("servers.allowedMethods", "OPTIONS,GET,POST")
+				.trim()
+				.replace(';', ',');
+
+		try {
+			String allowedMaxAgeString = props.getProperty("servers.allowedMaxAge", "600");
+			allowedMaxAge = Integer.parseInt(allowedMaxAgeString);
+			if(allowedMaxAge < -1){
+				throw new InvalidConfigurationException("The servers.allowedMaxAge parameter is in an unexpected format: " + allowedMaxAge + ". Expected number greater than -1");
+			}
+		} catch (NumberFormatException e){
+			throw new InvalidConfigurationException("The servers.allowedMaxAge parameter is in an unexpected format: " + allowedMaxAge + ". Expected numeric value", e);
+		}
+
+		// Read cryptographic key
+		getVariableSubProperties("crypto.key").forEach((v, p) -> {
+			try {
+				cryptographicKeys.put(v, CryptoUtil.readKey(p.getProperty("type"),
+						readFileFromURL(p.getProperty("uri").trim())));
+			} catch (IOException e) {
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.key." + v + ".uri", p.getProperty("uri"), e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			} catch (IllegalArgumentException e) {
+				// unsupported key type
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.key." + v + ".type", p.getProperty("type"), e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			} catch (UnsupportedOperationException e) {
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.key." + v + ".*", "Instantiation of a cryptographic key failed", e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			}
+		});
+
+		// Read encryption
+		getVariableSubProperties("crypto.encryption").forEach((v, p) -> {
+			try {
+				encryptionMap.put(v, CryptoUtil.createEncryption(p.getProperty("type"),
+						cryptographicKeys.get(p.getProperty("key"))));
+			} catch (InvalidKeySpecException e) {
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.encryption." + v + ".key", p.getProperty("key"), e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			} catch (IllegalArgumentException e) { // unsupported encryption type
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.encryption." + v + ".type", p.getProperty("type"), e);
+				logger.error(exception.getMessage(), e);
+				throw exception;
+			} catch (UnsupportedOperationException e) {
+				InvalidConfigurationException exception = new InvalidConfigurationException(
+						"crypto.encryption." + v + ".*", "Instantiation of a encryption failed", e);
+				logger.fatal(exception.getMessage(), e);
+				throw exception;
+			}
+		});
 
 		// Read version number provided by pom.xml
 		version = readVersion();
+
+		// read gui configuration
+		this.guiConfig = new GUI(props);
 
 		Set<AuthorizationServer> oidcServerSet = AuthorizationServerParser.parseOIDCServerConfiguration(props);
 		this.authorizationServers = new AuthorizationServers(oidcServerSet);
@@ -206,14 +309,41 @@ public enum Config {
 		this.claimConfigurations = new ClaimConfigurations(claimConfigurationSet);
 	}
 
-    /**
+	/**
+	 * Attempts to read config from path specified in an environment variable.
+	 * @param env The name of the environment variable. Different paths should be separated by "::"
+	 * @return The configuration as a Properties object or null if the given
+	 *         file was not found.
+	 */
+	public Properties readConfigFromEnv(String env) {
+		Properties props = null;
+
+		if (System.getenv(env) != null) {
+			String configDirsAsString = System.getenv(env);
+			String[] configDirs =  configDirsAsString.split("::");
+			for (String configDir : configDirs) {
+				File configFile = new File (configDir, "mainzelliste.conf");
+				logger.info("Try to read configuration from path " + configFile.getAbsolutePath() + "...");
+				try {
+					props = readConfigFromFile(configFile.getAbsolutePath());
+				} catch (IOException e)	{
+					logger.fatal("Error reading configuration file. Please configure according to installation manual.", e);
+					throw new Error(e);
+				}
+				if (props != null) {
+					break;
+				}
+			}
+
+		}
+		return props;
+	}
+
+	/**
      * Reads subConfiguration.{n}.uri(s) and adds the values to Config.props
      *
      */
     private void addSubConfigurationPropertiesToProps() {
-        //
-        // add custom configuration values
-
 		// get custom config attributes
 		List<String> subConfigurations = props.stringPropertyNames().stream().filter(k -> Pattern.matches("subConfiguration\\.\\d+\\.uri", k.trim()))
 				.map(k -> Integer.parseInt(k.split("\\.")[1])).sorted()
@@ -227,7 +357,7 @@ public enum Config {
             try {
                 URL subConfigurationURL = new URL(props.getProperty(attribute).trim());
                 subConfigurationProperties = readConfigFromUrl(subConfigurationURL);
-                logger.info("Sub configuration file " + attribute + " = " + subConfigurationURL + " has been read in.");
+                logger.info("Sub configuration file {} = {} has been read in.", attribute, subConfigurationURL);
             }  catch (MalformedURLException e) {
                 logger.fatal("Custom configuration file '" + attribute +
                         "' could not be read from provided URL " + attribute, e);
@@ -375,11 +505,27 @@ public enum Config {
 	}
 
 	/**
-	 * Returns the allowed Headers to set on Cross Domain Resource Sharing
-	 * @return list of headers set in config servers.allowedHeaders
+	 * Returns the configured allowed Headers for Cross Domain Resource Sharing
+	 * @return list of headers set in config servers.allowedHeaders, default is: "mainzellisteApiVersion,mainzellisteApiKey"
 	 */
 	public String getAllowedHeaders() {
 		return String.join(",", this.allowedHeaders);
+	}
+
+	/**
+	 * Returns the configured allowed methods for Cross Domain Resource Sharing
+	 * @return list of headers set in config servers.allowedMethods, default is: "OPTIONS,GET,POST"
+	 */
+	public String getAllowedMethods() {
+		return String.join(",", this.allowedMethods);
+	}
+
+	/**
+	 * Returns the configured allowed time CORS Preflight requests should be cached
+	 * @return list of headers set in config servers.allowedMaxAge, default is: "600"
+	 */
+	public int getAllowedMaxAge() {
+		return this.allowedMaxAge;
 	}
 
 	/**
@@ -590,6 +736,14 @@ public enum Config {
 	}
 
 	/**
+	 * Get gui configuration
+	 */
+	public GUI getGuiConfiguration()
+	{
+		return guiConfig;
+	}
+
+	/**
 	 * Read version string from properties file "version.properties",
 	 * which is copied from pom.xml by Maven.
 	 * @return The version string.
@@ -629,5 +783,76 @@ public enum Config {
 	 */
 	public AuthorizationServers getAuthorizationServers() {
 		return authorizationServers;
+	}
+
+	public Encryption getEncryption(String encryptionName) {
+		return encryptionMap.get(encryptionName);
+	}
+
+	public static class GUI {
+		/** url of control number generator */
+		public final String cngUrl;
+		/** api key of control number generator */
+		public final String cgnApiKey;
+		/** version of mainzelliste (ml) rest api */
+		public final String mlApiVersion;
+
+		private GUI(Properties properties) {
+			this.cngUrl = Optional.ofNullable((String)properties.get("gui.cng.url")).orElse("");
+			this.cgnApiKey = Optional.ofNullable((String)properties.get("gui.cng.apiKey")).orElse("");
+			this.mlApiVersion = Optional.ofNullable((String)properties.get("gui.ml.apiVersion")).orElse("");
+		}
+	}
+
+	// HELPERS
+
+	/**
+	 * transform a configuration entry in the following format : <br>
+	 * 	{@code prefix.<variable>.<propertyKey> = <propertyValue>} <br>
+	 * in a map with {@code <variable>} as key and the given suffix {@code <propertyKey>} together
+	 * with the value {@code <propertyValue>} in property list as value.
+	 * @param prefix configuration key prefix
+	 * @return a map with variable name as key and its properties as value
+	 */
+	private Map<String, Properties> getVariableSubProperties(String prefix) {
+		Map<String, Properties> childrenPropertiesMap = new HashMap<>();
+		// property key should look like this : prefix.<var>.suffix
+		props.stringPropertyNames()
+				.stream()
+				.filter(k -> Pattern.matches("^" + prefix + "\\.\\w+\\..+", k.trim()))
+				.forEach(k -> {
+					String subKey = k.substring(prefix.length() + 1); // remove prefix from key
+					childrenPropertiesMap.compute(
+							subKey.split("\\.")[0], // get "<var>" @see example above
+							(newK, newProperties) -> addProperty(
+									newProperties,
+									subKey.substring(newK.length() + 1), // get "suffix" @see example above
+									props.getProperty(k)));         // get property value
+				});
+		return childrenPropertiesMap;
+	}
+
+	private Properties addProperty(Properties properties, String key, String value) {
+		if(properties == null) {
+			properties = new Properties();
+		}
+		properties.setProperty(key, value);
+		return properties;
+	}
+
+	/**
+	 * read file from the given url
+	 * @param fileURL url of the file (e.g. file:///etc/keys/private.der)
+	 * @return byte array
+	 */
+	private byte[] readFileFromURL(String fileURL) throws IOException {
+		try (InputStream inputStream = new URL(fileURL).openStream() ) {
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			byte[] buffer = new byte[0xFFFF];
+			for (int len = inputStream.read(buffer); len != -1; len = inputStream.read(buffer)) {
+				outputStream.write(buffer, 0, len);
+			}
+			return outputStream.toByteArray();
+		}
 	}
 }

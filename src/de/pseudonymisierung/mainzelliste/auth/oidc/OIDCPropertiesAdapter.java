@@ -8,7 +8,8 @@ import de.pseudonymisierung.mainzelliste.auth.jwt.decodedJWT.IDecodedJWT;
 import de.pseudonymisierung.mainzelliste.auth.jwt.decoder.Auth0JWTDecoder;
 import de.pseudonymisierung.mainzelliste.httpsClient.OICDService;
 import java.io.IOException;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONObject;
 
 /**
@@ -16,7 +17,7 @@ import org.codehaus.jettison.json.JSONObject;
  */
 public class OIDCPropertiesAdapter {
 
-  private static final Logger logger = Logger.getLogger(OIDCPropertiesAdapter.class);
+  private static final Logger logger = LogManager.getLogger(OIDCPropertiesAdapter.class);
 
   /**
    * Returns the user claims provided by the authorization server

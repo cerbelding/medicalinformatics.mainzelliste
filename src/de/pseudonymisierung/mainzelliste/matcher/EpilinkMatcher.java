@@ -40,7 +40,7 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import org.apache.log4j.Logger;
+
 
 
 import de.pseudonymisierung.mainzelliste.Field;
@@ -48,6 +48,8 @@ import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.Validator;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Performs record linkage by using the algorithm of Epilink et al. This is a
@@ -123,7 +125,7 @@ public class EpilinkMatcher implements Matcher {
 	private Set<String> nonExchangeFields;
 
 	/** The logging instance. */
-	private Logger logger = Logger.getLogger(EpilinkMatcher.class);
+	private Logger logger = LogManager.getLogger(EpilinkMatcher.class);
 
 	@Override
 	public void initialize(Properties props) throws InternalErrorException
@@ -146,7 +148,7 @@ public class EpilinkMatcher implements Matcher {
 			m = p.matcher((String) key);
 			if (m.find()){
 				String fieldName = m.group(1);
-				logger.info("Initializing properties for field " + fieldName);
+				logger.info("Initializing properties for field {}", fieldName);
 				String fieldCompStr = props.getProperty("field." + fieldName + ".comparator");
 				if (fieldCompStr != null)
 				{
@@ -172,7 +174,7 @@ public class EpilinkMatcher implements Matcher {
 					// all e_i have same value in this implementation
 					double weight = (1 - error_rate) / frequency;
 					weight = Math.log(weight) / Math.log(2);
-					logger.debug("Field weight for field " + fieldName + ": " + weight);
+					logger.debug("Field weight for field {}: {}", fieldName, weight);
 					weights.put(fieldName, weight);
 				}
 			}
@@ -350,7 +352,7 @@ public class EpilinkMatcher implements Matcher {
 			double fieldWeight = weights.get(fieldName);
 			weightSum += fieldWeight;
 			double thisCompWeight = comparators.get(fieldName).compare(left, right) * fieldWeight;
-			logger.debug("Weighted comparison for field " + fieldName + ": " + thisCompWeight);
+			logger.debug("Weighted comparison for field {}: {}", fieldName, thisCompWeight);
 			totalWeight += thisCompWeight;
 		}
 		totalWeight /= weightSum;

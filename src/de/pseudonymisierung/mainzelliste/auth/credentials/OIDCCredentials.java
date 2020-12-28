@@ -4,7 +4,8 @@ import de.pseudonymisierung.mainzelliste.auth.authenticator.AuthenticationEum;
 import de.pseudonymisierung.mainzelliste.auth.jwt.decodedJWT.IDecodedJWT;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -16,7 +17,7 @@ public class OIDCCredentials implements ClientCredentials, AuthorizationServerCr
 
   JSONObject userInfo;
   IDecodedJWT decodedJWT;
-  private final Logger logger = Logger.getLogger(OIDCCredentials.class);
+  private final Logger logger = LogManager.getLogger(OIDCCredentials.class);
 
 
   public OIDCCredentials(JSONObject userInfo, IDecodedJWT jwt) {

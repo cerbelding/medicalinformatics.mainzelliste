@@ -1,6 +1,8 @@
 package de.pseudonymisierung.mainzelliste.httpsClient;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import javax.ws.rs.HttpMethod;
@@ -9,7 +11,7 @@ import java.io.IOException;
 public class OICDService {
 
   private static final String USERINFOENDPOINTKEY = "userinfo_endpoint";
-  private static final Logger logger = Logger.getLogger(OICDService.class);
+  private static final Logger logger = LogManager.getLogger(OICDService.class);
   private static final String METADATAURL = ".well-known/openid-configuration";
 
   /**
