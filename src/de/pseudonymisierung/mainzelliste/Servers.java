@@ -28,7 +28,7 @@ package de.pseudonymisierung.mainzelliste;
 import de.pseudonymisierung.mainzelliste.auth.credentials.ApiKeyCredentials;
 import de.pseudonymisierung.mainzelliste.utils.AuthenticationUtils;
 
-import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurations;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfigurations;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.ApiKeyAuthenticator;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.AuthenticationEum;
 import de.pseudonymisierung.mainzelliste.auth.credentials.OIDCCredentials;
@@ -79,15 +79,6 @@ public enum Servers {
 	 */
 	class Server extends Requester {
 
-		String id;
-		String name;
-		/** The apiKey by which this server authenticates itself. */
-		String apiKey;
-		/** The permissions of this server. */
-		Set<String> permissions;
-
-		/**Authentication of a server */
-		Authenticator auth;
 		/** Remote IP addresses that are accepted for requests by this server. */
 		Set<String> allowedRemoteAdresses;
 		/**
@@ -95,6 +86,11 @@ public enum Servers {
 		 * server.
 		 */
 		List<SubnetUtils> allowedRemoteAdressRanges;
+
+		public Server(Set<String> permissions,
+				Authenticator authenticator, String apiKey, String name) {
+			super(permissions, authenticator, apiKey,name);
+		}
 
 	}
 
@@ -178,15 +174,13 @@ public enum Servers {
 					!props.containsKey("servers." + i + ".permissions"))
 				break;
 
-			Server s = new Server();
-			s.name = "server" + i;
-			s.apiKey = props.getProperty("servers." + i + ".apiKey").trim();
-			s.id = s.apiKey;
-			s.auth = new ApiKeyAuthenticator(s.apiKey);
-
-
+			String name =  "server" + i;
+			String apiKey = props.getProperty("servers." + i + ".apiKey").trim();
+			Authenticator authenticator = new ApiKeyAuthenticator(apiKey);
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
-			s.permissions = new HashSet<String>(Arrays.asList(permissions));
+
+			Server s = new Server(new HashSet<String>(Arrays.asList(permissions)), authenticator, apiKey, name);
+
 
 			String allowedRemoteAdressesString = props.getProperty("servers." + i + ".allowedRemoteAdresses");
 			String allowedRemoteAdresses[] = (allowedRemoteAdressesString != null) ?  allowedRemoteAdressesString.split("[;,]") : new String[]{"127.0.0.1", "0:0:0:0:0:0:0:1"};
@@ -203,7 +197,7 @@ public enum Servers {
 					s.allowedRemoteAdresses.add(thisAddress);
 				}
 			}
-			servers.put(s.apiKey, s);
+			servers.put(s.getId(), s);
 
 		}
 	}
@@ -654,40 +648,21 @@ public enum Servers {
 
 	public String getServerNameForApiKey(String apiKey){
 		Server server = servers.get(apiKey);
-		return server.name;
+		return server.getName();
 
 	}
 
-	public boolean hasServerPermission(String serverName, String permission){
+	public boolean hasPermissionByName(String serverName, String permission){
 
-		Server server = servers.get(getApiKeyForServerName(serverName));
-		if(server.permissions.contains(permission)) {
-			return true;
+		Requester requester = getRequesterByName(serverName);
+		if(requester != null && requester.getPermissions().contains(permission) ){
+				return true;
 		}
-		return false;
+		else {
+			return false;
+		}
 	}
 
-	public Set<String> getServerPermissionsForServerName(String serverName){
-		Server server = servers.get(getApiKeyForServerName(serverName));
-		return server.permissions;
-	}
-
-	/**
-	 * Return the requester which has the unique id, if no requester could be found it returns null
-	 * @param id the id of the requester
-	 * @return the requester which has the unique id
-	 */
-	public Requester getRequesterByID(String id){
-		if(servers.containsKey(id)){
-			return servers.get(id);
-		}
-		else if(clientList.containsKey(id)){
-			return clientList.getUserById(id);
-		}
-		else{
-			return null;
-		}
-	}
 
 	/**
 	 * Return the requester which is registered with the unique api key
@@ -711,7 +686,7 @@ public enum Servers {
 	 * @return the authenticated requester, otherwise null
 	 */
 	public Requester getRequesterByAccessToken(String accessToken){
-		OIDCCredentials OIDCCredentials = OIDCPropertiesAdapter.getIdToken(accessToken);
+		OIDCCredentials OIDCCredentials = OIDCPropertiesAdapter.getOIDCInformationsByAccessToken(accessToken);
 		Requester requester = clientList.getRequesterByAuthentication(OIDCCredentials);
 		if(requester == null){
 			requester  = createRequesterByAccessToken(accessToken);
@@ -727,10 +702,10 @@ public enum Servers {
 	 */
 
 	public Requester createRequesterByAccessToken(String accessToken){
-		OIDCCredentials OIDCCredentials = OIDCPropertiesAdapter.getIdToken(accessToken);
-		if(OIDCCredentials != null){
+		OIDCCredentials oIDCCredentials = OIDCPropertiesAdapter.getOIDCInformationsByAccessToken(accessToken);
+		if(oIDCCredentials != null){
 			ClaimConfigurations claimConfigurations = Config.instance.getClaimConfigurationSet();
-			Requester requester =  claimConfigurations.createRequester(OIDCCredentials);
+			Requester requester =  claimConfigurations.createRequester(oIDCCredentials, oIDCCredentials);
 			if(requester != null){
 				clientList.add(requester);
 			}
@@ -756,22 +731,11 @@ public enum Servers {
 	public Server getServerByName(String serverName){
 		for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
 			Server server = entry.getValue();
-			if(serverName.equals(server.name)){
+			if(serverName.equals(server.getName())){
 				return server;
 			}
 		}
 		return  null;
-	}
-
-	public String getApiKeyForServerName(String serverName){
-
-		for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
-			if(serverName.equals(entry.getValue().name)){
-				return entry.getKey();
-			}
-		}
-
-		return "Server not found";
 	}
 
 }

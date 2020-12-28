@@ -1,6 +1,6 @@
 package de.pseudonymisierung.mainzelliste.configuration;
 
-import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimEnum;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfigurationEnum;
 import java.util.Properties;
 import java.util.Set;
 
@@ -31,7 +31,7 @@ public class PermissionUtils {
 
   public static Set<String> getPermissions(Properties props, String prefix) {
     String propsKey = ConfigurationUtils
-        .getConcatenatedConfigurationPath(prefix, ClaimEnum.PERMISSIONS.getClaimName());
+        .getConcatenatedConfigurationPath(prefix, ClaimConfigurationEnum.PERMISSIONS.getClaimName());
     String permissionKey = props.getProperty(propsKey);
     return splitPermissionValue(permissionKey);
   }

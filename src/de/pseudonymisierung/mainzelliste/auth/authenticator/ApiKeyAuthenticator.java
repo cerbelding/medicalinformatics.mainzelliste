@@ -25,7 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste.auth.authenticator;
 
-import de.pseudonymisierung.mainzelliste.auth.credentials.Credentials;
+import de.pseudonymisierung.mainzelliste.auth.credentials.ClientCredentials;
 import org.apache.log4j.Logger;
 
 /**
@@ -49,8 +49,8 @@ public class ApiKeyAuthenticator implements Authenticator {
 
 
   @Override
-  public boolean isAuthenticated(Credentials apiKeyCredentials) {
-    String apiKey = apiKeyCredentials.getId();
+  public boolean isAuthenticated(ClientCredentials apiKeyClientCredentials) {
+    String apiKey = apiKeyClientCredentials.getId();
     boolean isAuthenticated = false;
     if (apiKey != null) {
       isAuthenticated = this.apiKey.equals(apiKey);

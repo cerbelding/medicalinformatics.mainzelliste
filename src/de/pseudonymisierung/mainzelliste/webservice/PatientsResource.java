@@ -415,7 +415,7 @@ public class PatientsResource {
 
                     if (token.getParentServerName() == null) {
                         throw new NoParentServerNameException();
-                    } else if (Servers.instance.hasServerPermission(token.getParentServerName(), "readAllPatientIds")) {
+                    } else if (Servers.instance.hasPermissionByName(token.getParentServerName(), "readAllPatientIds")) {
                         try {
                             thisPatient.put("ids", getAllIDsOfPatient(patient));
 
@@ -448,7 +448,7 @@ public class PatientsResource {
 
                     if (token.getParentServerName() == null) {
                         throw new NoParentServerNameException();
-                    } else if (Servers.instance.hasServerPermission(token.getParentServerName(),
+                    } else if (Servers.instance.hasPermissionByName(token.getParentServerName(),
                             "readAllPatientIdTypes")) {
                         try {
                             thisPatient.put("idTypes", getAllIdTypesOfPatient(patient));
@@ -481,7 +481,7 @@ public class PatientsResource {
             // Callback
             String callback = token.getDataItemString("callback");
             if (callback != null && callback.length() > 0
-                    && Servers.instance.hasServerPermission(token.getParentServerName(), "callback")) {
+                    && Servers.instance.hasPermissionByName(token.getParentServerName(), "callback")) {
                 MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
                 try {
                     mainzellisteCallback.url(callback).apiVersion(Servers.instance.getRequestApiVersion(request))
@@ -496,7 +496,7 @@ public class PatientsResource {
             }
             String redirect = token.getDataItemString("redirect");
             if (redirect != null && redirect.length() > 0
-                    && Servers.instance.hasServerPermission(token.getParentServerName(), "redirect")) {
+                    && Servers.instance.hasPermissionByName(token.getParentServerName(), "redirect")) {
                 UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
                 List<String> templateVariables = redirectURITempl.getTemplateVariables();
 

@@ -1,7 +1,7 @@
 package de.pseudonymisierung.mainzelliste.auth.authorizationServer;
 
-import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimAuthEnum;
-import de.pseudonymisierung.mainzelliste.configuration.claim.oidc.OIDCConfigurationParser;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfigurationAuthEnum;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.oidcClaimConfiguration.OIDCClaimConfigurationParser;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -15,23 +15,26 @@ public class AuthorizationServerFactory {
 
   private final Map<String, String> config;
   private final String prefix;
-  private final Map<ClaimAuthEnum, Supplier<IAuthorization>> factoryMap = new HashMap<>();
+  private final Map<ClaimConfigurationAuthEnum, Supplier<AuthorizationServer>> factoryMap = new HashMap<>();
+  private final AuthorizationServers authorizationServers;
   private final static Logger logger = Logger.getLogger(AuthorizationServerFactory.class);
 
 
   private void initFactoryMap() {
-    factoryMap.put(ClaimAuthEnum.OIDC,
-        () -> OIDCConfigurationParser.getOIDCServer(this.config, this.prefix));
+    factoryMap.put(ClaimConfigurationAuthEnum.OIDC,
+        () -> OIDCClaimConfigurationParser.getOIDCServer(this.config, this.prefix, this.authorizationServers));
   }
 
-  public AuthorizationServerFactory(Map<String, String> config, String prefix) {
+  public AuthorizationServerFactory(Map<String, String> config, String prefix, AuthorizationServers authorizationServers) {
     this.config = config;
     this.prefix = prefix;
+    this.authorizationServers = authorizationServers;
     this.initFactoryMap();
   }
 
-  public IAuthorization getAuthorizationServer(ClaimAuthEnum claimAuthEnum) {
-    Supplier<IAuthorization> factory = factoryMap.get(claimAuthEnum);
+  public AuthorizationServer getAuthorizationServer(
+      ClaimConfigurationAuthEnum claimConfigurationAuthEnum) {
+    Supplier<AuthorizationServer> factory = factoryMap.get(claimConfigurationAuthEnum);
     if (factory == null) {
       logger.warn("Authorization Server could not be found");
       return null;

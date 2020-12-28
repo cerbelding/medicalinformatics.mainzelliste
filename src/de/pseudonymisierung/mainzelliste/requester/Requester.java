@@ -1,6 +1,6 @@
 package de.pseudonymisierung.mainzelliste.requester;
 
-import de.pseudonymisierung.mainzelliste.auth.credentials.Credentials;
+import de.pseudonymisierung.mainzelliste.auth.credentials.ClientCredentials;
 import de.pseudonymisierung.mainzelliste.auth.authenticator.Authenticator;
 import java.util.Set;
 import java.util.UUID;
@@ -49,6 +49,21 @@ public abstract class Requester {
     this.name = id;
   }
 
+  /**
+   * Creates a new Requester, with his permissions and authentication method, creates a random ID
+   *
+   * @param permissions   List of the permissions
+   * @param authenticator Authentication method of the User
+   * @param id            The id of the requester
+   * @param name          The name of the requester
+   */
+  public Requester(Set<String> permissions, Authenticator authenticator, String id, String name) {
+    this.permissions = permissions;
+    this.authenticator = authenticator;
+    this.id = id;
+    this.name = name;
+  }
+
   public Requester() {
   }
 
@@ -67,7 +82,7 @@ public abstract class Requester {
    * @param authentication the claims to authenticate
    * @return true if the requester could be authenticated, false if not
    */
-  public boolean isAuthenticated(Credentials authentication) {
+  public boolean isAuthenticated(ClientCredentials authentication) {
     return this.authenticator.isAuthenticated(authentication);
   }
 

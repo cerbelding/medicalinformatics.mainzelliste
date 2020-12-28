@@ -58,13 +58,15 @@ public final class AuthenticationUtils {
    * @return the founded requester otherwise null
    */
   public static Requester authenticate(Map<AuthenticationEum, String> httpHeader) {
-    if (httpHeader.containsKey(AuthenticationEum.APIKEY)) {
+    if(httpHeader.containsKey(AuthenticationEum.APIKEY) && httpHeader.containsKey(AuthenticationEum.ACCESS_TOKEN) ){
+      return null;
+    }
+    else if (httpHeader.containsKey(AuthenticationEum.APIKEY)) {
       String apiKey = httpHeader.get(AuthenticationEum.APIKEY);
       return Servers.instance.getRequesterByAPIKey(apiKey);
     } else if (httpHeader.containsKey(AuthenticationEum.ACCESS_TOKEN)) {
       String accessToken = httpHeader.get(AuthenticationEum.ACCESS_TOKEN);
       return Servers.instance.getRequesterByAccessToken(accessToken);
-
     } else {
       return null;
     }

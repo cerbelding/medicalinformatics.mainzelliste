@@ -25,12 +25,12 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfiguration;
-import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurationParser;
-import de.pseudonymisierung.mainzelliste.configuration.claim.ClaimConfigurations;
-import de.pseudonymisierung.mainzelliste.auth.authorizationServer.OIDCServer;
-import de.pseudonymisierung.mainzelliste.configuration.oidcServer.OIDCServerConfigurationParser;
-import de.pseudonymisierung.mainzelliste.auth.authorizationServer.OIDCServers;
+import de.pseudonymisierung.mainzelliste.auth.authorizationServer.AuthorizationServer;
+import de.pseudonymisierung.mainzelliste.configuration.authorizationServer.AuthorizationServerParser;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfiguration;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfigurationParser;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfigurations;
+import de.pseudonymisierung.mainzelliste.auth.authorizationServer.AuthorizationServers;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
@@ -90,7 +90,7 @@ public enum Config {
 	private Set<String> allowedHeaders;
 
 	/**List of allowed OIDC-Servers*/
-	private OIDCServers oidcServers;
+	private AuthorizationServers authorizationServers;
 	/**List of Claims*/
 	private ClaimConfigurations claimConfigurations = new ClaimConfigurations(new HashSet<>());
 
@@ -200,8 +200,10 @@ public enum Config {
 		// Read version number provided by pom.xml
 		version = readVersion();
 
-		Set<OIDCServer> oidcServerSet = OIDCServerConfigurationParser.parseOIDCServerConfiguration(props);
-		this.oidcServers = new OIDCServers(oidcServerSet);
+		Set<AuthorizationServer> oidcServerSet = AuthorizationServerParser.parseOIDCServerConfiguration(props);
+		this.authorizationServers = new AuthorizationServers(oidcServerSet);
+		Set<ClaimConfiguration> claimConfigurationSet = ClaimConfigurationParser.parseConfiguration(props, this.authorizationServers);
+		this.claimConfigurations = new ClaimConfigurations(claimConfigurationSet);
 	}
 
     /**
@@ -597,7 +599,7 @@ public enum Config {
 			Properties props = new Properties();
 			InputStream versionInputStream = Initializer.getServletContext().getResourceAsStream("/WEB-INF/classes/version.properties");
 			if (versionInputStream == null) {
-				// Try alternate way of reading file (necessary for running test via the Jersey Test Framework) 
+				// Try alternate way of reading file (necessary for running test via the Jersey Test Framework)
 				versionInputStream = this.getClass().getResourceAsStream("/version.properties");
 			}
 			if (versionInputStream == null) {
@@ -625,16 +627,7 @@ public enum Config {
 	 * Returns the OIDCServers which are defined in the configuration file
 	 * @return the stored OIDCServers
 	 */
-	public OIDCServers getOidcServers() {
-		return oidcServers;
+	public AuthorizationServers getAuthorizationServers() {
+		return authorizationServers;
 	}
-
-	/**
-	 * Generates the ClaimConfigurations with the provided configuration file and the stored OIDCServers
-	 */
-	public void updateClaimConfigurations(){
-		Set<ClaimConfiguration> claimConfigurationSet = ClaimConfigurationParser.parseConfiguration(props);
-		this.claimConfigurations = new ClaimConfigurations(claimConfigurationSet);
-	}
-
 }

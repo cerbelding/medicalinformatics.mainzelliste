@@ -22,5 +22,6 @@ docker-compose.override.yml
 /data/
 /config/secrets/
 
-
+#Ignore ci output and config
 /ci/test_results/
+/ci/newman_mainzelliste_configs/active_config/

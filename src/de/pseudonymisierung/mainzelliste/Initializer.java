@@ -91,7 +91,6 @@ public class Initializer implements ServletContextListener {
 		}
 
 		Config c = Config.instance;
-		c.updateClaimConfigurations();
 		log4jSetup();
 		Persistor p = Persistor.instance;
 		IDGeneratorFactory idgf = IDGeneratorFactory.instance;

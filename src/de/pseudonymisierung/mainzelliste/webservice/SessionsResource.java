@@ -86,7 +86,7 @@ public class SessionsResource {
 	public synchronized Response newSession(@Context HttpServletRequest req) throws JSONException{
 		logger.info("Request to create session received by host " + req.getRemoteHost());
 
-		// TODOO REFACTOR
+		// TODO: 14.12.2020 Refactoring
 		// Session will be
 		Servers.instance.checkPermission(req, "createSession");
 
@@ -108,7 +108,7 @@ public class SessionsResource {
 		else if(authenticationMap.containsKey(AuthenticationEum.ACCESS_TOKEN)){
 			Requester requester = AuthenticationUtils.authenticate(authenticationMap);
 			if(requester != null ){
-				s = Servers.instance.newSession(requester.getId());
+				s = Servers.instance.newSession(requester.getName());
 			}
 			else {
 				return Response.status(Status.UNAUTHORIZED)
