@@ -103,7 +103,15 @@ public class SessionsResource {
 		}
 		else if(authenticationMap.containsKey(AuthenticationEum.APIKEY)){
 			String parentServerName = Servers.instance.getServerNameForApiKey(authenticationMap.get(AuthenticationEum.APIKEY));
-			s = Servers.instance.newSession(parentServerName);
+			if(parentServerName != null){
+				s = Servers.instance.newSession(parentServerName);
+			}
+			else {
+				return Response.status(Status.UNAUTHORIZED)
+						.entity("Please supply your API key in HTTP header field 'mainzellisteApiKey'.")
+						.build();
+			}
+
 
 		}
 		else if(authenticationMap.containsKey(AuthenticationEum.ACCESS_TOKEN)){
@@ -113,7 +121,7 @@ public class SessionsResource {
 			}
 			else {
 				return Response.status(Status.UNAUTHORIZED)
-						.entity("access token could not been validate")
+						.entity("access token could not been validated")
 						.build();
 			}
 		}

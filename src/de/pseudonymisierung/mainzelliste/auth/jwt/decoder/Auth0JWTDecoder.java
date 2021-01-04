@@ -24,9 +24,4 @@ public class Auth0JWTDecoder implements IJWTDecoder {
     }
   }
 
-  @Override
-  public boolean verify(String accessToken, String algorithm) {
-    // TODO: 05.12.2020 Verify Access token 
-    throw new NotImplementedException();
-  }
 }

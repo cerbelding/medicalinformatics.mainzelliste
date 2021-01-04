@@ -25,5 +25,4 @@ public class Auth0JWT implements IDecodedJWT {
     return decodedJWT.getSubject();
   }
 
-
 }

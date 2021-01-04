@@ -650,8 +650,10 @@ public enum Servers {
 
 	public String getServerNameForApiKey(String apiKey){
 		Server server = servers.get(apiKey);
-		return server.getName();
-
+		if(server != null){
+			return server.getName();
+		}
+		return null;
 	}
 
 	public boolean hasPermissionByName(String serverName, String permission){

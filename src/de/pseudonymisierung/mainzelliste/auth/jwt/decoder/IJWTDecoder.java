@@ -14,7 +14,4 @@ public interface IJWTDecoder {
    * @return the decoded JWT
    */
   IDecodedJWT decode(String accessToken);
-
-  boolean verify(String accessToken, String algorithm);
-
 }
