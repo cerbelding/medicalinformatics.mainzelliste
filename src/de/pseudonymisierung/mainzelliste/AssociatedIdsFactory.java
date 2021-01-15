@@ -9,12 +9,14 @@ import java.util.Set;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 
 public class AssociatedIdsFactory {
-    private Map<String, Set<String>> assocTypes;
+    private static AssociatedIdsFactory instance;
+
+    private final Map<String, Set<String>> associatedIdTypes = new HashMap<>();
 
     /**
      * Create a Factory with properties from the Config Singleton instnace.
      */
-    public AssociatedIdsFactory() {
+    protected AssociatedIdsFactory() {
         this(Config.instance.getProperties());
     }
 
@@ -22,8 +24,7 @@ public class AssociatedIdsFactory {
      * Create a Factory with properties supplied.
      * @param props Mainzelliste properties, where relevant properties are extracted from.
      */
-    public AssociatedIdsFactory(Properties props) {
-        this.assocTypes =  new HashMap<String, Set<String>>();
+    protected AssociatedIdsFactory(Properties props) {
         for(String propKey: props.stringPropertyNames()) {
             if(propKey.startsWith("associatedids.") && propKey.endsWith(".idgenerators")) {
                 String idType = propKey.substring("associatedids.".length(), propKey.length() - ".idgenerators".length());
@@ -31,7 +32,7 @@ public class AssociatedIdsFactory {
                 for(String propGenerator: props.getProperty("associatedids." + idType + ".idgenerators").split(",")) {
                     idGenerators.add(propGenerator.trim());
                 }
-                this.assocTypes.put(idType, idGenerators);
+                this.associatedIdTypes.put(idType, idGenerators);
             }
         }
     }
@@ -39,8 +40,11 @@ public class AssociatedIdsFactory {
     /**
      * Returns a new factory instance.
      */
-    public static AssociatedIdsFactory getFactory() {
-        return new AssociatedIdsFactory();
+    public static AssociatedIdsFactory getInstance() {
+        if(instance == null) {
+            instance = new AssociatedIdsFactory();
+        }
+        return instance;
     }
 
     /**
@@ -61,8 +65,8 @@ public class AssociatedIdsFactory {
      * @return
      */
     public AssociatedIds createAssociatedIdsFor(String idType) throws IllegalArgumentException {
-        for(String assocType: this.assocTypes.keySet()) {
-            if(this.assocTypes.get(assocType).contains(idType)) {
+        for(String assocType: this.associatedIdTypes.keySet()) {
+            if(this.associatedIdTypes.get(assocType).contains(idType)) {
                 return new AssociatedIds(assocType);
             }
         }
@@ -82,15 +86,15 @@ public class AssociatedIdsFactory {
     /**
      * Creates or retrieves an AssociatedIds instance for an ID instance. Checks the persistence
      * for an existing instance or create a new AssociatedIds instance containing `identifier`.
-     * @param identifier
+     * @param id
      * @return
      */
-    public AssociatedIds getAssociatedIdsFor(ID identifier) {
-        AssociatedIds newAssocId = this.createAssociatedIdsFor(identifier);
-        AssociatedIds storedAssocId = Persistor.instance.getAssociatedIdsByID(identifier);
+    public AssociatedIds getAssociatedIdsFor(ID id) {
+        AssociatedIds newAssocId = this.createAssociatedIdsFor(id.getType());
+        AssociatedIds storedAssocId = Persistor.instance.getAssociatedIdsByID(id);
         if(storedAssocId == null) {
             // TODO: eager ID generation!
-            newAssocId.addIdentifier(identifier);
+            newAssocId.addId(id);
             return newAssocId;
         }
         return storedAssocId;
@@ -102,7 +106,7 @@ public class AssociatedIdsFactory {
      * @return
      */
     public boolean isAssociatedIdsType(String assocType) {
-        return this.assocTypes.keySet().contains(assocType);
+        return this.associatedIdTypes.keySet().contains(assocType);
     }
 
     /**
@@ -111,12 +115,7 @@ public class AssociatedIdsFactory {
      * @return
      */
     public boolean isAssociatedIdsIdType(String idType) {
-        for(String assocType: this.assocTypes.keySet()) {
-            if(this.assocTypes.get(assocType).contains(idType)) {
-                return true;
-            }
-        }
-        return false;
+        return associatedIdTypes.values().stream().anyMatch(e -> e.contains(idType));
     }
 
     /**
@@ -138,11 +137,11 @@ public class AssociatedIdsFactory {
         if(!this.isAssociatedIdsType(assocId.getType())) {
             throw new IllegalArgumentException("The AssociatedIds type is not configured: " + assocId.getType());
         }
-        for(String idType: this.assocTypes.get(assocId.getType())) {
-            if(assocId.getIdentifier(idType) == null) {
+        for(String idType: this.associatedIdTypes.get(assocId.getType())) {
+            if(assocId.getId(idType) == null) {
                 IDGenerator<?> idGenerator = IDGeneratorFactory.instance.getFactory(idType);
                 if(!idGenerator.isExternal()) {
-                    assocId.addIdentifier(idGenerator.getNext());
+                    assocId.addId(idGenerator.getNext());
                 }
             }
         }

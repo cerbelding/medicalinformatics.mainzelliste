@@ -49,40 +49,40 @@ public class IntegrationTest {
         /**********************
          * Prepare dummy data *
          **********************/
-        String[] visit_ext_1 = { "fallnummer", "1234asdf" };
+        String[] visit_ext_1 = { "extVisitId", "1234asdf" };
         ExternalID visitId_ext_1 = new ExternalID(visit_ext_1[1], visit_ext_1[0]);
-        String[] visit_ext_2 = { "fallnummer", "4321fdsa" };
+        String[] visit_ext_2 = { "extVisitId", "4321fdsa" };
         ExternalID visitId_ext_2 = new ExternalID(visit_ext_2[1], visit_ext_2[0]);
-        String[] visit_int_1 = { "fallnummer_psn", "" };
-        String[] visit_int_2 = { "fallnummer_psn", "" };
+        String[] visit_int_1 = { "intVisitId", "" };
+        String[] visit_int_2 = { "intVisitId", "" };
 
         /*******************
          * Add first visit *
          *******************/
 
         // Check for an AssociatedId here
-        AssociatedIdsFactory assocFactory = AssociatedIdsFactory.getFactory();
+        AssociatedIdsFactory assocFactory = AssociatedIdsFactory.getInstance();
         if(assocFactory.isAssociatedIdsID(visitId_ext_1)) {
             output.append("<h1>External Visit 1</h1>\n");
 
             // get the AssociatedIds instance
             AssociatedIds assocId = assocFactory.getAssociatedIdsFor(visitId_ext_1);
-            assert assocId.getIdentifier(visit_ext_1[0]) != null;
+            assert assocId.getId(visit_ext_1[0]) != null;
 
             // add assoc id to patient and persists
-            patient.addAssociatedIdentifier(assocId);
+            patient.addAssociatedIds(assocId);
             Persistor.instance.updatePatient(patient);
 
             // update the patient instance
             patient = Persistor.instance.getPatient(pat_id);
 
-            assert patient.getAssociatedIdentifiers().contains(assocId);
+            assert patient.getAssociatedIdsList().contains(assocId);
 
             // generate some output
             output.append("<p>Added patient instance to database: " + patient + "</p>\n");
             output.append("<p>Created External ID and added to patient: " + visitId_ext_1+ "</p>\n");
             output.append("<p>The patient includes AssociatedIds:</p>\n<ul>\n");
-            for(AssociatedIds assocId_out: patient.getAssociatedIdentifiers()) {
+            for(AssociatedIds assocId_out: patient.getAssociatedIdsList()) {
                 output.append("<li>" + assocId_out + "</li>\n");
             }
             output.append("</ul>");
@@ -98,24 +98,24 @@ public class IntegrationTest {
             output.append("<p>This time, we will create an internal ID right away");
             // get the AssociatedIds instance
             AssociatedIds assocId = assocFactory.getAssociatedIdsFor(visitId_ext_2);
-            assert assocId.getIdentifier(visit_ext_2[0]) != null;
+            assert assocId.getId(visit_ext_2[0]) != null;
             assocId = assocFactory.createAllIdentifiers(assocId);
-            assert assocId.getIdentifiers().size() == 2;
+            assert assocId.getIds().size() == 2;
 
             // add assoc id to patient and persists
-            patient.addAssociatedIdentifier(assocId);
+            patient.addAssociatedIds(assocId);
             Persistor.instance.updatePatient(patient);
 
             // update the patient instance
             patient = Persistor.instance.getPatient(pat_id);
 
-            assert patient.getAssociatedIdentifiers().contains(assocId);
+            assert patient.getAssociatedIdsList().contains(assocId);
 
             // generate some output
             output.append("<p>Added patient instance to database: " + patient + "</p>\n");
-            output.append("<p>Created External ID and added to patient: " + visitId_ext_2 + " + an internally created fallnummer_psn</p>\n");
+            output.append("<p>Created External ID and added to patient: " + visitId_ext_2 + " + an internally created intVisitId</p>\n");
             output.append("<p>The patient includes AssociatedIds:</p>\n<ul>\n");
-            for(AssociatedIds assocId_out: patient.getAssociatedIdentifiers()) {
+            for(AssociatedIds assocId_out: patient.getAssociatedIdsList()) {
                 output.append("<li>" + assocId_out + "</li>\n");
             }
             output.append("</ul>");
@@ -132,9 +132,9 @@ public class IntegrationTest {
             for(String idType: new String[] {visit_int_1[0], visit_int_2[0]}) {
                 // appropriate for "create", as we want to have a new id
                 AssociatedIds assocId = assocFactory.createAssociatedIdsFor(visit_int_1[0]);
-                assocId.addIdentifier(IDGeneratorFactory.instance.getFactory(idType).getNext());
-                patient.addAssociatedIdentifier(assocId);
-                output.append("<li>"+assocId.getIdentifier(idType)+"</li>\n");
+                assocId.addId(IDGeneratorFactory.instance.getFactory(idType).getNext());
+                patient.addAssociatedIds(assocId);
+                output.append("<li>"+assocId.getId(idType)+"</li>\n");
             }
             output.append("</ul>");
 
@@ -148,7 +148,7 @@ public class IntegrationTest {
         output.append("<h1>Check for all AssociatedIds now.</h1>\n");
         patient = Persistor.instance.getPatient(pat_id);
         output.append("<p>The patient includes AssociatedIds:</p>\n<ul>\n");
-        for(AssociatedIds assocId_out: patient.getAssociatedIdentifiers()) {
+        for(AssociatedIds assocId_out: patient.getAssociatedIdsList()) {
             output.append("<li>" + assocId_out + "</li>\n");
         }
         output.append("</ul>");
@@ -162,22 +162,22 @@ public class IntegrationTest {
 
             // get the AssociatedIds instance
             AssociatedIds assocId = assocFactory.getAssociatedIdsFor(visitId_ext_1);
-            assert assocId.getIdentifier(visit_ext_1[0]) != null;
+            assert assocId.getId(visit_ext_1[0]) != null;
 
             // add assoc id to patient and persists
-            patient.addAssociatedIdentifier(assocId);
+            patient.addAssociatedIds(assocId);
             Persistor.instance.updatePatient(patient);
 
             // update the patient instance
             patient = Persistor.instance.getPatient(pat_id);
 
-            assert patient.getAssociatedIdentifiers().contains(assocId);
+            assert patient.getAssociatedIdsList().contains(assocId);
 
             // generate some output
             output.append("<p>Added patient instance to database: " + patient + "</p>\n");
             output.append("<p>Created External ID and added to patient: " + visitId_ext_1+ "</p>\n");
             output.append("<p>The patient includes AssociatedIds:</p>\n<ul>\n");
-            for(AssociatedIds assocId_out: patient.getAssociatedIdentifiers()) {
+            for(AssociatedIds assocId_out: patient.getAssociatedIdsList()) {
                 output.append("<li>" + assocId_out + "</li>\n");
             }
             output.append("</ul>");
@@ -190,7 +190,7 @@ public class IntegrationTest {
         output.append("<p>Expecation: the number of AssociatedIds did not grow compared to the last check.</p>\n");
         patient = Persistor.instance.getPatient(pat_id);
         output.append("<p>The patient includes AssociatedIds:</p>\n<ul>\n");
-        for(AssociatedIds assocId_out: patient.getAssociatedIdentifiers()) {
+        for(AssociatedIds assocId_out: patient.getAssociatedIdsList()) {
             output.append("<li>" + assocId_out + "</li>\n");
         }
         output.append("</ul>");

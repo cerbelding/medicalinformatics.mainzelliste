@@ -8,28 +8,28 @@ public interface IHasIdentifier {
      * @param idType
      * @return
      */
-    public ID createIdentifier(String idType);
+    public ID createId(String idType);
     /**
      * Analogous to Patient.getId(String type)
      * @param idType
      * @return
      */
-    public ID getIdentifier(String idType);
+    public ID getId(String idType);
     /**
      * Analogous to Patient.addId(ID id)
      * @param identifier
      * @return
      */
-    public boolean addIdentifier(ID identifier);
+    public boolean addId(ID identifier);
     /**
      * Analogous to Patient.getIds().
      * @return
      */
-    public Set<ID> getIdentifiers();
+    public Set<ID> getIds();
     /**
      * Removes the ID of type idType from the objects IDs.
      * @param idType
      * @return
      */
-    public boolean removeIdentifier(String idType);
+    public boolean removeId(String idType);
 }

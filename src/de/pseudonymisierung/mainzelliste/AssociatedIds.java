@@ -45,14 +45,14 @@ public class AssociatedIds implements IHasIdentifier {
 
 	@Id
 	@GeneratedValue
-	private int jpaid; 
+	private int jpaid;
 
+	//TODO can be transient, the type can be in onload method determined
 	@Basic
-	protected String type;
+	private String type;
 
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
-	protected Set<ID> identifiers = new HashSet<ID>();
-
+	protected Set<ID> ids = new HashSet<>();
 
 	public AssociatedIds() {
 	}
@@ -70,18 +70,18 @@ public class AssociatedIds implements IHasIdentifier {
 	}
 
 	@Override
-	public ID createIdentifier(String idType) {
-		ID newId = this.getIdentifier(idType);
+	public ID createId(String idType) {
+		ID newId = this.getId(idType);
 		if(newId == null) {
 			newId = IDGeneratorFactory.instance.getFactory(idType).getNext();
-			this.identifiers.add(newId);
+			this.ids.add(newId);
 		}
 		return newId;
 	}
 
 	@Override
-	public ID getIdentifier(String idType) {
-		for(ID id: this.identifiers) {
+	public ID getId(String idType) {
+		for(ID id: this.ids) {
 			if(id.getType().equals(idType)) {
 				return id;
 			}
@@ -90,27 +90,26 @@ public class AssociatedIds implements IHasIdentifier {
 	}
 
 	@Override
-	public boolean addIdentifier(ID identifier) {
-		if(this.getIdentifier(identifier.getType()) != null) {
+	public boolean addId(ID id) {
+		if(this.getId(id.getType()) != null) {
 			return false;
 		}
-		return this.identifiers.add(identifier);
+		return this.ids.add(id);
+	}
+
+	public Set<ID> getIds() {
+		return this.ids;
 	}
 
 	@Override
-	public Set<ID> getIdentifiers() {
-		return this.identifiers;
-	}
-
-	@Override
-	public boolean removeIdentifier(String idType) {
+	public boolean removeId(String idType) {
 		ID searchId = null;
-		for(ID id: this.identifiers) {
+		for(ID id: this.ids) {
 			if(id.getType().equals(idType)) {
 				searchId = id;
 			}
 		}
-		return this.identifiers.remove(searchId);
+		return this.ids.remove(searchId);
 	}
 
 	@Override
@@ -133,8 +132,8 @@ public class AssociatedIds implements IHasIdentifier {
 		}
 
 		// two AssociatedIds are same iff at least one ID is the same. (an ID can only be in one AssociatedIds)
-		for(ID myId: this.identifiers) {
-			if(assocId.getIdentifiers().contains(myId)) {
+		for(ID myId: this.ids) {
+			if(assocId.getIds().contains(myId)) {
 				// TODO: check for inconsistencies?
 				return true;
 			}
@@ -147,7 +146,7 @@ public class AssociatedIds implements IHasIdentifier {
 		StringBuilder str = new StringBuilder();
 		str.append("AssociatedIds=[");
 		String delimiter = "";
-		for(ID id: this.identifiers) {
+		for(ID id: this.ids) {
 			str.append(delimiter);
 			delimiter = ",";
 			str.append(id.toString());

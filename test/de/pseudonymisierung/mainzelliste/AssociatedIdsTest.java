@@ -40,14 +40,14 @@ public class AssociatedIdsTest {
         Assert.assertTrue(assocId.getType().length() > 0);
 
         // associated Id has a Set of identifiers
-        Assert.assertNotNull(assocId.getIdentifiers());
-        Assert.assertEquals(assocId.getIdentifiers().size(), 0);
+        Assert.assertNotNull(assocId.getIds());
+        Assert.assertEquals(assocId.getIds().size(), 0);
 
         // non existent identifier return null
-        Assert.assertNull(assocId.getIdentifier("anyName"));
+        Assert.assertNull(assocId.getId("anyName"));
 
         // non existent identifier removal returns false
-        Assert.assertFalse(assocId.removeIdentifier("anyName"));
+        Assert.assertFalse(assocId.removeId("anyName"));
     }
 
     /**
@@ -56,15 +56,15 @@ public class AssociatedIdsTest {
      */
     @Test(dataProvider = "assocs")
     public void testAddIdentifier(AssociatedIds assocId) {
-        IntegerID intId = this.createIntId("fallnummer_psn", "123456");
-        assocId.addIdentifier(intId);
-        ExternalID extId = this.createExtId("fallnummer", "asdf1234");
-        assocId.addIdentifier(extId);
+        IntegerID intId = this.createIntId("intVisitId", "123456");
+        assocId.addId(intId);
+        ExternalID extId = this.createExtId("extVisitId", "asdf1234");
+        assocId.addId(extId);
 
-        Assert.assertNotNull(assocId.getIdentifier("fallnummer_psn"));
-        Assert.assertTrue(assocId.getIdentifiers().contains(intId));
-        Assert.assertNotNull(assocId.getIdentifier("fallnummer"));
-        Assert.assertTrue(assocId.getIdentifiers().contains(extId));
+        Assert.assertNotNull(assocId.getId("intVisitId"));
+        Assert.assertTrue(assocId.getIds().contains(intId));
+        Assert.assertNotNull(assocId.getId("extVisitId"));
+        Assert.assertTrue(assocId.getIds().contains(extId));
     }
 
     /**
@@ -73,10 +73,10 @@ public class AssociatedIdsTest {
      */
     @Test(dataProvider = "assocs")
     public void testGetIdentifier(AssociatedIds assocId) {
-        IntegerID intId = this.createIntId("fallnummer_psn", "123456");
-        assocId.addIdentifier(intId);
+        IntegerID intId = this.createIntId("intVisitId", "123456");
+        assocId.addId(intId);
 
-        ID returnedId = assocId.getIdentifier("fallnummer_psn");
+        ID returnedId = assocId.getId("intVisitId");
         Assert.assertEquals(returnedId, intId);
     }
 
@@ -86,15 +86,15 @@ public class AssociatedIdsTest {
      */
     @Test(dataProvider = "assocs")
     public void testGetIdentifiers(AssociatedIds assocId) {
-        IntegerID intId = this.createIntId("fallnummer_psn", "123456");
-        assocId.addIdentifier(intId);
-        ExternalID extId = this.createExtId("fallnummer", "asdf1234");
-        assocId.addIdentifier(extId);
+        IntegerID intId = this.createIntId("intVisitId", "123456");
+        assocId.addId(intId);
+        ExternalID extId = this.createExtId("extVisitId", "asdf1234");
+        assocId.addId(extId);
 
-        Set<ID> idList = assocId.getIdentifiers();
+        Set<ID> idList = assocId.getIds();
         Assert.assertEquals(idList.size(), 2);
-        Assert.assertTrue(assocId.getIdentifiers().contains(intId));
-        Assert.assertTrue(assocId.getIdentifiers().contains(extId));
+        Assert.assertTrue(assocId.getIds().contains(intId));
+        Assert.assertTrue(assocId.getIds().contains(extId));
     }
 
     /**
@@ -103,17 +103,17 @@ public class AssociatedIdsTest {
      */
     @Test(dataProvider = "assocs")
     public void testRemoveIdentifier(AssociatedIds assocId) {
-        IntegerID intId = this.createIntId("fallnummer_psn", "123456");
-        assocId.addIdentifier(intId);
-        ExternalID extId = this.createExtId("fallnummer", "asdf1234");
-        assocId.addIdentifier(extId);
-        Assert.assertTrue(assocId.getIdentifiers().contains(intId));
-        Assert.assertTrue(assocId.getIdentifiers().contains(extId));
+        IntegerID intId = this.createIntId("intVisitId", "123456");
+        assocId.addId(intId);
+        ExternalID extId = this.createExtId("extVisitId", "asdf1234");
+        assocId.addId(extId);
+        Assert.assertTrue(assocId.getIds().contains(intId));
+        Assert.assertTrue(assocId.getIds().contains(extId));
 
-        assocId.removeIdentifier("fallnummer_psn");
-        Assert.assertNull(assocId.getIdentifier("fallnummer_psn"));
-        Assert.assertFalse(assocId.getIdentifiers().contains(intId));
-        Assert.assertEquals(assocId.getIdentifier("fallnummer"), extId);
-        Assert.assertTrue(assocId.getIdentifiers().contains(extId));
+        assocId.removeId("intVisitId");
+        Assert.assertNull(assocId.getId("intVisitId"));
+        Assert.assertFalse(assocId.getIds().contains(intId));
+        Assert.assertEquals(assocId.getId("extVisitId"), extId);
+        Assert.assertTrue(assocId.getIds().contains(extId));
     }
 }

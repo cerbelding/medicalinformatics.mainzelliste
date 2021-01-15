@@ -11,7 +11,7 @@ public class AssociatedIdsFactoryTest {
     @DataProvider(name="factory")
     public Object[][] createFactory() {
         Properties props = new Properties();
-        props.setProperty("associatedids.faelle.idgenerators", "fallnummer, fall_psn");
+        props.setProperty("associatedids.faelle.idgenerators", "extVisitId, fall_psn");
 
         return new Object[][] {
             { new AssociatedIdsFactory(props) }
@@ -27,8 +27,8 @@ public class AssociatedIdsFactoryTest {
         AssociatedIds assocId = assocFactory.createAssociatedIds("faelle");
         Assert.assertTrue(assocFactory.isAssociatedIdsType("faelle"));
         Assert.assertNotNull(assocId);
-        Assert.assertNotNull(assocId.getIdentifiers());
-        Assert.assertEquals(assocId.getIdentifiers().size(), 0);
+        Assert.assertNotNull(assocId.getIds());
+        Assert.assertEquals(assocId.getIds().size(), 0);
     }
 
     /**
@@ -48,14 +48,14 @@ public class AssociatedIdsFactoryTest {
     @Test(dataProvider = "factory")
     public void getAssociatedIdsByID(AssociatedIdsFactory assocFactory) {
         ExternalID extId = new ExternalID();
-        extId.setType("fallnummer");
+        extId.setType("extVisitId");
         extId.setIdString("asdf1234");
 
-        AssociatedIds assocId = assocFactory.createAssociatedIdsFor(extId);
+        AssociatedIds assocId = assocFactory.createAssociatedIdsFor(extId.getType());
         Assert.assertTrue(assocFactory.isAssociatedIdsID(extId));
         Assert.assertNotNull(assocId);
-        Assert.assertNotNull(assocId.getIdentifiers());
-        Assert.assertEquals(assocId.getIdentifiers().size(), 0);
+        Assert.assertNotNull(assocId.getIds());
+        Assert.assertEquals(assocId.getIds().size(), 0);
     }
 
     /**
@@ -70,7 +70,7 @@ public class AssociatedIdsFactoryTest {
         extId.setIdString("anystring");
 
         Assert.assertFalse(assocFactory.isAssociatedIdsID(extId));
-        Assert.assertThrows(IllegalArgumentException.class, () -> assocFactory.createAssociatedIdsFor(extId));
+        Assert.assertThrows(IllegalArgumentException.class, () -> assocFactory.createAssociatedIdsFor(extId.getType()));
     }
 
     /**
@@ -81,16 +81,16 @@ public class AssociatedIdsFactoryTest {
     @Test(dataProvider = "factory")
     public void sameIdTypesGetSameAssocType(AssociatedIdsFactory assocFactory) {
         ExternalID extId = new ExternalID();
-        extId.setType("fallnummer");
+        extId.setType("extVisitId");
         extId.setIdString("asdf1234");
 
         IntegerID intId = new IntegerID();
         intId.setType("fall_psn");
         intId.setIdString("1");
 
-        AssociatedIds assocId_ext = assocFactory.createAssociatedIdsFor(extId);
+        AssociatedIds assocId_ext = assocFactory.createAssociatedIdsFor(extId.getType());
         Assert.assertNotNull(assocId_ext);
-        AssociatedIds assocId_int = assocFactory.createAssociatedIdsFor(intId);
+        AssociatedIds assocId_int = assocFactory.createAssociatedIdsFor(intId.getType());
         Assert.assertNotNull(assocId_int);
 
         Assert.assertEquals(assocId_ext.getType(), assocId_int.getType());
@@ -104,13 +104,13 @@ public class AssociatedIdsFactoryTest {
     //@Test(dataProvider = "factory")
     public void getAssociatedIdsFor(AssociatedIdsFactory assocFactory) {
         ExternalID extId = new ExternalID();
-        extId.setType("fallnummer");
+        extId.setType("extVisitId");
         extId.setIdString("asdf1234");
 
         AssociatedIds assocId = assocFactory.getAssociatedIdsFor(extId);
         Assert.assertNotNull(assocId);
-        Assert.assertTrue(assocId.getIdentifiers().size() >= 1);
-        Assert.assertEquals(assocId.getIdentifier(extId.getType()), extId);
+        Assert.assertTrue(assocId.getIds().size() >= 1);
+        Assert.assertEquals(assocId.getId(extId.getType()), extId);
     }
 
     /**
@@ -121,15 +121,15 @@ public class AssociatedIdsFactoryTest {
     //@Test(dataProvider = "factory")
     public void createAllIdentifiersForAssocId(AssociatedIdsFactory assocFactory) {
         ExternalID extId = new ExternalID();
-        extId.setType("fallnummer");
+        extId.setType("extVisitId");
         extId.setIdString("asdf1234");
 
         AssociatedIds assocId = new AssociatedIds("faelle");
-        assocId.addIdentifier(extId);
+        assocId.addId(extId);
         assocId = assocFactory.createAllIdentifiers(assocId);
 
-        Assert.assertEquals(assocId.getIdentifiers().size(), 2);
-        Assert.assertNotNull(assocId.getIdentifier("fall_psn"));
-        Assert.assertTrue(assocId.getIdentifier("fall_psn").getIdString().length() > 0);
+        Assert.assertEquals(assocId.getIds().size(), 2);
+        Assert.assertNotNull(assocId.getId("fall_psn"));
+        Assert.assertTrue(assocId.getId("fall_psn").getIdString().length() > 0);
     }
 }

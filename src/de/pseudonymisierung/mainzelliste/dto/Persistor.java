@@ -775,7 +775,7 @@ public enum Persistor {
 	 */
 	public synchronized AssociatedIds getAssociatedIdsByID(ID identifier) {
 		EntityManager emLocal = this.emf.createEntityManager();
-		TypedQuery<AssociatedIds> qry = emLocal.createQuery("SELECT assoc FROM AssociatedIds assoc, IN(assoc.identifiers) id WHERE id.idString = :idString AND id.type = :idType", AssociatedIds.class);
+		TypedQuery<AssociatedIds> qry = emLocal.createQuery("SELECT assoc FROM AssociatedIds assoc, IN(assoc.ids) id WHERE id.idString = :idString AND id.type = :idType", AssociatedIds.class);
 		qry.setParameter("idString", identifier.getIdString());
 		qry.setParameter("idType", identifier.getType());
 		List<AssociatedIds> result = qry.getResultList();

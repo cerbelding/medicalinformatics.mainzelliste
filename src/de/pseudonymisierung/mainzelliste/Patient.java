@@ -213,6 +213,13 @@ public class Patient {
 	private Set<ID> transientIds = new HashSet<>();
 
 	/**
+	 * Set of associated ids for this patient.
+	 */
+	@OneToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST,
+			CascadeType.REFRESH}, fetch = FetchType.LAZY)
+	protected List<AssociatedIds> associatedIdsList = new ArrayList<>();
+
+	/**
 	 * Input fields as read from form (before transformation). Used to display
 	 * field values as they were entered in first place.
 	 *
@@ -410,6 +417,16 @@ public class Patient {
 	 */
 	public Set<ID> getIds() {
 		return Collections.unmodifiableSet(ids);
+	}
+
+	/**
+	 * Get the list of associated IDs of this patient.
+	 *
+	 * @return The AssociatedIds of the patient as unmodifiable list. While the List itself is
+	 * unmodifiable, modification of the elements (AssociatedIds objects) affect the patient object.
+	 */
+	public List<AssociatedIds> getAssociatedIdsList() {
+		return Collections.unmodifiableList(this.associatedIdsList);
 	}
 
 	/**
@@ -646,35 +663,27 @@ public class Patient {
 		return Objects.hash(patientJpaId);
 	}
 
-	@OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-	protected List<AssociatedIds> associatedIds = new ArrayList<AssociatedIds>();
-
-	public List<AssociatedIds> getAssociatedIdentifiers() {
-		return this.associatedIds;
-	};
-
-    public AssociatedIds getAssociatedIdentifier(AssociatedIds assocId) {
-		for(AssociatedIds searchAssoc: this.associatedIds) {
-			if(searchAssoc.equals(assocId)) {
+	public AssociatedIds getAssociatedIds(AssociatedIds assocId) {
+		for (AssociatedIds searchAssoc : this.associatedIdsList) {
+			if (searchAssoc.equals(assocId)) {
 				return searchAssoc;
 			}
 		}
 		return null;
 	}
 
-    public boolean removeAssociatedIdentifier(AssociatedIds assocId) {
-		if(this.getAssociatedIdentifier(assocId) == null) {
+	public boolean removeAssociatedIds(AssociatedIds assocId) {
+		if (this.getAssociatedIds(assocId) == null) {
 			return false;
 		}
-		return this.associatedIds.remove(assocId);
+		return this.associatedIdsList.remove(assocId);
 	}
 
-    public boolean addAssociatedIdentifier(AssociatedIds assocId) {
-		if(this.getAssociatedIdentifier(assocId) != null) {
+	public boolean addAssociatedIds(AssociatedIds assocId) {
+		if (this.getAssociatedIds(assocId) != null) {
 			// TODO: merge instead of returning false.
 			return false;
 		}
-		return this.associatedIds.add(assocId);
+		return this.associatedIdsList.add(assocId);
 	}
-
 }
