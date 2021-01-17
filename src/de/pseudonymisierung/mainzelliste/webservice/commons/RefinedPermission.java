@@ -203,17 +203,14 @@ public class RefinedPermission {
             validRequest = true;
         }
 
-        for(String findings : requestedValuesWhichAreAlsoInConfig){
-            List<String> matchedConfig = tokenTypeServerPermissionsList.stream().filter(t -> t.contains(findings)).collect(Collectors.toList());
+        List<String> matchedConfig = tokenTypeServerPermissionsList.stream().filter(requestedValuesWhichAreAlsoInConfig::contains).collect(Collectors.toList());
 
-            for(RefinedPermissionDTO refDTO: refinedPermissionDTOS){
-
-                if((matchedConfig.stream().noneMatch(i -> i.contains(refDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + refDTO.getRequestedValue())) && matchedConfig.stream().noneMatch(i -> i.contains(refDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + "*")))){
-                        this.setReturnMessage(log + " is not allowed to request");
-                        logger.info(this.getReturnMessage());
-                        validRequest = false;
-                    }
-            }
+        for(RefinedPermissionDTO refDTO: refinedPermissionDTOS){
+          if((matchedConfig.stream().noneMatch(i -> i.contains(refDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + refDTO.getRequestedValue())) && matchedConfig.stream().noneMatch(i -> i.contains(refDTO.getRequestedParameter().replace(cut.group(1), "") + ":" + "*")))){
+            this.setReturnMessage(log + " is not allowed to request");
+            logger.info(this.getReturnMessage());
+            validRequest = false;
+          }
         }
 
         return validRequest;

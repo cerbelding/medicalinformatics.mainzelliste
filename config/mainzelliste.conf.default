@@ -243,7 +243,18 @@ matcher.epilink.threshold_non_match = 0.6
 idgenerators = pid, intid, extid
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
-# idgenerators = pid, intid, extid
+# idgenerators = pid, intid, extid, elasticid, exportId, cryptoid
+
+# By default, IDs are generated once they are requested (lazy generation).
+# Set the following parameter to true if upon creating a patient, IDs of all
+# configured types should be created for this patient eagerly. This will also override any existing
+# configurations that may have been made in individual "idgenerator" of specific type!
+idgenerators.eagerGeneration = false
+
+# list of ID types with which this generator will generate the ID eagerly
+#idgenerator.{identifier}.eager = {identifier}, {identifier}, {identifier}
+# ID will be generated, if any of the configured IDs of the same patient are created
+#idgenerator.{identifier}.eager = *
 
 # Additional params for PIDGenerator (k1, k2, k3, rndwidth) are defined here.
 idgenerator.pid = PIDGenerator
@@ -256,7 +267,7 @@ idgenerator.pid.rndwidth = 0
 idgenerator.intid = SimpleIDGenerator
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
-idgenerator.extid = ExternalIDGenerator
+#idgenerator.exportId = ExternalIDGenerator
 
 # Specify whether the generated ID must be always encrypted before exposing it to the outside via the REST API.
 # refer to an existing encryption configuration (@see "crypto.encryption.<name>.type")
@@ -336,8 +347,6 @@ claims.1.oidc.http\://mainzelliste.de/roles=admin
 # servers.allowedMethods = OPTIONS;GET;POST
 # servers.allowedMaxAge = 600
 
-# servers.allowedOrigins = https://mdat-server.example.org
-
 # Allowed Format of callback
 callback.allowedFormat = https://.*
 callback.allowSelfsigned = false
@@ -364,3 +373,52 @@ callback.allowSelfsigned = false
 
 # Logo file: example for file in META-INF/resources within a .jar file on the classpath
 # operator.logo = /logo.png
+
+# custom configuration
+# subConfiguration.{n}.uri = https://www.example.org/mainzelliste.sub.conf
+# subConfiguration.{n}.uri = file:///etc/mainzelliste/mainzelliste.sub.conf
+
+# gui configuration
+# url of control number generator
+# gui.cng.url = http://localhost:8080/paths_war/paths/getIdToken
+# gui.cng.apiKey = test
+# version of mainzelliste (ml) rest api
+# gui.ml.apiVersion = 3.0
+
+# CRYPTOGRAPHIC
+# -------------
+
+# * Key Configuration:
+# Format: crypto.key.<keyName>.<keyProperty>
+#
+# the keys can be referenced by their name in other configuration definitions
+# (@see crypto.encryption.<encryptionName>.key)
+
+# configure the type of the encryption key (possible values : RSA_PUBLIC, RSA_PRIVATE, TINK_KEYSET)
+# - RSA_PUBLIC : a binary encoded (DER) rsa public key.
+# - RSA_PRIVATE : a binary encoded (DER) rsa private key.
+# - TINK_KEYSET : Tink KeySet in json format
+#crypto.key.exportIdPublicKey.type = RSA_PUBLIC
+
+# only file uri are supported
+#crypto.key.exportIdPublicKey.uri = file:///etc/resources/keys/public.der
+
+# * Encryption Configuration
+# Format: crypto.key.<encryptionName>.<encryptionProperty>
+#
+# the encryptions can be referenced by their name in other configuration definitions
+# (e.g. idgenerator.<idName>.exportEncryption)
+
+# take a reference of an existing key configuration
+# @see crypto.key.<keyName>.type and crypto.key.<keyName>.uri
+#crypto.encryption.exportIdEncryption.key = exportIdPublicKey
+
+# configure the type of the encryption (possible values : RSA, TINK_HYBRID, TINK_DETERMINISTIC)
+# - RSA_ENCRYPT : JCE asymmetric encryption with ECB/OAEPWithSHA-1AndMGF1Padding
+# - RSA_DECRYPT : JCE asymmetric decryption
+# - TINK_HYBRID_ENCRYPT : hybrid encryption with Tink (ECIES with AEAD and HKDF). The plaintext is
+#   encrypted with a new generated symmetric key and the asymmetric public key is used to encrypt
+#   the symmetric key only. resulting ciphertext = symmetric ciphertext + encrypted symmetric key.
+# - TINK_HYBRID_DECRYPT : hybrid dencryption with Tink
+# - TINK_DETERMINISTIC : deterministic symmetric encryption with Tink (DeterministicAEAD)
+#crypto.encryption.exportIdEncryption.type = RSA_ENCRYPT
