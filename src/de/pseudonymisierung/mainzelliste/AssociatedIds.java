@@ -26,7 +26,7 @@
 package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.exceptions.ConflictingDataException;
-import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -39,14 +39,13 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
-import javax.persistence.Transient;
 
 /**
  * An externally generated patient identifier. Imported in Mainzelliste from
  * external systems (cannot be internally generated or overwritten).
  */
 @Entity
-public class AssociatedIds {
+public class AssociatedIds extends Identifiable {
 
 	@Id
 	@GeneratedValue
@@ -58,12 +57,6 @@ public class AssociatedIds {
 
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
 	protected Set<ID> ids = new HashSet<>();
-
-	/**
-	 * Set of IDs for this patient, which are not persisted in DB
-	 */
-	@Transient
-	private Set<ID> transientIds = new HashSet<>();
 
 	public AssociatedIds() {
 	}
@@ -81,74 +74,9 @@ public class AssociatedIds {
 		return this.type;
 	}
 
-	// TODO duplicate code @see patient
-	public ID createId(String idType) {
-		ID thisId = getId(idType);
-		if (thisId != null) {
-			return thisId;
-		}
-
-		// ID of requested type was not found and is not external -> generate new ID
-		IDGenerator<? extends ID> factory = IDGeneratorFactory.instance.getAssociatedIdGenerators(type)
-				.stream().filter(g -> g.getIdType().equals(idType)).findFirst().orElse(null);
-		if (factory == null) {
-			throw new InvalidIDException("ID type " + idType + " not defined!");
-		} else if (factory.isExternal()) {
-			return null;
-		}
-
-		// generate ids eagerly
-		// Only non external and persistent ids can be generated eagerly
-		// Can lead to cycles in generating ids due to incorrect configuration
-		// pid -> pid2 (eagerly), pid2 -> pid3 (eagerly), pid3 -> pid (eagerly))
-		// TODO: Check for cycles in the configuration
-		if (!IDGeneratorFactory.instance.isEagerGenerationOn()) {
-			IDGeneratorFactory.instance.getNonExternalIdGenerators().entrySet().stream()
-					.filter(e -> e.getValue().isPersistent())
-					.filter(e -> e.getValue().isEagerGenerationOn(idType))
-					.filter(e -> getId(e.getKey()) == null)
-					.forEach(e -> this.generateId(e.getValue()));
-		}
-
-		return generateId(factory);
-	}
-
-	// TODO duplicate code @see patient
-	private ID generateId(IDGenerator<? extends ID> factory) {
-		ID newID;
-		if (factory.isPersistent()){
-			newID = factory.getNext();
-			ids.add(newID);
-		} else {
-			String baseIdType = ((DerivedIDGenerator<?>)factory).getBaseIdType();
-			ID baseId = getId(baseIdType);
-			newID = ((DerivedIDGenerator<?>)factory).computeId(baseId);
-			transientIds.add(newID);
-		}
-		return newID;
-	}
-
-	// TODO duplicate code @see patient
-	public ID getId(String idType) {
-		for(ID id: this.ids) {
-			if(id.getType().equals(idType)) {
-				return id;
-			}
-		}
-		return null;
-	}
-
-	// TODO duplicate code @see patient
-	public boolean addId(ID identifier) {
-		if(this.getId(identifier.getType()) != null) {
-			return false;
-		}
-		return this.ids.add(identifier);
-	}
-
-	// TODO implement abstract method
-	public Set<ID> getIds() {
-		return this.ids;
+	@Override
+	protected Set<ID> getInternalIds() {
+		return ids;
 	}
 
 	public int getJpaId() {
@@ -165,28 +93,9 @@ public class AssociatedIds {
 		return this.ids.remove(searchId);
 	}
 
-	// TODO duplicate code @see patient.updateFrom(...)
-	public void updateFrom(List<ID> newIds) {
-		for (ID newId : newIds) {
-			ID id = getId(newId.getType());
-			if (id == null) {
-				addId(newId);
-			} else if (!id.equals(newId)) {
-				throw new ConflictingDataException(String.format("ID of type %s should be updated with "
-								+ "value %s but already has value %s", newId.getType(), newId.getIdString(),
-						id.getIdString()));
-			}
-		}
-	}
-
-	public boolean contain(ID id) {
-		return ids.contains(id);
-	}
-
+	@Override
 	public void setTentative(boolean isTentative) {
-		for (ID id : this.ids) {
-			id.setTentative(isTentative);
-		}
+		this.ids.forEach(id -> id.setTentative(isTentative));
 	}
 
 	@Override
@@ -227,6 +136,19 @@ public class AssociatedIds {
 		}
 		str.append("]");
 		return str.toString();
+	}
+
+	@Override
+	protected IDGenerator<? extends ID> getIDGeneratorFactory(String idType) {
+		return IDGeneratorFactory.instance.getAssociatedIdGenerators(type).stream()
+				.filter(g -> g.getIdType().equals(idType))
+				.findFirst()
+				.orElse(null);
+	}
+
+	@Override
+	protected Collection<IDGenerator<? extends ID>> getNonExternalIdGenerators() {
+		return IDGeneratorFactory.instance.getNonExtAssociatedIdGenerators(type);
 	}
 
 	/**

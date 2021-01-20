@@ -52,14 +52,13 @@ import org.codehaus.jettison.json.JSONObject;
 import de.pseudonymisierung.mainzelliste.exceptions.CircularDuplicateRelationException;
 import de.pseudonymisierung.mainzelliste.exceptions.ConflictingDataException;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
-import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
 /**
  * A patient entity identified by at least one ID and described by a number of Fields.
  */
 @XmlRootElement
 @Entity
-public class Patient {
+public class Patient extends Identifiable{
 
 	/**
 	 * JSON serialization of a map of fields. Used for persisting fields in the
@@ -145,7 +144,7 @@ public class Patient {
 			}
 		}
 
-		Map<String, Field<?>> newInputFields = new HashMap<String, Field<?>>();
+		Map<String, Field<?>> newInputFields = new HashMap<>();
 		for (String fieldName : from.getInputFields().keySet()) {
 			// If field is not null or empty, update
 			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
@@ -156,7 +155,12 @@ public class Patient {
 			}
 		}
 
+		// update external ids
 		Set<String> externalIdTypes = IDGeneratorFactory.instance.getExternalIdTypes();
+		updateIds(from.getIds().stream()
+				.filter(id -> externalIdTypes.contains(id.getType()))
+				.collect(Collectors.toList()));
+
 		for (ID thisId : from.getIds()) {
 			if (externalIdTypes.contains(thisId.getType())) {
 				String idType = thisId.getType();
@@ -194,7 +198,7 @@ public class Patient {
 
 			if (matchedAssociatedIds.isPresent()) {
 				// update matched associatedIds with external Ids from input patient
-				matchedAssociatedIds.get().updateFrom(newExternalIds);
+				matchedAssociatedIds.get().updateIds(newExternalIds);
 			} else {
 				// add new associatedIds from input patient
 				addAssociatedIds(newAssociatedIds);
@@ -232,12 +236,6 @@ public class Patient {
 	@OneToMany(cascade = { CascadeType.DETACH, CascadeType.MERGE,
 			CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
 	private Set<ID> ids = new HashSet<>();
-
-	/**
-	 * Set of IDs for this patient, which are not persisted in DB
-	 */
-	@Transient
-	private Set<ID> transientIds = new HashSet<>();
 
 	/**
 	 * Set of associated ids for this patient.
@@ -341,63 +339,6 @@ public class Patient {
 		return Collections.unmodifiableMap(fields);
 	}
 
-	/**
-	 * Get the ID of the specified type from this patient. The ID will be
-	 * generated if it does not exist and is not externally provided.
-	 *
-	 * @param type
-	 *            The ID type. See {@link ID} for the general structure of an
-	 *            ID.
-	 * @return This patient's ID of the given type or null if the ID is
-	 *         externally provided and not defined for this patient.
-	 * @throws InvalidIDException
-	 *             if the provided ID type is undefined.
-	 */
-	public ID createId(String type) {
-		ID thisId = getId(type);
-		if (thisId != null) {
-			return thisId;
-		}
-
-		// ID of requested type was not found and is not external -> generate new ID
-		IDGenerator<? extends ID> factory = IDGeneratorFactory.instance.getFactory(type);
-		if (factory == null) {
-			throw new InvalidIDException("ID type " + type + " not defined!");
-		} else if (factory.isExternal()) {
-			return null;
-		}
-
-		// generate ids eagerly
-		// Only non external and persistent ids can be generated eagerly
-		// Can lead to cycles in generating ids due to incorrect configuration
-		// pid -> pid2 (eagerly), pid2 -> pid3 (eagerly), pid3 -> pid (eagerly))
-		// TODO: Check for cycles in the configuration
-		if (!IDGeneratorFactory.instance.isEagerGenerationOn()) {
-			IDGeneratorFactory.instance.getNonExternalIdGenerators().entrySet().stream()
-					.filter(e -> !(e.getValue().getIdType()).equals(type))
-					.filter(e -> e.getValue().isPersistent())
-					.filter(e -> e.getValue().isEagerGenerationOn(type))
-					.filter(e -> getId(e.getKey()) == null)
-					.forEach(e -> this.generateId(e.getValue()));
-		}
-
-		return generateId(factory);
-	}
-
-	private ID generateId(IDGenerator<? extends ID> factory) {
-		ID newID;
-		if (factory.isPersistent()){
-			newID = factory.getNext();
-			ids.add(newID);
-		} else {
-			String baseIdType = ((DerivedIDGenerator<?>)factory).getBaseIdType();
-			ID baseId = getId(baseIdType);
-			newID = ((DerivedIDGenerator<?>)factory).computeId(baseId);
-			transientIds.add(newID);
-		}
-		return newID;
-	}
-
 	public AssociatedIds createAssociatedIds(String type, Collection<String> idTypes) {
 		AssociatedIds associatedIds = new AssociatedIds(type);
 		idTypes.forEach(associatedIds::createId);
@@ -443,67 +384,9 @@ public class Patient {
 		return generatedAssociatedIds;
 	}
 
-	/**
-	 * Get the ID of the specified type from this patient.
-	 *
-	 * @param type
-	 *            The ID type. See {@link ID} for the general structure of an
-	 *            ID.
-	 * @return This patient's ID of the given type or null if the ID is
-	 *         not defined for this patient.
-	 * @throws InvalidIDException
-	 *             if the provided ID type is undefined.
-	 */
-	public ID getId(String type) {
-		for (ID thisId : ids) {
-			if (thisId.getType().equals(type))
-				return thisId;
-		}
-		return null;
-	}
-
-	/**
-	 * Get the already generated transient ID of the specified type from this patient.
-	 *
-	 * @param type
-	 *            The ID type. See {@link ID} for the general structure of an
-	 *            ID.
-	 * @return This patient's ID of the given type or null if the ID is
-	 *         not defined for this patient.
-	 */
-	public ID getTransientId(String type) {
-		for (ID thisId : transientIds) {
-			if (thisId.getType().equals(type))
-				return thisId;
-		}
-		return null;
-	}
-
-	/**
-	 * Add ID if this ID type is not already in ids.
-	 *
-	 * @param id
-	 *            The ID to add.
-	 * @return true if the id was added successfully, otherwise false (if ID of this type already exists).
-	 */
-	public boolean addId(ID id) {
-		for (ID thisId : ids) {
-			if (thisId.getType().equals(id.getType()))
-				return false;
-		}
-		ids.add(id);
-		return true;
-	}
-
-	/**
-	 * Get the set of IDs of this patient.
-	 *
-	 * @return The IDs of the patient as unmodifiable set. While the set itself
-	 *         is unmodifiable, modification of the elements (ID objects) affect
-	 *         the patient object.
-	 */
-	public Set<ID> getIds() {
-		return Collections.unmodifiableSet(ids);
+	@Override
+	protected Set<ID> getInternalIds() {
+		return ids;
 	}
 
 	/**
@@ -525,26 +408,6 @@ public class Patient {
 		return this.associatedIdsList.stream()
 				.filter(a -> searchedIds.stream().anyMatch(a::contain))
 				.collect(Collectors.toList());
-	}
-
-	/**
-	 * Get the set of transient IDs of this patient.
-	 *
-	 * @return The already generated transient IDs of the patient
-	 */
-	public Set<ID> getTransientIds() {
-		return Collections.unmodifiableSet(transientIds);
-	}
-
-	/**
-	 * Get all generated ids of this patient (persistent and transient).
-	 *
-	 * @return All already generated IDs of the patient
-	 */
-	public Set<ID> getAllIds() {
-		Set<ID> allIds = ids;
-		allIds.addAll(transientIds);
-		return allIds;
 	}
 
 	/**
@@ -722,12 +585,11 @@ public class Patient {
 	 * @param isTentative
 	 *            The new tentative status.
 	 */
+	@Override
 	public void setTentative(boolean isTentative) {
 		this.isTentative = isTentative;
-		for (ID id : this.ids) {
-			id.setTentative(isTentative);
-		}
-		associatedIdsList.forEach(a -> a.setTentative(isTentative));
+		this.ids.forEach(id -> id.setTentative(isTentative));
+		this.associatedIdsList.forEach(a -> a.setTentative(isTentative));
 	}
 
 	/**
@@ -760,6 +622,16 @@ public class Patient {
 	@Override
 	public int hashCode() {
 		return Objects.hash(patientJpaId);
+	}
+
+	@Override
+	protected IDGenerator<? extends ID> getIDGeneratorFactory(String idType) {
+		return IDGeneratorFactory.instance.getFactory(idType);
+	}
+
+	@Override
+	protected Collection<IDGenerator<? extends ID>> getNonExternalIdGenerators() {
+		return IDGeneratorFactory.instance.getNonExternalIdGenerators().values();
 	}
 
 	public AssociatedIds getAssociatedIds(AssociatedIds assocId) {
