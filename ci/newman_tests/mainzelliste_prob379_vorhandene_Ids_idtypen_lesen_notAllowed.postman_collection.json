@@ -120,21 +120,21 @@
 							"console.log(\"ADD_Patient_JSON\");",
 							"console.log(jsonBody);",
 							"tests[\"Patient created\"] = responseCode.code === 201;",
-							"console.log(\"idtype0\" + jsonBody[0].idType);",
 							"console.log(\"idtype0\" + jsonBody[1].idType);",
-							"console.log(jsonBody[0].idType === \"intid\");",
-							"console.log(jsonBody[1].idType === \"pid\");",
-							"tests[\"idType is intid\"] = jsonBody[0].idType === \"intid\";",
-							"tests[\"idType is pid\"] = jsonBody[1].idType === \"pid\";",
-							"tests[\"Element has idString\"] = \"idString\" in jsonBody[0];",
-							"tests[\"Element has tentative\"] = \"tentative\" in jsonBody[0];",
-							"tests[\"Element has uri\"] = \"uri\" in jsonBody[0];",
+							"console.log(\"idtype0\" + jsonBody[0].idType);",
+							"console.log(jsonBody[1].idType === \"intid\");",
+							"console.log(jsonBody[0].idType === \"pid\");",
+							"tests[\"idType is intid\"] = jsonBody[1].idType === \"intid\";",
+							"tests[\"idType is pid\"] = jsonBody[0].idType === \"pid\";",
+							"tests[\"Element has idString\"] = \"idString\" in jsonBody[1];",
+							"tests[\"Element has tentative\"] = \"tentative\" in jsonBody[1];",
+							"tests[\"Element has uri\"] = \"uri\" in jsonBody[1];",
 							"",
 							"postman.setGlobalVariable(\"idType\", \"pid\")",
-							"postman.setGlobalVariable(\"idString\", jsonBody[1].idString);",
+							"postman.setGlobalVariable(\"idString\", jsonBody[0].idString);",
 							"",
 							"postman.setGlobalVariable(\"idType2\", \"intid\")",
-							"postman.setGlobalVariable(\"idString2\", jsonBody[0].idString);"
+							"postman.setGlobalVariable(\"idString2\", jsonBody[1].idString);"
 						]
 					}
 				}

@@ -25,13 +25,17 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-
+import java.util.concurrent.CopyOnWriteArrayList;
+import javax.persistence.Access;
+import javax.persistence.AccessType;
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
@@ -43,16 +47,15 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-
+import org.apache.commons.collections4.MultiValuedMap;
 import org.codehaus.jackson.annotate.JsonIgnore;
-
-import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
 
 /**
  * Represents a request to add a patient, consisting of information like input
  * fields, match result, type of requested ID.
  */
 @Entity
+@Access(AccessType.FIELD)
 @Table(name = "IDRequest")
 public class IDRequest {
 
@@ -74,6 +77,10 @@ public class IDRequest {
 	/** The match result, including the matched patient */
 	@Embedded
 	private MatchResult matchResult;
+
+	/** ordered requested associated ids list */
+	@Transient
+	private final MultiValuedMap<String, ID> requestedAssociatedIds;
 
 	/**
 	 * The patient object that was actually assigned. In case of a match this is
@@ -100,14 +107,13 @@ public class IDRequest {
 	 *            The assigned patient object, i.e. the patient whose IDs are
 	 *            returned. This is the newly created patient if no matching
 	 *            patient was found.
-	 * @param token
-	 *            The token that was used to make this request.
 	 */
 	public IDRequest(Map<String, Field<?>> inputFields, Set<String> idTypes,
-			MatchResult matchResult, Patient assignedPatient) {
+			MultiValuedMap<String, ID> associatedIds, MatchResult matchResult, Patient assignedPatient) {
 		super();
 		this.inputFields = inputFields;
 		this.requestedIdTypes = idTypes;
+		this.requestedAssociatedIds = associatedIds;
 		this.matchResult = matchResult;
 		this.assignedPatient = assignedPatient;
 		this.timestamp = new Date();
@@ -155,17 +161,26 @@ public class IDRequest {
 	 * @return The requested IDs.
 	 * @see IDRequest#getAssignedPatient()
 	 */
-	public Set<ID> createRequestedIds() {
+	public List<ID> getRequestedIds() {
+		return getRequestedIds(this.requestedIdTypes);
+	}
 
-		if (this.assignedPatient == null)
-			return null;
-
-		LinkedList<ID> idList = new LinkedList<ID>();
-
-		for (String thisType : this.requestedIdTypes) {
-			idList.add(this.assignedPatient.getOriginal().createId(thisType));
+	public List<ID> getRequestedIds(Set<String> requestedIdTypes) {
+		List<ID> result = new ArrayList<>();
+		if (this.assignedPatient == null) {
+			return result;
 		}
-		return new CopyOnWriteArraySet<ID>(idList);
+
+		for (String requestedIdType : requestedIdTypes) {
+			if (IDGeneratorFactory.instance.getTransientIdTypes().contains(requestedIdType)) {
+				Optional.ofNullable(this.assignedPatient.getTransientId(requestedIdType)).ifPresent(result::add);
+			} else if (IDGeneratorFactory.instance.isIdTypeExist(requestedIdType)) {
+				Optional.ofNullable(assignedPatient.getId(requestedIdType)).ifPresent(result::add);
+			} else if (IDGeneratorFactory.instance.isAssociatedIdTypeExist(requestedIdType)) {
+				Optional.ofNullable(requestedAssociatedIds.get(requestedIdType)).ifPresent(result::addAll);
+			}
+		}
+		return new CopyOnWriteArrayList<>(result);
 	}
 
 	/**
