@@ -27,6 +27,8 @@ package de.pseudonymisierung.mainzelliste;
 
 import java.util.*;
 
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -39,6 +41,8 @@ import javax.persistence.PostLoad;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -173,6 +177,29 @@ public class Patient {
 		// because setFields does other stuff
 		this.setFields(newFields);
 		this.setInputFields(newInputFields);
+
+		//update associatedIds
+		List<String> extAssociatedIdTypes = IDGeneratorFactory.instance.getExternalAssociatedIdTypes();
+		for (AssociatedIds newAssociatedIds : from.getAssociatedIdsList()) {
+			// get only external ids from new associatedIds
+			List<ID> newExternalIds = newAssociatedIds.getIds().stream()
+					.filter(id -> extAssociatedIdTypes.contains(id.getType()))
+					.collect(Collectors.toList());
+
+			// find an associatedIds with least one external id from the current newAssociatedIds
+			Optional<AssociatedIds> matchedAssociatedIds = associatedIdsList.stream()
+					.filter(a -> a.getType().equals(newAssociatedIds.getType()) &&
+							a.getIds().stream().anyMatch(newExternalIds::contains))
+					.findAny();
+
+			if (matchedAssociatedIds.isPresent()) {
+				// update matched associatedIds with external Ids from input patient
+				matchedAssociatedIds.get().updateFrom(newExternalIds);
+			} else {
+				// add new associatedIds from input patient
+				addAssociatedIds(newAssociatedIds);
+			}
+		}
 		return this;
 	}
 
@@ -273,16 +300,31 @@ public class Patient {
 	/**
 	 * Construct a patient object with the specified ids and fields.
 	 *
+	 * @param ids               A set of ID objects that identify the patient.
+	 * @param associatedIdsList A list of associated IDs that identify the patient
+	 */
+	public Patient(Set<ID> ids, List<AssociatedIds> associatedIdsList) {
+		if (ids != null && !ids.isEmpty()) {
+			this.ids = ids;
+		}
+		if (associatedIdsList != null && !associatedIdsList.isEmpty()) {
+			this.associatedIdsList = associatedIdsList;
+		}
+	}
+
+	/**
+	 * Construct a patient object with the specified ids and fields.
+	 *
 	 * @param ids
 	 *            A set of ID objects that identify the patient.
+	 * @param associatedIdsList
+	 * 						A list of associated IDs that identify the patient
 	 * @param fields
 	 *            The fields of the patient. A map with field names as keys and
 	 *            the corresponding Field objects as values.
 	 */
-	public Patient(Set<ID> ids, Map<String, Field<?>> fields) {
-		if(ids != null) {
-			this.ids = ids;
-		}
+	public Patient(Set<ID> ids, List<AssociatedIds> associatedIdsList, Map<String, Field<?>> fields) {
+		this(ids, associatedIdsList);
 		if(fields != null) {
 			this.setFields(fields);
 		}
@@ -356,6 +398,51 @@ public class Patient {
 		return newID;
 	}
 
+	public AssociatedIds createAssociatedIds(String type, Collection<String> idTypes) {
+		AssociatedIds associatedIds = new AssociatedIds(type);
+		idTypes.forEach(associatedIds::createId);
+		this.associatedIdsList.add(associatedIds);
+		return associatedIds;
+	}
+
+	/**
+	 * found associatedIds with the given type (map key) and generate new ids with the corresponding
+	 * requested id types (map value), otherwise create new associatedIds instance with new generated
+	 * requested ids and added it to the patient.
+	 *
+	 * @param associatedIdTypesMap associatedIds as key and requested id types as value
+	 * @return a map of new generated or already found requested ids with there associatedIds type as
+	 * key
+	 */
+	public MultiValuedMap<String, ID> createAssociatedIds(
+			MultiValuedMap<String, String> associatedIdTypesMap) {
+		return createAssociatedIds(associatedIdTypesMap, associatedIdsList);
+	}
+
+	public MultiValuedMap<String, ID> createAssociatedIds(
+			MultiValuedMap<String, String> associatedIdTypesMap, List<AssociatedIds> associatedIdsList) {
+		MultiValuedMap<String, ID> generatedAssociatedIds = new ArrayListValuedHashMap<>();
+		for (Entry<String, Collection<String>> entry : associatedIdTypesMap.asMap().entrySet()) {
+			List<AssociatedIds> currentAssociatedIdsList = associatedIdsList.stream()
+					.filter(a -> a.getType().equals(entry.getKey()))
+					.collect(Collectors.toList());
+			if (!currentAssociatedIdsList.isEmpty()) {
+				// update existing associatedIds with new generated ids
+				currentAssociatedIdsList.forEach(a -> entry.getValue().stream()
+						.map(a::createId)
+						.filter(Objects::nonNull)
+						.forEachOrdered(id -> generatedAssociatedIds.put(id.getType(), id)) // result
+				);
+			} else { // generate new associatedIds for requested id type
+				AssociatedIds associatedIds = createAssociatedIds(entry.getKey(), entry.getValue());
+				//add created ids to result list
+				entry.getValue().stream().map(associatedIds::getId)
+						.forEachOrdered(id -> generatedAssociatedIds.put(id.getType(), id));
+			}
+		}
+		return generatedAssociatedIds;
+	}
+
 	/**
 	 * Get the ID of the specified type from this patient.
 	 *
@@ -420,13 +507,24 @@ public class Patient {
 	}
 
 	/**
-	 * Get the list of associated IDs of this patient.
+	 * Get the list of associatedIds of this patient.
 	 *
 	 * @return The AssociatedIds of the patient as unmodifiable list. While the List itself is
 	 * unmodifiable, modification of the elements (AssociatedIds objects) affect the patient object.
 	 */
 	public List<AssociatedIds> getAssociatedIdsList() {
 		return Collections.unmodifiableList(this.associatedIdsList);
+	}
+
+	/**
+	 * Get a list of associatedIds of this patient, which contains at least one searched id.
+	 *
+	 * @return modification of the elements (AssociatedIds objects) affect the patient object.
+	 */
+	public List<AssociatedIds> getAssociatedIdsList(List<ID> searchedIds) {
+		return this.associatedIdsList.stream()
+				.filter(a -> searchedIds.stream().anyMatch(a::contain))
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -629,6 +727,7 @@ public class Patient {
 		for (ID id : this.ids) {
 			id.setTentative(isTentative);
 		}
+		associatedIdsList.forEach(a -> a.setTentative(isTentative));
 	}
 
 	/**

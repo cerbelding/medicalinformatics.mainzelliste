@@ -25,9 +25,13 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.exceptions.ConflictingDataException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -35,24 +39,31 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 
 /**
  * An externally generated patient identifier. Imported in Mainzelliste from
  * external systems (cannot be internally generated or overwritten).
  */
 @Entity
-public class AssociatedIds implements IHasIdentifier {
+public class AssociatedIds {
 
 	@Id
 	@GeneratedValue
 	private int jpaid;
 
-	//TODO can be transient, the type can be in onload method determined
+	//TODO can be transient: the type can be determined in onload method
 	@Basic
 	private String type;
 
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
 	protected Set<ID> ids = new HashSet<>();
+
+	/**
+	 * Set of IDs for this patient, which are not persisted in DB
+	 */
+	@Transient
+	private Set<ID> transientIds = new HashSet<>();
 
 	public AssociatedIds() {
 	}
@@ -61,25 +72,63 @@ public class AssociatedIds implements IHasIdentifier {
 		this.type = type;
 	}
 
+	public AssociatedIds(String type, List<ID> ids) {
+		this(type);
+		this.ids = new HashSet<>(ids);
+	}
+
 	public String getType() {
 		return this.type;
 	}
 
-	public void setType(String type) {
-		this.type = type;
-	}
-
-	@Override
+	// TODO duplicate code @see patient
 	public ID createId(String idType) {
-		ID newId = this.getId(idType);
-		if(newId == null) {
-			newId = IDGeneratorFactory.instance.getFactory(idType).getNext();
-			this.ids.add(newId);
+		ID thisId = getId(idType);
+		if (thisId != null) {
+			return thisId;
 		}
-		return newId;
+
+		// ID of requested type was not found and is not external -> generate new ID
+		IDGenerator<? extends ID> factory = IDGeneratorFactory.instance.getAssociatedIdGenerators(type)
+				.stream().filter(g -> g.getIdType().equals(idType)).findFirst().orElse(null);
+		if (factory == null) {
+			throw new InvalidIDException("ID type " + idType + " not defined!");
+		} else if (factory.isExternal()) {
+			return null;
+		}
+
+		// generate ids eagerly
+		// Only non external and persistent ids can be generated eagerly
+		// Can lead to cycles in generating ids due to incorrect configuration
+		// pid -> pid2 (eagerly), pid2 -> pid3 (eagerly), pid3 -> pid (eagerly))
+		// TODO: Check for cycles in the configuration
+		if (!IDGeneratorFactory.instance.isEagerGenerationOn()) {
+			IDGeneratorFactory.instance.getNonExternalIdGenerators().entrySet().stream()
+					.filter(e -> e.getValue().isPersistent())
+					.filter(e -> e.getValue().isEagerGenerationOn(idType))
+					.filter(e -> getId(e.getKey()) == null)
+					.forEach(e -> this.generateId(e.getValue()));
+		}
+
+		return generateId(factory);
 	}
 
-	@Override
+	// TODO duplicate code @see patient
+	private ID generateId(IDGenerator<? extends ID> factory) {
+		ID newID;
+		if (factory.isPersistent()){
+			newID = factory.getNext();
+			ids.add(newID);
+		} else {
+			String baseIdType = ((DerivedIDGenerator<?>)factory).getBaseIdType();
+			ID baseId = getId(baseIdType);
+			newID = ((DerivedIDGenerator<?>)factory).computeId(baseId);
+			transientIds.add(newID);
+		}
+		return newID;
+	}
+
+	// TODO duplicate code @see patient
 	public ID getId(String idType) {
 		for(ID id: this.ids) {
 			if(id.getType().equals(idType)) {
@@ -89,19 +138,23 @@ public class AssociatedIds implements IHasIdentifier {
 		return null;
 	}
 
-	@Override
-	public boolean addId(ID id) {
-		if(this.getId(id.getType()) != null) {
+	// TODO duplicate code @see patient
+	public boolean addId(ID identifier) {
+		if(this.getId(identifier.getType()) != null) {
 			return false;
 		}
-		return this.ids.add(id);
+		return this.ids.add(identifier);
 	}
 
+	// TODO implement abstract method
 	public Set<ID> getIds() {
 		return this.ids;
 	}
 
-	@Override
+	public int getJpaId() {
+		return this.jpaid;
+	}
+
 	public boolean removeId(String idType) {
 		ID searchId = null;
 		for(ID id: this.ids) {
@@ -112,33 +165,54 @@ public class AssociatedIds implements IHasIdentifier {
 		return this.ids.remove(searchId);
 	}
 
+	// TODO duplicate code @see patient.updateFrom(...)
+	public void updateFrom(List<ID> newIds) {
+		for (ID newId : newIds) {
+			ID id = getId(newId.getType());
+			if (id == null) {
+				addId(newId);
+			} else if (!id.equals(newId)) {
+				throw new ConflictingDataException(String.format("ID of type %s should be updated with "
+								+ "value %s but already has value %s", newId.getType(), newId.getIdString(),
+						id.getIdString()));
+			}
+		}
+	}
+
+	public boolean contain(ID id) {
+		return ids.contains(id);
+	}
+
+	public void setTentative(boolean isTentative) {
+		for (ID id : this.ids) {
+			id.setTentative(isTentative);
+		}
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		// "Free" checks until we can cast
-		if(obj == this) {
+		if (obj == this) {
 			return true;
 		}
-		if(obj == null) {
+		if (!(obj instanceof AssociatedIds)) {
 			return false;
 		}
-		if(!(obj instanceof AssociatedIds)) {
-			return false;
-		}
-		AssociatedIds assocId = (AssociatedIds) obj;
+
+		AssociatedIds associatedIds = (AssociatedIds) obj;
 
 		// check for same type
-		if(!this.type.equals(assocId.getType())) {
+		if (!this.type.equals(associatedIds.getType())) {
 			return false;
 		}
 
-		// two AssociatedIds are same iff at least one ID is the same. (an ID can only be in one AssociatedIds)
-		for(ID myId: this.ids) {
-			if(assocId.getIds().contains(myId)) {
-				// TODO: check for inconsistencies?
-				return true;
-			}
-		}
-		return false;
+		return this.ids.size() == associatedIds.getIds().size() && this.ids
+				.containsAll(associatedIds.getIds());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(jpaid);
 	}
 
 	@Override
@@ -153,5 +227,16 @@ public class AssociatedIds implements IHasIdentifier {
 		}
 		str.append("]");
 		return str.toString();
+	}
+
+	/**
+	 * Creates a new AssociatedIds instance based on the given ID instance.
+	 *
+	 * @param id id object
+	 * @return associated id contain the given id instance
+	 */
+	public static AssociatedIds createAssociatedIds(ID id) {
+		return new AssociatedIds(IDGeneratorFactory.instance.getAssociatedIdsType(id.getType()),
+				Collections.singletonList(id));
 	}
 }
