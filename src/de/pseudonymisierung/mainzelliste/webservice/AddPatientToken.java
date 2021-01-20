@@ -4,14 +4,12 @@ import de.pseudonymisierung.mainzelliste.Config;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidFieldException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
+import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-
-import de.pseudonymisierung.mainzelliste.matcher.MatchResult.MatchResultType;
 
 /**
  * Authorizes to add a patient to the database by his IDAT and receive an ID
@@ -37,7 +35,7 @@ public class AddPatientToken extends Token {
 		super("addPatient", allowedUses);
 		this.fields = new HashMap<>();
 		this.ids = new HashMap<>();
-		this.requestedIdTypes = new HashSet<>();
+		this.requestedIdTypes = new LinkedHashSet<>();
 	}
 
 	@Override
@@ -59,13 +57,14 @@ public class AddPatientToken extends Token {
 		if (this.getData().containsKey("ids")) {
 			Map<String, ?> serverIds = this.getDataItemMap("ids");
 			for (Map.Entry<String, ?> entry : serverIds.entrySet()) {
-				if (!IDGeneratorFactory.instance.getExternalIdTypes().contains(entry.getKey()))
+				if (!IDGeneratorFactory.instance.getExternalIdTypes().contains(entry.getKey()) ||
+						!IDGeneratorFactory.instance.getExternalAssociatedIdTypes().contains(entry.getKey()))
 					throw new InvalidIDException("Unknown id type '" + entry.getKey() + "'.");
 				ids.put(entry.getKey(), entry.getValue().toString());
 			}
 		}
 
-		this.requestedIdTypes = new HashSet<String>();
+		this.requestedIdTypes = new LinkedHashSet<>();
 		if (this.hasDataItem("idTypes")) {
 			List<?> idtypes = this.getDataItemList("idTypes");
 			for (Object o : idtypes) {

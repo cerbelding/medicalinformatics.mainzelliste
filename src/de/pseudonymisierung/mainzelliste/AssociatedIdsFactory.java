@@ -139,7 +139,7 @@ public class AssociatedIdsFactory {
         }
         for(String idType: this.associatedIdTypes.get(assocId.getType())) {
             if(assocId.getId(idType) == null) {
-                IDGenerator<?> idGenerator = IDGeneratorFactory.instance.getFactory(idType);
+                IDGenerator<?> idGenerator = IDGeneratorFactory.instance.getGenerator(idType);
                 if(!idGenerator.isExternal()) {
                     assocId.addId(idGenerator.getNext());
                 }

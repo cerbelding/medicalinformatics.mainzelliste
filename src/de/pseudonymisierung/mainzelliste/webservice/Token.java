@@ -48,7 +48,6 @@ import javax.ws.rs.core.Response.Status;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -597,10 +596,9 @@ public class Token {
 	 * @throws InvalidTokenException
 	 *             If the given ID type is not known.
 	 */
-	private void checkIdType(String idType) throws InvalidTokenException {
-		List<String> definedIdTypes = Arrays.asList(IDGeneratorFactory.instance
-				.getIDTypes());
-		if (!definedIdTypes.contains(idType))
+	private void checkIdType(String idType) {
+		if (!IDGeneratorFactory.instance.isIdTypeExist(idType) &&
+				!IDGeneratorFactory.instance.isAssociatedIdTypeExist(idType))
 			throw new InvalidTokenException("'" + idType + "'"
 					+ " is not a known ID type!");
 	}

@@ -195,7 +195,7 @@ public abstract class ID {
 	@JsonIgnore
 	@Transient
 	public IDGenerator<? extends ID> getFactory(){
-		return IDGeneratorFactory.instance.getFactory(getType());
+		return IDGeneratorFactory.instance.getGenerator(getType());
 	}
 
 	/**
