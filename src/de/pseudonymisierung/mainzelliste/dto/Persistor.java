@@ -771,29 +771,6 @@ public enum Persistor {
 		return result;
 	}
 
-	/**
-	 * Retrieves a ListID that contains `identifier` from the database.
-	 * @param identifier The identifier listed in a ListID to search for.
-	 * @return An (refreshed) ListID instance that holds `identifier`.
-	 */
-	public synchronized AssociatedIds getAssociatedIdsByID(ID identifier) {
-		EntityManager emLocal = this.emf.createEntityManager();
-		TypedQuery<AssociatedIds> qry = emLocal.createQuery("SELECT assoc FROM AssociatedIds assoc, IN(assoc.ids) id WHERE id.idString = :idString AND id.type = :idType", AssociatedIds.class);
-		qry.setParameter("idString", identifier.getIdString());
-		qry.setParameter("idType", identifier.getType());
-		List<AssociatedIds> result = qry.getResultList();
-		emLocal.close();
-		if(result.size() == 0) {
-			return null;
-		}
-		if(result.size() > 1) {
-			//TODO: inconsistency!
-			return null;
-		}
-		// made sure only one element is in results
-		return result.get(0);
-	}
-
 	public synchronized List<Patient> getPatientsWithAssociatedIds(List<AssociatedIds> associatedIdsList) {
 		List<ID> ids = associatedIdsList.stream()
 				.flatMap(ac -> ac.getIds().stream())

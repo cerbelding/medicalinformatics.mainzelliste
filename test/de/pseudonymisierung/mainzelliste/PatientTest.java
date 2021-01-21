@@ -41,7 +41,6 @@ public class PatientTest {
     public void baseAssumptions(Patient patient) {
         Assert.assertNotNull(patient.getAssociatedIdsList());
         Assert.assertEquals(patient.getAssociatedIdsList().size(), 0);
-        Assert.assertNull(patient.getAssociatedIds(null));
     }
 
     @Test(dataProvider = "patient")
@@ -50,17 +49,17 @@ public class PatientTest {
         Assert.assertNotNull(patient.getAssociatedIdsList());
         Assert.assertEquals(patient.getAssociatedIdsList().size(), 0);
 
-        patient.addAssociatedIds(assocId);
-        Assert.assertEquals(patient.getAssociatedIds(assocId), assocId);
+        patient.associatedIdsList.add(assocId);
+        Assert.assertEquals(patient.getAssociatedIdsList().get(0), assocId);
         Assert.assertEquals(patient.getAssociatedIdsList().size(), 1);
     }
 
     @Test(dataProvider = "patient")
     public void addAssociatedIdentifiers(Patient patient) {
         AssociatedIds assocId_1 = this.createAssocId("extVisitId", "asdf1234", "fall_psn", "1");
-        patient.addAssociatedIds(assocId_1);
+        patient.associatedIdsList.add(assocId_1);
         AssociatedIds assocId_2 = this.createAssocId("extVisitId", "fdsa4321", "fall_psn", "2");
-        patient.addAssociatedIds(assocId_2);
+        patient.associatedIdsList.add(assocId_2);
 
         Assert.assertEquals(patient.getAssociatedIdsList().size(), 2);
         Assert.assertTrue(patient.getAssociatedIdsList().contains(assocId_1));
@@ -70,32 +69,14 @@ public class PatientTest {
     @Test(dataProvider = "patient")
     public void getAssociatedIdentifiers(Patient patient) {
         AssociatedIds assocId_1 = this.createAssocId("extVisitId", "asdf1234", "fall_psn", "1");
-        patient.addAssociatedIds(assocId_1);
+        patient.associatedIdsList.add(assocId_1);
         AssociatedIds assocId_2 = this.createAssocId("extVisitId", "fdsa4321", "fall_psn", "2");
-        patient.addAssociatedIds(assocId_2);
+        patient.associatedIdsList.add(assocId_2);
 
-        Assert.assertEquals(patient.getAssociatedIds(assocId_1), assocId_1);
+        Assert.assertEquals(patient.associatedIdsList.get(0), assocId_1);
         Assert.assertTrue(patient.getAssociatedIdsList().contains(assocId_1));
 
-        Assert.assertEquals(patient.getAssociatedIds(assocId_2), assocId_2);
+        Assert.assertEquals(patient.associatedIdsList.get(1), assocId_2);
         Assert.assertTrue(patient.getAssociatedIdsList().contains(assocId_2));
     }
-
-    @Test(dataProvider = "patient")
-    public void removeAssociatedIdentifier(Patient patient) {
-        AssociatedIds assocId_1 = this.createAssocId("extVisitId", "asdf1234", "fall_psn", "1");
-        patient.addAssociatedIds(assocId_1);
-        AssociatedIds assocId_2 = this.createAssocId("extVisitId", "fdsa4321", "fall_psn", "2");
-        patient.addAssociatedIds(assocId_2);
-
-        Assert.assertEquals(patient.getAssociatedIdsList().size(), 2);
-        patient.removeAssociatedIds(assocId_2);
-
-        Assert.assertEquals(patient.getAssociatedIdsList().size(), 1);
-        Assert.assertNotNull(patient.getAssociatedIds(assocId_1));
-        Assert.assertTrue(patient.getAssociatedIdsList().contains(assocId_1));
-        Assert.assertNull(patient.getAssociatedIds(assocId_2));
-        Assert.assertFalse(patient.getAssociatedIdsList().contains(assocId_2));
-    }
-
 }

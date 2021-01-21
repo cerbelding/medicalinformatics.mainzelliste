@@ -201,7 +201,7 @@ public class Patient extends Identifiable{
 				matchedAssociatedIds.get().updateIds(newExternalIds);
 			} else {
 				// add new associatedIds from input patient
-				addAssociatedIds(newAssociatedIds);
+				this.associatedIdsList.add(newAssociatedIds);
 			}
 		}
 		return this;
@@ -632,29 +632,5 @@ public class Patient extends Identifiable{
 	@Override
 	protected Collection<IDGenerator<? extends ID>> getNonExternalIdGenerators() {
 		return IDGeneratorFactory.instance.getNonExternalIdGenerators().values();
-	}
-
-	public AssociatedIds getAssociatedIds(AssociatedIds assocId) {
-		for (AssociatedIds searchAssoc : this.associatedIdsList) {
-			if (searchAssoc.equals(assocId)) {
-				return searchAssoc;
-			}
-		}
-		return null;
-	}
-
-	public boolean removeAssociatedIds(AssociatedIds assocId) {
-		if (this.getAssociatedIds(assocId) == null) {
-			return false;
-		}
-		return this.associatedIdsList.remove(assocId);
-	}
-
-	public boolean addAssociatedIds(AssociatedIds assocId) {
-		if (this.getAssociatedIds(assocId) != null) {
-			// TODO: merge instead of returning false.
-			return false;
-		}
-		return this.associatedIdsList.add(assocId);
 	}
 }
