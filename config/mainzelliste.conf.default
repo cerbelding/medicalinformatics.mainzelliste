@@ -379,6 +379,7 @@ result.printIdat = true
 #
 # - createToken: create tokens -- in addition, permission "tt_x" is req'd, where x is one of these TOKEN TYPES:
 #   - tt_addPatient: allows to generate one (1) ID. Token is invalidated afterwards even if an existing ID was returned.
+#   - tt_addPatients: allows to add multiple patients.
 #	- tt_readPatients: allows to read IDAT or pseudonyms of patients
 #   - tt_editPatient: allows to change identifying data of one (1) patient. Token is invalidated afterwards.
 #
