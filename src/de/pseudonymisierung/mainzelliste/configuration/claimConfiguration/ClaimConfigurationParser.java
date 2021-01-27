@@ -76,7 +76,6 @@ public class ClaimConfigurationParser {
           !props.containsKey("claims." + i + ".permissions") ||
               !props.containsKey("claims." + i + ".auth")
       ) {
-        logger.warn("Claims configuration parsing failed");
         break;
       }
       ClaimConfiguration claimConfiguration = parseClaim(props, "claims." + i,  authorizationServers);
