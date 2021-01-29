@@ -383,10 +383,12 @@ public enum PatientBackend {
                 }
             } else { // idMatches.size() == 1 : Found patient with matching external ID
                 final Patient idMatch = idMatches.iterator().next();
-                boolean idMatchHasIdat = Validator.instance.getRequiredFields().stream().allMatch(f ->
-                        idMatch.getFields().containsKey(f) && !idMatch.getFields().get(f).isEmpty());
                 // Check if IDAT of input and match (if present) matches
-                if (!inputPatient.getFields().isEmpty() && idMatchHasIdat) {
+                if (!inputPatient.getFields().isEmpty()
+                    && idMatch.getFields().values().stream().anyMatch(f -> !f.isEmpty())
+                    && Validator.instance.getRequiredFields().stream()
+                    .allMatch(f -> idMatch.getFields().containsKey(f) && !idMatch.getFields().get(f).isEmpty())
+                ) {
                     MatchResult matchWithIdMatch = Config.instance.getMatcher().match(inputPatient, Collections.singletonList(idMatch));
                     if (matchWithIdMatch.getResultType() != MatchResultType.MATCH) {
                         logger.debug("Best matching weight on ID Matching: {}", matchWithIdMatch.getBestMatchedWeight());
