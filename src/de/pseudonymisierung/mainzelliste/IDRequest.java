@@ -101,6 +101,8 @@ public class IDRequest {
 	 *            values as keys and respective inputs as values.
 	 * @param idTypes
 	 *            The requested ID types.
+	 * @param associatedIds
+	 * 	          Generated associated IDs.
 	 * @param matchResult
 	 *            The match result as returned by the matcher.
 	 * @param assignedPatient
