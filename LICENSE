@@ -47,3 +47,4 @@ Furthermore, the following files incorporate code by other authors:
 	  
 In order to run this program, a JAX-RS implementation (e.g. Jersey, https://jersey.java.net/) 
 and a JDBC driver for the selected database are needed. These are not included for license reasons.
+

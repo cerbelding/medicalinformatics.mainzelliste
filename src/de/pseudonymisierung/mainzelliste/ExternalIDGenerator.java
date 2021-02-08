@@ -25,8 +25,9 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import org.apache.commons.lang.NotImplementedException;
+import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -38,7 +39,8 @@ public class ExternalIDGenerator implements IDGenerator<ExternalID>{
     String idType;
 
     @Override
-    public void init(IDGeneratorMemory mem, String idType, Properties props) {
+    public void init(IDGeneratorMemory mem, String idType, String[] eagerGenRelatedIdTypes,
+        Properties props) {
         this.idType = idType;
     }
 
@@ -91,6 +93,19 @@ public class ExternalIDGenerator implements IDGenerator<ExternalID>{
 
     @Override
 	public boolean isExternal() { return true; }
+
+    @Override
+    public boolean isPersistent() { return true; }
+
+    @Override
+    public Optional<IDGeneratorMemory> getMemory() {
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean isEagerGenerationOn(String idType) {
+        return false;
+    }
 
     @Override
     public boolean isSrl() { return false; }

@@ -1,0 +1,487 @@
+{
+	"info": {
+		"_postman_id": "54e0a4cd-6b4d-4dd8-a8f7-5e2685ef769f",
+		"name": "mainzelliste_validate_token_multiple",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NEW_SESSION - Sitzung anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9d6887cd-821d-4333-bba8-2e0c075022e8",
+						"exec": [
+							"console.log(\"New Session\")",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"sessionId\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"pm.test(\"Check StatusCode\", function(){",
+							"    pm.response.to.have.status(\"Created\");",
+							"});",
+							"",
+							"pm.test(\"Check ResponseSchema\", function(){",
+							"     var jsonData = pm.response.json();",
+							"     pm.expect(ajv.validate(schema, jsonData)).to.be.true;",
+							"     pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
+							"});",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW TOKEN (checkMatch) - Token anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ac4a4408-56de-43ff-9f6c-2a39f28ff65b",
+						"exec": [
+							"",
+							"",
+							"console.log(\"New TOKEN (checkMatch)\")",
+							"var jsonBody;",
+							"pm.collectionVariables.unset(\"tokenId\");",
+							"",
+							"",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"id\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"type\":{",
+							"                \"type\": \"string\",",
+							"                \"pattern\": \"checkMatch\"",
+							"            },",
+							"            \"data\": {",
+							"                \"type\": \"object\",",
+							"                 \"required\": [\"idTypes\"]",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"",
+							"",
+							"",
+							"pm.test('response must be valid and have a body', function() {",
+							"    pm.response.to.have.status(201);",
+							"    pm.response.to.be.withBody;",
+							"    pm.response.to.be.json; ",
+							"     ",
+							"    ",
+							"});",
+							"",
+							"pm.test(\"responseBody have correct scheme\", function() {",
+							"    var localBody =  pm.response.json();",
+							"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+							"    jsonBody = localBody;",
+							"    ",
+							"});",
+							"pm.test('response header have correct scheme', function(){",
+							"    pm.expect(pm.response.headers.has('Location')).to.be.true;",
+							"})",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"if(jsonBody){",
+							"    var tokenId = jsonBody.id;",
+							"    pm.collectionVariables.set(\"tokenId\",tokenId);",
+							"}",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"checkMatch\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "NEW_TOKEN (addPatient) - Token anlegen",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1ad769cd-bb92-4dd0-af67-a2284e9fc68e",
+						"exec": [
+							"console.log(\"New TOKEN (addPatient)\")",
+							"var jsonBody;",
+							"",
+							"",
+							"",
+							"",
+							"var Ajv = require('ajv'),",
+							"    ajv = new Ajv({logger: console}),",
+							"    schema = {",
+							"        \"properties\": {",
+							"            \"id\": {",
+							"                \"type\": \"string\"",
+							"            },",
+							"            \"type\":{",
+							"                \"type\": \"string\",",
+							"                \"pattern\": \"addPatient\"",
+							"            },",
+							"            \"data\": {",
+							"                \"type\": \"object\",",
+							"                 \"required\": [\"idTypes\"]",
+							"            },",
+							"            \"uri\": {",
+							"                \"type\": \"string\"",
+							"            }",
+							"        }",
+							"    };",
+							"",
+							"",
+							"",
+							"",
+							"pm.test('response must be valid and have a body', function() {",
+							"    pm.response.to.have.status(201);",
+							"    pm.response.to.be.withBody;",
+							"    pm.response.to.be.json; ",
+							"     ",
+							"    ",
+							"});",
+							"",
+							"pm.test(\"response have correct scheme\", function() {",
+							"    var localBody =  pm.response.json();",
+							"    pm.expect(ajv.validate(schema, localBody )).to.be.true;",
+							"    jsonBody = localBody;",
+							"    ",
+							"});",
+							"",
+							"pm.test('response header have correct scheme', function(){",
+							"    pm.expect(pm.response.headers.has('Location')).to.be.true;",
+							"})",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"if(jsonBody){",
+							"    var tokenId = jsonBody.id;",
+							"    ",
+							"    tokenIds = [];",
+							"    recentTokenId = pm.variables.get(\"tokenId\");",
+							"    ",
+							"  ",
+							"    ",
+							"   ",
+							"    tokenIds.push(tokenId)",
+							"    ",
+							"    if(recentTokenId){",
+							"        tokenIds.push(recentTokenId)",
+							"    }",
+							"    ",
+							"    ",
+							"    pm.collectionVariables.set(\"tokenId\",tokenId);",
+							"     pm.collectionVariables.set(\"tokenIds\",tokenIds);",
+							"}",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "10902c95-9181-49ef-b50d-be36f5c2924d",
+						"exec": [
+							"var externalData =  pm.variables.get('ADD_PATIENTS_DATA');",
+							"var patientsPointer = (pm.variables.get('addPatientsPointer'));",
+							"",
+							"",
+							"",
+							"",
+							"if(typeof(externalData) ==\"object\" && typeof(patientsPointer) == 'number' ){",
+							"    ",
+							" ",
+							"   ",
+							"    var patient = externalData[patientsPointer];",
+							"    ",
+							"   ",
+							"    Object.keys(patient).forEach(key=> {",
+							"      ",
+							"        pm.collectionVariables.set(key, patient[key]);",
+							"",
+							"        ",
+							"    });",
+							"    ",
+							"     ",
+							"     ",
+							"    ",
+							"}",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [{{idTypes}}]\r\n    \t}\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "VALIDATE_VALID_TOKEN",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c9c6e2a9-b514-41b2-b9ee-4acd363034c0",
+						"exec": [
+							"",
+							"",
+							"",
+							"pm.test('response must be valid', function() {",
+							"    pm.response.to.have.status(200);",
+							"    pm.response.to.not.have.body();",
+							"     ",
+							"    ",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "441da37a-487a-44bd-ab27-ae710eed8627",
+						"exec": [
+							"pm.collectionVariables.set('tokenId', pm.variables.get('tokenIds')[0]);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/validate/token?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"validate",
+						"token"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "VALIDATE_VALID_TOKEN",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c9c6e2a9-b514-41b2-b9ee-4acd363034c0",
+						"exec": [
+							"",
+							"",
+							"",
+							"pm.test('response must be valid', function() {",
+							"    pm.response.to.have.status(200);",
+							"    pm.response.to.not.have.body();",
+							"     ",
+							"    ",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "68fc5d98-89e9-4e8d-ab5a-ff206f8ee887",
+						"exec": [
+							"pm.collectionVariables.set('tokenId', pm.variables.get('tokenIds')[1]);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/validate/token?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"validate",
+						"token"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "4166b40b-d06c-43d8-905c-e344ba57dda8",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "9e8d8f9c-ae10-4d5d-8825-1a0cd9df9f56",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "db6206d7-d8be-4ea4-9067-bad53e44aa7c",
+			"key": "sessionId",
+			"value": "92d94b2f-4b84-4df0-9aeb-fc0f2343a534",
+			"type": "string"
+		}
+	],
+	"protocolProfileBehavior": {}
+}

@@ -6,7 +6,7 @@
 
     <groupId>de.pseudonymisierung.mainzelliste</groupId>
     <artifactId>mainzelliste</artifactId>
-    <version>1.7.0-RC1-SEL10</version>
+    <version>1.10-SNAPSHOT-${buildNumber}-${maven.build.timestamp}</version>
     <packaging>war</packaging>
 
     <parent>
@@ -15,23 +15,31 @@
         <version>10.0</version>
     </parent>
 
+  <scm>
+    <connection>scm:git:https://bitbucket.org/medicalinformatics/mainzelliste.git</connection>
+  </scm>
+
     <properties>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.build.timestamp.format>yyyyMMdd_HHmmss</maven.build.timestamp.format>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <version.servlet>3.1.0</version.servlet>
-        <version.commons.codec>1.11</version.commons.codec>
-        <version.log4j>1.2.17</version.log4j>
+        <version.servlet>4.0.1</version.servlet>
+        <version.commons.codec>1.14</version.commons.codec>
+        <version.log4j>2.14.0</version.log4j>
         <version.jersey>1.19.4</version.jersey>
-        <version.openjpa>2.4.2</version.openjpa>
-        <version.commons-dbcp>1.4</version.commons-dbcp>
-        <version.postgresql>42.1.4.jre7</version.postgresql>
-        <version.mysql>5.1.45</version.mysql>
-        <version.httpclient>4.5.4</version.httpclient>
+        <version.openjpa>3.1.2</version.openjpa>
+        <version.commons-dbcp2>2.8.0</version.commons-dbcp2>
+        <version.postgresql>42.2.18</version.postgresql>
+        <version.mysql>8.0.22</version.mysql>
+        <version.httpclient>4.5.11</version.httpclient>
         <version.commons.net>3.6</version.commons.net>
+        <version.maven-artifact>3.6.3</version.maven-artifact>
+        <version.tink>1.4.0</version.tink>
+        <version.org.testng>7.3.0</version.org.testng>
     </properties>
 
     <dependencies>
@@ -51,9 +59,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>commons-dbcp</groupId>
-            <artifactId>commons-dbcp</artifactId>
-            <version>${version.commons-dbcp}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-dbcp2</artifactId>
+            <version>${version.commons-dbcp2}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -70,11 +78,18 @@
         </dependency>
 
         <!-- Logging -->
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>${version.log4j}</version>
+        <scope>compile</scope>
+      </dependency>
+        <!-- cryptography -->
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>${version.log4j}</version>
-            <scope>compile</scope>
+          <groupId>com.google.crypto.tink</groupId>
+          <artifactId>tink</artifactId>
+          <version>${version.tink}</version>
+          <scope>compile</scope>
         </dependency>
 
         <!-- Rest -->
@@ -111,9 +126,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-        	<groupId>commons-net</groupId>
-        	<artifactId>commons-net</artifactId>
-        	<version>${version.commons.net}</version>
+          <groupId>commons-net</groupId>
+          <artifactId>commons-net</artifactId>
+          <version>${version.commons.net}</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet.jsp</groupId>
@@ -126,10 +141,24 @@
             <artifactId>common-http</artifactId>
             <version>4.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>${version.maven-artifact}</version>
+        </dependency>
+
+      <!-- Test -->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${version.org.testng}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <sourceDirectory>${basedir}/src</sourceDirectory>
+        <testSourceDirectory>${basedir}/test</testSourceDirectory>
         <resources>
             <resource>
                 <directory>${basedir}/config</directory>
@@ -143,7 +172,7 @@
             <resource>
                 <directory>${basedir}/resources</directory>
                 <includes>
-                	<include>version.properties</include>
+                  <include>version.properties</include>
                 </includes>
                 <filtering>true</filtering>
             </resource>
@@ -154,8 +183,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
                 <executions>
                     <execution>
@@ -166,34 +195,57 @@
                     </execution>
                 </executions>
             </plugin>
-			<plugin>
-				<groupId>org.apache.openjpa</groupId>
-				<artifactId>openjpa-maven-plugin</artifactId>
-				<version>${version.openjpa}</version>
-				<configuration>
-					<includes>**/entities/*.class</includes>
-					<excludes>**/entities/XML*.class</excludes>
-					<addDefaultConstructor>true</addDefaultConstructor>
-					<enforcePropertyRestrictions>true</enforcePropertyRestrictions>
-				</configuration>
-				<executions>
-					<execution>
-						<id>enhancer</id>
-						<phase>process-classes</phase>
-						<goals>
-							<goal>enhance</goal>
-						</goals>
-					</execution>
-				</executions>
-				<dependencies>
-					<dependency>
-						<groupId>org.apache.openjpa</groupId>
-						<artifactId>openjpa</artifactId>
-						<version>${version.openjpa}</version>
-					</dependency>
-				</dependencies>
-			</plugin>
-			<plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>3.0.0-M5</version>
+            </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>buildnumber-maven-plugin</artifactId>
+            <version>1.4</version>
+            <executions>
+              <execution>
+                <phase>validate</phase>
+                <goals>
+                  <goal>create</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <doCheck>false</doCheck>
+              <doUpdate>false</doUpdate>
+              <shortRevisionLength>10</shortRevisionLength>
+            </configuration>
+          </plugin>
+      <plugin>
+        <groupId>org.apache.openjpa</groupId>
+        <artifactId>openjpa-maven-plugin</artifactId>
+        <version>${version.openjpa}</version>
+        <configuration>
+          <includes>**/entities/*.class</includes>
+          <excludes>**/entities/XML*.class</excludes>
+          <addDefaultConstructor>true</addDefaultConstructor>
+          <enforcePropertyRestrictions>true</enforcePropertyRestrictions>
+        </configuration>
+        <executions>
+          <execution>
+            <id>enhancer</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>enhance</goal>
+            </goals>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.openjpa</groupId>
+            <artifactId>openjpa</artifactId>
+            <version>${version.openjpa}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.3</version>
@@ -203,13 +255,13 @@
                 </configuration>
             </plugin>
             <plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>tomcat-maven-plugin</artifactId>
-				<version>1.1</version>
-				<configuration>
-					<warSourceDirectory>${basedir}/WebContent</warSourceDirectory>
-				</configuration>
-			</plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>tomcat-maven-plugin</artifactId>
+        <version>1.1</version>
+        <configuration>
+          <warSourceDirectory>${basedir}/WebContent</warSourceDirectory>
+        </configuration>
+      </plugin>
 
             <!-- for configuration -->
             <plugin>
@@ -241,39 +293,39 @@
         <!-- Eingefügt um "Plugin execution not covered by lifecycle configuration" zu beheben -->
 
         <pluginManagement>
-        	<plugins>
-        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-        		<plugin>
-        			<groupId>org.eclipse.m2e</groupId>
-        			<artifactId>lifecycle-mapping</artifactId>
-        			<version>1.0.0</version>
-        			<configuration>
-        				<lifecycleMappingMetadata>
-        					<pluginExecutions>
-        						<pluginExecution>
-        							<pluginExecutionFilter>
-        								<groupId>
-        									org.apache.openjpa
-        								</groupId>
-        								<artifactId>
-        									openjpa-maven-plugin
-        								</artifactId>
-        								<versionRange>
-        									[${version.openjpa},)
-        								</versionRange>
-        								<goals>
-        									<goal>enhance</goal>
-        								</goals>
-        							</pluginExecutionFilter>
-        							<action>
-        								<execute/>
-        							</action>
-        						</pluginExecution>
-        					</pluginExecutions>
-        				</lifecycleMappingMetadata>
-        			</configuration>
-        		</plugin>
-        	</plugins>
+          <plugins>
+            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+            <plugin>
+              <groupId>org.eclipse.m2e</groupId>
+              <artifactId>lifecycle-mapping</artifactId>
+              <version>1.0.0</version>
+              <configuration>
+                <lifecycleMappingMetadata>
+                  <pluginExecutions>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>
+                          org.apache.openjpa
+                        </groupId>
+                        <artifactId>
+                          openjpa-maven-plugin
+                        </artifactId>
+                        <versionRange>
+                          [${version.openjpa},)
+                        </versionRange>
+                        <goals>
+                          <goal>enhance</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <execute/>
+                      </action>
+                    </pluginExecution>
+                  </pluginExecutions>
+                </lifecycleMappingMetadata>
+              </configuration>
+            </plugin>
+          </plugins>
         </pluginManagement>
     </build>
 </project>

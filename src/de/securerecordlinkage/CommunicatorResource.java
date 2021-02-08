@@ -6,7 +6,8 @@ import de.sessionTokenSimulator.PatientRecords;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -24,7 +25,7 @@ import java.util.*;
 @Path("Communicator")
 public class CommunicatorResource {
 
-    private static Logger logger = Logger.getLogger("de.securerecordlinkage.CommunicatorResource");
+    final static Logger logger = LogManager.getLogger(CommunicatorResource.class);
 
     // 2a. Re-send linkRecord to SRL
     // 2b. Process callback from SRL (linkRecord)

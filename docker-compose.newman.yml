@@ -1,0 +1,39 @@
+## This is a basic configuration of mainzelliste inside docker
+## Futher information about the image is available inside the docker.md file of this repository
+## Configuration examples are provided with docker-compose.dev.yml and docker-compose.user.yml
+version: "3.1"
+services:
+  db:
+    image: postgres:9.5-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=mainzelliste
+      - POSTGRES_USER=mainzelliste
+      - POSTGRES_PASSWORD=PleasePutASafePasswordHere
+  mainzelliste:
+    image: mainzelliste:test
+    build:
+      context: .
+    ports:
+      - 8080:8080
+    environment:
+      - ML_REVERSEPROXY_FQDN=mainzelliste
+      - ML_DB_PASS=NOONEISUSINGME
+      - ML_API_KEY=NOONEISUSINGME
+    depends_on:
+      - db
+    volumes:
+      - ./ci/newman_mainzelliste_configs/active_config:/run/secrets/
+      - ./ci/newman_mainzelliste_resources:/etc/resources/
+  newman:
+    image: newman_html_report
+    build:
+      context: ./ci
+      dockerfile: Dockerfile.newman
+    volumes:
+      - ./ci:/etc/newman
+    depends_on:
+      - db
+      - mainzelliste
+

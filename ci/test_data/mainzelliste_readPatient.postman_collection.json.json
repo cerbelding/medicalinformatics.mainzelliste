@@ -1,0 +1,56 @@
+[
+  {
+    "ADD_PATIENTS_DATA": [
+      {
+        "idTypes": [
+          "pid",
+          "intid"
+        ],
+        "vorname": "Barry",
+        "nachname": "Sullivan",
+        "geburtsname": "Hogan",
+        "geburtsjahr": "1919",
+        "ort": "Zeitz",
+        "geburtstag": "21",
+        "geburtsmonat": "09"
+      },
+      {
+        "idTypes": [
+          "pid",
+          "intid"
+        ],
+        "vorname": "Herman",
+        "nachname": "Erickson",
+        "geburtsname": "Ellison",
+        "geburtsjahr": "1919",
+        "ort": "Duncan",
+        "geburtstag": "21",
+        "geburtsmonat": "09"
+      },
+      {
+        "idTypes": [
+          "pid"
+        ],
+        "vorname": "Ashton",
+        "nachname": "Gregory",
+        "geburtsname": "Vaughn",
+        "geburtsjahr": "1919",
+        "ort": "Pike Creek",
+        "geburtstag": "21",
+        "geburtsmonat": "01"
+      },
+      {
+        "idTypes": [
+          "intid"
+        ],
+        "vorname": "Murphy",
+        "nachname": "Mcclain",
+        "geburtsname": "Oliver",
+        "geburtsjahr": "1919",
+        "ort": "Giurdignano",
+        "geburtstag": "01",
+        "geburtsmonat": "08"
+      }
+    ]
+  }
+]

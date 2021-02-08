@@ -44,11 +44,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.apache.commons.net.util.SubnetUtils;
-import org.apache.log4j.Logger;
 
+import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
+import org.apache.commons.net.util.SubnetUtils;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.webservice.Token;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.openjpa.lib.log.Log;
 
 /**
  * Keeps track of servers, i.e. each communication partner that is not a user.
@@ -64,6 +67,8 @@ public enum Servers {
 	 * Represents one registered server.
 	 */
 	class Server {
+
+		String name;
 		/** The apiKey by which this server authenticates itself. */
 		String apiKey;
 		/** The permissions of this server. */
@@ -83,6 +88,8 @@ public enum Servers {
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
 	/** All currently valid tokens, identified by their token ids. */
 	private final Map<String, Token> tokensByTid = new HashMap<String, Token>();
+	/** All Remote IPs with valid tokens by token ids. */
+	private final Map<String, String> IPsByTid = new HashMap<String, String>();
 
 	/** Time of inactivity after which a session is invalidated. */
 	private final long sessionTimeout;
@@ -94,7 +101,7 @@ public enum Servers {
 	private final Timer sessionsCleanupTimer;
 
 	/** The loggging instance. */
-	Logger logger = Logger.getLogger(Servers.class);
+	Logger logger = LogManager.getLogger(Servers.class);
 
 	/**
 	 * Creates the singleton instance. Reads configuration properties and
@@ -106,17 +113,19 @@ public enum Servers {
 		for (int i = 0; ; i++)
 		{
 			if (!props.containsKey("servers." + i + ".apiKey") ||
-				!props.containsKey("servers." + i + ".permissions") ||
-				!props.containsKey("servers." + i + ".allowedRemoteAdresses"))
+				!props.containsKey("servers." + i + ".permissions"))
 				break;
 
 			Server s = new Server();
-			s.apiKey = props.getProperty("servers." + i + ".apiKey");
+			s.name = "server" + i;
+			s.apiKey = props.getProperty("servers." + i + ".apiKey").trim();
 			
 			String permissions[] = props.getProperty("servers." + i + ".permissions").split("[;,]");
 			s.permissions = new HashSet<String>(Arrays.asList(permissions));
-			
-			String allowedRemoteAdresses[] = props.getProperty("servers." + i + ".allowedRemoteAdresses").split("[;,]");
+
+			String allowedRemoteAdressesString = props.getProperty("servers." + i + ".allowedRemoteAdresses");
+			String allowedRemoteAdresses[] = (allowedRemoteAdressesString != null) ?  allowedRemoteAdressesString.split("[;,]") : new String[]{"127.0.0.1", "0:0:0:0:0:0:0:1"};
+			logger.info("No AllowedRemoteAddresses are specified for servers.{}. Allowing localhost as default.", i);
 			s.allowedRemoteAdressRanges = new LinkedList<SubnetUtils>();
 			s.allowedRemoteAdresses = new HashSet<String>();
 			for (String thisAddress : allowedRemoteAdresses) {
@@ -132,10 +141,16 @@ public enum Servers {
 			servers.put(s.apiKey, s);
 		}
 			
+		if(servers.size() == 0) {
+			logger.error("No servers added. Is your config complete?");
+		}
+
 		if (Config.instance.getProperty("debug") == "true")
 		{
-			Token t = new Token("4223", "addPatient");
+			Token t = new AddPatientToken();
 			tokensByTid.put(t.getId(), t);
+			//set localhost for debugging
+			IPsByTid.put(t.getId(), "127.0.0.1");
 		}
 
 		// Read session timeout (maximum time a session can be inactive) from
@@ -182,9 +197,10 @@ public enum Servers {
 	 * 
 	 * @return The new session object.
 	 */
-	public Session newSession() {
+	public Session newSession(String serverName) {
 		String sid = UUID.randomUUID().toString();
 		Session s = new Session(sid);
+		s.setParentServerName(serverName);
 		synchronized (sessions) {
 			sessions.put(sid, s);
 		}
@@ -232,6 +248,7 @@ public enum Servers {
 
 			for (Token t : s.getTokens()) {
 				tokensByTid.remove(t.getId());
+				IPsByTid.remove(t.getId());
 			}
 			s.deleteAllTokens();
 			sessions.remove(sid);
@@ -243,7 +260,7 @@ public enum Servers {
 	 * for at least the configured timeout.
 	 */
 	public void cleanUpSessions() {
-		logger.debug("Cleaning up sessions...");
+		logger.trace("Cleaning up sessions...");
 		LinkedList<String> sessionsToDelete = new LinkedList<String>();
 		Date now = new Date();
 		synchronized (sessions) {
@@ -255,7 +272,7 @@ public enum Servers {
 			// ConcurrentModificationException
 			for (String sessionId : sessionsToDelete) {
 				this.deleteSession(sessionId);
-				logger.info(String.format("Session %s timed out", sessionId));
+				logger.info("Session {} timed out", sessionId);
 			}
 		}
 	}
@@ -276,6 +293,7 @@ public enum Servers {
 	 * @param permission
 	 *            The permission to check, e.g. "addPatient".
 	 */
+	//TODO: This function is not only checking permissions. it's also adding the configured server permission to a session. The function should have another name and function should be separated.
 	public void checkPermission(HttpServletRequest req, String permission) {
 		@SuppressWarnings("unchecked")
 		Set<String> perms = (Set<String>) req.getSession(true).getAttribute("permissions");
@@ -287,7 +305,7 @@ public enum Servers {
 			Server server = servers.get(apiKey);
 			
 			if(server == null){
-				logger.info("No server found with provided API key " + apiKey);
+				logger.info("No server found with provided API key \"{}\"", apiKey);
 				throw new WebApplicationException(Response
 						.status(Status.UNAUTHORIZED)
 						.entity("Please supply your API key in HTTP header field 'mainzellisteApiKey'.")
@@ -309,7 +327,7 @@ public enum Servers {
 					}
 				}
 				if (!addressInRange) {
-					logger.info("IP address " + req.getRemoteAddr() +  " rejected");
+					logger.info("IP address {} rejected", req.getRemoteAddr());
 					throw new WebApplicationException(Response
 							.status(Status.UNAUTHORIZED)
 							.entity(String.format("Rejecting your IP address %s.", req.getRemoteAddr()))
@@ -318,12 +336,16 @@ public enum Servers {
 			}
 
 			perms = server.permissions;
+
 			req.getSession().setAttribute("permissions", perms);
-			logger.info("Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(perms.toArray()) + ".");
+			req.getSession().setAttribute("serverName", getServerNameForApiKey(apiKey));
+
+
+			logger.info(() -> "Server " + req.getRemoteHost() + " logged in with permissions " + Arrays.toString(server.permissions.toArray()) + ".");
 		}
 		
-		if(!perms.contains(permission)){ // Check permission
-			logger.info("Access from " + req.getRemoteHost() + " is denied since they lack permission " + permission + ".");
+		if(!perms.contains(permission) && perms.stream().noneMatch(p -> p.matches(permission + ".*}"))){ // Check permission
+			logger.info("Access from {} is denied since they lack permission {}.", req.getRemoteHost(), permission);
 			throw new WebApplicationException(Response
 					.status(Status.UNAUTHORIZED)
 					.entity("Your permissions do not allow the requested access.")
@@ -339,8 +361,10 @@ public enum Servers {
 	 *            Id of the session in which to register the token.
 	 * @param t
 	 *            The token to register.
+	 * @param remoteAddress
+	 *            The IP address of the system trying to register this token.
 	 */
-	public void registerToken(String sessionId, Token t) {
+	public void registerToken(String sessionId, Token t, String remoteAddress) {
 		Session s = getSession(sessionId);
 		String tid = UUID.randomUUID().toString();
 		t.setId(tid);
@@ -349,7 +373,9 @@ public enum Servers {
 		getSession(sessionId).addToken(t);
 
 		synchronized (tokensByTid) {
+			// register token in server
 			tokensByTid.put(t.getId(), t);
+			IPsByTid.put(t.getId(), remoteAddress);
 		}
 	}
 
@@ -391,6 +417,7 @@ public enum Servers {
 
 		synchronized (tokensByTid) {
 			tokensByTid.remove(tokenId);
+			IPsByTid.remove(tokenId);
 		}
 	}
 
@@ -422,6 +449,19 @@ public enum Servers {
 	}
 
 	/**
+	 * Get the remote IP address of a specific token by its id.
+	 *
+	 * @param tokenId
+	 *            Id of the token to get the remote IP from.
+	 * @return The remote IP in String format or null if no token with the given id exists.
+	 */
+	public String getRemoteIpByTid(String tokenId) {
+		synchronized (tokensByTid) {
+			return IPsByTid.get(tokenId);
+		}
+	}
+
+	/**
 	 * Check if a token exists and has the given type. If
 	 * 
 	 * @param tid
@@ -434,7 +474,7 @@ public enum Servers {
 	public void checkToken(String tid, String type) throws InvalidTokenException {
 		Token t = getTokenByTid(tid);
 		if (t == null || !type.equals(t.getType()) ) {
-			logger.info("Token with id " + tid + " " + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
+			logger.info(() -> "Token with id " + tid + " " + (t == null ? "is unknown." : ("has wrong type '" + t.getType() + "'")));
 			throw new InvalidTokenException("Please supply a valid '" + type + "' token.");
 		}
 	}
@@ -530,4 +570,36 @@ public enum Servers {
 	public int getRequestMinorApiVersion(HttpServletRequest req) {
 		return this.getRequestApiVersion(req).minorVersion;
 	}
+
+	public String getServerNameForApiKey(String apiKey){
+		Server server = servers.get(apiKey);
+		return server.name;
+
+	}
+
+	public boolean hasServerPermission(String serverName, String permission){
+
+		Server server = servers.get(getApiKeyForServerName(serverName));
+		if(server.permissions.contains(permission)) {
+			return true;
+		}
+		return false;
+	}
+
+	public Set<String> getServerPermissionsForServerName(String serverName){
+		Server server = servers.get(getApiKeyForServerName(serverName));
+		return server.permissions;
+	}
+
+	public String getApiKeyForServerName(String serverName){
+
+		for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
+			if(serverName.equals(entry.getValue().name)){
+				return entry.getKey();
+			}
+		}
+
+		return "Server not found";
+	}
+
 }

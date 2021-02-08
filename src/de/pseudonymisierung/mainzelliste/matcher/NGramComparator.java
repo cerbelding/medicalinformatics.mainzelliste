@@ -3,24 +3,24 @@
  * Contact: info@mainzelliste.de
  *
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Affero General Public License as published by the Free 
+ * the terms of the GNU Affero General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License 
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses>.
  *
  * Additional permission under GNU GPL version 3 section 7:
  *
- * If you modify this Program, or any covered work, by linking or combining it 
- * with Jersey (https://jersey.java.net) (or a modified version of that 
- * library), containing parts covered by the terms of the General Public 
- * License, version 2.0, the licensors of this Program grant you additional 
+ * If you modify this Program, or any covered work, by linking or combining it
+ * with Jersey (https://jersey.java.net) (or a modified version of that
+ * library), containing parts covered by the terms of the General Public
+ * License, version 2.0, the licensors of this Program grant you additional
  * permission to convey the resulting work.
  */
 package de.pseudonymisierung.mainzelliste.matcher;
@@ -40,7 +40,7 @@ import de.pseudonymisierung.mainzelliste.PlainTextField;
  * and end characters, the strings are padded with a leading and a trailing
  * blank. The similarity is computed as Dice's coefficient of these sets: <i>(2
  * * |T(a) intersect T(b)|) / (|T(a)| + |T(b)|)</i>
- * 
+ *
  * @see <a href="http://en.wikipedia.org/wiki/N-gram">n-gram</a>
  * @see <a
  *      href="http://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient">Sørensen–Dice
@@ -54,10 +54,10 @@ public class NGramComparator extends FieldComparator<PlainTextField> {
 
 	/** Cache of n-grams for recently used strings. */
 	private static Map<String, Set<String>> cacheNGrams = new HashMap<String, Set<String>>(50000);
-	
+
 	/**
 	 * Get the set of n-grams for a given string.
-	 * 
+	 *
 	 * @param input
 	 *            The input string.
 	 * @return The generated n-grams.
@@ -66,7 +66,7 @@ public class NGramComparator extends FieldComparator<PlainTextField> {
 		Set<String> cacheResult = cacheNGrams.get(input);
 		if (cacheResult != null) return Collections.unmodifiableSet(cacheResult);
 
-		// initialize Buffer to hold input and padding 
+		// initialize Buffer to hold input and padding
 		// (nGramLength - 1 spaces on each side)
 		StringBuffer buffer = new StringBuffer(input.length() + 2 * (nGramLength - 1));
 		// Add leading padding
@@ -91,7 +91,7 @@ public class NGramComparator extends FieldComparator<PlainTextField> {
 	 * Instantiate comparison between two specified fields. The field
 	 * definitions correspond to indices in the Fields map of the persons
 	 * (objects of class Patient) which are compared.
-	 * 
+	 *
 	 * @param fieldLeft
 	 *            Name of comparison field on the left side.
 	 * @param fieldRight
@@ -106,29 +106,29 @@ public class NGramComparator extends FieldComparator<PlainTextField> {
 	public double compareBackend(PlainTextField fieldLeft, PlainTextField fieldRight) {
 		assert (fieldLeft instanceof PlainTextField);
 		assert (fieldRight instanceof PlainTextField);
-		
+
 		Set<String> nGramsLeft = getNGrams(fieldLeft.getValue());
 		Set<String> nGramsRight = getNGrams(fieldRight.getValue());
-		
+
 		int nLeft = nGramsLeft.size();
 		int nRight = nGramsRight.size();
-		
+
 		int nCommon = 0;
 		Set<String> smaller;
 		Set<String> larger;
-		
+
 		if (nLeft < nRight) {
 			smaller = nGramsLeft;
-			larger = nGramsRight;			
+			larger = nGramsRight;
 		} else {
 			smaller = nGramsRight;
 			larger = nGramsLeft;
 		}
-		
+
 		for (String str : smaller) {
 			if (larger.contains(str)) nCommon++;
 		}
-		
+
 		return 2.0 * nCommon / (nLeft + nRight);
 	}
 
