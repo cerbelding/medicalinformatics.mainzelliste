@@ -25,7 +25,8 @@
  */
 package de.securerecordlinkage.configuration;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.servlet.ServletContext;
 import java.io.*;
@@ -67,7 +68,7 @@ public enum ConfigLoader {
 	private Properties props;
 
 	/** Logging instance */
-	private Logger logger = Logger.getLogger(ConfigLoader.class);
+	private Logger logger = LogManager.getLogger(ConfigLoader.class);
 
 	/**
 	 * Creates an instance. Invoked on first access to ConfigLoader.instance. Reads

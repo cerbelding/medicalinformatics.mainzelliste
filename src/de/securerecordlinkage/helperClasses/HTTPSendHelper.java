@@ -4,7 +4,8 @@ import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.samply.common.http.HttpConnector;
 import de.samply.common.http.HttpConnectorException;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,7 +62,7 @@ public class HTTPSendHelper {
     }
 
     private static void initLogger(){
-        logger = Logger.getLogger(HTTPSendHelper.class);
+        logger = LogManager.getLogger(HTTPSendHelper.class);
         logger.info("HTTPSendHelper initLogger()");
     }
 }

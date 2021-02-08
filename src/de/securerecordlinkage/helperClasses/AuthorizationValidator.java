@@ -1,9 +1,9 @@
 package de.securerecordlinkage.helperClasses;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +11,7 @@ import java.util.Map;
 public class AuthorizationValidator {
 
     private Map<String, List<String>> allowedAuthTypesAndValues = new HashMap<>();
-    private static Logger logger = Logger.getLogger("de.securerecordlinkage.helperClasses.AuthorizationValidator");
+    final static Logger logger = LogManager.getLogger(AuthorizationValidator.class);
 
     public AuthorizationValidator(Map<String, List<String>> allowedAuthTypesAndValues){
         this.allowedAuthTypesAndValues = allowedAuthTypesAndValues;

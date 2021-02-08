@@ -6,7 +6,8 @@ import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.matcher.BloomFilterTransformer;
 import de.securerecordlinkage.CommunicatorResource;
 import de.securerecordlinkage.configuration.ConfigLoader;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -17,7 +18,7 @@ import java.util.*;
 
 public class PatientRecords {
 
-    private Logger logger = Logger.getLogger(this.getClass());
+    final static Logger logger = LogManager.getLogger(PatientRecords.class);
     private int numPatients = 0;
 
     /**

@@ -169,6 +169,11 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	}
 
 	@Override
+	public void reset(String idType) {
+		//
+	}
+
+	@Override
 	public boolean verify(String id) {
 		return true;
 	}
@@ -203,4 +208,7 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	public boolean isEagerGenerationOn(String idType) {
 		return eagerGenRelatedIdTypes.contains("*") || eagerGenRelatedIdTypes.contains(idType);
 	}
+
+	@Override
+	public boolean isSrl() { return false; }
 }

@@ -30,6 +30,8 @@ package de.pseudonymisierung.mainzelliste;
 
 import org.codehaus.jettison.json.JSONObject;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 
@@ -45,9 +47,12 @@ public class SrlIDGenerator implements IDGenerator<SrlID> {
 	IDGeneratorMemory mem;
 	/** The ID type this generator instance creates. */
 	String idType;
+	/** list of configured ID types with which this generator will create the ID eagerly */
+	private List<String> eagerGenRelatedIdTypes;
 
 	@Override
-	public void init(IDGeneratorMemory mem, String idType, Properties props) {
+	public void init(IDGeneratorMemory mem, String idType, String[] eagerGenRelatedIdTypes,
+					 Properties props) {
 		this.mem = mem;
 
 		String memCounter = mem.get("counter");
@@ -100,6 +105,19 @@ public class SrlIDGenerator implements IDGenerator<SrlID> {
 
 	@Override
 	public boolean isExternal() { return false; }
+
+	@Override
+	public boolean isPersistent() { return true; }
+
+	@Override
+	public Optional<IDGeneratorMemory> getMemory() {
+		return Optional.of(mem);
+	}
+
+	@Override
+	public boolean isEagerGenerationOn(String idType) {
+		return eagerGenRelatedIdTypes.contains("*") || eagerGenRelatedIdTypes.contains(idType);
+	}
 
 	@Override
 	public boolean isSrl() { return true; }

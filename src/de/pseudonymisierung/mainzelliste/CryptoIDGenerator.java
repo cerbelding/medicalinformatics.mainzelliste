@@ -77,6 +77,11 @@ public class CryptoIDGenerator implements DerivedIDGenerator<CryptoID> {
 	}
 
   @Override
+  public void reset(String idType) {
+    //
+  }
+
+  @Override
   public boolean verify(String id) { return true; }
 
   @Override
@@ -92,6 +97,9 @@ public class CryptoIDGenerator implements DerivedIDGenerator<CryptoID> {
 
   @Override
   public boolean isPersistent() { return false; }
+
+  @Override
+  public boolean isSrl() { return false; }
 
   @Override
   public Optional<IDGeneratorMemory> getMemory() {

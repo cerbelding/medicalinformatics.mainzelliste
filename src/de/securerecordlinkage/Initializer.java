@@ -9,10 +9,8 @@ import de.securerecordlinkage.helperClasses.HTTPSendHelper;
 import de.securerecordlinkage.helperClasses.Header;
 import de.securerecordlinkage.configuration.Server;
 import de.securerecordlinkage.helperClasses.HeaderHelper;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -115,6 +113,7 @@ public class Initializer {
     }
 
 
+/*
     private void log4jSetup() {
         Logger root = Logger.getRootLogger();
 
@@ -148,6 +147,7 @@ public class Initializer {
         }
         root.info("#####BEGIN SecureRecordLinkage LOG SESSION");
     }
+*/
 
     private JSONObject createLocalInitJSON(Config config){
         JSONObject reqObject = new JSONObject();
@@ -289,7 +289,7 @@ public class Initializer {
     }
 
     private static void initLogger(){
-        logger = Logger.getLogger(Initializer.class);
+        logger = LogManager.getLogger(Initializer.class);
 
         //FileAppender fileAppender = new FileAppender();
         //fileAppender.setLayout();
