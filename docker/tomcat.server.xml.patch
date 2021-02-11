@@ -1,13 +1,14 @@
 --- server.xml.ori	2019-05-04 11:22:07.000000000 +0200
 +++ server.xml		2019-08-07 12:21:56.000000000 +0200
-@@ -68,7 +68,10 @@
+@@ -68,7 +68,11 @@
      -->
      <Connector port="8080" protocol="HTTP/1.1"
                 connectionTimeout="20000"
 -               redirectPort="8443" />
 +               redirectPort="8443" 
 +               proxyName="ML_REVERSEPROXY_FQDN" 
-+               proxyPort="ML_REVERSEPROXY_PORT" 
++               proxyPort="ML_REVERSEPROXY_PORT"
++               scheme="ML_REVERSEPROXY_SCHEME"
 +               secure="ML_REVERSEPROXY_SSL" />
      <!-- A "Connector" using the shared thread pool-->
      <!--
