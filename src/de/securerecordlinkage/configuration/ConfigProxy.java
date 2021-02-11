@@ -4,7 +4,7 @@ import de.samply.common.config.Configuration;
 import de.samply.common.config.ObjectFactory;
 import de.samply.common.http.HttpConnector;
 import de.samply.config.util.FileFinderUtil;
-import de.samply.config.util.JAXBUtil;
+import de.samply.config.util.JaxbUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -74,7 +74,7 @@ public enum ConfigProxy {
         // proxy
         File proxyFile = FileFinderUtil.findFile("initializer.proxy.xml", "samply", fallback);
 
-        proxyConfiguration = JAXBUtil.unmarshall(proxyFile, JAXBContext.newInstance(ObjectFactory.class),
+        proxyConfiguration = JaxbUtil.unmarshall(proxyFile, JAXBContext.newInstance(ObjectFactory.class),
                                                  Configuration.class);
         prepareProxy(proxyConfiguration);
     }
@@ -85,20 +85,20 @@ public enum ConfigProxy {
      */
     private void prepareProxy(Configuration proxyConfiguration) {
         if (proxyConfiguration != null && proxyConfiguration.getProxy() != null) {
-            if (proxyConfiguration.getProxy().getHTTP() != null
-                && proxyConfiguration.getProxy().getHTTP().getUrl() != null) {
+            if (proxyConfiguration.getProxy().getHttp() != null
+                && proxyConfiguration.getProxy().getHttp().getUrl() != null) {
                 proxyConfig
-                        .put(HttpConnector.PROXY_HTTP_HOST, proxyConfiguration.getProxy().getHTTP().getUrl().getHost());
+                        .put(HttpConnector.PROXY_HTTP_HOST, proxyConfiguration.getProxy().getHttp().getUrl().getHost());
                 proxyConfig.put(HttpConnector.PROXY_HTTP_PORT,
-                                String.valueOf(proxyConfiguration.getProxy().getHTTP().getUrl().getPort()));
+                                String.valueOf(proxyConfiguration.getProxy().getHttp().getUrl().getPort()));
             }
 
-            if (proxyConfiguration.getProxy().getHTTPS() != null
-                && proxyConfiguration.getProxy().getHTTPS().getUrl() != null) {
+            if (proxyConfiguration.getProxy().getHttps() != null
+                && proxyConfiguration.getProxy().getHttps().getUrl() != null) {
                 proxyConfig.put(HttpConnector.PROXY_HTTPS_HOST,
-                                proxyConfiguration.getProxy().getHTTPS().getUrl().getHost());
+                                proxyConfiguration.getProxy().getHttps().getUrl().getHost());
                 proxyConfig.put(HttpConnector.PROXY_HTTPS_PORT,
-                                String.valueOf(proxyConfiguration.getProxy().getHTTPS().getUrl().getPort()));
+                                String.valueOf(proxyConfiguration.getProxy().getHttps().getUrl().getPort()));
             }
         }
     }

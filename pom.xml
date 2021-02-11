@@ -9,12 +9,6 @@
     <version>1.11-SNAPSHOT-${buildNumber}-${maven.build.timestamp}</version>
     <packaging>war</packaging>
 
-<!--    <parent>
-        <artifactId>parent</artifactId>
-        <groupId>de.samply</groupId>
-        <version>11.1.0</version>
-    </parent> -->
-
   <scm>
     <connection>scm:git:https://bitbucket.org/medicalinformatics/mainzelliste.git</connection>
   </scm>
@@ -282,9 +276,9 @@
 
             <!-- for configuration -->
             <plugin>
-                <groupId>org.jvnet.jaxb2.maven2</groupId>
+                <groupId>com.helger.maven</groupId>
                 <artifactId>maven-jaxb2-plugin</artifactId>
-                <version>0.12.3</version>
+                <version>0.14.3</version>
                 <executions>
                     <execution>
                         <id>xjc</id>
