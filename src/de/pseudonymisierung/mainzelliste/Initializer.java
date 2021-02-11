@@ -63,8 +63,10 @@ public class Initializer implements ServletContextListener {
 		initialize();
 		// only for debugging
 		// TODO: Delete before deployment
-		de.securerecordlinkage.Initializer initializer = new de.securerecordlinkage.Initializer();
-		initializer.contextInitialized(sce);
+		if (Boolean.parseBoolean(Config.instance.getProperty("sel.on"))){
+			de.securerecordlinkage.Initializer initializer = new de.securerecordlinkage.Initializer();
+			initializer.contextInitialized(sce);
+		}
 	}
 
 	@Override

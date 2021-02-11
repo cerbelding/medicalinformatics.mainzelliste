@@ -6,18 +6,29 @@
 
     <groupId>de.pseudonymisierung.mainzelliste</groupId>
     <artifactId>mainzelliste</artifactId>
-    <version>1.10-SNAPSHOT-${buildNumber}-${maven.build.timestamp}</version>
+    <version>1.11-SNAPSHOT-${buildNumber}-${maven.build.timestamp}</version>
     <packaging>war</packaging>
 
-    <parent>
+<!--    <parent>
         <artifactId>parent</artifactId>
         <groupId>de.samply</groupId>
-        <version>10.0</version>
-    </parent>
+        <version>11.1.0</version>
+    </parent> -->
 
   <scm>
     <connection>scm:git:https://bitbucket.org/medicalinformatics/mainzelliste.git</connection>
   </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -105,6 +116,12 @@
             <version>${version.jersey}</version>
             <scope>compile</scope>
         </dependency>
+<!--        <dependency>
+            <groupId>org.codehaus.jettison</groupId>
+            <artifactId>jettison</artifactId>
+            <version>1.2.0</version>
+            <scope>compile</scope>
+        </dependency> -->
 
         <dependency>
             <groupId>javax.xml.bind</groupId>
@@ -139,7 +156,7 @@
         <dependency>
             <groupId>de.samply</groupId>
             <artifactId>common-http</artifactId>
-            <version>4.0.0</version>
+            <version>7.1.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
@@ -218,34 +235,34 @@
               <shortRevisionLength>10</shortRevisionLength>
             </configuration>
           </plugin>
-      <plugin>
-        <groupId>org.apache.openjpa</groupId>
-        <artifactId>openjpa-maven-plugin</artifactId>
-        <version>${version.openjpa}</version>
-        <configuration>
-          <includes>**/entities/*.class</includes>
-          <excludes>**/entities/XML*.class</excludes>
-          <addDefaultConstructor>true</addDefaultConstructor>
-          <enforcePropertyRestrictions>true</enforcePropertyRestrictions>
-        </configuration>
-        <executions>
-          <execution>
-            <id>enhancer</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>enhance</goal>
-            </goals>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.openjpa</groupId>
-            <artifactId>openjpa</artifactId>
-            <version>${version.openjpa}</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <plugin>
+            <plugin>
+                <groupId>org.apache.openjpa</groupId>
+                <artifactId>openjpa-maven-plugin</artifactId>
+                <version>${version.openjpa}</version>
+                <configuration>
+                  <includes>**/entities/*.class</includes>
+                  <excludes>**/entities/XML*.class</excludes>
+                  <addDefaultConstructor>true</addDefaultConstructor>
+                  <enforcePropertyRestrictions>true</enforcePropertyRestrictions>
+                </configuration>
+                <executions>
+                  <execution>
+                    <id>enhancer</id>
+                    <phase>process-classes</phase>
+                    <goals>
+                      <goal>enhance</goal>
+                    </goals>
+                  </execution>
+                </executions>
+                <dependencies>
+                  <dependency>
+                    <groupId>org.apache.openjpa</groupId>
+                    <artifactId>openjpa</artifactId>
+                    <version>${version.openjpa}</version>
+                  </dependency>
+                </dependencies>
+              </plugin>
+              <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.3</version>
@@ -255,13 +272,13 @@
                 </configuration>
             </plugin>
             <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>tomcat-maven-plugin</artifactId>
-        <version>1.1</version>
-        <configuration>
-          <warSourceDirectory>${basedir}/WebContent</warSourceDirectory>
-        </configuration>
-      </plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>tomcat-maven-plugin</artifactId>
+                <version>1.1</version>
+                <configuration>
+                  <warSourceDirectory>${basedir}/WebContent</warSourceDirectory>
+                </configuration>
+            </plugin>
 
             <!-- for configuration -->
             <plugin>

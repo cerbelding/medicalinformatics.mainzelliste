@@ -168,7 +168,7 @@ public class CommunicatorResource {
     private JSONObject getCallBackURLasJSON() throws JSONException {
         logger.debug("getCallBackURLasJSON()");
         JSONObject callbackObj = new JSONObject();
-        callbackObj.setEscapeForwardSlashAlways(false);
+//        callbackObj.setEscapeForwardSlashAlways(false);
         callbackObj.put("url", localCallbackMatchURL);
         return callbackObj;
     }
@@ -177,7 +177,7 @@ public class CommunicatorResource {
     private JSONObject getCallBackURLasJSON(String idType, String idString) throws JSONException {
         logger.debug("getCallBackURLasJSON(" + idType + "," + idString + ")");
         JSONObject callbackObj = new JSONObject();
-        callbackObj.setEscapeForwardSlashAlways(false);
+//        callbackObj.setEscapeForwardSlashAlways(false);
         if(idString.length()==0 || idString.isEmpty()){
             callbackObj.put("url", localCallbackLinkURL + "?idType=" + idType);
         }
@@ -344,11 +344,11 @@ public class CommunicatorResource {
         JSONObject nextObject = new JSONObject();
         JSONObject lastObject = new JSONObject();
 
-        selfObject.setEscapeForwardSlashAlways(false);
-        firstObject.setEscapeForwardSlashAlways(false);
-        prevObject.setEscapeForwardSlashAlways(false);
-        nextObject.setEscapeForwardSlashAlways(false);
-        lastObject.setEscapeForwardSlashAlways(false);
+//        selfObject.setEscapeForwardSlashAlways(false);
+//        firstObject.setEscapeForwardSlashAlways(false);
+//        prevObject.setEscapeForwardSlashAlways(false);
+//        nextObject.setEscapeForwardSlashAlways(false);
+//        lastObject.setEscapeForwardSlashAlways(false);
 
         //Create URLs for paging navigation and add to JSON
         int minPage = 1;
@@ -363,7 +363,7 @@ public class CommunicatorResource {
         nextObject.put("href", baseCommunicatorURL + "/" + remoteID + "?" + "page=" + (page + 1) + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
         lastObject.put("href", baseCommunicatorURL + "/" + remoteID + "?" + "page=" + lastPage + "&" + "pageSize=" + pageSize + "&" + "toDate=" + toDate);
 
-        linkObject.setEscapeForwardSlashAlways(false);
+//        linkObject.setEscapeForwardSlashAlways(false);
 
         linkObject.put("self", selfObject);
         linkObject.put("first", firstObject);
