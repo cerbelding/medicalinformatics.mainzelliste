@@ -1,3 +1,8 @@
+### 1.9.1 - 2021-01-29
+#### Fixed
+- Adding new patient with external id in a database which contains a patient with the same external id 
+  and empty fields causes a conflict, if the NullMatcher has been activated
+
 ### 1.9.0 - 2020-12-21
 #### Added
 - A new endpoint (/monitoring) was implemented that enables clients to request information about the operating state of Mainzelliste [PR85](https://bitbucket.org/medicalinformatics/mainzelliste/pull-requests/85)
