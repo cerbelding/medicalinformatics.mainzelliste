@@ -30,20 +30,26 @@ import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import javax.persistence.Entity;
 
 /**
- * An externally generated patient identifier.
- * Imported in Mainzelliste from external systems (cannot be internally generated or overwritten).
+ * An externally generated patient identifier. Imported in Mainzelliste from
+ * external systems (cannot be internally generated or overwritten).
  */
 @Entity
 public class ExternalID extends ID {
 
 	/**
 	 * Creates an instance with the given ID string and type.
+	 * 
 	 * @param idString ID string.
-	 * @param type The ID type.
-	 * @throws InvalidIDException If the ID type is unknown or idString cannot be parsed to an integer.
+	 * @param type     The ID type.
+	 * @throws InvalidIDException If the ID type is unknown or idString cannot be
+	 *                            parsed to an integer.
 	 */
 	public ExternalID(String idString, String type) throws InvalidIDException {
 		super(idString, type);
+	}
+
+	public ExternalID() {
+		super();
 	}
 
 	@Override
@@ -55,4 +61,5 @@ public class ExternalID extends ID {
 	protected void setIdString(String id) {
 		this.idString = id;
 	}
+
 }

@@ -585,10 +585,9 @@ public class Token {
 	 * @throws InvalidTokenException
 	 *             If the given ID type is not known.
 	 */
-	private void checkIdType(String idType) throws InvalidTokenException {
-		List<String> definedIdTypes = Arrays.asList(IDGeneratorFactory.instance
-				.getIDTypes());
-		if (!definedIdTypes.contains(idType))
+	private void checkIdType(String idType) {
+		if (!IDGeneratorFactory.instance.isIdTypeExist(idType) &&
+				!IDGeneratorFactory.instance.isAssociatedIdTypeExist(idType))
 			throw new InvalidTokenException("'" + idType + "'"
 					+ " is not a known ID type!");
 	}

@@ -148,10 +148,10 @@ public class PatientsResource {
       AddPatientToken token = getAddPatientToken(tokenId);
       IDRequest createRet = addNewPatient(token, form);
 
-			Set<ID> ids = createRet.createRequestedIds();
+      List<ID> ids = createRet.getRequestedIds(token.getRequestedIdTypes());
 			MatchResult result = createRet.getMatchResult();
 			Map <String, Object> map = new HashMap<String, Object>();
-			if (ids == null) { // unsure case
+			if (ids.isEmpty()) { // unsure case
 				// Copy form to JSP model so that input is redisplayed
 				for (String key : form.keySet())
 				{
@@ -262,8 +262,9 @@ public class PatientsResource {
 
     AddPatientToken token = getAddPatientToken(tokenId);
     IDRequest response = addNewPatient(token, form);
-    //handle possible matches
-		if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.createRequestedIds() == null) {
+
+    //return possible matches
+		if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.getRequestedIds().isEmpty()) {
 			JSONObject ret = new JSONObject();
 			if (token.showPossibleMatches()) {
 				JSONArray possibleMatches = new JSONArray();
@@ -283,8 +284,8 @@ public class PatientsResource {
 		}
 		logger.debug(() -> "Accept: " + request.getHeader("Accept"));
 		logger.debug(() -> "Content-Type: " + request.getHeader("Content-Type"));
-		List<ID> newIds = new LinkedList<ID>(response.createRequestedIds());
-		
+
+		List<ID> newIds = new LinkedList<>(response.getRequestedIds(token.getRequestedIdTypes()));
 		int apiMajorVersion = Servers.instance.getRequestMajorApiVersion(request);
 
     String callback = token.getDataItemString("callback");

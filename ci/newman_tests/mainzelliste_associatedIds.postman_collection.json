@@ -1,0 +1,580 @@
+{
+	"info": {
+		"_postman_id": "7ed76eff-0092-4845-8acd-572e4fa5f74e",
+		"name": "mainzelliste_associatedIds",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "create session",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"console.log(\"newSession\")",
+							"var jsonBody = JSON.parse(responseBody);",
+							"",
+							"tests[\"Session created\"] = responseCode.code === 201;",
+							"tests[\"Body has sessionId\"] = responseBody.has(\"sessionId\");",
+							"tests[\"Body has uri\"] = responseBody.has(\"uri\");",
+							"",
+							"var sessionId = jsonBody.sessionId;",
+							"postman.setGlobalVariable(\"sessionId\", sessionId);",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create addPatientToken",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Token created\"] = responseCode.code === 201;",
+							"tests[\"Body has id\"] = responseBody.has(\"id\");",
+							"tests[\"Type is addPatient\"] = jsonBody.type === \"addPatient\";",
+							"tests[\"Body has data\"] = responseBody.has(\"data\");",
+							"tests[\"Data has idTypes\"] = \"idTypes\" in jsonBody.data;",
+							"",
+							"var tokenId = jsonBody.id;",
+							"postman.setGlobalVariable(\"tokenId\", tokenId);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n    \"allowedUses\": \"10\",\r\n    \"data\": {\r\n        \"idtypes\": [\"intVisitId\", \"pid\"]\r\n    }\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[T1] CREATE_PATIENT: two external assoc. ids and pid",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Patient created\"] = responseCode.code === 201;",
+							"",
+							"// check order and content : two intVisitId and one patient pid should be generated",
+							"var idTypes = [\"intVisitId\", \"intVisitId\", \"pid\"], i = 0;",
+							"jsonBody.forEach( id => {",
+							"    tests[ i + \" idType is \" + idTypes[i]] = id.idType === idTypes[i];",
+							"    tests[ i + \" ID object has idString\"] = \"idString\" in id;",
+							"    tests[ i + \" ID object has tentative\"] = \"tentative\" in id;",
+							"    tests[ i + \" ID object has uri\"] = \"uri\" in id;",
+							"    i++;",
+							"    });",
+							"pm.collectionVariables.set('intVisitId', jsonBody[1].idString);",
+							"pm.collectionVariables.set('pid', jsonBody[2].idString);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "vorname",
+							"value": "Lars",
+							"type": "text"
+						},
+						{
+							"key": "nachname",
+							"value": "Rarigauson",
+							"type": "text"
+						},
+						{
+							"key": "geburtstag",
+							"value": "01",
+							"type": "text"
+						},
+						{
+							"key": "geburtsmonat",
+							"value": "11",
+							"type": "text"
+						},
+						{
+							"key": "geburtsjahr",
+							"value": "1983",
+							"type": "text"
+						},
+						{
+							"key": "plz",
+							"value": "28857",
+							"type": "text"
+						},
+						{
+							"key": "ort",
+							"value": "Syke",
+							"type": "text"
+						},
+						{
+							"key": "extVisitId",
+							"value": "5255NF",
+							"type": "text"
+						},
+						{
+							"key": "extVisitId",
+							"value": "2355NF",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/patients?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"patients"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[T2] CREATE_PATIENT: find with external assoc. id and update",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Patient created\"] = responseCode.code === 201;",
+							"",
+							"// check order and content : two intVisitId and one patient pid should be generated",
+							"var idTypes = [\"intVisitId\", \"pid\"], i = 0;",
+							"jsonBody.forEach( id => {",
+							"    tests[ i + \" idType is \" + idTypes[i]] = id.idType === idTypes[i];",
+							"    tests[ i + \" ID object has idString\"] = id.idString === pm.collectionVariables.get(idTypes[i]);",
+							"    tests[ i + \" ID object has tentative\"] = \"tentative\" in id;",
+							"    tests[ i + \" ID object has uri\"] = \"uri\" in id;",
+							"    i++;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "vorname",
+							"value": "Lars",
+							"type": "text"
+						},
+						{
+							"key": "nachname",
+							"value": "Rarigauson",
+							"type": "text"
+						},
+						{
+							"key": "geburtstag",
+							"value": "01",
+							"type": "text"
+						},
+						{
+							"key": "geburtsmonat",
+							"value": "11",
+							"type": "text"
+						},
+						{
+							"key": "geburtsjahr",
+							"value": "1983",
+							"type": "text"
+						},
+						{
+							"key": "plz",
+							"value": "28857",
+							"type": "text"
+						},
+						{
+							"key": "ort",
+							"value": "Syke",
+							"type": "text"
+						},
+						{
+							"key": "extVisitId",
+							"value": "2355NF",
+							"type": "text"
+						},
+						{
+							"key": "extId",
+							"value": "DK388N",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/patients?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"patients"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[T3] CREATE_PATIENT: find with external assoc. id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Patient created\"] = responseCode.code === 201;",
+							"",
+							"// check order and content : two intVisitId and one patient pid should be generated",
+							"var idTypes = [\"intVisitId\", \"pid\"], i = 0;",
+							"jsonBody.forEach( id => {",
+							"    tests[ i + \" idType is \" + idTypes[i]] = id.idType === idTypes[i];",
+							"    tests[ i + \" ID object has idString\"] = id.idString === pm.collectionVariables.get(idTypes[i]);",
+							"    tests[ i + \" ID object has tentative\"] = \"tentative\" in id;",
+							"    tests[ i + \" ID object has uri\"] = \"uri\" in id;",
+							"    i++;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "vorname",
+							"value": "Lars",
+							"type": "text"
+						},
+						{
+							"key": "nachname",
+							"value": "Rarigauson",
+							"type": "text"
+						},
+						{
+							"key": "geburtstag",
+							"value": "01",
+							"type": "text"
+						},
+						{
+							"key": "geburtsmonat",
+							"value": "11",
+							"type": "text"
+						},
+						{
+							"key": "geburtsjahr",
+							"value": "1983",
+							"type": "text"
+						},
+						{
+							"key": "plz",
+							"value": "28857",
+							"type": "text"
+						},
+						{
+							"key": "ort",
+							"value": "Syke",
+							"type": "text"
+						},
+						{
+							"key": "extVisitId",
+							"value": "2355NF",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/patients?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"patients"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[T4] CREATE_PATIENT: find with external id and generate new assoc. id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Patient created\"] = responseCode.code === 201;",
+							"",
+							"// check order and content : two intVisitId and one patient pid should be generated",
+							"tests[ \"1 idType is intVisitId\"] = jsonBody[0].idType === \"intVisitId\";",
+							"tests[ \"1 ID object has idString\"] = jsonBody[0].idString === \"3\";",
+							"tests[ \"1 ID object has tentative\"] = \"tentative\" in jsonBody[0];",
+							"tests[ \"1 ID object has uri\"] = \"uri\" in jsonBody[0];",
+							"",
+							"tests[ \"2 idType is pid\"] = jsonBody[1].idType === \"pid\";",
+							"tests[ \"2 ID object has idString\"] = jsonBody[1].idString === pm.collectionVariables.get(\"pid\");",
+							"tests[ \"2 ID object has tentative\"] = \"tentative\" in jsonBody[1];",
+							"tests[ \"2 ID object has uri\"] = \"uri\" in jsonBody[1];"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "vorname",
+							"value": "Lars",
+							"type": "text"
+						},
+						{
+							"key": "nachname",
+							"value": "Rarigauson",
+							"type": "text"
+						},
+						{
+							"key": "geburtstag",
+							"value": "01",
+							"type": "text"
+						},
+						{
+							"key": "geburtsmonat",
+							"value": "11",
+							"type": "text"
+						},
+						{
+							"key": "geburtsjahr",
+							"value": "1983",
+							"type": "text"
+						},
+						{
+							"key": "plz",
+							"value": "28857",
+							"type": "text"
+						},
+						{
+							"key": "ort",
+							"value": "Syke",
+							"type": "text"
+						},
+						{
+							"key": "extId",
+							"value": "DK388N",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/patients?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"patients"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "intVisitId",
+			"value": ""
+		},
+		{
+			"key": "pid",
+			"value": ""
+		}
+	]
+}

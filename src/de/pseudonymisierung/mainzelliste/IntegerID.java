@@ -45,6 +45,10 @@ public class IntegerID extends ID {
 		super(idString, type);
 	}
 
+	public IntegerID() {
+		super();
+	}
+
 	@Override
 	public String getIdString() {
 		return idString;

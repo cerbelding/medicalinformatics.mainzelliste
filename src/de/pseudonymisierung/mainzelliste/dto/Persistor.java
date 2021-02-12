@@ -208,7 +208,9 @@ public enum Persistor {
 		Patient p = result.get(0);
 		// Fetch lazy loaded IDs
 		p.getIds();
+		p.getAssociatedIdsList();
 		p.getOriginal().getIds();
+		p.getOriginal().getAssociatedIdsList();
 		//em.refresh(p.getOriginal());
 		em.close();
 		return p;
@@ -344,6 +346,7 @@ public enum Persistor {
 		em.persist(req); //TODO: Fehlerbehandlung, falls PID schon existiert.
 		em.merge(req.getAssignedPatient());
 		IDGeneratorFactory.instance.getGeneratorMemories().forEach(em::merge);
+		IDGeneratorFactory.instance.getAssociatedIdGeneratorMemories().forEach(em::merge);
 		em.getTransaction().commit();
 		// Persist blocking keys
 		Config.instance.getBlockingKeyExtractors().updateBlockingKeys(Collections.singletonList(req.getAssignedPatient()));
@@ -765,6 +768,41 @@ public enum Persistor {
 			q.setParameter("thisPatient", p);
 			result.addAll(q.getResultList());
 		}
+		return result;
+	}
+
+	public synchronized List<Patient> getPatientsWithAssociatedIds(List<AssociatedIds> associatedIdsList) {
+		List<ID> ids = associatedIdsList.stream()
+				.flatMap(ac -> ac.getIds().stream())
+				.collect(Collectors.toList());
+		if(ids.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		String where = ids.stream()
+				.map(id -> new StringBuilder()
+						.append("(id.type = '")
+						.append(id.getType())
+						.append("' AND ")
+						.append("id.idString = '")
+						.append(id.getIdString())
+						.append("')").toString())
+				.collect(Collectors.joining("OR"));
+		EntityManager localEm = this.emf.createEntityManager();
+		TypedQuery<Patient> q = localEm.createQuery("SELECT DISTINCT p FROM Patient p, IN(p.associatedIdsList) "
+				+ "associatedIds, IN(associatedIds.ids) id WHERE " + where, Patient.class);
+
+		List<Patient> result = q.getResultList();
+
+		// Fetch lazy loaded IDs and AssociatedIds
+		result.forEach( p -> {
+			p.getIds();
+			p.getAssociatedIdsList();
+			p.getOriginal().getIds();
+			p.getOriginal().getAssociatedIdsList();
+		});
+
+		localEm.close();
 		return result;
 	}
 	

@@ -32,6 +32,7 @@ import de.pseudonymisierung.mainzelliste.crypto.key.CryptoKey;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
 import de.pseudonymisierung.mainzelliste.matcher.Matcher;
+import de.pseudonymisierung.mainzelliste.util.ConfigUtils;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -240,7 +241,7 @@ public enum Config {
 		}
 
 		// Read cryptographic key
-		getVariableSubProperties("crypto.key").forEach((v, p) -> {
+		ConfigUtils.getVariableSubProperties(props, "crypto.key").forEach((v, p) -> {
 			try {
 				cryptographicKeys.put(v, CryptoUtil.readKey(p.getProperty("type"),
 						readFileFromURL(p.getProperty("uri").trim())));
@@ -264,7 +265,7 @@ public enum Config {
 		});
 
 		// Read encryption
-		getVariableSubProperties("crypto.encryption").forEach((v, p) -> {
+		ConfigUtils.getVariableSubProperties(props,"crypto.encryption").forEach((v, p) -> {
 			try {
 				encryptionMap.put(v, CryptoUtil.createEncryption(p.getProperty("type"),
 						cryptographicKeys.get(p.getProperty("key"))));
@@ -773,40 +774,6 @@ public enum Config {
 	}
 
 	// HELPERS
-
-	/**
-	 * transform a configuration entry in the following format : <br>
-	 * 	{@code prefix.<variable>.<propertyKey> = <propertyValue>} <br>
-	 * in a map with {@code <variable>} as key and the given suffix {@code <propertyKey>} together
-	 * with the value {@code <propertyValue>} in property list as value.
-	 * @param prefix configuration key prefix
-	 * @return a map with variable name as key and its properties as value
-	 */
-	private Map<String, Properties> getVariableSubProperties(String prefix) {
-		Map<String, Properties> childrenPropertiesMap = new HashMap<>();
-		// property key should look like this : prefix.<var>.suffix
-		props.stringPropertyNames()
-				.stream()
-				.filter(k -> Pattern.matches("^" + prefix + "\\.\\w+\\..+", k.trim()))
-				.forEach(k -> {
-					String subKey = k.substring(prefix.length() + 1); // remove prefix from key
-					childrenPropertiesMap.compute(
-							subKey.split("\\.")[0], // get "<var>" @see example above
-							(newK, newProperties) -> addProperty(
-									newProperties,
-									subKey.substring(newK.length() + 1), // get "suffix" @see example above
-									props.getProperty(k)));         // get property value
-				});
-		return childrenPropertiesMap;
-	}
-
-	private Properties addProperty(Properties properties, String key, String value) {
-		if(properties == null) {
-			properties = new Properties();
-		}
-		properties.setProperty(key, value);
-		return properties;
-	}
 
 	/**
 	 * read file from the given url

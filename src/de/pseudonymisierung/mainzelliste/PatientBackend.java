@@ -24,6 +24,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,13 +59,28 @@ public enum PatientBackend {
 
         Patient assignedPatient; // The "real" patient that is assigned (match result or new patient)
 
-        Set<String> transientIdTypes = IDGeneratorFactory.instance.getTransientIdTypes();
-        Set<String> idTypes = requestedIdTypes.stream().filter(o -> (!transientIdTypes.contains(o))).collect(Collectors.toSet());
-        Set<String> derivedIdTypes = requestedIdTypes.stream().filter(o -> (transientIdTypes.contains(o))).collect(Collectors.toSet());
+        // TODO move to addPatientToken
+        Set<String> idTypes = new HashSet<>();
+        Set<String> transientIdTypes = new HashSet<>();
+        MultiValuedMap<String, String> associatedIdTypesMap = new ArrayListValuedHashMap<>();
+        for(String requestedIdType : requestedIdTypes) {
+          if(IDGeneratorFactory.instance.getTransientIdTypes().contains(requestedIdType)) {
+            transientIdTypes.add(requestedIdType);
+          } else if (IDGeneratorFactory.instance.isIdTypeExist(requestedIdType)) {
+            idTypes.add(requestedIdType);
+          } else if (IDGeneratorFactory.instance.isAssociatedIdTypeExist(requestedIdType)) {
+            associatedIdTypesMap.put(IDGeneratorFactory.instance.getAssociatedIdsType(
+                requestedIdType), requestedIdType.trim());
+          }
+        }
+        // TODO -----------------------------
+
         if (requestedIdTypes.isEmpty()) { // otherwise use the default ID type
           idTypes = new CopyOnWriteArraySet<>();
           idTypes.add(IDGeneratorFactory.instance.getDefaultIDType());
         }
+
+        MultiValuedMap<String, ID> generatedAssociatedIds = new ArrayListValuedHashMap<>();
 
         // generate requested ids and update fields if patient found
         switch (match.getResultType()) {
@@ -74,9 +91,17 @@ public enum PatientBackend {
             for (String idType : idTypes) {
               assignedPatient.getOriginal().createId(idType);
             }
-            for (String idType : derivedIdTypes) {
+            for (String idType : transientIdTypes) {
               assignedPatient.getOriginal().createId(idType);
             }
+
+            // find external associated ids from input patient
+            List<ID> externalIds = inputPatient.getAssociatedIdsList().stream()
+                .map(a -> a.getIds().iterator().next()) // only one id
+                .collect(Collectors.toList());
+            //create or update associatedIds with new generated ids
+            generatedAssociatedIds = assignedPatient.createAssociatedIds(associatedIdTypesMap,
+                assignedPatient.getAssociatedIdsList(externalIds));
 
             // log token to separate concurrent request in the log file
             // Log message is not informative if new ID types were requested
@@ -85,7 +110,7 @@ public enum PatientBackend {
             if (!idTypes.isEmpty()) {
               returnedId = assignedPatient.getOriginal().getId(idTypes.iterator().next());
             } else {
-              returnedId = assignedPatient.getOriginal().getTransientId(derivedIdTypes.iterator().next());
+              returnedId = assignedPatient.getOriginal().getTransientId(transientIdTypes.iterator().next());
             }
             logger.info("Found match with ID {} for ID request {}", returnedId.getIdString(), tokenId);
             break;
@@ -93,7 +118,8 @@ public enum PatientBackend {
           case NON_MATCH:
           case POSSIBLE_MATCH:
             if (match.getResultType() == MatchResultType.POSSIBLE_MATCH && !sureness) {
-              return new IDRequest(inputPatient.getInputFields(), idTypes, match, null);
+              return new IDRequest(inputPatient.getInputFields(), idTypes, generatedAssociatedIds,
+                  match, null);
             }
 
             // Generate internal IDs
@@ -105,6 +131,8 @@ public enum PatientBackend {
               idTypes.forEach(inputPatient::createId);
               transientIdTypes.forEach(inputPatient::createId);
             }
+
+            generatedAssociatedIds = inputPatient.createAssociatedIds(associatedIdTypesMap);
 
             for (String idType : idTypes) {
               ID currentId = inputPatient.createId(idType);
@@ -135,7 +163,8 @@ public enum PatientBackend {
         logger.info("Weight of best match: {}", match.getBestMatchedWeight());
 
         // persist id request and new patient
-        return new IDRequest(inputPatient.getInputFields(), requestedIdTypes, match, assignedPatient);
+        return new IDRequest(inputPatient.getInputFields(), requestedIdTypes, generatedAssociatedIds,
+            match, assignedPatient);
   }
 
   /**
@@ -304,11 +333,17 @@ public enum PatientBackend {
     private MatchResult findMatch(Patient inputPatient, Set<BlockingKey> bks) {
         // input patient should contain only external Ids
         Set<ID> externalIds = inputPatient.getIds();
+        boolean containAssociatedIds = inputPatient.getAssociatedIdsList().stream()
+            .anyMatch(a -> !a.getIds().isEmpty());
         // External Id matching
-        if (!externalIds.isEmpty()) {
+        if (!externalIds.isEmpty() || containAssociatedIds) {
             // Find matches with all given external IDs
             Set<Patient> idMatches = externalIds.stream().map(Persistor.instance::getPatient)
                     .filter(Objects::nonNull).collect(Collectors.toSet());
+            if(containAssociatedIds && idMatches.size() <= 1) {
+              idMatches.addAll(Persistor.instance.getPatientsWithAssociatedIds(inputPatient.getAssociatedIdsList()));
+            }
+
             if (idMatches.size() > 1) {// Found multiple patients with matching external ID
                 throw new WebApplicationException(Response.status(Status.CONFLICT)
                         .entity("Multiple patients found with the given external IDs!").build());
@@ -394,18 +429,30 @@ public enum PatientBackend {
                 .map(idType -> IDGeneratorFactory.instance.buildId(idType, forms.getFirst(idType)))
                 .collect(Collectors.toList());
 
+      // create external associatedIds list
+      List<AssociatedIds> associatedIdsList = IDGeneratorFactory.instance
+          .getExternalAssociatedIdTypes().stream()
+          .filter(forms::containsKey)
+          // find external associatedIds with the same type and return a stream of ID Objects
+          .flatMap(idType -> forms.get(idType).stream()
+              .map(idString -> new ExternalID(idString, idType))
+              .map(ID.class::cast))
+          .map(AssociatedIds::createAssociatedIds)
+          .collect(Collectors.toList());
+
         // check if required fields are available
         if (forms.keySet().containsAll(Validator.instance.getRequiredFields())) {
-            Validator.instance.validateForm(forms, false);
+          Validator.instance.validateForm(forms, false);
 
-            // normalize and transform fields of the new patient
-            Map<String, Field<?>> inputFields = mapMapWithConfigFields(forms);
-            Patient inputPatient =  Config.instance.getRecordTransformer()
-                    .transform(new Patient(new HashSet<>(externalIds), inputFields));
-            inputPatient.setInputFields(inputFields);
-            return inputPatient;
+          // normalize and transform fields of the new patient
+          Map<String, Field<?>> inputFields = mapMapWithConfigFields(forms);
+          Patient inputPatient = Config.instance.getRecordTransformer()
+              .transform(new Patient(new HashSet<>(externalIds), new ArrayList<>(associatedIdsList),
+                  inputFields));
+          inputPatient.setInputFields(inputFields);
+          return inputPatient;
         } else {
-            return new Patient(new HashSet<>(externalIds), null);
+            return new Patient(new HashSet<>(externalIds), new ArrayList<>(associatedIdsList), null);
         }
     }
 
