@@ -251,7 +251,7 @@ public class JobsResource {
       if (response.getMatchResult().getResultType() != MatchResultType.POSSIBLE_MATCH) {
         jsonResponse.put("status", Status.CREATED.getStatusCode());
         JSONArray jsonData = new JSONArray();
-        for (ID thisID : response.createRequestedIds()) {
+        for (ID thisID : response.getRequestedIds()) {
           URI newUri = uriInfo.getBaseUriBuilder()
               .path(PatientsResource.class)
               .path("/{idtype}/{idvalue}")
