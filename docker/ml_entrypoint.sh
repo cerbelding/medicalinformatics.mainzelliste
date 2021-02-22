@@ -29,9 +29,11 @@ if [ -z "$ML_REVERSEPROXY_PORT" ]; then
 	case "$ML_REVERSEPROXY_SSL" in
 		true)
 			ML_REVERSEPROXY_PORT=443
+			ML_REVERSEPROXY_SCHEME=https
 			;;
 		false)
 			ML_REVERSEPROXY_PORT=80
+			ML_REVERSEPROXY_SCHEME=http
 			;;
 		*)
 			echo "Please set ML_REVERSEPROXY_SSL to either true or false."
@@ -88,6 +90,7 @@ fi
 
 sed -e "s|ML_REVERSEPROXY_FQDN|$ML_REVERSEPROXY_FQDN|g ; \
 	s|ML_REVERSEPROXY_PORT|$ML_REVERSEPROXY_PORT|g ; \
+	s|ML_REVERSEPROXY_SCHEME|$ML_REVERSEPROXY_SCHEME|g ; \
 	s|ML_REVERSEPROXY_SSL|$ML_REVERSEPROXY_SSL|g" \
 	/usr/local/tomcat/conf/server.xml.ori > /usr/local/tomcat/conf/server.xml
 
