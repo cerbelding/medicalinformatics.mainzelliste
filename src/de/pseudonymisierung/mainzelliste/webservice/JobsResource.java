@@ -238,12 +238,9 @@ public class JobsResource {
 
   private JSONObject addPatient(AddPatientsToken token, MultivaluedMap<String, String> form,
       UriInfo uriInfo) {
-    // read sureness flag
-    boolean sureness = form.getFirst("sureness") != null ||
-        Boolean.parseBoolean(form.getFirst("sureness"));
     // create patient
-    IDRequest response = PatientBackend.instance.createAndPersistPatient(form,
-        token.getRequestedIdTypes(), sureness, token.getId());
+    IDRequest response = PatientsResource.addNewPatient(form, new HashMap<>(), new HashMap<>(),
+        token.getRequestedIdTypes(), token.getId());
 
     // serialize result to json
     JSONObject jsonResponse = new JSONObject();
