@@ -872,15 +872,7 @@ public class PatientsResource {
         // read input fields and external ids from FORM
         Map<String, String> inputFields = new HashMap<>();
         Map<String, String> externalIds = new HashMap<>();
-        form.entrySet().stream()
-            .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
-            .forEach(e -> {
-              if (IDGeneratorFactory.instance.getExternalIdTypes().contains(e.getKey())) {
-                externalIds.put(e.getKey(), e.getValue().get(0));
-              } else {
-                inputFields.put(e.getKey(), e.getValue().get(0));
-              }
-            });
+        extractFieldsAndExternalIds(form, inputFields, externalIds);
 
         MatchResult matchResult = PatientBackend.instance.findMatch(inputFields, externalIds);
         logger.info("CheckMatch/Bestmatch score: {}", matchResult.getBestMatchedWeight());
@@ -973,23 +965,27 @@ public class PatientsResource {
     // read input fields and external ids from FORM and Token
     Map<String, String> fields = new HashMap<>(fieldsFromToken);
     Map<String, String> externalIds = new HashMap<>(externalIdsFromToken);
-    form.entrySet().stream()
-        .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
-        .forEach(e -> {
-          if (IDGeneratorFactory.instance.getExternalIdTypes().contains(e.getKey())) {
-            //override token external ids
-            externalIds.put(e.getKey(), e.getValue().get(0));
-          } else if (!e.getKey().equals("sureness")) {
-            //override token input fields
-            fields.put(e.getKey(), e.getValue().get(0));
-          }
-        });
+    extractFieldsAndExternalIds(form, fields, externalIds);
 
     // read sureness flag
     boolean sureness =
         form.getFirst("sureness") != null || Boolean.parseBoolean(form.getFirst("sureness"));
     return PatientBackend.instance.createAndPersistPatient(fields, externalIds, requestedIdTypes,
         sureness, tokeId);
+  }
+
+  private static void extractFieldsAndExternalIds(MultivaluedMap<String, String> form,
+      Map<String, String> inputFields, Map<String, String> externalIds) {
+    form.entrySet().stream()
+        .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
+        .forEach(e -> {
+          if (IDGeneratorFactory.instance.getExternalIdTypes().contains(e.getKey())) {
+            externalIds.put(e.getKey(), e.getValue().get(0));
+          }
+          if (Config.instance.getFieldKeys().contains(e.getKey())) {
+            inputFields.put(e.getKey(), e.getValue().get(0));
+          }
+        });
   }
 
   /**
