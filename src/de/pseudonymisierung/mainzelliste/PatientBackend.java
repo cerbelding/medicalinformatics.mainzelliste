@@ -173,15 +173,17 @@ public enum PatientBackend {
    * patient with the specified data is created. If a possible match is found and the given
    * "sureness" value is true, a new patient is created.
    *
-   * @param form  input data from the HTTP request.
+   * @param fields  input fields from the HTTP request and Token.
+   * @param externalIds externalIds from the HTTP request and Token.
    * @param requestedIdTypes  Input fields from the HTTP request.
    * @param sureness if true, add possible match patient.
    * @return A representation of the request and its result as an instance of {@link IDRequest}.
    */
-  public synchronized IDRequest createAndPersistPatient(MultivaluedMap<String, String> form,
-      Set<String> requestedIdTypes, boolean sureness, String tokenId) {
+  public synchronized IDRequest createAndPersistPatient(Map<String, String> fields,
+      Map<String, String> externalIds, Set<String> requestedIdTypes, boolean sureness,
+      String tokenId) {
     // deserialize patient from form
-    Patient inputPatient = createPatientFrom(form);
+    Patient inputPatient = createPatientFrom(fields, externalIds);
 
     // run record linkage
     final Set<BlockingKey> blockingKeys = new HashSet<>();
@@ -324,10 +326,11 @@ public enum PatientBackend {
     /**
      * Check if the patient with the given idat exist
      * @param inputFields idat
+     * @param externalIds external ids
      * @return best match patient with matching weight
      */
-    public MatchResult findMatch(MultivaluedMap<String, String> inputFields) {
-        return findMatch(createPatientFrom(inputFields), Collections.emptySet());
+    public MatchResult findMatch(Map<String, String> inputFields, Map<String, String> externalIds) {
+        return findMatch(createPatientFrom(inputFields, externalIds), Collections.emptySet());
     }
 
     private MatchResult findMatch(Patient inputPatient, Set<BlockingKey> bks) {
@@ -422,11 +425,10 @@ public enum PatientBackend {
         return result;
     }
 
-    private Patient createPatientFrom(MultivaluedMap<String, String> forms) {
+    private Patient createPatientFrom(Map<String, String> fields, Map<String, String> externalIdsMap) {
         // create external Id list
-        List<ID> externalIds = IDGeneratorFactory.instance.getExternalIdTypes().stream()
-                .filter(forms::containsKey)
-                .map(idType -> IDGeneratorFactory.instance.buildId(idType, forms.getFirst(idType)))
+        List<ID> externalIds = externalIdsMap.entrySet().stream()
+                .map(e -> IDGeneratorFactory.instance.buildId(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
 
       // create external associatedIds list
@@ -441,11 +443,11 @@ public enum PatientBackend {
           .collect(Collectors.toList());
 
         // check if required fields are available
-        if (forms.keySet().containsAll(Validator.instance.getRequiredFields())) {
-          Validator.instance.validateForm(forms, false);
+        if (fields.keySet().containsAll(Validator.instance.getRequiredFields())) {
+            Validator.instance.validateForm(fields, false);
 
           // normalize and transform fields of the new patient
-          Map<String, Field<?>> inputFields = mapMapWithConfigFields(forms);
+            Map<String, Field<?>> inputFields = mapMapWithConfigFields(fields);
           Patient inputPatient = Config.instance.getRecordTransformer()
               .transform(new Patient(new HashSet<>(externalIds), new ArrayList<>(associatedIdsList),
                   inputFields));
@@ -507,19 +509,19 @@ public enum PatientBackend {
 		return at;
 	}
 
-	private Map<String, Field<?>> mapMapWithConfigFields(MultivaluedMap<String, String> form) {
-		Map<String, Field<?>> chars = new HashMap<String, Field<?>>();
+	private Map<String, Field<?>> mapMapWithConfigFields(Map<String, String> fields) {
+		Map<String, Field<?>> fieldMap = new HashMap<>();
 		//Compare Fields from Config with requested Fields a
-		for(String s: Config.instance.getFieldKeys()){
-			if (form.containsKey(s)) {
+		for(String fieldName: Config.instance.getFieldKeys()){
+			if (fields.containsKey(fieldName)) {
 				try {
-					chars.put(s, Field.build(s, form.getFirst(s)));
+					fieldMap.put(fieldName, Field.build(fieldName, fields.get(fieldName)));
 				} catch (WebApplicationException we) {
-					logger.error(String.format("Error while building field %s with input %s", s, form.getFirst(s)));
+					logger.error(String.format("Error while building field %s with input %s", fieldName, fields.get(fieldName)));
 					throw we;
 				}
 			}
 		}
-		return chars;
+		return fieldMap;
 	}
 }

@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste.webservice;
 
+import com.google.gson.Gson;
 import com.sun.jersey.api.uri.UriTemplate;
 import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.spi.resource.Singleton;
@@ -39,6 +40,7 @@ import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.Session;
+import de.pseudonymisierung.mainzelliste.api.AddPatientRequest;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidJSONException;
@@ -102,6 +104,8 @@ public class PatientsResource {
    */
   private static final Logger logger = LogManager.getLogger(PatientsResource.class);
 
+  private static final Gson gson = new Gson();
+
   /**
    * Session to be used when in debug mode.
    */
@@ -146,7 +150,9 @@ public class PatientsResource {
     try {
       logger.debug("@POST newPatientBrowser");
       AddPatientToken token = getAddPatientToken(tokenId);
-      IDRequest createRet = addNewPatient(token, form);
+      logger.info("Handling ID Request with token {}", token.getId());
+      IDRequest createRet = addNewPatient(form, token.getFields(), token.getIds(),
+          token.getRequestedIdTypes(), token.getId());
 
       List<ID> ids = createRet.getRequestedIds(token.getRequestedIdTypes());
 			MatchResult result = createRet.getMatchResult();
@@ -261,9 +267,56 @@ public class PatientsResource {
     logger.debug("@POST newPatientJson");
 
     AddPatientToken token = getAddPatientToken(tokenId);
-    IDRequest response = addNewPatient(token, form);
+    logger.info("Handling ID Request with token {}", token.getId());
+    IDRequest response = addNewPatient(form, token.getFields(), token.getIds(),
+        token.getRequestedIdTypes(), token.getId());
+    return handleAddPatientResponse(request, context, response, token);
+  }
 
-    //return possible matches
+  /**
+   * Create a new patient. Interface for software applications.
+   *
+   * @param tokenId   Id of a valid "addPatient" token.
+   * @param request   The injected HttpServletRequest.
+   * @param context   Injected information of application and request URI.
+   * @param inputData Input as json.
+   * @return An HTTP response as specified in the API documentation.
+   * @throws JSONException If a JSON error occurs.
+   */
+  @POST
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public synchronized Response addPatientFromJson(
+      @QueryParam("tokenId") String tokenId,
+      @Context HttpServletRequest request,
+      @Context UriInfo context,
+      String inputData) throws JSONException {
+    logger.debug("@POST addPatientFromJson");
+    AddPatientToken token = getAddPatientToken(tokenId);
+    logger.info("Handling ID Request with token {}", token.getId());
+
+    // deserialize input to json
+    AddPatientRequest inputDataJson = gson.fromJson(inputData, AddPatientRequest.class);
+
+    // override input fields and external ids from Token
+    Map<String, String> fields = new HashMap<>(token.getFields());
+    if (inputDataJson.getFields() != null) {
+      fields.putAll(inputDataJson.getFields());
+    }
+    Map<String, String> externalIds = new HashMap<>(token.getIds());
+    if (inputDataJson.getIds() != null) {
+      externalIds.putAll(inputDataJson.getIds());
+    }
+
+    // create patient
+    IDRequest response = PatientBackend.instance.createAndPersistPatient(fields, externalIds,
+        token.getRequestedIdTypes(), inputDataJson.isSureness(), token.getId());
+    return handleAddPatientResponse(request, context, response, token);
+  }
+
+  private Response handleAddPatientResponse(HttpServletRequest request, UriInfo context,
+      IDRequest response, AddPatientToken token) throws JSONException{
+    //handle possible matches
 		if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.getRequestedIds().isEmpty()) {
 			JSONObject ret = new JSONObject();
 			if (token.showPossibleMatches()) {
@@ -816,7 +869,12 @@ public class PatientsResource {
         Token token = Servers.instance.getTokenByTid(tokenId);
         token.checkTokenType("checkMatch");
 
-        MatchResult matchResult = PatientBackend.instance.findMatch(form);
+        // read input fields and external ids from FORM
+        Map<String, String> inputFields = new HashMap<>();
+        Map<String, String> externalIds = new HashMap<>();
+        extractFieldsAndExternalIds(form, inputFields, externalIds);
+
+        MatchResult matchResult = PatientBackend.instance.findMatch(inputFields, externalIds);
         logger.info("CheckMatch/Bestmatch score: {}", matchResult.getBestMatchedWeight());
         List<Double> similarityScores = Collections.singletonList(matchResult.getBestMatchedWeight());
         JSONArray jsonArray = new JSONArray();
@@ -900,19 +958,34 @@ public class PatientsResource {
 
     /* Utils */
 
-  private IDRequest addNewPatient(AddPatientToken token, MultivaluedMap<String, String> form) {
-    logger.info("Handling ID Request with token {}", token.getId());
+  public static IDRequest addNewPatient(MultivaluedMap<String, String> form,
+      Map<String, String> fieldsFromToken, Map<String, String> externalIdsFromToken,
+      Set<String> requestedIdTypes, String tokeId) {
 
-    // get fields transmitted from MDAT server
-    token.getFields().forEach(form::add);
-    // get externally generated ids transmitted from MDAT server
-    token.getIds().forEach(form::add);
+    // read input fields and external ids from FORM and Token
+    Map<String, String> fields = new HashMap<>(fieldsFromToken);
+    Map<String, String> externalIds = new HashMap<>(externalIdsFromToken);
+    extractFieldsAndExternalIds(form, fields, externalIds);
 
     // read sureness flag
     boolean sureness =
         form.getFirst("sureness") != null || Boolean.parseBoolean(form.getFirst("sureness"));
-    return PatientBackend.instance.createAndPersistPatient(form,
-        token.getRequestedIdTypes(), sureness, token.getId());
+    return PatientBackend.instance.createAndPersistPatient(fields, externalIds, requestedIdTypes,
+        sureness, tokeId);
+  }
+
+  private static void extractFieldsAndExternalIds(MultivaluedMap<String, String> form,
+      Map<String, String> inputFields, Map<String, String> externalIds) {
+    form.entrySet().stream()
+        .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
+        .forEach(e -> {
+          if (IDGeneratorFactory.instance.getExternalIdTypes().contains(e.getKey())) {
+            externalIds.put(e.getKey(), e.getValue().get(0));
+          }
+          if (Config.instance.getFieldKeys().contains(e.getKey())) {
+            inputFields.put(e.getKey(), e.getValue().get(0));
+          }
+        });
   }
 
   /**
