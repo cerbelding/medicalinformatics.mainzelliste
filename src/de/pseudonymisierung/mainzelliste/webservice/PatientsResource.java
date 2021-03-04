@@ -869,20 +869,18 @@ public class PatientsResource {
         Token token = Servers.instance.getTokenByTid(tokenId);
         token.checkTokenType("checkMatch");
 
-      // read input fields and external ids from FORM
-      Map<String, String> inputFields = new HashMap<>();
-      Map<String, String> externalIds = new HashMap<>();
-      form.entrySet().stream()
-          .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
-          .forEach(e -> {
-            if (IDGeneratorFactory.instance.getExternalIdTypes().contains(e.getKey())) {
-              //override token external ids
-              externalIds.put(e.getKey(), e.getValue().get(0));
-            } {
-              //override token input fields
-              inputFields.put(e.getKey(), e.getValue().get(0));
-            }
-          });
+        // read input fields and external ids from FORM
+        Map<String, String> inputFields = new HashMap<>();
+        Map<String, String> externalIds = new HashMap<>();
+        form.entrySet().stream()
+            .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
+            .forEach(e -> {
+              if (IDGeneratorFactory.instance.getExternalIdTypes().contains(e.getKey())) {
+                externalIds.put(e.getKey(), e.getValue().get(0));
+              } else {
+                inputFields.put(e.getKey(), e.getValue().get(0));
+              }
+            });
 
         MatchResult matchResult = PatientBackend.instance.findMatch(inputFields, externalIds);
         logger.info("CheckMatch/Bestmatch score: {}", matchResult.getBestMatchedWeight());
