@@ -57,14 +57,17 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -84,6 +87,8 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -296,16 +301,23 @@ public class PatientsResource {
     logger.info("Handling ID Request with token {}", token.getId());
 
     // deserialize input to json
-    AddPatientRequest inputDataJson = gson.fromJson(inputData, AddPatientRequest.class);
+    AddPatientRequest inputDataJson = AddPatientRequest.fromJson(inputData);
 
-    // override input fields and external ids from Token
+    // override input fields from Token
     Map<String, String> fields = new HashMap<>(token.getFields());
     if (inputDataJson.getFields() != null) {
       fields.putAll(inputDataJson.getFields());
     }
-    Map<String, String> externalIds = new HashMap<>(token.getIds());
+
+    // override external ids from Token
+    Map<String, List<String>> externalIds = new LinkedHashMap<>();
     if (inputDataJson.getIds() != null) {
-      externalIds.putAll(inputDataJson.getIds());
+      inputDataJson.getIds().forEach((k,l) -> {
+        Optional.ofNullable(token.getIds().get(k)).ifPresent(l::add);
+        externalIds.put(k, l);
+      });
+    } else {
+      token.getIds().forEach((k, v) -> externalIds.put(k, Arrays.asList(v)));
     }
 
     // create patient
@@ -871,7 +883,7 @@ public class PatientsResource {
 
         // read input fields and external ids from FORM
         Map<String, String> inputFields = new HashMap<>();
-        Map<String, String> externalIds = new HashMap<>();
+        Map<String, List<String>> externalIds = new LinkedHashMap<>();
         extractFieldsAndExternalIds(form, inputFields, externalIds);
 
         MatchResult matchResult = PatientBackend.instance.findMatch(inputFields, externalIds);
@@ -964,8 +976,19 @@ public class PatientsResource {
 
     // read input fields and external ids from FORM and Token
     Map<String, String> fields = new HashMap<>(fieldsFromToken);
-    Map<String, String> externalIds = new HashMap<>(externalIdsFromToken);
+    Map<String, List<String>> externalIds = new LinkedHashMap<>();
+
     extractFieldsAndExternalIds(form, fields, externalIds);
+
+    // add ids from Token
+    externalIdsFromToken.forEach((k, v) -> {
+      List<String> oldValues = externalIds.get(k);
+      if (oldValues == null) {
+        externalIds.put(k, Arrays.asList(v));
+      } else {
+        oldValues.add(v);
+      }
+    });
 
     // read sureness flag
     boolean sureness =
@@ -975,13 +998,23 @@ public class PatientsResource {
   }
 
   private static void extractFieldsAndExternalIds(MultivaluedMap<String, String> form,
-      Map<String, String> inputFields, Map<String, String> externalIds) {
+      Map<String, String> inputFields, Map<String, List<String>> externalIds) {
+
+    List<String> externalAssociatedIdTypes = IDGeneratorFactory.instance.getExternalAssociatedIdTypes();
     form.entrySet().stream()
         .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
         .forEach(e -> {
-          if (IDGeneratorFactory.instance.getExternalIdTypes().contains(e.getKey())) {
-            externalIds.put(e.getKey(), e.getValue().get(0));
+          //extract external ids
+          if (IDGeneratorFactory.instance.getExternalIdTypes().contains(e.getKey())
+              || externalAssociatedIdTypes.contains(e.getKey())) {
+            List<String> oldValues = externalIds.get(e.getKey());
+            if (oldValues == null) {
+              externalIds.put(e.getKey(), new ArrayList<>(e.getValue()));
+            } else {
+              oldValues.addAll(e.getValue());
+            }
           }
+          // extract input fields
           if (Config.instance.getFieldKeys().contains(e.getKey())) {
             inputFields.put(e.getKey(), e.getValue().get(0));
           }

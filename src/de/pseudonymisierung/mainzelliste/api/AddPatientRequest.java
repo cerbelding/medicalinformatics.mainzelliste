@@ -25,23 +25,88 @@
  */
 package de.pseudonymisierung.mainzelliste.api;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class AddPatientRequest {
 
   private Map<String, String> fields;
-  private Map<String, String> ids;
+  /** Linked HashMap of ArrayList */
+  private Map<String, List<String>> ids;
   private boolean sureness;
 
   public Map<String, String> getFields() {
     return fields;
   }
 
-  public Map<String, String> getIds() {
+  public Map<String, List<String>> getIds() {
     return ids;
   }
 
   public boolean isSureness() {
     return sureness;
+  }
+
+  public static AddPatientRequest fromJson(String jsonString) {
+    return new GsonBuilder()
+        .registerTypeAdapter(new TypeToken<Map<String, List<String>>>() {}.getType(),
+            new MapOfStringListDeserializer())
+        .create().fromJson(jsonString, AddPatientRequest.class);
+  }
+
+  private static class MapOfStringListDeserializer implements
+      JsonDeserializer<Map<String, List<String>>> {
+
+    @Override
+    public Map<String, List<String>> deserialize(JsonElement elem, Type type,
+        JsonDeserializationContext jsonDeserializationContext) {
+      try {
+        return elem.getAsJsonObject()
+            .entrySet()
+            .stream()
+            // ignore empty arrays !
+            .filter(e -> !e.getValue().isJsonArray() || e.getValue().getAsJsonArray().size() > 0)
+            .collect(Collectors.toMap(Entry::getKey, e -> {
+                  List<String> values = new ArrayList<>();
+                  if (e.getValue().isJsonPrimitive()) { // handle string
+                    try {
+                      values.add(e.getValue().getAsString());
+                    } catch (ClassCastException | IllegalStateException exec) {
+                      throw new JsonParseException("Invalid ids object : the value of '" + e.getKey()
+                          + "' must be a string");
+                    }
+                  } else if (e.getValue().isJsonArray()) { // handle string array
+                    e.getValue().getAsJsonArray().forEach(v -> {
+                      try {
+                        values.add(v.getAsString());
+                      } catch (ClassCastException | IllegalStateException exec) {
+                        throw new JsonParseException("Invalid ids object : the value of '"
+                            + e.getKey() + "' must be a string");
+                      }
+                    });
+                  } else {
+                    throw new JsonParseException("Invalid ids object : the value of '" + e.getKey()
+                        + "' must be a string or a string array");
+                  }
+                  return values;
+                }, (u, v) -> {
+                  throw new IllegalStateException(String.format("Duplicate key %s", u));
+                },
+                LinkedHashMap::new));
+      } catch (IllegalStateException e) {
+        throw new JsonParseException("Invalid Json : ids must be a JSON Object");
+      }
+    }
   }
 }

@@ -174,13 +174,13 @@ public enum PatientBackend {
    * "sureness" value is true, a new patient is created.
    *
    * @param fields  input fields from the HTTP request and Token.
-   * @param externalIds externalIds from the HTTP request and Token.
+   * @param externalIds externalIds and associatedIds from the HTTP request and Token.
    * @param requestedIdTypes  Input fields from the HTTP request.
    * @param sureness if true, add possible match patient.
    * @return A representation of the request and its result as an instance of {@link IDRequest}.
    */
   public synchronized IDRequest createAndPersistPatient(Map<String, String> fields,
-      Map<String, String> externalIds, Set<String> requestedIdTypes, boolean sureness,
+      Map<String, List<String>>  externalIds, Set<String> requestedIdTypes, boolean sureness,
       String tokenId) {
     // deserialize patient from form
     Patient inputPatient = createPatientFrom(fields, externalIds);
@@ -329,7 +329,8 @@ public enum PatientBackend {
      * @param externalIds external ids
      * @return best match patient with matching weight
      */
-    public MatchResult findMatch(Map<String, String> inputFields, Map<String, String> externalIds) {
+    public MatchResult findMatch(Map<String, String> inputFields,
+        Map<String, List<String>> externalIds) {
         return findMatch(createPatientFrom(inputFields, externalIds), Collections.emptySet());
     }
 
@@ -425,18 +426,21 @@ public enum PatientBackend {
         return result;
     }
 
-    private Patient createPatientFrom(Map<String, String> fields, Map<String, String> externalIdsMap) {
+    private Patient createPatientFrom(Map<String, String> fields,
+        Map<String, List<String>>  externalIdsMap) {
         // create external Id list
-        List<ID> externalIds = externalIdsMap.entrySet().stream()
-                .map(e -> IDGeneratorFactory.instance.buildId(e.getKey(), e.getValue()))
-                .collect(Collectors.toList());
+      List<ID> externalIds = IDGeneratorFactory.instance.getExternalIdTypes().stream()
+          .filter(externalIdsMap::containsKey)
+          .map(idType -> IDGeneratorFactory.instance.buildId(idType,
+              externalIdsMap.get(idType).get(0)))
+          .collect(Collectors.toList());
 
       // create external associatedIds list
       List<AssociatedIds> associatedIdsList = IDGeneratorFactory.instance
           .getExternalAssociatedIdTypes().stream()
-          .filter(forms::containsKey)
+          .filter(externalIdsMap::containsKey)
           // find external associatedIds with the same type and return a stream of ID Objects
-          .flatMap(idType -> forms.get(idType).stream()
+          .flatMap(idType -> externalIdsMap.get(idType).stream()
               .map(idString -> new ExternalID(idString, idType))
               .map(ID.class::cast))
           .map(AssociatedIds::createAssociatedIds)
