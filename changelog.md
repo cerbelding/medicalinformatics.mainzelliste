@@ -2,6 +2,7 @@
 #### Fixed
 - Adding new patient with external id in a database which contains a patient with the same external id 
   and empty fields causes a conflict, if the NullMatcher has been activated
+- Map runtime exceptions to a response with 500 status code and error message in the body
 
 ### 1.9.0 - 2020-12-21
 #### Added
