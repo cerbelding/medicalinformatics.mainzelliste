@@ -53,6 +53,7 @@ Here is a list of all currently supported environment variables:
 |`ML_ALLOWEDREMOTEADDRESSES`|`0.0.0.0/0`|Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only) for MDAT server 0|
 |`ML_REVERSEPROXY_FQDN`|(none, please define)|Fully-qualified domain name to be used for access to this Mainzelliste, e.g. `patientlist.example.org`|
 |`ML_REVERSEPROXY_PORT`|80 or 443 according to `ML_REVERSEPROXY_SSL`|The corresponding port number|
+|`ML_REVERSEPROXY_SCHEME`|http or https according to `ML_REVERSEPROXY_SSL`|The corresponding scheme|
 |`ML_REVERSEPROXY_SSL`|`false`|Set to `true` if Mainzelliste is accessed via SSL/TLS; `false` otherwise|
 |`DEBUG`|`false`|Set to `true` if you want to open a port for remote debugging. You will need to forward the port 1099 with dockers port configuration.|
 
@@ -125,7 +126,3 @@ services:
 ```
 With the default configuration the database should now be available on port 5432 on your docker host system and it should be possible to  
 connect using the Values from the *ML_DB_NAME*, *ML_DB_USER* and *ML_DB_PASSWORD* environment variables.
-
-### Execute Mainzelliste tests
-
-```docker-compose -f docker-compose.test.yml up```
