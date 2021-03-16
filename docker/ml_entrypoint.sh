@@ -25,21 +25,23 @@ if [ -e "/run/secrets/mainzellisteDbName" ]; then \
 : "${ML_ALLOWEDREMOTEADDRESSES:=0.0.0.0/0}"
 : "${ML_REVERSEPROXY_SSL:=false}"
 
-if [ -z "$ML_REVERSEPROXY_PORT" ]; then
-	case "$ML_REVERSEPROXY_SSL" in
-		true)
-			ML_REVERSEPROXY_PORT=443
-			ML_REVERSEPROXY_SCHEME=https
-			;;
-		false)
-			ML_REVERSEPROXY_PORT=80
-			ML_REVERSEPROXY_SCHEME=http
-			;;
-		*)
-			echo "Please set ML_REVERSEPROXY_SSL to either true or false."
-			exit 1
-	esac
-fi
+case "$ML_REVERSEPROXY_SSL" in
+  true)
+    if [ -z "$ML_REVERSEPROXY_PORT" ]; then
+      ML_REVERSEPROXY_PORT=443
+    fi
+    ML_REVERSEPROXY_SCHEME=https
+    ;;
+  false)
+    if [ -z "$ML_REVERSEPROXY_PORT" ]; then
+      ML_REVERSEPROXY_PORT=80
+    fi
+    ML_REVERSEPROXY_SCHEME=http
+    ;;
+  *)
+    echo "Please set ML_REVERSEPROXY_SSL to either true or false."
+    exit 1
+esac
 
 echo "Check if template config or /run/secrets/mainzellisteConfig is used."
 

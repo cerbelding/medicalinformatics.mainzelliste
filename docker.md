@@ -53,7 +53,6 @@ Here is a list of all currently supported environment variables:
 |`ML_ALLOWEDREMOTEADDRESSES`|`0.0.0.0/0`|Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only) for MDAT server 0|
 |`ML_REVERSEPROXY_FQDN`|(none, please define)|Fully-qualified domain name to be used for access to this Mainzelliste, e.g. `patientlist.example.org`|
 |`ML_REVERSEPROXY_PORT`|80 or 443 according to `ML_REVERSEPROXY_SSL`|The corresponding port number|
-|`ML_REVERSEPROXY_SCHEME`|http or https according to `ML_REVERSEPROXY_SSL`|The corresponding scheme|
 |`ML_REVERSEPROXY_SSL`|`false`|Set to `true` if Mainzelliste is accessed via SSL/TLS; `false` otherwise|
 |`DEBUG`|`false`|Set to `true` if you want to open a port for remote debugging. You will need to forward the port 1099 with dockers port configuration.|
 
