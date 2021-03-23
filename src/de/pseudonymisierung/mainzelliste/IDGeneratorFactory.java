@@ -26,11 +26,14 @@
 package de.pseudonymisierung.mainzelliste;
 
 import de.pseudonymisierung.mainzelliste.crypto.Encryption;
+import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.GeneralCryptoException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 import de.pseudonymisierung.mainzelliste.util.ConfigUtils;
-
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,16 +45,12 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-
-import de.pseudonymisierung.mainzelliste.dto.Persistor;
-import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
 /**
  * Factory for IDGenerators. Implemented as a singleton object, which can be
@@ -64,6 +63,9 @@ public enum IDGeneratorFactory {
 
 	/** Map of generators, with respective ID types as keys. */
 	private final Map<String, IDGenerator<? extends ID>> generators;
+
+	/** Map of generators, with respective associatedIds type as keys. */
+	private final Map<String, List<IDGenerator<? extends ID>>> associatedIdGenerators;
 
 	/**
 	 * The configured ID types. Must be saved separately as the order is
@@ -93,7 +95,6 @@ public enum IDGeneratorFactory {
 	 * settings stored in the database (see {@link IDGeneratorMemory}).
 	 */
 	private IDGeneratorFactory() {
-		HashMap<String, IDGenerator<? extends ID>> temp = new HashMap<String, IDGenerator<? extends ID>>();
 		Properties props = Config.instance.getProperties();
 
 		if (!props.containsKey("idgenerators")
@@ -106,6 +107,38 @@ public enum IDGeneratorFactory {
 		// around commas
 		this.idTypes = props.getProperty("idgenerators").split("\\s*,\\s*");
 
+		generators = Collections.unmodifiableMap(readIdGenerators(props, idTypes));
+
+		// Find the set of special id types (external ID types / transient ID types)
+		extIdTypes = new HashSet<>();
+		transientIdTypes = new HashSet<>();
+		for (IDGenerator<? extends ID> idGenerator : this.generators.values()) {
+			if (idGenerator.isExternal()) {
+				extIdTypes.add(idGenerator.getIdType());
+			} else if (!idGenerator.isPersistent()) {
+				transientIdTypes.add(idGenerator.getIdType());
+			}
+		}
+
+		// read the configured eager generation flag
+		try {
+			this.eagerGenerationOn = ConfigUtils
+					.readValue(props, "idgenerators.eagerGeneration", false);
+		} catch (InvalidConfigurationException e) {
+			logger.error(e.getMessage());
+			throw e;
+		}
+
+		this.associatedIdGenerators = new HashMap<>();
+		ConfigUtils.getVariableSubProperties(props,"associatedids").forEach((t, p) -> {
+			String[] associatedIdTypes = p.getProperty("idgenerators").split("\\s*,\\s*");
+			associatedIdGenerators.put(t, new ArrayList<>(readIdGenerators(props, associatedIdTypes).values()));
+		});
+		logger.info("ID generators have initialized successfully.");
+	}
+
+	private Map<String, IDGenerator<? extends ID>> readIdGenerators(Properties props, String[] idTypes) {
+		HashMap<String, IDGenerator<? extends ID>> temp = new HashMap<String, IDGenerator<? extends ID>>();
 		// Iterate over ID types
 		for (String thisIdType : idTypes) {
 			PropertyIterator propIt = new PropertyIterator(props, "idgenerator." + thisIdType);
@@ -193,28 +226,7 @@ public enum IDGeneratorFactory {
 				throw new Error(e);
 			}
 		}
-		generators = Collections.unmodifiableMap(temp);
-
-		// Find the set of special id types (external ID types / transient ID types)
-		extIdTypes = new HashSet<String>();
-		transientIdTypes = new HashSet<String>();
-		for (String idType : this.generators.keySet()) {
-			if (this.generators.get(idType).isExternal())
-				extIdTypes.add(idType);
-			if (!this.generators.get(idType).isPersistent())
-				transientIdTypes.add(idType);
-		}
-
-		// read the configured eager generation flag
-		try {
-			this.eagerGenerationOn = ConfigUtils
-					.readValue(props, "idgenerators.eagerGeneration", false);
-		} catch (InvalidConfigurationException e) {
-			logger.error(e.getMessage());
-			throw e;
-		}
-
-		logger.info("ID generators have initialized successfully.");
+		return temp;
 	}
 
 	/**
@@ -227,6 +239,17 @@ public enum IDGeneratorFactory {
 	 */
 	public IDGenerator<? extends ID> getFactory(String idType) {
 		return generators.get(idType);
+	}
+
+	public IDGenerator<? extends ID> getGenerator(String idType) {
+		IDGenerator<? extends ID> generator = generators.get(idType);
+		if (generator == null) {
+			generator = associatedIdGenerators.values().stream()
+					.flatMap(Collection::stream)
+					.filter(g -> g.getIdType().equals(StringUtils.trimToEmpty(idType)))
+					.findAny().orElse(null);
+		}
+		return generator;
 	}
 
 	/**
@@ -286,6 +309,19 @@ public enum IDGeneratorFactory {
 	}
 
 	/**
+	 * Get all {@link IDGeneratorMemory}s of associated Ids
+	 * @return A set of id generator memories
+	 */
+	public Set<IDGeneratorMemory> getAssociatedIdGeneratorMemories() {
+		return this.associatedIdGenerators.values().stream()
+				.flatMap(Collection::stream)
+				.map(IDGenerator::getMemory)
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.collect(Collectors.toSet());
+	}
+
+	/**
 	 * Get set of external id types
 	 *
 	 * @return The set of external id types.
@@ -314,6 +350,15 @@ public enum IDGeneratorFactory {
 	}
 
 	/**
+	 * check if the given primary id type exist
+	 * @param idType primary id type
+	 * @return true if exist
+	 */
+	public boolean isIdTypeExist(String idType) {
+		return Arrays.asList(idTypes).contains(StringUtils.trimToEmpty(idType));
+	}
+
+	/**
 	 * Get the default id type (currently, the first one defined in the
 	 * configuration).
 	 * 
@@ -321,6 +366,64 @@ public enum IDGeneratorFactory {
 	 */
 	public String getDefaultIDType() {
 		return this.idTypes[0];
+	}
+
+	/**
+	 * get all IdGenerators belonging to the given associatedIds type
+	 * @param associatedIdsType searched associatedIds type
+	 * @return list of id generators
+	 */
+	public Set<IDGenerator<? extends ID>> getAssociatedIdGenerators(String associatedIdsType) {
+		return new HashSet<>(associatedIdGenerators.get(associatedIdsType));
+	}
+
+	/**
+	 * get all non external IdGenerators belonging to the given associatedIds type
+	 * @param associatedIdsType searched associatedIds type
+	 * @return list of id generators
+	 */
+	public Set<IDGenerator<? extends ID>> getNonExtAssociatedIdGenerators(String associatedIdsType) {
+		return associatedIdGenerators.getOrDefault(associatedIdsType, Collections.emptyList()).stream()
+				.filter(e -> !e.isExternal())
+				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * get all external associated id types
+	 *
+	 * @return The set of external id types.
+	 */
+	public List<String> getExternalAssociatedIdTypes() {
+		return associatedIdGenerators.entrySet().stream()
+				.flatMap( e -> e.getValue().stream().filter(IDGenerator::isExternal))
+				.map(IDGenerator::getIdType)
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * find associatedIds type the given id type belong to
+	 * @param idType id type
+	 * @return associatedIds type
+	 * @exception IllegalArgumentException if no associatedIds type found
+	 */
+	public String getAssociatedIdsType(String idType) {
+		return associatedIdGenerators.entrySet().stream()
+				.filter(e -> e.getValue().stream()
+						.anyMatch(g -> g.getIdType().equals(StringUtils.trimToEmpty(idType))))
+				.map(Entry::getKey)
+				.findAny()
+				.orElseThrow(() -> new IllegalArgumentException("no associatedIdsType found for the given "
+						+ "id types: " + idType));
+	}
+
+	/**
+	 * check if the given associated id type exist
+	 * @param idType associated id type
+	 * @return true if exist
+	 */
+	public boolean isAssociatedIdTypeExist(String idType) {
+		return associatedIdGenerators.values().stream()
+				.anyMatch( l -> l.stream().anyMatch( g -> g.getIdType().equals(StringUtils.trimToEmpty(idType))));
 	}
 
 	/**
@@ -407,5 +510,4 @@ public enum IDGeneratorFactory {
 					"Decryption of ID[type:" + idType + "," + idString.length() + " failed", e);
 		}
 	}
-
 }

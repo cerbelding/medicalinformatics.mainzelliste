@@ -11,6 +11,9 @@
 # Property names may contain letters, numbers, underscores and dots. Dots define a hierarchical
 # structure on the property names.
 
+# Leading and trailing whitespaces in property values are not allowed and will be removed
+# after loading.
+
 # For a comprehensive documentation of configuration parameters see the configuration manual
 # ("Konfigurationshandbuch").
 
@@ -23,32 +26,28 @@ dist = Mainzelliste
 # Database setup
 
 # Uncomment this for PostgreSQL
-db.driver = org.postgresql.Driver
-#db.url = jdbc:postgresql://localhost:5432/mainzellisteAuditTrail
-#db.url = jdbc:postgresql://localhost:5432/mainzelliste7
-db.url = jdbc:postgresql://db:5432/mainzelliste
+# db.driver = org.postgresql.Driver
+# db.url = jdbc:postgresql://localhost:5432/mainzelliste
 
 # Uncomment this for MySQL
 # db.driver = com.mysql.jdbc.Driver
 # db.url = jdbc:mysql://localhost:3306/mainzelliste
 
 db.username = mainzelliste
-db.password = PleasePutASafePasswordHere
+db.password = mainzelliste
 
 # Logging
 #
 # By default, logs are written to stdout. Uncomment the following values to log to a file
 # instead.
-
+ 
 #log.filename = /var/log/tomcat6/mainzelliste.log
 #log.level = DEBUG
-
 
 #performance tuning soundex-like blocking
 #tuning.soundexblocking = false
 #blocking.soundex.type = Soundex
 #blocking.soundex.fields = vorname, nachname
-
 
 # GCP Features
 #
@@ -96,6 +95,15 @@ field.geburtsjahr.type = IntegerField
 field.plz.type = PlainTextField
 field.ort.type = PlainTextField
 field.versicherungsnummer.type = PlainTextField
+
+# To store the data in hashed form (control numbers) use the type ControlNumberField
+
+# field.vorname.type = ControlNumberField
+# field.nachname.type = ControlNumberField
+# field.geburtsname.type = ControlNumberField
+# field.geburtsdatum.type = ControlNumberField
+# field.plz.type = ControlNumberField
+# field.ort.type = ControlNumberField
 
 
 # Server-side validation
@@ -165,17 +173,79 @@ field.geburtsjahr.comparator = BinaryFieldComparator
 field.plz.comparator = BinaryFieldComparator
 field.ort.comparator = NGramComparator
 
+# Use DiceField comparator instead of NGramComparator to apply EpilLink algorithm to hashed fields
 
-blockingFields.0 geburtstag, geburtsmonat
-blockingFields.0 geburtstag, geburtjahr
-blockingFields.0 geburtsmonat, geburtsjahr
+# field.vorname.comparator = DiceFieldComparator
+
+
+# Blocking
+# The blocking strategy choice depends on the field types after the transformation.
+# If compound fields are passed to the blocker, whether created by a field transformation or as input fields,
+# the type of the subfields is the one that is relevant for the blocking.
+# If exchange groups are used, only one of the fieldnames should be given here. The blocker is applied to
+# the other fields as well.
+
+# Use Soundex for PlainText fields
+# blocking.soundex.type = Soundex
+# With the default exchange group
+# blocking.soundex.fields = nachname
+# Without an exchange group
+# blocking.soundex.fields = vorname, nachname, geburtsname
+
+
+# Use FieldEquality e.g. for birthday based blocking
+# This can be combined with Soundex blocking.
+# blocking.dob.type = FieldEquality
+# blocking.dob.fields = geburtstag, geburtsmonat, geburtsjahr
+
+# FieldEquality can also be used for externally generated blocking keys
+# The input field must of course be defined above.
+# blocking.ext.type = FieldEquality
+# blocking.ext.fields = extBlockingField
+
+
+# Use HLsh for blocking on hashed fields
+# blocking.lsh.type = HLsh
+# blocking.lsh.fields = vorname, nachname, geburtsdatum
+# The lengths of the above hashed fields
+# blocking.lsh.bfSize = 384, 512, 512
+# The lsh method defines the strategy for multiple fields.
+# Depending on the expected quality of the fields select one of the following possibilities.
+# General advise:
+# High values for lshKeys can reduce false negatives, but will have a negative impact on the performance.
+# High values for lshHashes can improve the performance, but can lead to more false negatives.
+
+# Recommended: Fields with missing or dirty values
+blocking.lsh.lshMethod = field
+# Number of keys per field
+blocking.lsh.lshKeys = 1
+# Number of hash functions per field
+blocking.lsh.lshHashes = 36
+
+# Fields with few errors
+# blocking.lsh.lshMethod = record
+# Total number of keys
+# blocking.lsh.lshKeys = 9
+# Number of hash functions per field (can be used as a weight)
+# blocking.lsh.lshHashes = 8, 8, 8
+
+# The seed for the hash functions
+blocking.lsh.seed = 42
+
+# The following options can improve the performance by reducing the size of the blocks.
+# The ratio of the frequent bit positions to ignore in the blocking keys (Choose 0 to deactivate the optimization)
+# blocking.lsh.pruneRatio = 0.25
+# Trigger the optimization on each startup of the Mainzelliste
+# blocking.lsh.initialOptimization = true
 
 
 
 # Matcher definition
 # Property matcher defines the class name of the matcher to use, which must be a subclass
-# of Matcher. Currently only EpilinkMatcher is supported.
+# of Matcher. Currently only EpilinkMatcher and NullMatcher are supported.
+# Null matcher is used to skip the step of record linkage
 matcher = EpilinkMatcher
+# matcher = NullMatcher
 
 # Config for Epilink Matcher
 #
@@ -196,6 +266,7 @@ matcher.epilink.geburtsjahr.frequency = 0.0286
 
 matcher.epilink.plz.frequency = 0.01
 matcher.epilink.ort.frequency = 0.01
+matcher.epilink.geburtsdatum.frequency = 0.00007
 
 # matcher.epilink.{fieldname}.error_rate defines the assumed error_rate for
 # field {fieldname} (1 - m-probability)
@@ -209,6 +280,7 @@ matcher.epilink.geburtsmonat.errorRate = 0.002
 matcher.epilink.geburtsjahr.errorRate = 0.004
 matcher.epilink.plz.errorRate = 0.04
 matcher.epilink.ort.errorRate = 0.04
+matcher.epilink.geburtsdatum.errorRate = 0.005
 
 
 
@@ -221,14 +293,8 @@ matcher.epilink.ort.errorRate = 0.04
 #
 # Record pairs with a weight w with threshold_non_match <= w < threshold_match are
 # considered possible matches and lead to a tentative PID.
-
-
-#matcher.epilink.threshold_match = 0.2
 matcher.epilink.threshold_match = 0.95
-#matcher.epilink.threshold_non_match = 0.1
 matcher.epilink.threshold_non_match = 0.6
-#matcher.epilink.threshold_non_match = 0.01
-
 
 
 # ID-Generators
@@ -240,8 +306,15 @@ matcher.epilink.threshold_non_match = 0.6
 # idgenerator.{identifier}: Class which implements the ID generator.
 # additional parameters depend on the ID generator used.
 #
-idgenerators = pid, intid, extid
+idgenerators = pid, intid, extId
 
+# these three IDGenerators are used for testing purposes
+idgenerator.extId = ExternalIDGenerator
+idgenerator.extVisitId = ExternalIDGenerator
+idgenerator.intVisitId = SimpleIDGenerator
+
+# AssociatedIds allow to attach multiple instances of IDs from the same idType to a patient
+associatedids.visit.idgenerators = extVisitId, intVisitId
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
 # idgenerators = pid, intid, extid, elasticid, exportId, cryptoid
@@ -266,6 +339,12 @@ idgenerator.pid.k3 = 3
 idgenerator.pid.rndwidth = 0
 
 idgenerator.intid = SimpleIDGenerator
+
+# ElasticIDGenerator is used for randomly generated id types with the flexible length and vocabulary
+# Additional params for ElasticIDGenerator are defined here.
+# idgenerator.elasticid = ElasticIDGenerator
+# idgenerator.elasticid.vocabulary = 23456789ACDEFGHJKMNPQURTUVWXYZ
+# idgenerator.elasticid.length = 7
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
 idgenerator.extid = ExternalIDGenerator
@@ -303,12 +382,28 @@ result.printIdat = true
 #
 # - showSessionIds: see own sessions via GET /sessions
 # - createSession: create session via POST /sessions
+# - manageSessionPatients: manage the set of patients related to a session
+# - callback: the permission to allow callbacks
+#	(operations on /sessions/{sessionid}/patients)
 #
 # - createToken: create tokens -- in addition, permission "tt_x" is req'd, where x is one of these TOKEN TYPES:
 #   - tt_addPatient: allows to generate one (1) ID. Token is invalidated afterwards even if an existing ID was returned.
+#   - tt_addPatients: allows to add multiple patients.
 #	- tt_readPatients: allows to read IDAT or pseudonyms of patients
 #   - tt_editPatient: allows to change identifying data of one (1) patient. Token is invalidated afterwards.
+#
+# readAllPatientIdTypes: allows to read all IdTypes of a patient
+# readAllPatientIds: allows to read all Ids of a patient
+#
 
+# Allows refined permissions
+# example if activated: ;tt_readPatients{|data.searchIds.idType:pid|data.searchIds.idString:*|data.resultFields:geburtsname&vorname|data.resultIds:pid|data.resultIds:intid|data.callback:*};tt_addPatient{data.idtypes:pid}
+extendedPermissionCheck = true
+#If failed auth message should not send back to requester
+#extendedPermissionCheck.failedAuthMessage = deactivated
+#extendedPermissionCheck.caseSensitive = true
+
+# OAuth authentication
 oidc.auth0.iss=https://dev-ptsul9wq.eu.auth0.com/
 
 claims.0.permissions = createToken;tt_addPatient;tt_readPatients;tt_editPatient
@@ -323,6 +418,10 @@ claims.1.oidc.operator=AND
 claims.1.oidc.iss=auth0
 claims.1.oidc.http\://mainzelliste.de/roles=admin
 
+# A passphrase used for authentication
+servers.0.apiKey =
+# Monitoring permissions: getPatientCount;getTentativePatientCount;getIDRequestCount;getCpuInfo;getMemoryInfo
+servers.0.permissions = createSession;showSessionIds;createToken;tt_addPatient;tt_readPatients;tt_editPatient
 
 
 # Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only)
@@ -330,17 +429,15 @@ claims.1.oidc.http\://mainzelliste.de/roles=admin
 # Allow only requests from localhost (e.g. for developing)
 #servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1
 
-
-#servers.1.apiKey = notAllowedServer
-#servers.1.permissions = createSession;showSessionIds;createToken;tt_deletePatient;tt_addPatient;tt_readPatients;tt_editPatient;tt_deleteAllPatients
-#servers.1.allowedRemoteAdresses = 172.19.255.255;127.0.0.1;0:0:0:0:0:0:0:1
-
-
 # Allow requests from a typical private network
 # servers.0.allowedRemoteAdresses = 192.168.56.0/24
 
 # Allow combination of both
 # servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1;192.168.56.0/24
+
+#servers.1.apiKey = notAllowedServer
+#servers.1.permissions = createSession;showSessionIds;createToken;tt_deletePatient;tt_addPatient;tt_readPatients;tt_editPatient;tt_deleteAllPatients
+#servers.1.allowedRemoteAdresses = 172.19.255.255;127.0.0.1;0:0:0:0:0:0:0:1
 
 # Allowed origins for cross origin resource sharing (CORS), multiple values separated by ";"
 # servers.allowedOrigins = https://mdat-server.example.org

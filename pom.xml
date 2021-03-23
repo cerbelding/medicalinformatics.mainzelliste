@@ -25,6 +25,7 @@
         <version.commons.codec>1.14</version.commons.codec>
         <version.log4j>2.14.0</version.log4j>
         <version.jersey>1.19.4</version.jersey>
+        <version.gson>2.8.6</version.gson>
         <version.openjpa>3.1.2</version.openjpa>
         <version.commons-dbcp2>2.8.0</version.commons-dbcp2>
         <version.postgresql>42.2.18</version.postgresql>
@@ -99,6 +100,12 @@
             <artifactId>jersey-json</artifactId>
             <version>${version.jersey}</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.google.code.gson</groupId>
+          <artifactId>gson</artifactId>
+          <version>${version.gson}</version>
+          <scope>compile</scope>
         </dependency>
 
       <!-- JWT -->

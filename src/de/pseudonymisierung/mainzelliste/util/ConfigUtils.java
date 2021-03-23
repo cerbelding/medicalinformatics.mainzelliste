@@ -26,7 +26,10 @@
 package de.pseudonymisierung.mainzelliste.util;
 
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidConfigurationException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 public class ConfigUtils {
@@ -56,5 +59,42 @@ public class ConfigUtils {
       throw new InvalidConfigurationException(
           configurationKey, "the configured value " + value + " must be boolean");
     }
+  }
+
+  /**
+   * transform a configuration entry in the following format : <br> {@code
+   * prefix.<variable>.<propertyKey> = <propertyValue>} <br> in a map with {@code <variable>} as key
+   * and the given suffix {@code <propertyKey>} together with the value {@code <propertyValue>} in
+   * property list as value.
+   *
+   * @param properties configurations as Properties
+   * @param prefix     configuration key prefix
+   * @return a map with variable name as key and its properties as value
+   */
+  public static Map<String, Properties> getVariableSubProperties(Properties properties,
+      String prefix) {
+    Map<String, Properties> childrenPropertiesMap = new HashMap<>();
+    // property key should look like this : prefix.<var>.suffix
+    properties.stringPropertyNames()
+        .stream()
+        .filter(k -> Pattern.matches("^" + prefix + "\\.\\w+\\..+", k.trim()))
+        .forEach(k -> {
+          String subKey = k.substring(prefix.length() + 1); // remove prefix from key
+          childrenPropertiesMap.compute(
+              subKey.split("\\.")[0], // get "<var>" @see example above
+              (newK, newProperties) -> addProperty(
+                  newProperties,
+                  subKey.substring(newK.length() + 1), // get "suffix" @see example above
+                  properties.getProperty(k)));         // get property value
+        });
+    return childrenPropertiesMap;
+  }
+
+  public static Properties addProperty(Properties properties, String key, String value) {
+    if (properties == null) {
+      properties = new Properties();
+    }
+    properties.setProperty(key, value);
+    return properties;
   }
 }

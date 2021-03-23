@@ -48,7 +48,6 @@ import javax.ws.rs.core.Response.Status;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -84,7 +83,7 @@ public class Token {
 	private int remainingUses;
 
 	/** Logging instance */
-	private Logger logger = LogManager.getLogger(Config.class);
+	private final Logger logger = LogManager.getLogger(Token.class);
 
 	/**
 	 * Create emtpy instance. Used internally only.
@@ -212,17 +211,6 @@ public class Token {
 	 */
 	public String getType() {
 		return type;
-	}
-
-	/**
-	 * Set the type of this token, e.g. "addPatient", "editPatient" etc.
-	 *
-	 * @param type
-	 *            The new token type.
-	 */
-	@Deprecated
-	public void setType(String type) {
-		this.type = type;
 	}
 
 	/**
@@ -565,7 +553,7 @@ public class Token {
 	 * @throws InvalidTokenException
 	 *             if the check fails.
 	 */
-	private void checkIdTypes(Collection<String> listIdTypes)
+	protected void checkIdTypes(Collection<String> listIdTypes)
 			throws InvalidTokenException {
 		// if no idTypes are defined, there is nothing to check
 		if (listIdTypes == null)
@@ -597,10 +585,9 @@ public class Token {
 	 * @throws InvalidTokenException
 	 *             If the given ID type is not known.
 	 */
-	private void checkIdType(String idType) throws InvalidTokenException {
-		List<String> definedIdTypes = Arrays.asList(IDGeneratorFactory.instance
-				.getIDTypes());
-		if (!definedIdTypes.contains(idType))
+	private void checkIdType(String idType) {
+		if (!IDGeneratorFactory.instance.isIdTypeExist(idType) &&
+				!IDGeneratorFactory.instance.isAssociatedIdTypeExist(idType))
 			throw new InvalidTokenException("'" + idType + "'"
 					+ " is not a known ID type!");
 	}
@@ -666,7 +653,7 @@ public class Token {
         this.parentServerName = parentServerName;
     }
 
-	private void checkAuditTrail() {
+	protected void checkAuditTrail() {
 		if (!this.getData().containsKey("auditTrail"))
 			throw new InvalidTokenException("Invalid Token object, audtiTrail key is not specified", Response.Status.BAD_REQUEST);
 

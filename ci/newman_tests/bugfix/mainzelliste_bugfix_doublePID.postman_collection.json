@@ -122,7 +122,7 @@
 							"console.log(jsonBody);",
 							"tests[\"Patient created\"] = responseCode.code === 201;",
 							"",
-							"postman.setGlobalVariable(\"cryptoidString\", jsonBody[0].idString);"
+							"postman.setGlobalVariable(\"cryptoidString\", jsonBody[1].idString);"
 						],
 						"type": "text/javascript"
 					}

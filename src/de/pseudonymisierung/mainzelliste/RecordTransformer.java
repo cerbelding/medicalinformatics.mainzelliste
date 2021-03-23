@@ -25,6 +25,7 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -102,9 +103,8 @@ public class RecordTransformer {
 	 */
 	public Patient transform(Patient input) {
 		Map<String, Field<?>> inFields = input.getFields();
-		Patient output = new Patient();
-		output.setIds(new HashSet<>(input.getIds()));
-		HashMap<String, Field<?>> outFields = new HashMap<String, Field<?>>();
+		Patient output = new Patient(new HashSet<>(input.getIds()), new ArrayList<>(input.getAssociatedIdsList()));
+		HashMap<String, Field<?>> outFields = new HashMap<>();
 		/* iterate over input fields and transform each */
 		for (String fieldName : inFields.keySet()) {
 			if (this.fieldTransformers.containsKey(fieldName))
