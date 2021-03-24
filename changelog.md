@@ -4,6 +4,8 @@
   and empty fields causes a conflict, if the NullMatcher has been activated
 - Set tomcat connector's scheme depending on ML_REVERSEPROXY_SSL environment variable
 - Map runtime exceptions to a response with 500 status code and error message in the body
+- Adding an existing patient in a database which contains a patient with the same fields remove 
+  optional fields, if these fields haven't been provided.
 
 ### 1.9.0 - 2020-12-21
 #### Added

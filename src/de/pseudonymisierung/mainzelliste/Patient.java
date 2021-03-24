@@ -129,28 +129,18 @@ public class Patient {
 	 * @return The modified patient object on which the method is called.
 	 */
 	public Patient updateFrom(Patient from) {
-		// Put updated fields in new map
-		Map<String, Field<?>> newFields = new HashMap<String, Field<?>>();
-		for (String fieldName : from.getFields().keySet()) {
-			// If field is null or empty, update
-			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
-				newFields.put(fieldName, from.getFields().get(fieldName));
-				// otherwise leave old value
-			} else {
-				newFields.put(fieldName, this.fields.get(fieldName));
-			}
-		}
 
-		Map<String, Field<?>> newInputFields = new HashMap<String, Field<?>>();
-		for (String fieldName : from.getInputFields().keySet()) {
-			// If field is not null or empty, update
-			if (!this.fields.containsKey(fieldName) || this.fields.get(fieldName).isEmpty()) {
-				newInputFields.put(fieldName, from.getInputFields().get(fieldName));
-				// otherwise leave old value
-			} else {
-				newInputFields.put(fieldName, this.inputFields.get(fieldName));
-			}
-		}
+		// update patient if field is null or empty, otherwise leave old value
+		from.getFields().keySet().stream()
+				.filter(name -> !this.fields.containsKey(name) || this.fields.get(name).isEmpty())
+				.forEach(name -> this.fields.put(name, from.getFields().get(name)));
+		this.fieldsString = fieldsToString(this.fields);
+
+		// update patient if input field is null or empty, otherwise leave old value
+		from.getInputFields().keySet().stream()
+				.filter(name -> !this.inputFields.containsKey(name) || this.inputFields.get(name).isEmpty())
+				.forEach(name -> this.inputFields.put(name, from.getInputFields().get(name)));
+		this.inputFieldsString = fieldsToString(this.inputFields);
 
 		Set<String> externalIdTypes = IDGeneratorFactory.instance.getExternalIdTypes();
 		for (ID thisId : from.getIds()) {
@@ -168,11 +158,6 @@ public class Patient {
 				}
 			}
 		}
-		// Set fields to updated map. This is more safe than setting fields
-		// direct
-		// because setFields does other stuff
-		this.setFields(newFields);
-		this.setInputFields(newInputFields);
 		return this;
 	}
 
