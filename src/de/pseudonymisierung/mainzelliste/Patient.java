@@ -126,9 +126,10 @@ public class Patient {
 	 * object. Modifies the object and returns it.
 	 * 
 	 * @param from The patient object from which to update fields.
+	 * @param externalIdTypes external id types
 	 * @return The modified patient object on which the method is called.
 	 */
-	public Patient updateFrom(Patient from) {
+	public Patient updateFrom(Patient from, Set<String> externalIdTypes ) {
 
 		// update patient if field is null or empty, otherwise leave old value
 		from.getFields().keySet().stream()
@@ -142,7 +143,6 @@ public class Patient {
 				.forEach(name -> this.inputFields.put(name, from.getInputFields().get(name)));
 		this.inputFieldsString = fieldsToString(this.inputFields);
 
-		Set<String> externalIdTypes = IDGeneratorFactory.instance.getExternalIdTypes();
 		for (ID thisId : from.getIds()) {
 			if (externalIdTypes.contains(thisId.getType())) {
 				String idType = thisId.getType();
