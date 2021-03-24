@@ -50,7 +50,7 @@ The Mainzelliste API has been implemented in the following projects and software
 - [German National Cohort](https://nako.de) (see MOSAIC and the [data protection concept](http://nationale-kohorte.de/wp-content/uploads/2015/07/Treuhandstellenkonzept.pdf))
 - [Electronic data capture system by Fraunhofer FOKUS](https://cdn3.scrivito.com/fokus/57a537e2ec27cb7b/0a3a0655dcc079f58890e39dbdca4781/E-HEALTH_Standards_PB_03-2015_v03.pdf)
 - [CentraXX](http://www.kairos.de/produkte/centraxx/) by Kairos GmbH 
-- Platform for medical research by Climedo Health GmbH ([Description of electronic health record component](https://www.climedo.de/digitale-probandenakte/))
+- Platform for medical research by [Climedo Health GmbH](https://www.climedo.de/)
 - The [NEW ESID online database network] (https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btz525/5526873)
 - Biobank network of the Ruhr University Bochum (BioNetRUB)
 
