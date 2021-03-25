@@ -1,4 +1,4 @@
-### 1.9.1 - 2021-01-29
+### 1.9.1 - 2021-03-25
 #### Fixed
 - Adding new patient with external id in a database which contains a patient with the same external id 
   and empty fields causes a conflict, if the NullMatcher has been activated
