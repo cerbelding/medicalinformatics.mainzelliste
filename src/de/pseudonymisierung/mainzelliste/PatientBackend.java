@@ -154,7 +154,7 @@ public enum PatientBackend {
           case MATCH:
             assignedPatient = match.getBestMatchedPatient();
             // Firstly Generate/update from existing patient the persistent id types
-            assignedPatient.updateFrom(inputPatient);
+            assignedPatient.updateFrom(inputPatient, IDGeneratorFactory.instance.getExternalIdTypes());
             for (String idType : idTypes) {
               assignedPatient.getOriginal().createId(idType);
             }
