@@ -4,7 +4,7 @@
 # a variety of szenarios. At least, the sections "Database setup" and "xDAT servers"
 # should be adjusted to the local environment.
 
-# General format: Key-value pairs, separated by spaces, tabs, "=", ":". 
+# General format: Key-value pairs, separated by spaces, tabs, "=", ":".
 # Lines starting with "#" are comments. Comments appended to a line are not possible!
 # See Javadoc for java.util.Properties#load(Reader) for details.
 
@@ -45,7 +45,7 @@ db.password = mainzelliste
 #log.level = DEBUG
 
 #performance tuning soundex-like blocking
-
+#tuning.soundexblocking = false
 #blocking.soundex.type = Soundex
 #blocking.soundex.fields = vorname, nachname
 
@@ -80,7 +80,7 @@ gcp.audittrail = false
 # where fieldname is a unique identifier and fieldtype the name of a subclass of Field.
 # Input data from the field will be stored in objects of that class.
 #
-# Every field defined here must either be contained in the input form 
+# Every field defined here must either be contained in the input form
 # WEB-INF/jsp/patientFormElements.jsp (with corresponding "name"-Tag) or
 # be provided in the createPatient Token
 
@@ -89,7 +89,7 @@ gcp.audittrail = false
 field.vorname.type = PlainTextField
 field.nachname.type = PlainTextField
 field.geburtsname.type = PlainTextField
-field.geburtstag.type = IntegerField 
+field.geburtstag.type = IntegerField
 field.geburtsmonat.type = IntegerField
 field.geburtsjahr.type = IntegerField
 field.plz.type = PlainTextField
@@ -151,7 +151,7 @@ exchangeGroup.0 = vorname, nachname, geburtsname
 # Transformations for a field {fieldname} are defined by
 # field.{fieldname}.transformers = {transformerlist}, where
 # transformerlist is a comma-separated list of names of subclasses of FieldTransformer.
-# 
+#
 # The first transformer in the list is applied to the input field as defined in the field definition;
 # i.e. the type parameter IN of the first transformer must match the class of the field.
 # Every subsequent transformer is applied to the output of its predecessor; i.e. its type parameter IN
@@ -298,7 +298,7 @@ matcher.epilink.threshold_non_match = 0.6
 
 
 # ID-Generators
-# 
+#
 # idgenerators: A comma-seperated list of identifiers of ID-Generators, corresponding to ID types.
 # External id types should be also listed here
 
@@ -347,6 +347,7 @@ idgenerator.intid = SimpleIDGenerator
 # idgenerator.elasticid.length = 7
 
 # For externally generated id types (imported from external systems) use ExternalIDGenerator
+idgenerator.extid = ExternalIDGenerator
 #idgenerator.exportId = ExternalIDGenerator
 
 # Specify whether the generated ID must be always encrypted before exposing it to the outside via the REST API.
@@ -376,9 +377,9 @@ result.printIdat = true
 # language =
 
 # xDAT servers
-# 
+#
 # Known Permissions / Token Types:
-# 
+#
 # - showSessionIds: see own sessions via GET /sessions
 # - createSession: create session via POST /sessions
 # - manageSessionPatients: manage the set of patients related to a session
@@ -402,6 +403,20 @@ extendedPermissionCheck = true
 #extendedPermissionCheck.failedAuthMessage = deactivated
 #extendedPermissionCheck.caseSensitive = true
 
+# OAuth authentication
+oidc.auth0.iss=https://dev-ptsul9wq.eu.auth0.com/
+
+claims.0.permissions = createToken;tt_addPatient;tt_readPatients;tt_editPatient
+claims.0.auth=OIDC
+claims.0.oidc.operator=AND
+claims.0.oidc.iss=auth0
+claims.0.oidc.sub=auth0|5f026a16920eff001996f9a5
+
+claims.1.permissions = createSession;showSessionIds
+claims.1.auth=OIDC
+claims.1.oidc.operator=AND
+claims.1.oidc.iss=auth0
+claims.1.oidc.http\://mainzelliste.de/roles=admin
 
 # A passphrase used for authentication
 servers.0.apiKey =
@@ -410,15 +425,19 @@ servers.0.permissions = createSession;showSessionIds;createToken;tt_addPatient;t
 
 
 # Accepted origin addresses (IPv4 and/or IPv6) or address ranges in CIDR notation (IPv4 only)
- 
+
 # Allow only requests from localhost (e.g. for developing)
-# servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1
+#servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1
 
 # Allow requests from a typical private network
 # servers.0.allowedRemoteAdresses = 192.168.56.0/24
 
 # Allow combination of both
 # servers.0.allowedRemoteAdresses = 127.0.0.1;0:0:0:0:0:0:0:1;192.168.56.0/24
+
+#servers.1.apiKey = notAllowedServer
+#servers.1.permissions = createSession;showSessionIds;createToken;tt_deletePatient;tt_addPatient;tt_readPatients;tt_editPatient;tt_deleteAllPatients
+#servers.1.allowedRemoteAdresses = 172.19.255.255;127.0.0.1;0:0:0:0:0:0:0:1
 
 # Allowed origins for cross origin resource sharing (CORS), multiple values separated by ";"
 # servers.allowedOrigins = https://mdat-server.example.org
@@ -443,7 +462,7 @@ callback.allowSelfsigned = false
 #         in the file system, a path within the .war file or a path relative to META-INF/resource
 #         within a .jar file on the class path (e.g. a dependency).
 
-# operator.contact = 
+# operator.contact =
 
 # Logo file: example for absolute path
 # operator.logo = /etc/mainzelliste/logo.png
@@ -451,7 +470,7 @@ callback.allowSelfsigned = false
 # Logo file: example for relative path in .war file
 # operator.logo = /WEB-INF/classes/logo.png
 
-# Logo file: example for file in META-INF/resources within a .jar file on the classpath 
+# Logo file: example for file in META-INF/resources within a .jar file on the classpath
 # operator.logo = /logo.png
 
 # custom configuration

@@ -509,7 +509,7 @@ public class PatientsResource {
     // Callback
     String callback = token.getDataItemString("callback");
     if (callback != null && callback.length() > 0
-        && Servers.instance.hasServerPermission(token.getParentServerName(), "callback")) {
+        && Servers.instance.hasPermissionByName(token.getParentServerName(), "callback")) {
       MainzellisteCallback mainzellisteCallback = new MainzellisteCallback();
       try {
         mainzellisteCallback.url(callback)
@@ -527,7 +527,7 @@ public class PatientsResource {
     // Redirect
     String redirect = token.getDataItemString("redirect");
     if (redirect != null && redirect.length() > 0
-        && Servers.instance.hasServerPermission(token.getParentServerName(), "redirect")) {
+        && Servers.instance.hasPermissionByName(token.getParentServerName(), "redirect")) {
       UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
       List<String> templateVariables = redirectURITempl.getTemplateVariables();
 
@@ -578,7 +578,7 @@ public class PatientsResource {
       if (token.getParentServerName() == null) {
         throw new NoParentServerNameException();
       } else if (Servers.instance
-          .hasServerPermission(token.getParentServerName(), "readAllPatientIds")) {
+          .hasPermissionByName(token.getParentServerName(), "readAllPatientIds")) {
         try {
           List<JSONObject> foundIds = patient.getIds().stream()
               .map(ID::toJSON)
@@ -619,7 +619,7 @@ public class PatientsResource {
     if (Boolean.TRUE.equals(token.getData().get("readAllPatientIdTypes"))) {
       if (token.getParentServerName() == null) {
         throw new NoParentServerNameException();
-      } else if (Servers.instance.hasServerPermission(token.getParentServerName(),
+      } else if (Servers.instance.hasPermissionByName(token.getParentServerName(),
           "readAllPatientIdTypes")) {
         try {
           patientJson.put("idTypes", new JSONArray(patient.getIds().stream()

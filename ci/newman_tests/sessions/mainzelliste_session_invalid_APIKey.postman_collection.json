@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "7dc063fe-8903-4de9-bcc8-41b5ac2c3192",
+		"_postman_id": "8704f625-f842-491f-b7c9-fe22262cd552",
 		"name": "mainzelliste_session_invalid_APIKey",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -23,7 +23,7 @@
 							"});",
 							"",
 							"pm.test(\"Check ResponseBody\", function(){",
-							"     pm.response.to.have.body(\"Please supply your API key in HTTP header field 'mainzellisteApiKey'.\");",
+							"     pm.response.to.have.body(\"Please supply your API key in HTTP header field 'mainzellisteApiKey'. Or your access token in the HTTP header field Authorization\");",
 							"});",
 							"",
 							"",

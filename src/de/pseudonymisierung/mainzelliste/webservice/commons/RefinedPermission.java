@@ -46,7 +46,7 @@ public class RefinedPermission {
     }
 
     private void prepareTokenValuesAndServerPermissions(String tokenParameter, Session session) {
-        serverPermissions = getServerPermissions(session.getParentServerName());
+        serverPermissions = getPermissions(session.getParentServerName());
 
         if(isCaseInsensitiveConfigured()){
             serverPermissions = serverPermissions.stream().map(s -> s.toLowerCase()).collect(Collectors.toSet());
@@ -264,8 +264,8 @@ public class RefinedPermission {
         return false;
     }
 
-    private Set<String> getServerPermissions(String servername) {
-        return Servers.instance.getServerPermissionsForServerName(servername);
+    private Set<String> getPermissions(String name) {
+        return Servers.instance.getRequesterByName(name).getPermissions();
     }
 
     private void extractJSONObjectTokenValues(String tokenParameter) {

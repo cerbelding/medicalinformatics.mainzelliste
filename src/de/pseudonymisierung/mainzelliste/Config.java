@@ -25,6 +25,12 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.auth.authorizationServer.AuthorizationServer;
+import de.pseudonymisierung.mainzelliste.configuration.authorizationServer.AuthorizationServerParser;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfiguration;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfigurationParser;
+import de.pseudonymisierung.mainzelliste.configuration.claimConfiguration.ClaimConfigurations;
+import de.pseudonymisierung.mainzelliste.auth.authorizationServer.AuthorizationServers;
 import de.pseudonymisierung.mainzelliste.blocker.BlockingKeyExtractors;
 import de.pseudonymisierung.mainzelliste.crypto.CryptoUtil;
 import de.pseudonymisierung.mainzelliste.crypto.Encryption;
@@ -119,6 +125,11 @@ public enum Config {
 	private String allowedMethods;
 	/** Allowed caching time for Cross Domain Resource Sharing Preflight Requests */
 	private int allowedMaxAge;
+
+	/**List of allowed OIDC-Servers*/
+	private AuthorizationServers authorizationServers;
+	/**List of Claims*/
+	private ClaimConfigurations claimConfigurations = new ClaimConfigurations(new HashSet<>());
 
 	/** some gui configurations */
 	private GUI guiConfig;
@@ -292,6 +303,11 @@ public enum Config {
 
 		// read gui configuration
 		this.guiConfig = new GUI(props);
+
+		Set<AuthorizationServer> oidcServerSet = AuthorizationServerParser.parseOIDCServerConfiguration(props);
+		this.authorizationServers = new AuthorizationServers(oidcServerSet);
+		Set<ClaimConfiguration> claimConfigurationSet = ClaimConfigurationParser.parseConfiguration(props, this.authorizationServers);
+		this.claimConfigurations = new ClaimConfigurations(claimConfigurationSet);
 	}
 
 	/**
@@ -738,7 +754,7 @@ public enum Config {
 			Properties props = new Properties();
 			InputStream versionInputStream = Initializer.getServletContext().getResourceAsStream("/WEB-INF/classes/version.properties");
 			if (versionInputStream == null) {
-				// Try alternate way of reading file (necessary for running test via the Jersey Test Framework) 
+				// Try alternate way of reading file (necessary for running test via the Jersey Test Framework)
 				versionInputStream = this.getClass().getResourceAsStream("/version.properties");
 			}
 			if (versionInputStream == null) {
@@ -752,6 +768,22 @@ public enum Config {
 		} catch (IOException e) {
 			throw new Error ("I/O error while reading version.properties", e);
 		}
+	}
+
+	/**
+	 * Returns the Claims which are defined in the configuration file
+	 * @return the stored claims
+	 */
+	public ClaimConfigurations getClaimConfigurationSet() {
+		return claimConfigurations;
+	}
+
+	/**
+	 * Returns the OIDCServers which are defined in the configuration file
+	 * @return the stored OIDCServers
+	 */
+	public AuthorizationServers getAuthorizationServers() {
+		return authorizationServers;
 	}
 
 	public Encryption getEncryption(String encryptionName) {

@@ -337,10 +337,10 @@ public class Token {
 
 		// Check callback URL
 		String callback = this.getDataItemString("callback");
-		if (callback != null && !callback.equals("") && Servers.instance.hasServerPermission(getParentServerName(), "callback"))
+		if (callback != null && !callback.equals("") && Servers.instance.hasPermissionByName(getParentServerName(), "callback"))
 			MainzellisteCallbackUtil.checkCallbackUrl(callback);
 		String redirect = this.getDataItemString("redirect");
-		if (redirect != null && !redirect.equals("") && Servers.instance.hasServerPermission(getParentServerName(), "redirect")){
+		if (redirect != null && !redirect.equals("") && Servers.instance.hasPermissionByName(getParentServerName(), "redirect")){
 			// @Florian paste code here
 		}
 

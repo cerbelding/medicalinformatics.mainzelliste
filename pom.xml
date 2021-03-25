@@ -32,6 +32,7 @@
         <version.httpclient>4.5.11</version.httpclient>
         <version.commons.net>3.6</version.commons.net>
         <version.maven-artifact>3.6.3</version.maven-artifact>
+        <version.java-jwt>3.11.0</version.java-jwt>
         <version.tink>1.4.0</version.tink>
         <version.org.testng>7.3.0</version.org.testng>
     </properties>
@@ -106,6 +107,14 @@
           <scope>compile</scope>
         </dependency>
 
+      <!-- JWT -->
+      <dependency>
+        <groupId>com.auth0</groupId>
+        <artifactId>java-jwt</artifactId>
+        <version>${version.java-jwt}</version>
+        <scope>compile</scope>
+      </dependency>
+
         <!-- Util -->
         <dependency>
             <groupId>commons-codec</groupId>
@@ -134,6 +143,12 @@
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
             <version>${version.maven-artifact}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>17.0.0</version>
+            <scope>compile</scope>
         </dependency>
 
       <!-- Test -->
