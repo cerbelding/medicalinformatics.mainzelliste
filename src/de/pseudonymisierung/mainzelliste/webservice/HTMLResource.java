@@ -84,8 +84,10 @@ public class HTMLResource {
 	/**
 	 * Get the form for entering a new patient.
 	 *
-	 * @param tokenId Id of a valid "addPatient" token.
-	 * @param request The injected HttpServletRequest.
+	 * @param tokenId
+	 *            Id of a valid "addPatient" token.
+	 * @param request
+	 *            The injected HttpServletRequest.
 	 * @return The input form or an error message if the given token is not valid.
 	 */
 	@GET
@@ -94,40 +96,19 @@ public class HTMLResource {
 	public Response createPatientForm(
 			@QueryParam("tokenId") String tokenId,
 			@Context HttpServletRequest request) {
-		return createPatient(tokenId, request, "/createPatient.jsp");
-	}
-
-	/**
-	 * Get the form for entering a new patient.
-	 *
-	 * @param tokenId Id of a valid "addPatient" token.
-	 * @param request The injected HttpServletRequest.
-	 * @return The input form or an error message if the given token is not valid.
-	 */
-	@GET
-	@Path("addPatient")
-	@Produces(MediaType.TEXT_HTML)
-	public Response addPatientForm(
-			@QueryParam("tokenId") String tokenId,
-			@Context HttpServletRequest request) {
-		return createPatient(tokenId, request, "/addPatient.jsp");
-	}
-
-	private Response createPatient(String tokenId, HttpServletRequest request, String jspPage) {
 		String mainzellisteApiVersion = Servers.instance.getRequestApiVersion(request).toString();
 		Token t = Servers.instance.getTokenByTid(tokenId);
 		if (Config.instance.debugIsOn() ||
-				(t != null && t.getType().equals("addPatient"))) {
+				(t != null && t.getType().equals("addPatient")))
+		{
 			HashMap<String, Object> map = new HashMap<String, Object>();
 			map.put("tokenId", tokenId);
 			map.put("mainzellisteApiVersion", mainzellisteApiVersion);
-			return Response.ok(new Viewable(jspPage, map)).build();
-		} else {
-			throw new WebApplicationException(Response
-					.status(Status.UNAUTHORIZED)
-					.entity("Please supply a valid token id as URL parameter 'tokenId'.")
-					.build());
-		}
+			return Response.ok(new Viewable("/createPatient.jsp", map)).build();
+		} else throw new WebApplicationException(Response
+				.status(Status.UNAUTHORIZED)
+				.entity("Please supply a valid token id as URL parameter 'tokenId'.")
+				.build());
 	}
 
 	/**

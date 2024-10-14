@@ -94,7 +94,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [\"cryptoid\"]\r\n    \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"addPatient\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [\"pid\"]\r\n    \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -181,6 +181,11 @@
 						{
 							"key": "ort",
 							"value": "Musterstadt",
+							"type": "text"
+						},
+						{
+							"key": "extid",
+							"value": "12345",
 							"type": "text"
 						},
 						{
@@ -299,7 +304,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"checkMatch\",\r\n\t\"allowedUses\": \"1\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [\"cryptoid\"]\r\n    \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"checkMatch\",\r\n\t\"allowedUses\": \"1\",\r\n     \t\"data\": {\r\n     \t\t\"idtypes\": [\"pid\"]\r\n    \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -327,8 +332,8 @@
 							"var jsonBody = JSON.parse(responseBody);",
 							"console.log(jsonBody);",
 							"tests[\"Similarity score should be 1\"] = jsonBody[0].similarityScore === 1;",
-							"tests[\"cryptoid returned\"] = jsonBody[0].hasOwnProperty(\"cryptoid\");",
-							"tests[\"only cryptoid is returned\"] = Object.keys(jsonBody[0]).length === 2;",
+							"tests[\"pid returned\"] = jsonBody[0].hasOwnProperty(\"pid\");",
+							"tests[\"only pid is returned\"] = Object.keys(jsonBody[0]).length === 2;",
 							""
 						],
 						"type": "text/javascript"
@@ -392,6 +397,11 @@
 						{
 							"key": "ort",
 							"value": "Musterstadt",
+							"type": "text"
+						},
+						{
+							"key": "extid",
+							"value": "12345",
 							"type": "text"
 						},
 						{

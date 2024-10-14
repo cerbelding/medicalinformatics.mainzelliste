@@ -43,8 +43,6 @@ import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
 
-import java.util.Arrays;
-import java.util.List;
 
 import java.util.Optional;
 import java.util.Properties;
@@ -61,8 +59,6 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	private String idType;
 	/** The IDGeneratorMemory instance for this generator. */
 	private IDGeneratorMemory mem;
-	/** list of configured ID types with which this generator will create the ID eagerly */
-	private List<String> eagerGenRelatedIdTypes;
 
 	/** Counter, increased with every created id. */
 	private int counter = 1;
@@ -90,8 +86,7 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	}
 
 	@Override
-	public void init(IDGeneratorMemory mem, String idType, String[] eagerGenRelatedIdTypes,
-			Properties props) {
+	public void init(IDGeneratorMemory mem, String idType, Properties props) {
 		this.mem = mem;
 
 		String memCounter = mem.get("counter");
@@ -99,7 +94,6 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 		this.counter = Integer.parseInt(memCounter);
 
 		this.idType = idType;
-		this.eagerGenRelatedIdTypes = Arrays.asList(eagerGenRelatedIdTypes);
 		// initialize default configuration
 		this.idLength = 5;
 		this.vocabulary = "0123456789ACDEFGHJKLMNPQRTUVWXYZ".toCharArray();
@@ -169,11 +163,6 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	}
 
 	@Override
-	public void reset(String idType) {
-		//
-	}
-
-	@Override
 	public boolean verify(String id) {
 		return true;
 	}
@@ -197,18 +186,7 @@ public class ElasticIDGenerator implements IDGenerator<ElasticID>{
 	public boolean isExternal() { return false; }
 
 	@Override
-	public boolean isPersistent() { return true; }
-
-	@Override
 	public Optional<IDGeneratorMemory> getMemory() {
 		return Optional.of(mem);
 	}
-
-	@Override
-	public boolean isEagerGenerationOn(String idType) {
-		return eagerGenRelatedIdTypes.contains("*") || eagerGenRelatedIdTypes.contains(idType);
-	}
-
-	@Override
-	public boolean isSrl() { return false; }
 }

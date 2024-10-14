@@ -218,7 +218,7 @@ public class MainzellisteCallback {
                 idsJson.put(id.toJSON());
             }
             if (apiVersion.majorVersion == 1)
-                json.put("id", this.returnIds.iterator().next().getEncryptedIdStringFirst());
+                json.put("id", new ArrayList<>(this.returnIds).get(0).getIdString());
             else
                 json.put("ids", idsJson);
         }

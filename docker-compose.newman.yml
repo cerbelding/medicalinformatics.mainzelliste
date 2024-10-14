@@ -25,7 +25,6 @@ services:
       - db
     volumes:
       - ./ci/newman_mainzelliste_configs/active_config:/run/secrets/
-      - ./ci/newman_mainzelliste_resources:/etc/resources/
   newman:
     image: newman_html_report
     build:

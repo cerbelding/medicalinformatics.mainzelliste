@@ -193,26 +193,6 @@
 							"key": "ort",
 							"value": "{{ort}}",
 							"type": "text"
-						},
-						{
-							"key": "adresse.strasse",
-							"value": "Musterstrasse",
-							"type": "text"
-						},
-						{
-							"key": "adresse.hausnummer",
-							"value": "01",
-							"type": "text"
-						},
-						{
-							"key": "adresse.plz",
-							"value": "12345",
-							"type": "text"
-						},
-						{
-							"key": "adresse.stadt",
-							"value": "Musterstadt",
-							"type": "text"
 						}
 					]
 				},
@@ -278,7 +258,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"editPatient\",\r\n     \t\"data\": {\r\n     \t\t\"patientId\": {\r\n\t\t\t\t\"idType\":\"{{idTypes}}\", \r\n\t\t\t\t\"idString\":\"{{idString}}\"\r\n\t\t\t},\r\n\t\t\t\"fields\":[\"vorname\", \"nachname\", \"geburtsname\", \"geburtstag\", \"geburtsmonat\", \"geburtsjahr\", \"plz\", \"ort\", \"adresse.strasse\", \"adresse.hausnummer\", \"adresse.plz\", \"adresse.stadt\"]\r\n     \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"editPatient\",\r\n     \t\"data\": {\r\n     \t\t\"patientId\": {\r\n\t\t\t\t\"idType\":\"{{idTypes}}\", \r\n\t\t\t\t\"idString\":\"{{idString}}\"\r\n\t\t\t},\r\n\t\t\t\"fields\":[\"vorname\", \"nachname\", \"geburtsname\", \"geburtstag\", \"geburtsmonat\", \"geburtsjahr\", \"plz\", \"ort\"],\r\n     \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -319,10 +299,7 @@
 							"postman.setGlobalVariable(\"geburtsjahrEdit\", requestBody.geburtsjahr);",
 							"postman.setGlobalVariable(\"plzEdit\", requestBody.plz);",
 							"postman.setGlobalVariable(\"ortEdit\", requestBody.ort);",
-							"postman.setGlobalVariable(\"adresse.strasse\", requestBody.ort);",
-							"postman.setGlobalVariable(\"adresse.hausnummer\", requestBody.ort);",
-							"postman.setGlobalVariable(\"adresse.stadt\", requestBody.ort);",
-							"postman.setGlobalVariable(\"adresse.plz\", requestBody.ort);",
+							"",
 							"",
 							""
 						],
@@ -348,7 +325,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"vorname\": \"{{vorname}}Edit\",\n\t\"nachname\": \"{{nachname}}Edit\",\n\t\"geburtsname\": \"{{geburtsname}}Edit\", \n\t\"geburtstag\": \"06\",\n\t\"geburtsmonat\": \"06\",\n\t\"geburtsjahr\": \"1980\",\n\t\"plz\": \"66666\",\n\t\"ort\": \"{{ort}}Edit\",\n\t\"adresse.hausnummer\": \"02\",\n\t\"adresse.strasse\": \"Blumenstrasse\",\n\t\"adresse.stadt\": \"Heidelberg\",\n\t\"adresse.plz\": \"79822\"\n}"
+					"raw": "{\n\t\"vorname\": \"{{vorname}}Edit\",\n\t\"nachname\": \"{{nachname}}Edit\",\n\t\"geburtsname\": \"{{geburtsname}}Edit\", \n\t\"geburtstag\": \"06\",\n\t\"geburtsmonat\": \"06\",\n\t\"geburtsjahr\": \"1980\",\n\t\"plz\": \"66666\",\n\t\"ort\": \"{{ort}}Edit\"\n\t\n}"
 				},
 				"url": {
 					"raw": "{{url}}/patients/tokenId/{{tokenId}}",
@@ -406,7 +383,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":{{idType}},\r\n\t \t\t\t\"idString\":{{idString}}\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultFields\": [\"vorname\", \"nachname\", \"geburtsname\", \"geburtstag\", \"geburtsmonat\", \"geburtsjahr\", \"plz\", \"ort\", \"adresse.strasse\", \"adresse.hausnummer\", \"adresse.plz\", \"adresse.stadt\"],\r\n\t\t\"resultIds\":[\"{{idType}}\"]\r\n\r\n \t}\r\n}"
+					"raw": "{\r\n\t\"type\": \"readPatients\",\r\n \t\"data\": {\r\n\t \t\"searchIds\": [\r\n\t \t\t{\r\n\t \t\t\t\"idType\":{{idType}},\r\n\t \t\t\t\"idString\":{{idString}}\r\n\t \t\t}\r\n\t\t],\r\n\t\t\"resultFields\": [\"vorname\", \"nachname\", \"geburtsname\", \"geburtstag\", \"geburtsmonat\", \"geburtsjahr\", \"plz\", \"ort\"],\r\n\t\t\"resultIds\":[\"{{idType}}\"]\r\n\r\n \t}\r\n}"
 				},
 				"url": {
 					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
@@ -448,10 +425,6 @@
 							"    pm.expect(jsonBody[0].fields.geburtsjahr).to.eql(postman.getGlobalVariable(\"geburtsjahrEdit\")); ",
 							"    pm.expect(jsonBody[0].fields.plz).to.eql(postman.getGlobalVariable(\"plzEdit\"));",
 							"    pm.expect(jsonBody[0].fields.ort).to.eql(postman.getGlobalVariable(\"ortEdit\"));",
-							"    pm.expect(jsonBody[0].fields.ort).to.eql(postman.getGlobalVariable(\"adresse.strasse\"));",
-							"    pm.expect(jsonBody[0].fields.ort).to.eql(postman.getGlobalVariable(\"adresse.hausnummer\"));",
-							"    pm.expect(jsonBody[0].fields.ort).to.eql(postman.getGlobalVariable(\"adresse.stadt\"));",
-							"    pm.expect(jsonBody[0].fields.ort).to.eql(postman.getGlobalVariable(\"adresse.plz\"));",
 							"});",
 							"",
 							"pm.test('Check PatientID', function () {",

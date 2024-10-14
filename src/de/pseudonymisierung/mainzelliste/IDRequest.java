@@ -47,6 +47,7 @@ import javax.persistence.Transient;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import de.pseudonymisierung.mainzelliste.matcher.MatchResult;
+import de.pseudonymisierung.mainzelliste.webservice.AddPatientToken;
 
 /**
  * Represents a request to add a patient, consisting of information like input
@@ -75,6 +76,10 @@ public class IDRequest {
 	@Embedded
 	private MatchResult matchResult;
 
+	/** The token that was used to make the request */
+	@Transient
+	private AddPatientToken token;
+	
 	/**
 	 * The patient object that was actually assigned. In case of a match this is
 	 * usually equal to matchResult.bestMatchedPatient.
@@ -104,13 +109,14 @@ public class IDRequest {
 	 *            The token that was used to make this request.
 	 */
 	public IDRequest(Map<String, Field<?>> inputFields, Set<String> idTypes,
-			MatchResult matchResult, Patient assignedPatient) {
+			MatchResult matchResult, Patient assignedPatient, AddPatientToken token) {
 		super();
 		this.inputFields = inputFields;
 		this.requestedIdTypes = idTypes;
 		this.matchResult = matchResult;
 		this.assignedPatient = assignedPatient;
 		this.timestamp = new Date();
+		this.token = token;
 	}
 
 	/**
@@ -175,5 +181,14 @@ public class IDRequest {
 	 */
 	Date getTimestamp() {
 		return timestamp;
+	}
+	
+	/**
+	 * Get the token that was used to make this request.
+	 * 
+	 * @return The token that was used to make this request.
+	 */
+	public AddPatientToken getToken() {
+		return this.token;
 	}
 }

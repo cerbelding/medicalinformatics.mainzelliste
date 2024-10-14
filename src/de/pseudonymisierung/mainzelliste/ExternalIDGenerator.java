@@ -39,8 +39,7 @@ public class ExternalIDGenerator implements IDGenerator<ExternalID>{
     String idType;
 
     @Override
-    public void init(IDGeneratorMemory mem, String idType, String[] eagerGenRelatedIdTypes,
-        Properties props) {
+    public void init(IDGeneratorMemory mem, String idType, Properties props) {
         this.idType = idType;
     }
 
@@ -50,12 +49,6 @@ public class ExternalIDGenerator implements IDGenerator<ExternalID>{
      * 
      * @return true
      */
-
-    @Override
-    public void reset(String idType) {
-        //
-    }
-
     @Override
     public boolean verify(String id) {
         return true;
@@ -95,18 +88,7 @@ public class ExternalIDGenerator implements IDGenerator<ExternalID>{
 	public boolean isExternal() { return true; }
 
     @Override
-    public boolean isPersistent() { return true; }
-
-    @Override
     public Optional<IDGeneratorMemory> getMemory() {
         return Optional.empty();
     }
-
-    @Override
-    public boolean isEagerGenerationOn(String idType) {
-        return false;
-    }
-
-    @Override
-    public boolean isSrl() { return false; }
 }

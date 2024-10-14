@@ -65,7 +65,7 @@ public enum Persistor {
 	
 	/** String with which database identifers are quoted. */
 	private String identifierQuoteString = null;
-
+	
 	/** Number of retries for initializing database connection. */
 	private int dbconnect_retry_count = 100;
 
@@ -225,7 +225,7 @@ public enum Persistor {
 				Patient.class)
 				.getResultList();
 	}
-
+	
 	/**
 	 * Returns all patients currently persisted in the patient list. This is not
 	 * a copy! Caller MUST NOT perform write operations on the return value or

@@ -64,7 +64,7 @@ public class TokenParam extends AbstractParam<Token> {
 		try {
 			JSONObject jsob = new JSONObject(param);
 			String tokenType = jsob.optString("type");
-			int allowedUses = 1;
+			int allowedUses = 0;
 			try {
 				if(!jsob.optString("allowedUses").equals("")){
 					allowedUses = Integer.parseInt(jsob.optString("allowedUses"));
@@ -75,16 +75,13 @@ public class TokenParam extends AbstractParam<Token> {
 			}
 			Token t;
 			if (tokenType.equals("addPatient"))
-				t = new AddPatientToken(allowedUses);
-			else if (tokenType.equals("addPatients"))
-				t = new AddPatientsToken();
+				t = (allowedUses == 0) ? new AddPatientToken() : new AddPatientToken(allowedUses);
 			else if (tokenType.equals("editPatient"))
-				t = new EditPatientToken(allowedUses);
+				t = (allowedUses == 0) ? new EditPatientToken() : new EditPatientToken(allowedUses);
 			else
-				t = new Token(tokenType, allowedUses);
-
+				t = (allowedUses == 0) ? new Token(tokenType) : new Token(tokenType, allowedUses);
 			HashMap<String, Object> data = new ObjectMapper().readValue (jsob.getString("data"), new TypeReference<HashMap<String, Object>>() {});
-			// TODO move this workaround to Token.setData(...)
+
 			// compatibility fix: "idtypes" -> "idTypes"
 			HashMap<String, Object> changedItems = new HashMap<String, Object>();
 			for (Iterator<Entry<String, Object>> itDataItem = data.entrySet().iterator(); itDataItem.hasNext();) {

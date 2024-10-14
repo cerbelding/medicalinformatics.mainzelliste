@@ -26,8 +26,11 @@
 package de.pseudonymisierung.mainzelliste.webservice;
 
 import com.sun.jersey.api.uri.UriTemplate;
-import de.pseudonymisierung.mainzelliste.*;
+import de.pseudonymisierung.mainzelliste.Config;
+import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
+import de.pseudonymisierung.mainzelliste.Servers;
 import de.pseudonymisierung.mainzelliste.Servers.ApiVersion;
+import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidTokenException;
 import de.pseudonymisierung.mainzelliste.exceptions.NotImplementedException;
@@ -47,10 +50,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jettison.json.JSONObject;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 
 /**
  * A temporary "ticket" to realize authorization and/or access to a resource.
@@ -81,9 +80,6 @@ public class Token {
 
 	/** The remaining amount of uses allowed for the token */
 	private int remainingUses;
-
-	/** Logging instance */
-	private final Logger logger = LogManager.getLogger(Token.class);
 
 	/**
 	 * Create emtpy instance. Used internally only.
@@ -211,6 +207,17 @@ public class Token {
 	 */
 	public String getType() {
 		return type;
+	}
+
+	/**
+	 * Set the type of this token, e.g. "addPatient", "editPatient" etc.
+	 *
+	 * @param type
+	 *            The new token type.
+	 */
+	@Deprecated
+	public void setType(String type) {
+		this.type = type;
 	}
 
 	/**
@@ -419,30 +426,11 @@ public class Token {
 			}
 			checkIdType(idType);
 
-			if (apiVersion.majorVersion < 3 || apiVersion.majorVersion == 3 && apiVersion.minorVersion < 2){
-				// Decrypt id if necessary before token validation
-				ID searchId;
-				try {
-					searchId = IDGeneratorFactory.instance.decryptAndBuildId(idType, idString);
-				} catch (Exception e) {
-					logger.warn("Decryption failed, try to proceed with search id string");
-					searchId = IDGeneratorFactory.instance.buildId(idType, idString);
-				}
-				IDGenerator generator = IDGeneratorFactory.instance.getFactory(idType);
-				if(!generator.isPersistent()){
-					// CryptoIds are transient, compute the base id to check if the patient exists
-					ID newID =((DerivedIDGenerator)generator).getBaseId(searchId);
-					idType = newID.getType();
-					idString = newID.getIdString();
-				} else {
-					idType = searchId.getType();
-					idString = searchId.getIdString();
-				}
-				if(!Persistor.instance.patientExists(idType, idString)) {
-					throw new InvalidTokenException(
-							"No patient found with provided " + idType + " '"
-									+ idString + "'!");
-				}
+			if ((apiVersion.majorVersion < 3 || apiVersion.majorVersion == 3 && apiVersion.minorVersion < 2)
+					&& !Persistor.instance.patientExists(idType, idString)) {
+				throw new InvalidTokenException(
+						"No patient found with provided " + idType + " '"
+								+ idString + "'!");
 			} else if (searchIds.size() > 1 && idString.trim().equals("*")){
 				throw new NotImplementedException(
 						"It's only possible to request one IdType as wildcard select.");
@@ -553,7 +541,7 @@ public class Token {
 	 * @throws InvalidTokenException
 	 *             if the check fails.
 	 */
-	protected void checkIdTypes(Collection<String> listIdTypes)
+	private void checkIdTypes(Collection<String> listIdTypes)
 			throws InvalidTokenException {
 		// if no idTypes are defined, there is nothing to check
 		if (listIdTypes == null)
@@ -654,7 +642,7 @@ public class Token {
         this.parentServerName = parentServerName;
     }
 
-	protected void checkAuditTrail() {
+	private void checkAuditTrail() {
 		if (!this.getData().containsKey("auditTrail"))
 			throw new InvalidTokenException("Invalid Token object, audtiTrail key is not specified", Response.Status.BAD_REQUEST);
 
