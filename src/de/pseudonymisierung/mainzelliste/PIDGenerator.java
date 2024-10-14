@@ -39,9 +39,6 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
@@ -70,8 +67,6 @@ public class PIDGenerator implements IDGenerator<PID>{
 	private String idType;
 	/** The IDGeneratorMemory instance for this generator. */
 	private IDGeneratorMemory mem;
-	/** list of configured ID types with which this generator will create the ID eagerly  */
-	private List<String> eagerGenRelatedIdTypes = new ArrayList<>();
 
 	/** Private key for PID generation. */
 	@SuppressWarnings("javadoc") // One comment is sufficient, but Eclipse marks a warning otherwise.
@@ -711,8 +706,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	}
 
 	@Override
-	public void init(IDGeneratorMemory mem, String idType, String[] eagerGenRelatedIdTypes,
-			Properties props) {
+	public void init(IDGeneratorMemory mem, String idType, Properties props) {
 		this.mem = mem;
 
 		String memCounter = mem.get("counter");
@@ -720,7 +714,6 @@ public class PIDGenerator implements IDGenerator<PID>{
 		this.counter = Integer.parseInt(memCounter);
 
 		this.idType = idType;
-		this.eagerGenRelatedIdTypes = Arrays.asList(eagerGenRelatedIdTypes);
 
 		try {
 			int key1 = Integer.parseInt(props.getProperty("k1"));
@@ -739,11 +732,6 @@ public class PIDGenerator implements IDGenerator<PID>{
 			logger.fatal("Number format error in configuration of IDGenerator for ID type " + idType, e);
 			throw new InternalErrorException(e);
 		}
-	}
-
-	@Override
-	public void reset(String idType) {
-		//
 	}
 
 	@Override
@@ -778,18 +766,7 @@ public class PIDGenerator implements IDGenerator<PID>{
 	public boolean isExternal() { return false; }
 
 	@Override
-	public boolean isPersistent() { return true; }
-
-	@Override
 	public Optional<IDGeneratorMemory> getMemory() {
 		return Optional.of(mem);
 	}
-
-	@Override
-	public boolean isEagerGenerationOn(String idType) {
-		return eagerGenRelatedIdTypes.contains("*") || eagerGenRelatedIdTypes.contains(idType);
-	}
-
-	@Override
-	public boolean isSrl() { return false; }
 }

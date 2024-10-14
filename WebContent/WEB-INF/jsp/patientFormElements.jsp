@@ -19,7 +19,8 @@
   <table class="daten_tabelle">
     <tbody>
       <tr>
-        <td><label for="vorname"><%=bundle.getString("firstName")%>: </label></td>
+        <td><label for="vorname"><%=bundle.getString("firstName")%>:
+        </label></td>
         <td><input type="text" id="vorname" name="vorname" size="50"
           value="${it.vorname}" <% if (map.containsKey("readonly")) { %>
           readonly="readonly" <% } else if (showPlaceholders) { %>
@@ -27,7 +28,8 @@
           <span class="mandatory">*</span></td>
       </tr>
       <tr>
-        <td><label for="nachname"><%=bundle.getString("lastName")%>: </label></td>
+        <td><label for="nachname"><%=bundle.getString("lastName")%>
+            : </label></td>
         <td><input type="text" id="nachname" name="nachname" size="50"
           value="${it.nachname}" <% if (map.containsKey("readonly")) { %>
           readonly="readonly" <% } else if (showPlaceholders) { %>
@@ -35,20 +37,22 @@
           <span class="mandatory">*</span></td>
       </tr>
       <tr>
-        <td><label for="geburtsname"><%=bundle.getString("birthName")%>: </label></td>
+        <td><label for="geburtsname"><%=bundle.getString("birthName")%>
+            : </label></td>
         <td><input type="text" id="geburtsname" name="geburtsname"
           size="50" value="${it.geburtsname}"
           <% if (map.containsKey("readonly")) { %> readonly="readonly"
           <% } else if (showPlaceholders) { %>
           placeholder="<%=bundle.getString("placeholderBName") %>" <% } %> />
-          <span class="mandatory"></span> <small> (<%=bundle.getString("ifDifferent")%>)
+          <span class="mandatory">*</span> <small> (<%=bundle.getString("ifDifferent")%>)
         </small></td>
       </tr>
       <tr>
         <td colspan="2"><small>&nbsp;</small></td>
       </tr>
       <tr>
-        <td><label<% if (!map.containsKey("readonly")) { %> for="geburtstag"<% } %>><%=bundle.getString("dateOfBirth")%>:</label></td>
+        <td><label<% if (!map.containsKey("readonly")) { %> for="geburtstag"<% } %>><%=bundle.getString("dateOfBirth")%>
+            :</label></td>
         <td class="geburtsdatum" id="geburtsdatum">
           <div>
             <%
@@ -160,22 +164,8 @@
         </td>
       </tr>
       <tr>
-        <td colspan="2"><small>&nbsp;</small></td>
-      </tr>
-      <tr>
-        <td><label for="versicherungsnummer"><%=bundle.getString("insuranceNumber")%>: </label></td>
-        <td><input type="text" id="versicherungsnummer" name="versicherungsnummer"
-                   size="50" value="${it.versicherungsnummer}"
-                <% if (map.containsKey("readonly")) { %> readonly="readonly"
-                <% } else if (showPlaceholders) { %>
-                   placeholder="<%=bundle.getString("placeholderInsuranceNumber") %>" <% } %> />
-        </td>
-      </tr>
-      <tr>
-        <td colspan="2"><small>&nbsp;</small></td>
-      </tr>
-      <tr>
-        <td rowspan="2"><label for="plz"><%=bundle.getString("cityOfResidence")%>: <br />(<%=bundle.getString("postalCode")%> / <%=bundle.getString("city")%>)
+        <td rowspan="2"><label for="plz"><%=bundle.getString("cityOfResidence")%>
+            : <br />(<%=bundle.getString("postalCode")%> / <%=bundle.getString("city")%>)
         </label></td>
         <td><input type="text" id="plz" name="plz" size="5"
           maxlength="5" value="${it.plz}"

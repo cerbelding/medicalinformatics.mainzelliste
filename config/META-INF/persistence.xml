@@ -16,7 +16,6 @@
     <class>de.pseudonymisierung.mainzelliste.IDGeneratorMemory</class>
     <class>de.pseudonymisierung.mainzelliste.IntegerID</class>
     <class>de.pseudonymisierung.mainzelliste.ExternalID</class>
-	<class>de.pseudonymisierung.mainzelliste.SrlID</class>
     <class>de.pseudonymisierung.mainzelliste.ElasticID</class>
     <class>de.pseudonymisierung.mainzelliste.matcher.MatchResult</class>
     <class>de.pseudonymisierung.mainzelliste.blocker.BlockingKey</class>

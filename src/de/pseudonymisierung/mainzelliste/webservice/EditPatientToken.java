@@ -33,10 +33,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.pseudonymisierung.mainzelliste.Config;
-import de.pseudonymisierung.mainzelliste.DerivedIDGenerator;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
-import de.pseudonymisierung.mainzelliste.IDGenerator;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidFieldException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
@@ -131,12 +129,6 @@ public class EditPatientToken extends Token {
 
 		this.patientId = IDGeneratorFactory.instance.buildId(
 				idJSON.get("idType").toString(), idJSON.get("idString").toString());
-
-		IDGenerator generator = IDGeneratorFactory.instance.getFactory(patientId.getType());
-		if(!generator.isPersistent()){
-			// CryptoIds are transient, compute the base id to check if the patient exists
-			this.patientId =((DerivedIDGenerator)generator).getBaseId(patientId);
-		}
 
 		if (!Persistor.instance.patientExists(patientId))
 			throw new InvalidIDException("No patient exists with id " + patientId.toString());
