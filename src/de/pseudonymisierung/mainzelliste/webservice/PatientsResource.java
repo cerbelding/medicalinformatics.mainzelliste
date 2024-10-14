@@ -30,6 +30,7 @@ import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.spi.resource.Singleton;
 import de.pseudonymisierung.mainzelliste.AuditTrail;
 import de.pseudonymisierung.mainzelliste.Config;
+import de.pseudonymisierung.mainzelliste.DerivedIDGenerator;
 import de.pseudonymisierung.mainzelliste.Field;
 import de.pseudonymisierung.mainzelliste.ID;
 import de.pseudonymisierung.mainzelliste.IDGeneratorFactory;
@@ -37,6 +38,7 @@ import de.pseudonymisierung.mainzelliste.IDRequest;
 import de.pseudonymisierung.mainzelliste.Patient;
 import de.pseudonymisierung.mainzelliste.PatientBackend;
 import de.pseudonymisierung.mainzelliste.Servers;
+import de.pseudonymisierung.mainzelliste.Session;
 import de.pseudonymisierung.mainzelliste.dto.Persistor;
 import de.pseudonymisierung.mainzelliste.exceptions.InternalErrorException;
 import de.pseudonymisierung.mainzelliste.exceptions.InvalidJSONException;
@@ -51,6 +53,7 @@ import de.pseudonymisierung.mainzelliste.webservice.commons.RedirectBuilder;
 import de.pseudonymisierung.mainzelliste.webservice.commons.RedirectUtils;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -94,10 +97,15 @@ import org.codehaus.jettison.json.JSONObject;
 @Path("/patients")
 @Singleton
 public class PatientsResource {
-    /**
-     * The logging instance.
-     */
-    private final Logger logger = LogManager.getLogger(PatientsResource.class);
+  /**
+   * The logging instance.
+   */
+  private static final Logger logger = LogManager.getLogger(PatientsResource.class);
+
+  /**
+   * Session to be used when in debug mode.
+   */
+  private Session debugSession = null;
 
   /**
    * Get a list of patients.
@@ -127,19 +135,19 @@ public class PatientsResource {
 	 *            The injected HttpServletRequest.
 	 * @return An HTTP response as specified in the API documentation.
 	 */
-	@POST
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	@Produces({MediaType.TEXT_HTML, MediaType.WILDCARD})
-	public synchronized Response newPatientBrowser(
-			@QueryParam("tokenId") String tokenId,
-			@QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion,
-			MultivaluedMap<String, String> form,
-			@Context HttpServletRequest request){
-		try {
-            logger.debug("@POST newPatientBrowser");
-			Token token = Servers.instance.getTokenByTid(tokenId);
-			IDRequest createRet = PatientBackend.instance.createNewPatient(tokenId, form,
-                    Servers.instance.getRequestApiVersion(request));
+  @POST
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  @Produces({MediaType.TEXT_HTML, MediaType.WILDCARD})
+  public synchronized Response newPatientBrowser(
+      @QueryParam("tokenId") String tokenId,
+      @QueryParam("mainzellisteApiVersion") String mainzellisteApiVersion,
+      MultivaluedMap<String, String> form,
+      @Context HttpServletRequest request) {
+    try {
+      logger.debug("@POST newPatientBrowser");
+      AddPatientToken token = getAddPatientToken(tokenId);
+      IDRequest createRet = addNewPatient(token, form);
+
 			Set<ID> ids = createRet.createRequestedIds();
 			MatchResult result = createRet.getMatchResult();
 			Map <String, Object> map = new HashMap<String, Object>();
@@ -165,7 +173,9 @@ public class PatientsResource {
                         map.put("printIdat", true);
                     }
 
-                    map.put("ids", ids);
+                    JSONArray idsAsJson = new JSONArray();
+                    ids.forEach(id -> idsAsJson.put(id.toJSON()));
+                    map.put("ids", idsAsJson);
 
                     map.put("tentative", false);
                     // Only put true in map if one or more PID are tentative
@@ -213,18 +223,6 @@ public class PatientsResource {
                             map.put("redirectParams", redirect.getRedirectParams());
                             return Response.ok(new Viewable("/patientCreated.jsp", map)).build();
                         }
-                        // Remove query parameters and pass them to JSP. The redirect is put
-                        // into the "action" tag of a form and the parameters are passed as
-                        // hidden fields
-                        // TODO: generate for frontend
-                        // URI redirectURI = new URI(redirectURITempl.createURI(templateVarMap));
-                        // String showResult = Config.instance.getProperty("result.show");
-                        // if (showResult != null && !Boolean.parseBoolean(showResult)) {
-                        //     return Response.status(Status.SEE_OTHER).location(redirectURI).build();
-                        // }
-                        // MultivaluedMap<String, String> queryParams = UriComponent.decodeQuery(redirectURI, true);
-                        // map.put("redirect", redirectURI);
-                        // map.put("redirectParams", queryParams);
                     }
 
                     return Response.ok(new Viewable("/patientCreated.jsp", map)).build();
@@ -252,20 +250,22 @@ public class PatientsResource {
 	 * @throws JSONException
 	 *             If a JSON error occurs.
 	 */
-	@POST
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	@Produces(MediaType.APPLICATION_JSON)
-	public synchronized Response newPatientJson(
-			@QueryParam("tokenId") String tokenId,
-			@Context HttpServletRequest request,
-			@Context UriInfo context,
-			MultivaluedMap<String, String> form) throws JSONException {
-        logger.debug("@POST newPatientJson");
-		IDRequest response = PatientBackend.instance.createNewPatient(tokenId, form,
-                Servers.instance.getRequestApiVersion(request));
+  @POST
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  @Produces(MediaType.APPLICATION_JSON)
+  public synchronized Response newPatientJson(
+      @QueryParam("tokenId") String tokenId,
+      @Context HttpServletRequest request,
+      @Context UriInfo context,
+      MultivaluedMap<String, String> form) throws JSONException {
+    logger.debug("@POST newPatientJson");
+
+    AddPatientToken token = getAddPatientToken(tokenId);
+    IDRequest response = addNewPatient(token, form);
+    //handle possible matches
 		if (response.getMatchResult().getResultType() == MatchResultType.POSSIBLE_MATCH && response.createRequestedIds() == null) {
 			JSONObject ret = new JSONObject();
-			if (response.getToken().showPossibleMatches()) {
+			if (token.showPossibleMatches()) {
 				JSONArray possibleMatches = new JSONArray();
 				for (Entry<Double, List<Patient>> possibleMatch : response.getMatchResult().getPossibleMatches().entrySet()) {
 					for (Patient p : possibleMatch.getValue())
@@ -287,15 +287,12 @@ public class PatientsResource {
 		
 		int apiMajorVersion = Servers.instance.getRequestMajorApiVersion(request);
 
-        Token callbackToken = response.getToken();
-        String callback = callbackToken.getDataItemString("callback");
-        if (callback != null && callback.length() > 0) {
-            sendCallback(request, callbackToken, newIds, null, callback);
-        }
+    String callback = token.getDataItemString("callback");
+    if (callback != null && callback.length() > 0) {
+        sendCallback(request, token, newIds, null, callback);
+    }
 
 		if (apiMajorVersion >= 2) {
-
-            AddPatientToken token = response.getToken();
             String redirect = token.getDataItemString("redirect");
             if (redirect != null && redirect.length() > 0) {
                 UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
@@ -317,12 +314,9 @@ public class PatientsResource {
 				URI newUri = context.getBaseUriBuilder()
 						.path(PatientsResource.class)
 						.path("/{idtype}/{idvalue}")
-						.build(thisID.getType(), thisID.getIdString());
+						.build(thisID.getType(), thisID.getEncryptedIdStringFirst());
 	
-				ret.put(new JSONObject()
-					.put("idType", thisID.getType())
-					.put("idString", thisID.getIdString())
-					.put("tentative", thisID.isTentative())
+				ret.put(thisID.toJSON()
 					.put("uri", newUri));
 			}
 					
@@ -352,7 +346,7 @@ public class PatientsResource {
 					.build(newId.getType(), newId.getIdString());
 			
 			JSONObject ret = new JSONObject()
-					.put("newId", newId.getIdString())
+					.put("newId", newId.getEncryptedIdStringFirst())
 					.put("tentative", newId.isTentative())
 					.put("uri", newUri);
 
@@ -362,7 +356,7 @@ public class PatientsResource {
                     .location(newUri)
                     .build();
         }
-    }
+	}
 
   /**
    * Get patients via "readPatient" token.
@@ -401,7 +395,19 @@ public class PatientsResource {
       if(idString.trim().equals("*")) {
         patients = Persistor.instance.getPatients(idType);
       } else {
-        ID id = IDGeneratorFactory.instance.buildId(idType, idString);
+        ID id;
+        try {
+          // Decrypt input id, if configured
+          id = IDGeneratorFactory.instance.decryptAndBuildId(idType, idString);
+        } catch (Exception e) {
+          // if cannot decrypt id, proceed with plain id string
+          logger.warn("Decryption failed, try to proceed with search id string");
+          id = IDGeneratorFactory.instance.buildId(idType, idString);
+        }
+        if (IDGeneratorFactory.instance.getTransientIdTypes().contains(idType)){
+          // if id is an instance of transient id types, find a corresponding persistent base id
+          id = ((DerivedIDGenerator)IDGeneratorFactory.instance.getFactory(idType)).getBaseId(id);
+        }
         patients = Collections.singletonList(Persistor.instance.getPatient(id));
       }
 
@@ -525,11 +531,15 @@ public class PatientsResource {
     } else if (token.hasDataItem("resultIds")) {
       try {
         List<?> requestedIdTypes = token.getDataItemList("resultIds");
-        List<JSONObject> requestedIds = patient.getIds().stream()
+        Set<String> transientIdTypes = IDGeneratorFactory.instance.getTransientIdTypes();
+        List<String> derivedIdTypes = (List<String>)requestedIdTypes.stream().filter(o -> (transientIdTypes.contains(o))).collect(Collectors.toList());
+        if (!derivedIdTypes.isEmpty()) {
+            derivedIdTypes.forEach(patient::createId);
+        }
+        List<JSONObject> requestedIds = patient.getAllIds().stream()
             .filter(id -> requestedIdTypes.contains(id.getType()))
             .map(ID::toJSON)
             .collect(Collectors.toList());
-
         if (!requestedIds.isEmpty()) {
           patientJson.put("ids", requestedIds);
         }
@@ -647,7 +657,6 @@ public class PatientsResource {
                 if (redirect != null && redirect.length() > 0) {
                     UriTemplate redirectURITempl = new UriTemplate(token.getDataItemString("redirect"));
                     List<String> templateVariables = redirectURITempl.getTemplateVariables();
-                    List<String> requestedIds = RedirectUtils.getRequestedIDsTypeFromToken(token);
                     if (templateVariables.contains("tokenId")) {
                         return new RedirectBuilder().setTokenId(token.getId()).setTemplateURI(redirectURITempl).build()
                                 .execute();
@@ -814,10 +823,16 @@ public class PatientsResource {
 
         //TODO: IMPORTANT ADD PERMISSION CONCEPT. send only "permitted" IDs
         if(matchResult.getBestMatchedPatient()!=null){
+            Set<String> transientIdTypes = IDGeneratorFactory.instance.getTransientIdTypes();
             for (Object idType : token.getDataItemList("idTypes")) {
-                ID id = matchResult.getBestMatchedPatient().getId((String) idType);
+                ID id;
+                if (transientIdTypes.contains((String) idType)) {
+                    id = matchResult.getBestMatchedPatient().createId((String) idType);
+                } else {
+                    id = matchResult.getBestMatchedPatient().getId((String) idType);
+                }
                 if (id != null) {
-                    jsonPatientObject.put(id.getType(), id.getIdString());
+                    jsonPatientObject.put(id.getType(), id.getEncryptedIdStringFirst());
                 }
             }
         }
@@ -883,6 +898,65 @@ public class PatientsResource {
     }
 
     /* Utils */
+
+  private IDRequest addNewPatient(AddPatientToken token, MultivaluedMap<String, String> form) {
+    logger.info("Handling ID Request with token {}", token.getId());
+
+    // get fields transmitted from MDAT server
+    token.getFields().forEach(form::add);
+    // get externally generated ids transmitted from MDAT server
+    token.getIds().forEach(form::add);
+
+    // read sureness flag
+    boolean sureness =
+        form.getFirst("sureness") != null || Boolean.parseBoolean(form.getFirst("sureness"));
+    return PatientBackend.instance.createAndPersistPatient(form,
+        token.getRequestedIdTypes(), sureness, token.getId());
+  }
+
+  /**
+   * find if add patient token exist otherwise create a new one if started in debug mode
+   * @param tokenId token id
+   * @return add patient token
+   * @throws InvalidTokenException if no token with the given id found
+   */
+  private AddPatientToken getAddPatientToken(String tokenId) {
+    Token token = Servers.instance.getTokenByTid(tokenId);
+    // Try to read token from session.
+    if (token == null) {
+      // If no token found and debug mode is on, create token, otherwise fail
+      if (!Config.instance.debugIsOn()) {
+        logger.error("No token with id {} found", tokenId);
+        throw new InvalidTokenException("Please supply a valid 'addPatient' token.",
+            Status.UNAUTHORIZED);
+      }
+      AddPatientToken addPatientToken = new AddPatientToken();
+      Servers.instance.registerToken(getDebugSession().getId(), addPatientToken, "127.0.0.1");
+      return addPatientToken;
+    } else if (!(token instanceof AddPatientToken)) { // correct token type?
+      logger.error("Token {} is not of type 'addPatient' but '{}'", token.getId(), token.getType());
+      throw new InvalidTokenException("Please supply a valid 'addPatient' token.",
+          Status.UNAUTHORIZED);
+    }
+    return (AddPatientToken) token;
+  }
+
+  /**
+   * Get a session for use in debug mode.
+   *
+   * @return The debug session.
+   */
+  private Session getDebugSession() {
+    if (debugSession == null || Servers.instance.getSession(debugSession.getId()) == null) {
+      debugSession = Servers.instance.newSession("");
+      try {
+        debugSession.setURI(new URI("debug"));
+      } catch (URISyntaxException e) {
+        throw new WebApplicationException(e);
+      }
+    }
+    return debugSession;
+  }
 
     private void performAuditTrail(Patient patient, String tokenId,String action)
     {

@@ -57,11 +57,17 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
 	* @param props Properties of the Generator
 	*/
     @Override
-    public void init(IDGeneratorMemory mem, String idType, Properties props) {
+		public void init(IDGeneratorMemory mem, String idType, String[] eagerGenRelatedIdTypes,
+				Properties props) {
         this.idType = idType;
     }
 
-    /**
+	@Override
+	public void reset(String idType) {
+		//
+	}
+
+	/**
      * Verify an external ID (eGK-ID). Returns true if value of 'id' is a valid eGK Number.
      * 
 	 * @param id Value of the eGK-Number 
@@ -123,6 +129,17 @@ public class EGKIDGenerator implements IDGenerator<ExternalID>{
 	public boolean isExternal() {
 		 return true; 
 	}
+
+	@Override
+	public boolean isPersistent() { return true; }
+
+	@Override
+	public boolean isEagerGenerationOn(String idType) {
+		return false;
+	}
+
+	@Override
+	public boolean isSrl() { return false; }
 
 	@Override
 	public Optional<IDGeneratorMemory> getMemory() {

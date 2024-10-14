@@ -1,0 +1,398 @@
+{
+	"info": {
+		"_postman_id": "8cfcd517-9d06-4314-abe8-4cbc7799a05b",
+		"name": "mainzelliste_jobs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "create session",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"console.log(\"newSession\")",
+							"var jsonBody = JSON.parse(responseBody);",
+							"",
+							"tests[\"Session created\"] = responseCode.code === 201;",
+							"tests[\"Body has sessionId\"] = responseBody.has(\"sessionId\");",
+							"tests[\"Body has uri\"] = responseBody.has(\"uri\");",
+							"",
+							"var sessionId = jsonBody.sessionId;",
+							"postman.setGlobalVariable(\"sessionId\", sessionId);",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/sessions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create addPatientsToken",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonBody = JSON.parse(responseBody);",
+							"console.log(jsonBody);",
+							"tests[\"Token created\"] = responseCode.code === 201;",
+							"tests[\"Body has id\"] = responseBody.has(\"id\");",
+							"tests[\"Type is addPatients\"] = jsonBody.type === \"addPatients\";",
+							"tests[\"Body has data\"] = responseBody.has(\"data\");",
+							"tests[\"Data has idTypes\"] = \"idTypes\" in jsonBody.data;",
+							"",
+							"var tokenId = jsonBody.id;",
+							"postman.setGlobalVariable(\"tokenId\", tokenId);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"type\": \"addPatients\",\r\n    \"data\": {\r\n        \"idtypes\": [\"pid\"]\r\n    }\r\n}"
+				},
+				"url": {
+					"raw": "{{url}}/sessions/{{sessionId}}/tokens",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"sessions",
+						"{{sessionId}}",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[T1] CREATE_PATIENTS: multiple request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"tests[\"job started\"] = responseCode.code === 202;",
+							"pm.test(\"Redirect location is correct\", function () {",
+							"   pm.response.to.have.header(\"Location\");",
+							"});",
+							"var headerLocation = pm.response.headers.get(\"Location\");",
+							"console.log(headerLocation);",
+							"pm.collectionVariables.set('jobid', headerLocation.match(/^.+jobs\\/(\\d+)\\//)[1]);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\r\n  {\"extid\":\"9949\",\"vorname\":\"Dina\",\"nachname\":\"Hitalateson\",\"adresse.strasse\":\"Kreuzweg 102\",\"plz\":\"97769\",\"ort\":\"Bad Brückenau\",\"sex\":\"0\",\"geburtstag\":\"19\",\"geburtsmonat\":\"02\",\"geburtsjahr\":\"2009\"},\r\n  {\"extid\":\"9950\",\"vorname\":\"Ruth\",\"nachname\":\"Lövevadestein\",\"adresse.strasse\":\"Erlenweg 223\",\"plz\":\"74632\",\"ort\":\"Neuenstein\",\"sex\":\"1\",\"geburtstag\":\"19\",\"geburtsmonat\":\"12\",\"geburtsjahr\":\"1999\"},\r\n  {\"extid\":\"9951\",\"vorname\":\"Salvatore\",\"nachname\":\"Zaloflode\",\"adresse.strasse\":\"Dieselstrasse 223\",\"plz\":\"56235\",\"ort\":\"Ransbach-Baumbach\",\"sex\":\"0\",\"geburtstag\":\"08\",\"geburtsmonat\":\"09\",\"geburtsjahr\":\"1942\"},\r\n  {\"extid\":\"9952\",\"vorname\":\"Marcel\",\"nachname\":\"Kisibaweiner\",\"adresse.strasse\":\"Grüner Weg 29\",\"plz\":\"38667\",\"ort\":\"Bad Harzburg\",\"sex\":\"1\",\"geburtstag\":\"13\",\"geburtsmonat\":\"05\",\"geburtsjahr\":\"1989\"},\r\n  {\"extid\":\"9953\",\"vorname\":\"Vito\",\"nachname\":\"Mutufledestein\",\"adresse.strasse\":\"Mittelweg 260\",\"plz\":\"44135\",\"ort\":\"Dortmund\",\"sex\":\"0\",\"geburtstag\":\"25\",\"geburtsmonat\":\"04\",\"geburtsjahr\":\"2005\"},\r\n  {\"extid\":\"9954\",\"vorname\":\"Herta\",\"nachname\":\"Gutagrade\",\"adresse.strasse\":\"Fichtenweg 74\",\"plz\":\"98673\",\"ort\":\"Eisfeld\",\"sex\":\"0\",\"geburtstag\":\"28\",\"geburtsmonat\":\"07\",\"geburtsjahr\":\"1964\"},\r\n  {\"extid\":\"9955\",\"vorname\":\"Victoria\",\"nachname\":\"Cerafareweiner\",\"adresse.strasse\":\"Am Bahnhof 189c\",\"plz\":\"15374\",\"ort\":\"Müncheberg\",\"sex\":\"1\",\"geburtstag\":\"18\",\"geburtsmonat\":\"06\",\"geburtsjahr\":\"1979\"},\r\n  {\"extid\":\"9956\",\"vorname\":\"Anka\",\"nachname\":\"Pövivodehein\",\"adresse.strasse\":\"Mörikestrasse 122\",\"plz\":\"21335\",\"ort\":\"Lüneburg\",\"sex\":\"0\",\"geburtstag\":\"25\",\"geburtsmonat\":\"02\",\"geburtsjahr\":\"2008\"},\r\n  {\"extid\":\"9957\",\"vorname\":\"Karl-Peter\",\"nachname\":\"Vasufaremeiner\",\"adresse.strasse\":\"Heckenweg 84\",\"plz\":\"95100\",\"ort\":\"Selb\",\"sex\":\"0\",\"geburtstag\":\"15\",\"geburtsmonat\":\"12\",\"geburtsjahr\":\"2004\"},\r\n  {\"extid\":\"9958\",\"vorname\":\"Mesut\",\"nachname\":\"Fosimattson\",\"adresse.strasse\":\"Kirchplatz 73\",\"plz\":\"34117\",\"ort\":\"Kassel\",\"sex\":\"1\",\"geburtstag\":\"29\",\"geburtsmonat\":\"09\",\"geburtsjahr\":\"1966\"},\r\n  {\"extid\":\"9959\",\"vorname\":\"Fatih\",\"nachname\":\"Civofohein\",\"adresse.strasse\":\"Schwarzer Weg 95\",\"plz\":\"55116\",\"ort\":\"Mainz\",\"sex\":\"0\",\"geburtstag\":\"16\",\"geburtsmonat\":\"08\",\"geburtsjahr\":\"1916\"},\r\n  {\"extid\":\"9960\",\"vorname\":\"Annemarie\",\"nachname\":\"Belewatteweiner\",\"adresse.strasse\":\"Brunnenweg 24c\",\"plz\":\"06905\",\"ort\":\"Bad Schmiedeberg\",\"sex\":\"0\",\"geburtstag\":\"10\",\"geburtsmonat\":\"08\",\"geburtsjahr\":\"2004\"},\r\n  {\"extid\":\"9961\",\"vorname\":\"Pia\",\"nachname\":\"Gedolodemeiner\",\"adresse.strasse\":\"Lindenweg 114\",\"plz\":\"39418\",\"ort\":\"Staßfurt\",\"sex\":\"0\",\"geburtstag\":\"29\",\"geburtsmonat\":\"04\",\"geburtsjahr\":\"1987\"},\r\n  {\"extid\":\"9962\",\"vorname\":\"Hans-Hinrich\",\"nachname\":\"Betubihein\",\"adresse.strasse\":\"Marienstrasse 9\",\"plz\":\"78462\",\"ort\":\"Konstanz\",\"sex\":\"1\",\"geburtstag\":\"21\",\"geburtsmonat\":\"02\",\"geburtsjahr\":\"1995\"},\r\n  {\"extid\":\"9963\",\"vorname\":\"Miodrag\",\"nachname\":\"Pödafledeson\",\"adresse.strasse\":\"Am Hang 234\",\"plz\":\"17440\",\"ort\":\"Lassan\",\"sex\":\"1\",\"geburtstag\":\"04\",\"geburtsmonat\":\"12\",\"geburtsjahr\":\"1978\"},\r\n  {\"extid\":\"9964\",\"vorname\":\"Pascale\",\"nachname\":\"Gitiduson\",\"adresse.strasse\":\"Römerstrasse 99\",\"plz\":\"63500\",\"ort\":\"Seligenstadt\",\"sex\":\"1\",\"geburtstag\":\"26\",\"geburtsmonat\":\"07\",\"geburtsjahr\":\"1993\"},\r\n  {\"extid\":\"9965\",\"vorname\":\"Maria-Theresia\",\"nachname\":\"Väwisadeweiner\",\"adresse.strasse\":\"Siedlung 186c\",\"plz\":\"83714\",\"ort\":\"Miesbach\",\"sex\":\"1\",\"geburtstag\":\"30\",\"geburtsmonat\":\"12\",\"geburtsjahr\":\"1911\"},\r\n  {\"extid\":\"9966\",\"vorname\":\"Niklas\",\"nachname\":\"Sasofo\",\"adresse.strasse\":\"Finkenstrasse 47\",\"plz\":\"32584\",\"ort\":\"Löhne\",\"sex\":\"0\",\"geburtstag\":\"18\",\"geburtsmonat\":\"06\",\"geburtsjahr\":\"1982\"},\r\n  {\"extid\":\"9967\",\"vorname\":\"Arnd\",\"nachname\":\"Metugrade\",\"adresse.strasse\":\"Rathausstrasse 207c\",\"plz\":\"72116\",\"ort\":\"Mössingen\",\"sex\":\"0\",\"geburtstag\":\"19\",\"geburtsmonat\":\"09\",\"geburtsjahr\":\"1977\"},\r\n  {\"extid\":\"9968\",\"vorname\":\"Joseph\",\"nachname\":\"Bawegatestein\",\"adresse.strasse\":\"Friedrich-Ebert-Strasse 265\",\"plz\":\"59227\",\"ort\":\"Ahlen\",\"sex\":\"0\",\"geburtstag\":\"11\",\"geburtsmonat\":\"12\",\"geburtsjahr\":\"1937\"},\r\n  {\"extid\":\"9969\",\"vorname\":\"Erdmute\",\"nachname\":\"Zölesadehein\",\"adresse.strasse\":\"Kreuzstrasse 43\",\"plz\":\"02826\",\"ort\":\"Görlitz\",\"sex\":\"1\",\"geburtstag\":\"08\",\"geburtsmonat\":\"06\",\"geburtsjahr\":\"1940\"},\r\n  {\"extid\":\"9970\",\"vorname\":\"Semra\",\"nachname\":\"Gitofereson\",\"adresse.strasse\":\"Buchenweg 158\",\"plz\":\"72280\",\"ort\":\"Dornstetten\",\"sex\":\"0\",\"geburtstag\":\"04\",\"geburtsmonat\":\"02\",\"geburtsjahr\":\"1918\"},\r\n  {\"extid\":\"9971\",\"vorname\":\"Mirella\",\"nachname\":\"Tetuvoremeiner\",\"adresse.strasse\":\"Schlehenweg 293\",\"plz\":\"98544\",\"ort\":\"Zella-Mehlis\",\"sex\":\"0\",\"geburtstag\":\"17\",\"geburtsmonat\":\"04\",\"geburtsjahr\":\"2004\"},\r\n  {\"extid\":\"9972\",\"vorname\":\"Martine\",\"nachname\":\"Förowade\",\"adresse.strasse\":\"Kapellenstrasse 264\",\"plz\":\"39590\",\"ort\":\"Tangermünde\",\"sex\":\"1\",\"geburtstag\":\"17\",\"geburtsmonat\":\"04\",\"geburtsjahr\":\"1986\"},\r\n  {\"extid\":\"9973\",\"vorname\":\"Arzu\",\"nachname\":\"Kolesedemeiner\",\"adresse.strasse\":\"Römerstrasse 171\",\"plz\":\"38226\",\"ort\":\"Salzgitter\",\"sex\":\"1\",\"geburtstag\":\"13\",\"geburtsmonat\":\"12\",\"geburtsjahr\":\"2008\"},\r\n  {\"extid\":\"9974\",\"vorname\":\"Mariola\",\"nachname\":\"Gödefare\",\"adresse.strasse\":\"Weiherstrasse 103\",\"plz\":\"17291\",\"ort\":\"Prenzlau\",\"sex\":\"0\",\"geburtstag\":\"02\",\"geburtsmonat\":\"01\",\"geburtsjahr\":\"1965\"},\r\n  {\"extid\":\"9975\",\"vorname\":\"Janette\",\"nachname\":\"Didulode\",\"adresse.strasse\":\"Schlehenweg 144\",\"plz\":\"66763\",\"ort\":\"Dillingen/ Saar\",\"sex\":\"1\",\"geburtstag\":\"15\",\"geburtsmonat\":\"07\",\"geburtsjahr\":\"1995\"},\r\n  {\"extid\":\"9976\",\"vorname\":\"Nada\",\"nachname\":\"Mösolatehein\",\"adresse.strasse\":\"Mörikestrasse 42\",\"plz\":\"54550\",\"ort\":\"Daun\",\"sex\":\"1\",\"geburtstag\":\"17\",\"geburtsmonat\":\"10\",\"geburtsjahr\":\"1985\"},\r\n  {\"extid\":\"9977\",\"vorname\":\"Hubertine\",\"nachname\":\"Fiwubehein\",\"adresse.strasse\":\"Wacholderweg 70\",\"plz\":\"95028\",\"ort\":\"Hof\",\"sex\":\"1\",\"geburtstag\":\"01\",\"geburtsmonat\":\"06\",\"geburtsjahr\":\"1994\"},\r\n  {\"extid\":\"9978\",\"vorname\":\"Marie-Theres\",\"nachname\":\"Rurefostein\",\"adresse.strasse\":\"Finkenweg 127\",\"plz\":\"42489\",\"ort\":\"Wülfrath\",\"sex\":\"0\",\"geburtstag\":\"26\",\"geburtsmonat\":\"03\",\"geburtsjahr\":\"1935\"},\r\n  {\"extid\":\"9979\",\"vorname\":\"Heidemarie\",\"nachname\":\"Talugatemüller\",\"adresse.strasse\":\"Kirchweg 259\",\"plz\":\"36381\",\"ort\":\"Schlüchtern\",\"sex\":\"1\",\"geburtstag\":\"25\",\"geburtsmonat\":\"08\",\"geburtsjahr\":\"1988\"},\r\n  {\"extid\":\"9980\",\"vorname\":\"Tilmann\",\"nachname\":\"Lodefu\",\"adresse.strasse\":\"Teichstrasse 153\",\"plz\":\"73466\",\"ort\":\"Lauchheim\",\"sex\":\"0\",\"geburtstag\":\"31\",\"geburtsmonat\":\"01\",\"geburtsjahr\":\"1984\"},\r\n  {\"extid\":\"9981\",\"vorname\":\"Käthe\",\"nachname\":\"Vesoduweiner\",\"adresse.strasse\":\"Forststrasse 101c\",\"plz\":\"17335\",\"ort\":\"Strasburg (Uckermark)\",\"sex\":\"0\",\"geburtstag\":\"07\",\"geburtsmonat\":\"08\",\"geburtsjahr\":\"1988\"},\r\n  {\"extid\":\"9982\",\"vorname\":\"Vera\",\"nachname\":\"Tuvagradeweiner\",\"adresse.strasse\":\"Weinbergstrasse 181\",\"plz\":\"93142\",\"ort\":\"Maxhütte-Haidhof\",\"sex\":\"1\",\"geburtstag\":\"25\",\"geburtsmonat\":\"08\",\"geburtsjahr\":\"1968\"},\r\n  {\"extid\":\"9983\",\"vorname\":\"Nicolai\",\"nachname\":\"Kitischattstein\",\"adresse.strasse\":\"Frankenstrasse 251\",\"plz\":\"99755\",\"ort\":\"Ellrich\",\"sex\":\"1\",\"geburtstag\":\"05\",\"geburtsmonat\":\"11\",\"geburtsjahr\":\"1948\"},\r\n  {\"extid\":\"9984\",\"vorname\":\"Ella\",\"nachname\":\"Gowusegehein\",\"adresse.strasse\":\"Dahlienweg 147\",\"plz\":\"75378\",\"ort\":\"Bad Liebenzell\",\"sex\":\"1\",\"geburtstag\":\"15\",\"geburtsmonat\":\"08\",\"geburtsjahr\":\"1923\"},\r\n  {\"extid\":\"9985\",\"vorname\":\"Johann\",\"nachname\":\"Natogrode\",\"adresse.strasse\":\"Marktplatz 294\",\"plz\":\"41515\",\"ort\":\"Grevenbroich\",\"sex\":\"0\",\"geburtstag\":\"22\",\"geburtsmonat\":\"01\",\"geburtsjahr\":\"1984\"},\r\n  {\"extid\":\"9986\",\"vorname\":\"Cilly\",\"nachname\":\"Velebedestein\",\"adresse.strasse\":\"Lindenstrasse 293\",\"plz\":\"42499\",\"ort\":\"Hückeswagen\",\"sex\":\"0\",\"geburtstag\":\"21\",\"geburtsmonat\":\"01\",\"geburtsjahr\":\"2006\"},\r\n  {\"extid\":\"9987\",\"vorname\":\"Dörthe\",\"nachname\":\"Zütuhede\",\"adresse.strasse\":\"Rotdornweg 195\",\"plz\":\"16816\",\"ort\":\"Neuruppin\",\"sex\":\"1\",\"geburtstag\":\"23\",\"geburtsmonat\":\"09\",\"geburtsjahr\":\"1962\"},\r\n  {\"extid\":\"9988\",\"vorname\":\"Oxana\",\"nachname\":\"Pitusade\",\"adresse.strasse\":\"Ulmenweg 201\",\"plz\":\"04639\",\"ort\":\"Gößnitz\",\"sex\":\"1\",\"geburtstag\":\"21\",\"geburtsmonat\":\"05\",\"geburtsjahr\":\"1989\"},\r\n  {\"extid\":\"9989\",\"vorname\":\"Hellmut\",\"nachname\":\"Volufi\",\"adresse.strasse\":\"Am Sportplatz 244\",\"plz\":\"61449\",\"ort\":\"Steinbach (Taunus)\",\"sex\":\"1\",\"geburtstag\":\"03\",\"geburtsmonat\":\"02\",\"geburtsjahr\":\"1980\"},\r\n  {\"extid\":\"9990\",\"vorname\":\"Nadin\",\"nachname\":\"Dirifomeiner\",\"adresse.strasse\":\"Finkenweg 60\",\"plz\":\"34311\",\"ort\":\"Naumburg\",\"sex\":\"1\",\"geburtstag\":\"30\",\"geburtsmonat\":\"05\",\"geburtsjahr\":\"1964\"},\r\n  {\"extid\":\"9991\",\"vorname\":\"Annita\",\"nachname\":\"Schulz\",\"adresse.strasse\":\"Heckenweg 62\",\"plz\":\"67292\",\"ort\":\"Kirchheimbolanden\",\"sex\":\"0\",\"geburtstag\":\"10\",\"geburtsmonat\":\"03\",\"geburtsjahr\":\"1953\"},\r\n  {\"extid\":\"9992\",\"vorname\":\"Leif\",\"nachname\":\"Jurivade\",\"adresse.strasse\":\"Im Wiesengrund 258\",\"plz\":\"37170\",\"ort\":\"Uslar\",\"sex\":\"1\",\"geburtstag\":\"03\",\"geburtsmonat\":\"08\",\"geburtsjahr\":\"1942\"},\r\n  {\"extid\":\"9993\",\"vorname\":\"Sylwia\",\"nachname\":\"Huselau\",\"adresse.strasse\":\"Weidenweg 132\",\"plz\":\"88427\",\"ort\":\"Bad Schussenried\",\"sex\":\"0\",\"geburtstag\":\"08\",\"geburtsmonat\":\"11\",\"geburtsjahr\":\"1968\"},\r\n  {\"extid\":\"9994\",\"vorname\":\"Loni\",\"nachname\":\"Tösaflodestein\",\"adresse.strasse\":\"Kantstrasse 17\",\"plz\":\"71272\",\"ort\":\"Renningen\",\"sex\":\"0\",\"geburtstag\":\"25\",\"geburtsmonat\":\"02\",\"geburtsjahr\":\"1916\"},\r\n  {\"extid\":\"9995\",\"vorname\":\"Hanife\",\"nachname\":\"Dewebodo\",\"adresse.strasse\":\"Eichenstrasse 11\",\"plz\":\"65549\",\"ort\":\"Limburg a.d. Lahn\",\"sex\":\"0\",\"geburtstag\":\"03\",\"geburtsmonat\":\"06\",\"geburtsjahr\":\"1986\"},\r\n  {\"extid\":\"9996\",\"vorname\":\"Claus\",\"nachname\":\"Motifledemüller\",\"adresse.strasse\":\"Kirchgasse 239\",\"plz\":\"56759\",\"ort\":\"Kaisersesch\",\"sex\":\"0\",\"geburtstag\":\"25\",\"geburtsmonat\":\"06\",\"geburtsjahr\":\"1975\"},\r\n  {\"extid\":\"9997\",\"vorname\":\"Wilhelmine\",\"nachname\":\"Tidesegehein\",\"adresse.strasse\":\"Am Bahnhof 189c\",\"plz\":\"38707\",\"ort\":\"Altenau\",\"sex\":\"0\",\"geburtstag\":\"27\",\"geburtsmonat\":\"07\",\"geburtsjahr\":\"1969\"},\r\n  {\"extid\":\"9998\",\"vorname\":\"Nadeshda\",\"nachname\":\"Citemauhein\",\"adresse.strasse\":\"Tulpenstrasse 24c\",\"plz\":\"71672\",\"ort\":\"Marbach am Neckar\",\"sex\":\"1\",\"geburtstag\":\"09\",\"geburtsmonat\":\"07\",\"geburtsjahr\":\"1939\"},\r\n  {\"extid\":\"9999\",\"vorname\":\"Ester\",\"nachname\":\"Mutevodemüller\",\"adresse.strasse\":\"Birkenweg 173\",\"plz\":\"73525\",\"ort\":\"Schwäbisch Gmünd\",\"sex\":\"0\",\"geburtstag\":\"28\",\"geburtsmonat\":\"08\",\"geburtsjahr\":\"1960\"},\r\n  {\"extid\":\"10000\",\"vorname\":\"Petar\",\"nachname\":\"Nusudohein\",\"adresse.strasse\":\"Mittelstrasse 75\",\"plz\":\"98630\",\"ort\":\"Römhild\",\"sex\":\"0\",\"geburtstag\":\"05\",\"geburtsmonat\":\"11\",\"geburtsjahr\":\"1919\"}\r\n]"
+				},
+				"url": {
+					"raw": "{{url}}/jobs?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"jobs"
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[T1] CREATE_PATIENT: not allowed",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"tests[\"token id is not valid\"] = pm.response.to.have.status(401);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/jobs/{{jobid}}/?tokenId=b399-4af7-99c9-d45b2b4ba969",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"jobs",
+						"{{jobid}}",
+						""
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "b399-4af7-99c9-d45b2b4ba969"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[T1] CREATE_PATIENT: get result",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set('next', pm.info.requestId);",
+							"tests[\"Adding patients should be done or in progress\"] = pm.expect(responseCode.code).to.satisfy(function(code) { return code === 204 || code === 202; });",
+							"",
+							"// check if adding patients in progress",
+							"setTimeout(function() {  ",
+							"    if(responseCode.code === 204) {",
+							"        tests[\"Adding patients in progress\"] = pm.response.to.have.status(204);",
+							"        console.log(pm.info.requestId);",
+							"        postman.setNextRequest(pm.environment.get('next'));",
+							"    }",
+							"}, 1000);",
+							"",
+							"// check job result",
+							"if(responseCode.code === 202) {",
+							"    var jsonBody = JSON.parse(responseBody);",
+							"    console.log(jsonBody);",
+							"    tests[\"Patients created\"] = pm.response.to.have.status(202);",
+							"",
+							"    // check size",
+							"    tests[\"Number of created patients is 52\"] = pm.expect(jsonBody).to.have.lengthOf(52);",
+							"",
+							"    // check first result",
+							"    var innerArraySchema = {",
+							"            \"type\": \"object\",",
+							"                \"required\": [\"idType\", \"idString\", \"tentative\", \"uri\"],",
+							"                \"properties\":  ",
+							"                {",
+							"                    \"idType\": {",
+							"                        \"type\": \"string\"",
+							"                    },",
+							"                    \"idString\":{",
+							"                        \"type\": \"string\",",
+							"                    },",
+							"                    \"tentative\": {",
+							"                        \"type\": \"boolean\",",
+							"                    },",
+							"                    \"uri\": {",
+							"                        \"type\": \"string\"",
+							"                    }",
+							"                }",
+							"        }",
+							"",
+							"    var Ajv = require('ajv'),",
+							"        ajv = new Ajv({logger: console}),",
+							"        schema = {",
+							"            \"type\": \"array\",",
+							"            \"items\" : {",
+							"                \"#ref\": innerArraySchema",
+							"        }};",
+							"",
+							"    pm.test('response of 1. patient must be valid and have a body', function() {",
+							"        pm.expect(jsonBody[0]).to.have.property('status', 201);",
+							"        pm.expect(jsonBody[0]).to.have.property('body');",
+							"    });",
+							"",
+							"    pm.test(\"response of 1. patient have correct scheme\", function() {",
+							"        pm.expect(ajv.validate(schema, jsonBody[0].body )).to.be.true;",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/jobs/{{jobid}}/?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"jobs",
+						"{{jobid}}",
+						""
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "[T1] CREATE_PATIENT: job not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"tests[\"Job not found\"] = pm.response.to.have.status(404);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "mainzellisteApiKey",
+						"value": "{{mainzellisteApiKey}}"
+					},
+					{
+						"key": "mainzellisteApiVersion",
+						"value": "{{mainzellisteApiVersion}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/jobs/{{jobid}}/?tokenId={{tokenId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"jobs",
+						"{{jobid}}",
+						""
+					],
+					"query": [
+						{
+							"key": "tokenId",
+							"value": "{{tokenId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "intVisitId",
+			"value": ""
+		},
+		{
+			"key": "pid",
+			"value": ""
+		},
+		{
+			"key": "jobid",
+			"value": ""
+		}
+	]
+}

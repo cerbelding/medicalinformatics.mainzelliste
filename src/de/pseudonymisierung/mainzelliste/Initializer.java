@@ -61,6 +61,12 @@ public class Initializer implements ServletContextListener {
 	public void contextInitialized(ServletContextEvent sce) {
 		context = sce.getServletContext();
 		initialize();
+		// only for debugging
+		// TODO: Delete before deployment
+		if (Boolean.parseBoolean(Config.instance.getProperty("sel.on"))){
+			de.securerecordlinkage.Initializer initializer = new de.securerecordlinkage.Initializer();
+			initializer.contextInitialized(sce);
+		}
 	}
 
 	@Override
@@ -100,7 +106,7 @@ public class Initializer implements ServletContextListener {
 		Validator v = Validator.instance;
 
 		Config.instance.getBlockingKeyExtractors().updateBlockingKeyExtractors();
-		/* 
+		/*
 		 * Limit Jersey logging to avoid spamming the log with "the request body has been consumed" messages
 		 * (see http://stackoverflow.com/questions/2011895/how-to-fix-jersey-post-request-parameters-warning).
 		 * This applies to use cases where all fields are transmitted via the "addPatient" token and the 
