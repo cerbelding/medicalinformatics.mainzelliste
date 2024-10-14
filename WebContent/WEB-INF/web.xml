@@ -28,7 +28,7 @@
 		<filter-class>com.sun.jersey.spi.container.servlet.ServletContainer</filter-class>
 	  	<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
-			<param-value>de.pseudonymisierung.mainzelliste</param-value>
+			<param-value>de.pseudonymisierung.mainzelliste;de.securerecordlinkage</param-value>
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.JSPTemplatesBasePath</param-name>

@@ -25,6 +25,10 @@
  */
 package de.pseudonymisierung.mainzelliste;
 
+import de.pseudonymisierung.mainzelliste.crypto.Encryption;
+import de.pseudonymisierung.mainzelliste.exceptions.GeneralCryptoException;
+import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
+import java.security.GeneralSecurityException;
 import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -32,13 +36,10 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
-
 import org.apache.openjpa.persistence.jdbc.Index;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-
-import de.pseudonymisierung.mainzelliste.exceptions.InvalidIDException;
 
 /**
  * A person's identifier. Once created, the ID is guaranteed to be valid.
@@ -194,6 +195,23 @@ public abstract class ID {
 	}
 
 	/**
+	 * Return an encrypted ID, if the ID was already configured with an encryption algorithm,
+	 * otherwise return plain text id.
+	 *
+	 * @return base 64 encrypted id if configured, otherwise plain text id
+	 */
+	@Transient
+	public String getEncryptedIdStringFirst() {
+		Encryption encryption = IDGeneratorFactory.instance.getExportEncryption(getType());
+		try {
+			return encryption != null ? encryption.encryptToBase64String(getIdString()) : getIdString();
+		} catch (GeneralSecurityException e) {
+			throw new GeneralCryptoException(
+					"Encryption of ID[type:" + getType() + "," + idString.length() + " failed", e);
+		}
+	}
+
+	/**
 	 * Returns a string representation of this ID, mainly for display in log files etc.
 	 * @return A string of the format "{idType}={idString}".
 	 */
@@ -221,7 +239,7 @@ public abstract class ID {
 		try {
 			JSONObject ret = new JSONObject();
 			ret.put("idType", this.type);
-			ret.put("idString", this.idString);
+			ret.put("idString", getEncryptedIdStringFirst());
 			ret.put("tentative", this.tentative);
 
 			return ret;

@@ -1,3 +1,10 @@
+## Disclaimer
+
+This repository is a fork of the official Mainzelliste project, embodying the features described in the paper “Mainzelliste SecureEpiLinker (MainSEL): Privacy-Preserving Record Linkage using Secure Multi-Party Computation”. 
+It is intended that these new features will eventually be integrated back into the official Mainzelliste software.: https://bitbucket.org/medicalinformatics/mainzelliste/src
+
+The SecureEpilinker sMPC Node C++ source code is available at https://github.com/medicalinformatics/SecureEpilinker
+
 # Mainzelliste
 
 Mainzelliste is a web-based first-level pseudonymization service. It allows for the creation of personal identifiers (PID) from identifying attributes (IDAT), and thanks to the record linkage functionality, this is even possible with poor quality identifying data. The functions are available through a RESTful web interface.
